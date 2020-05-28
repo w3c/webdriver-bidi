@@ -1,1 +1,1 @@
-<https://jgraham.github.io/webdriver-bidi/>
+<https://w3c.github.io/webdriver-bidi/>
