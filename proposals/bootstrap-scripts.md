@@ -1,8 +1,8 @@
-# Bootstrap Scripts
+# WebDriver BiDi Bootstrap Scripts
 
 ## Overview
 
-This document presents Bootstrap Scripts, a new feature based on the [Bidirectional WebDriver Protocol](webdriver.md).
+This document presents Bootstrap Scripts, a new feature based on the [Bidirectional WebDriver Protocol](./core.md).
 
 A bootstrap script is a function that runs once whenever a new script execution context is created and is guaranteed to run before any other script in that context. It runs in the same script context as a page, worker, or service worker so that it can inspect and manipulate variables in these contexts to do things like interact with the DOM or polyfill APIs. A messaging channel is provided so that bootstrap scripts can communicate with the WebDriver client.
 
@@ -18,7 +18,7 @@ Another use case is adding instrumentation or shims before a page starts running
 
 ## Registering Bootstrap Scripts
 
-The [bidirectional WebDriver protocol](webdriver.md) defines 3 types of script contexts: "document", "worker", and "serviceWorker". Every script context has a unique ID and the WebDriver client can use the getScriptContexts command to get a list of script contexts for a given target. The client may also subscribe to the scriptContextCreated and scriptContextClosed events to find out when a script context is created or closed.
+The [bidirectional WebDriver protocol](./core.md) defines 3 types of script contexts: "document", "worker", and "serviceWorker". Every script context has a unique ID and the WebDriver client can use the getScriptContexts command to get a list of script contexts for a given target. The client may also subscribe to the scriptContextCreated and scriptContextClosed events to find out when a script context is created or closed.
 
 The main purpose of a bootstrap script is to run before any other scripts in the same script context. To do anything with a script context, the WebDriver client normally needs to know its ID. The WebDriver client first learns of a context's ID through a scriptContextCreated event. However, due to the asynchronous nature of events, it is possible (and even likely) that this context will start running script before the WebDriver client has a chance to inject a bootstrap script. Therefore, the WebDriver client needs some way to register a bootstrap script to run in a script context before it even knows the script context's ID.
 
@@ -98,7 +98,7 @@ Bootstrap scripts should allow bidi communication with the WebDriver client code
 - Forwarding DOM events to the client.
 
 
-To send a message from the WebDriver client to a bootstrap script, we need a way to identify the bootstrap script. However, in the previous section, we defined a bootstrapScriptId as an ID for a *registration*, not a particular instance of a bootstrap script. Once a bootstrap script is registered, it can be invoked in potentially many contexts, and the user may want to message only some of these contexts. For example, the user might register a bootstrap script to run on all "documents" to hook up some event listeners and add some instrumentation, and then they might want to message just one instance of the bootstrap script at a time to perform some operation on the corresponding page. The bootstrapScriptId isn't suitable in this case since it doesn't uniquely identify a single instance of a bootstrap script running in a single script context. 
+To send a message from the WebDriver client to a bootstrap script, we need a way to identify the bootstrap script. However, in the previous section, we defined a bootstrapScriptId as an ID for a *registration*, not a particular instance of a bootstrap script. Once a bootstrap script is registered, it can be invoked in potentially many contexts, and the user may want to message only some of these contexts. For example, the user might register a bootstrap script to run on all "documents" to hook up some event listeners and add some instrumentation, and then they might want to message just one instance of the bootstrap script at a time to perform some operation on the corresponding page. The bootstrapScriptId isn't suitable in this case since it doesn't uniquely identify a single instance of a bootstrap script running in a single script context.
 
 To enable this scenario, the user needs a way to know when a bootstrap script has been matched with a particular script context. Then, they can use the bootstrapScriptId, plus the scriptContextId to route a message to just the one script context they want. We can provide this information with an event:
 
@@ -183,7 +183,7 @@ function bootstrapScript(port) {
 // Register the bootstrap script to run on all pages.
 const { bootstrapScriptId } = await driver.registerBootstrapScript({
     match: [ { type: "document" } ],
-    script: bootstrapScript.toString() // Stringify the bootstrap function for sending to the remote end. 
+    script: bootstrapScript.toString() // Stringify the bootstrap function for sending to the remote end.
 });
 
 // Listen for messages from the bootstrap script.
@@ -237,7 +237,7 @@ try {
     // Register the bootstrap script to run on all pages.
     const { bootstrapScriptId } = await driver.registerBootstrapScript({
         match: [ { type: "document" } ],
-        script: bootstrapScript.toString() // Stringify the bootstrap function for sending to the remote end. 
+        script: bootstrapScript.toString() // Stringify the bootstrap function for sending to the remote end.
     });
 
     // Wait for either the test to complete successfully or an error to occur.
