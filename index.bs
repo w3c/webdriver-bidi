@@ -13,7 +13,7 @@ Default Ref Status: current
 <pre class=anchors>
 spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
     type: dfn
-        text: WebSocket ws-URI; url: section-3
+        text: WebSocket URI; url: section-3
         text: A WebSocket Message Has Been Received; url: section-6.2
         text: The WebSocket Closing Handshake is Started; url: section-7.1.3
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
@@ -21,13 +21,18 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
         text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
         text: additional WebDriver capability; url: dfn-additional-webdriver-capability
         text: capability name; url: dfn-capability-name
+        text: endpoint node; url: dfn-endpount-node
         text: error code; url: dfn-error-code
         text: error; url: dfn-errors
+        text: getting a property; url: dfn-get-a-property
         text: invalid argument; url: dfn-invalid-argument
         text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
         text: remote end; url: dfn-remote-ends
         text: session; url: dfn-sessions
+        text: session ID; url: dfn-session-id
+        text: set a property; url: dfn-set-a-property
         text: success; url: dfn-success
+        text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
 </pre>
 
 Introduction {#intro}
@@ -46,36 +51,41 @@ Transport {#transport}
 Message transport is provided using a [[RFC6455|WebSocket]]
 connection.
 
-A [=remote end=] has a <dfn>connection</dfn>, which is a network connection, and
-a <dfn>websocket url</dfn>, which is a string. These are both initially null.
+A WebDriver [=session=] has a <dfn>WebSocket connection</dfn>, which
+is a network connection, and a <dfn>WebSocket URL</dfn>, which is a
+string. These are both initially null.
 
-When data is recieved on [=connection=] it must be processed according to the
+When data is recieved on [=WebSocket connection=] it must be processed according to the
 requirements of the [[!RFC6455|WebSockets]] specification. When [=a WebSocket
 message has been received=], an implementation must [=handle an incoming
 message=]. When [=the WebSocket closing handshake is started=] an implementation
 must [=end the session=].
 
-When required to <dfn>ensure a connection is established</dfn>, run
-the following steps:
+When required to <dfn>Establish a WebSocket Connection</dfn>, with
+argument <var>session id</var>, run the following steps:
 
-1.  If the [=websocket url=] is not null, return the
-    [=websocket url=]
-
-2.  Set up a network connection that listens on an implementation-defined
-    hostname <var>host</var> and port <var>port</var>. Set the [=connection=] to
+1.  Set up a network connection that listens on an
+    implementation-defined hostname <var>host</var> and port
+    <var>port</var>. The connection may TLS encrypted, in which case
+    let <var>secure</var> be <code>true</code>, otherwise let
+    <var>secure</var> be <code>false</code>. Set the [=connection=] to
     this network connection.
 
-3.  Let <var>WebSocket URL</var> be the result of constructing a [=WebSocket
-    ws-URI=] with host <var>host</var>, port <var>port</var>, and empty path an
-    query.
+2.  Let <var>path</var> be the result of concatenating the string
+    "<code>session/</code>" with <var>session id</var>.
+
+3.  Let <var>URL</var> be the result of constructing a [=WebSocket
+    URI=] with scheme "<code>wss</code>" if <var>secure</var> is
+    <code>true</code> or "<code>ws</code>" otherwise, host
+    <var>host</var>, port <var>port</var>, path <var>path</var> and
+    empty query.
 
 4.  Set the [=websocket url=] to <var>WebSocket URL</var>.
 
 5.  Return <var>WebSocket URL</var>.
 
-
-Note: Typically the hostname in the above steps will be
-"<code>localhost</code>".
+Note: For an [=endpoint node=] the hostname in the above steps will be
+typically be "<code>localhost</code>".
 
 When required to <dfn>handle an incoming message</dfn>, run the following steps:
 
@@ -102,15 +112,27 @@ This specification defines an
 [=additional webdriver capability=] with the [=capability name=] "<code>bidi</code>".
 
 The [=additional capability deserialization algorithm=] for the
-"<code>bidi</code> capability, with argument <var>value</var> is:
+"<code>bidi</code>" capability, with argument <var>value</var> is:
  1. If <var>value</var> is not a boolean, return [=error=] with [=error
     code|code=] [=invalid argument=].
  2. Return [=success=] with data <var>value</var>.
 
-The [=matched capability serialization algorithm=] for the `bidi` capability,
+The [=matched capability serialization algorithm=] for the "<code>bidi</code>" capability,
 with argument <var>value</var> is:
  1. If value is <code>false</code>, return [=success=] with data
     <code>null</code>.
- 2. Let <var>websocket url</var> be the result of running the steps to
-    [=ensure a connection is established=].
- 3. Return [=success=] with data <var>websocket url</var>.
+ 2. Return [=success=] with data <code>true</code>.
+
+The [=WebDriver new session algorithm=] defined by this specification,
+with arguments <var>session</var> and <var>capabilities</var> is:
+ 1. Let <var>bidi</var> be the result of [=getting a property=] named
+    "<code>bidi</code>" from <var>capabilities</var>.
+ 2. If <var>bidi</var> is undefined, return.
+ 3. Let <var>session id</var> be the [=session ID=] of
+    <var>session</var>.
+ 3. Otherwise <var>bidi</var> is <code>true</code>. Let <var>URL</var>
+    be the result of calling the algorithm to [=establish a websocket
+    connection=] with argument <var>session id</var>.
+ 4. Set the [=WebSocket URL=] for <var>session</var> to <var>URL</var>.
+ 5. [=Set a property=] "<code>bidi</code>" to <var>URL</var>
+    on <var>capabilities</var>.
