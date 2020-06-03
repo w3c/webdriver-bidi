@@ -7,14 +7,110 @@ Group: browser-testing-tools
 URL: https://w3c.github.io/webdriver-bidi/
 No Editor: true
 Abstract: This document defines the BiDirectional WebDriver Protocol, a mechanism for remote control of user agents.
+Default Ref Status: current
 </pre>
 
 Introduction {#intro}
 =====================
 
-[[WEBDRIVER|WebDriver]] defines a protocol for introspection and remote control
-of user agents. This specification extends WebDriver by introducing
-bidirectional communication. In place of the strict command/response
-format of WebDriver, this permits events to stream from the user
-agent to the controlling software, better matching the evented nature
-of the browser DOM.
+[[WEBDRIVER2|WebDriver]] defines a protocol for introspection and
+remote control of user agents. This specification extends WebDriver by
+introducing bidirectional communication. In place of the strict
+command/response format of WebDriver, this permits events to stream
+from the user agent to the controlling software, better matching the
+evented nature of the browser DOM.
+
+Terminology {#terminology}
+==========================
+
+This specification reuses the terms defined in the
+[[!WEBDRIVER2]] specification.
+
+Transport {#transport}
+======================
+
+Message transport is provided using a [[RFC6455|WebSocket]]
+connection.
+
+A [[WEBDRIVER2#dfn-remote-ends|remote end]] has a
+<dfn>connection</dfn>, which is a network connection, and a
+<dfn>websocket url</dfn>, which is a string. These are both initially
+<code>null</code>.
+
+When data is recieved on [=connection=] it must be processed according
+to the requirements of the [[!RFC6455|WebSockets]]
+specification. When a [[RFC6455#section-6.2|WebSocket Message has
+been Received]], an implementation must [=handle an incoming
+message=]. When [[RFC6455#section-7.1.3|The WebSocket Closing
+Handshake is Started]] an implementation must [=end the
+session=].
+
+When required to <dfn>ensure a connection is established</dfn>, run
+the following steps:
+
+1.  If the [=websocket url=] is not <code>null</code>, return the
+    [=websocket url=]
+
+2.  Set up a network connection that listens on an
+    implementation-defined hostname <var>host</var> and port
+    <var>port</var>. Set the [=connection=] to this network connection.
+
+3.  Let <var>WebSocket URL</var> be the result of constructing a
+    [[RFC6455#section-3|WebSocket ws-URI]] with host
+    <var>host</var>, port <var>port</var>, and empty path an query.
+
+4.  Set the [=websocket url=] to <var>WebSocket URL</var>.
+
+5.  Return <var>WebSocket URL</var>.
+
+
+Note: Typically the host name in the above steps will be
+"<code>localhost</code>".
+
+When required to <dfn>handle an incoming message</dfn>, run
+the following steps:
+
+Issue: Figure this out.
+
+When required to <dfn>end the session</dfn>, run the following
+steps:
+
+1. Close the underlying network connection [=connection=].
+
+2. Set [=connection=] and [=WebSocket URL=] to <code>null</code>.
+
+Issue: This should also reset any internal state
+
+Note: This does not end any [[WEBDRIVER2#sessions|WebDriver
+session]].
+
+Establishing a Connection {#estabishing}
+========================================
+
+WebDriver clients opt in to a bidirectional connection by requesting a
+capability with the name "<code>bidi</code>" and value
+<code>true</code>.
+
+This specification defines an
+[[WEBDRIVER2#dfn-additional-webdriver-capability|additional webdriver
+capability]] with name "<code>bidi</code>".
+
+The
+[[WEBDRIVER2#dfn-additional-capability-deserialization-algorithm|additional
+capability deserialization algorithm]] for the <code>bidi</code> capability, with
+argument <var>value</var> is:
+ 1. If <var>value</var> is not a boolean, return
+    [[WEBDRIVER2#dfn-error|error]] with [[WEBDRIVER2#dfn-error-code|code]]
+    [[WEBDRIVER2#dfn-invalid-argument|invalid argument]].
+ 2. Return [[WEBDRIVER2#dfn-success|success]] with data
+    <var>value</var>.
+
+The
+[[WEBDRIVER2#dfn-matched-capability-serialization-algorithm|matched
+capability serialization algorithm]] for the `bidi` capability, with
+argument <var>value</var> is:
+ 1. If value is <code>false</code>, return
+    [[WEBDRIVER2#dfn-success|success]] with data <code>null</code>.
+ 2. Let <var>websocket url</var> be the result of running the steps to
+    [=ensure a connection is established=]
+ 3. Return [[WEBDRIVER2#dfn-success|success]] with data <var>websocket url</var>.
