@@ -55,15 +55,18 @@ A WebDriver [=session=] has a <dfn>WebSocket connection</dfn>, which
 is a network connection, and a <dfn>WebSocket URL</dfn>, which is a
 string. These are both initially null.
 
-When data is recieved on [=WebSocket connection=] it must be processed according to the
-requirements of the [[!RFC6455|WebSockets]] specification. When [=a WebSocket
-message has been received=], an implementation must [=handle an incoming
-message=]. When [=the WebSocket closing handshake is started=] an implementation
-must [=end the session=].
+When data is recieved on [=WebSocket connection=]
+<var>connection</var>, it must be processed according to the
+requirements of the [[!RFC6455|WebSockets]] specification. When [=a
+WebSocket message has been received=], an implementation must [=handle
+an incoming message=] with argument <var>connection</var>. When [=the
+WebSocket closing handshake is started=] an implementation must
+[=close the WebSocket connection=] with argument
+<var>connection</var>.
 
 <div algorithm>
-To <dfn>establish a WebSocket connection</dfn>, with
-argument |session id|, run these steps:
+To <dfn>start listening for a WebSocket connection</dfn>, with
+parameter |session id|, run these steps:
 
  1. Set up a network connection that listens on an implementation-defined
     hostname |host| and port |port|. The connection may TLS encrypted, in which
@@ -86,19 +89,22 @@ argument |session id|, run these steps:
 Note: For an [=endpoint node=] the hostname in the above steps will be
 typically be "<code>localhost</code>".
 
-<div algorithm>
-To <dfn>handle an incoming message</dfn>, run thes steps:
+<div algorithm> To <dfn>handle an incoming message</dfn> with parameter
+<var ignore>connection</var>, run these steps:
 
 Issue: Figure this out.
 
 </div>
 
-<div algorithm>
-To <dfn>end the session</dfn>, run these steps:
+<div algorithm> To <dfn>close the WebSocket connection</dfn> with
+parameter <var>connection</var>, run these steps:
 
- 1. Close the underlying network connection [=connection=].
+ 1. Close the underlying network connection associated with
+    <var>connection</var>.
 
- 2. Set [=connection=] and [=WebSocket URL=] to null.
+ 2. If there is a WebDriver [=session=] with <var>connection</var> as
+    its [=connection=], set the [=connection=] on that [=session=] to
+    null.
 
 Issue: This should also reset any internal state
 
@@ -118,7 +124,7 @@ This specification defines an
 
 <div algorithm="bidi capability deserialization algorithm">
 The [=additional capability deserialization algorithm=] for the
-"<code>bidi</code>" capability, with argument |value| is:
+"<code>bidi</code>" capability, with parameter |value| is:
 
  1. If |value| is not a boolean, return [=error=] with [=error code|code=]
     [=invalid argument=].
@@ -129,7 +135,7 @@ The [=additional capability deserialization algorithm=] for the
 
 <div algorithm="bidi capability serialization algorithm">
 The [=matched capability serialization algorithm=] for the "<code>bidi</code>" capability,
-with argument |value| is:
+with parameter |value| is:
 
  1. If |value| is <code>false</code>, return [=success=] with data
     <code>null</code>.
@@ -140,7 +146,7 @@ with argument |value| is:
 
 <div algorithm="bidi new session algorithm">
 The [=WebDriver new session algorithm=] defined by this specification,
-with arguments |session| and |capabilities| is:
+with parameters |session| and |capabilities| is:
 
  1. Let |bidi| be the result of [=getting a property=] named "<code>bidi</code>"
     from |capabilities|.
@@ -149,9 +155,9 @@ with arguments |session| and |capabilities| is:
 
  3. Let |session id| be the [=session ID=] of |session|.
 
- 3. Otherwise |bidi| is <code>true</code>. Let |url| be the result of calling
-    the algorithm to [=establish a WebSocket connection=] with argument
-    |session id|.
+ 3. Otherwise |bidi| is <code>true</code>. Let |url| be the result of
+    calling the algorithm to [=start listening for a WebSocket
+    connection=] with argument |session id|.
 
  4. Set the [=WebSocket URL=] for |session| to |url|.
 
