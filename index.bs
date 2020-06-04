@@ -47,12 +47,63 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
 Introduction {#intro}
 =====================
 
+<em>This section is non-normative.</em>
+
 [[WEBDRIVER|WebDriver]] defines a protocol for introspection and
 remote control of user agents. This specification extends WebDriver by
 introducing bidirectional communication. In place of the strict
 command/response format of WebDriver, this permits events to stream
 from the user agent to the controlling software, better matching the
 evented nature of the browser DOM.
+
+Model {#model}
+==============
+
+This section defines the basic concepts of the WebDriver BiDi
+protocol. These terms are distinct from their representation at the
+<a href=#transport>transport</a> layer, and can be thought of as their
+in-memory representation.
+
+Note: These definitions do not form any normative requirements, rather
+they are used elsewhere as part of such requirements.
+
+A <dfn export>command</dfn> is sent by the client to the [=remote
+end=], requesting it to perform some action. A [=command=] consists
+of:
+ - An <dfn export for=command>id</dfn> (integer) to be used in the
+    resulting [=response=] or [=error=].
+ - A <dfn export for=command>domain</dfn> (string)
+ - A <dfn export for=command>name</dfn> (string)
+ - <dfn export for=command>parameters</dfn> ([=map=] with string
+    <a for=map>keys</a> and any type as <a for=map>values</a>)
+
+A <dfn export>response</dfn> is sent by the [=remote end=] to the
+client in response to a specific [=command=], and signifies the
+success of that command. A [=response=] consists of:
+ - An <dfn export for=response>id</dfn> (integer) equal to the
+    corresponding [=command=]'s <a for=command>id</a>.
+ - A <dfn export for=response>result</dfn> (any type)
+
+An <dfn export>error</dfn> is sent by the [=remote end=] to the client
+in response to a specific [=command=], and signifies the failure of
+that command. An [=error=] consists of:
+ - An <dfn export for=error>id</dfn> (integer) equal to the
+    corresponding [=command=]'s <a for=command>id</a>.
+ - A <dfn export for=error>code</dfn> (a WebDriver [=error code=]
+    string)
+ - A <dfn export for=error>message</dfn> (string)
+ - Optional <dfn export for=error>data</dfn> (any type)
+
+A <dfn export>notification</dfn> is sent by the [=remote end=] to the
+client. It is similar to a [=response=], but does not correspond to a
+specific [=command=]. A [=notification=] consists of:
+ - A <dfn export for=notification>domain</dfn> string)
+ - A <dfn export for=notification>name</dfn> (string)
+ - <dfn export for=notification>parameters</dfn> ([=map=] with string
+    <a for=map>keys</a> and any type as <a for=map>values</a>)
+
+Issue: Should the strings here be [=strings=] (a sequence of unsigned
+16-bit integers) or [=scalar value strings=]?
 
 Transport {#transport}
 ======================
