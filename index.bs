@@ -56,33 +56,31 @@ is a network connection, and a <dfn>WebSocket URL</dfn>, which is a
 string. These are both initially null.
 
 When data is recieved on [=WebSocket connection=]
-<var>connection</var>, it must be processed according to the
+|connection|, it must be processed according to the
 requirements of the [[!RFC6455|WebSockets]] specification. When [=a
 WebSocket message has been received=], an implementation must [=handle
-an incoming message=] with argument <var>connection</var>. When [=the
+an incoming message=] with argument |connection|. When [=the
 WebSocket closing handshake is started=] an implementation must
 [=close the WebSocket connection=] with argument
-<var>connection</var>.
+|connection|.
 
 <div algorithm>
-To <dfn>start listening for a WebSocket connection</dfn>, with
-parameter |session id|, run these steps:
+To <dfn>start listening for a WebSocket connection</dfn> for a |session|, run
+these steps:
 
  1. Set up a network connection that listens on an implementation-defined
     hostname |host| and port |port|. The connection may TLS encrypted, in which
-    case let |secure| be <code>true</code>, otherwise let |secure| be
-    <code>false</code>. Set the [=connection=] to this network connection.
+    case let |secure| be true, otherwise let |secure| be false. Set the
+    [=connection=] to this network connection.
 
  2. Let |path| be the result of concatenating the string "<code>session/</code>"
-    with |session id|.
+    with |session|'s [=session ID=].
 
  3. Let |url| be the result of constructing a [=WebSocket URI=] with scheme
-    "<code>wss</code>" if |secure| is <code>true</code> or "<code>ws</code>"
+    "<code>wss</code>" if |secure| is true or "<code>ws</code>"
     otherwise, host |host|, port |port|, path |path| and empty query.
 
- 4. Set the [=websocket url=] to |url|.
-
- 5. Return |url|.
+ 4. Set |session|'s [=WebSocket URL=] to |url|.
 
 Issue: This confuses the server listening socket with the actual
 websocket connection
@@ -92,22 +90,20 @@ websocket connection
 Note: For an [=endpoint node=] the hostname in the above steps will be
 typically be "<code>localhost</code>".
 
-<div algorithm> To <dfn>handle an incoming message</dfn> with parameter
+<div algorithm> To <dfn>handle an incoming message</dfn> for a
 <var ignore>connection</var>, run these steps:
 
 Issue: Figure this out.
 
 </div>
 
-<div algorithm> To <dfn>close the WebSocket connection</dfn> with
-parameter <var>connection</var>, run these steps:
+<div algorithm> To <dfn>close the WebSocket connection</dfn> for a
+|connection|, run these steps:
 
- 1. Close the underlying network connection associated with
-    <var>connection</var>.
+ 1. Close the underlying network connection associated with |connection|.
 
- 2. If there is a WebDriver [=session=] with <var>connection</var> as
-    its [=connection=], set the [=connection=] on that [=session=] to
-    null.
+ 2. If there is a WebDriver [=session=] with |connection| as its [=connection=],
+    set the [=connection=] on that [=session=] to null.
 
 Issue: This should also reset any internal state
 
@@ -120,7 +116,7 @@ Establishing a Connection {#estabishing}
 
 WebDriver clients opt in to a bidirectional connection by requesting a
 capability with the name "<code>webSocketUrl</code>" and value
-<code>true</code>.
+true.
 
 This specification defines an
 [=additional webdriver capability=] with the [=capability name=] "<code>webSocketUrl</code>".
@@ -140,10 +136,9 @@ The [=additional capability deserialization algorithm=] for the
 The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
 with parameter |value| is:
 
- 1. If |value| is <code>false</code>, return [=success=] with data
-    <code>null</code>.
+ 1. If |value| is false, return [=success=] with data null.
 
- 2. Return [=success=] with data <code>true</code>.
+ 2. Return [=success=] with data true.
 
 </div>
 
@@ -156,17 +151,11 @@ with parameters |session| and |capabilities| is:
 
  2. If |webSocketUrl| is undefined, return.
 
- 3. Let |session id| be the [=session ID=] of |session|.
+ 3. Assert: |webSocketUrl| is true.
 
- 3. Assert: |webSocketUrl| is <code>true</code>.
+ 4. [=Start listening for a WebSocket connection=] for |session|.
 
- 4. Let |url| be the result of
-    calling the algorithm to [=start listening for a WebSocket
-    connection=] with argument |session id|.
-
- 5. Set the [=WebSocket URL=] for |session| to |url|.
-
- 6. [=Set a property=] "<code>webSocketUrl</code>" to |url| on
-    |capabilities|.
+ 5. [=Set a property=] "<code>webSocketUrl</code>" to |session|'s
+    [=WebSocket URL=] on |capabilities|.
 
 </div>
