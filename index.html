@@ -1224,7 +1224,7 @@ Possible extra rowspan handling
   <link href="https://www.w3.org/StyleSheets/TR/2016/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version bcf9ed33, updated Fri May 29 18:11:07 2020 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="9e835c6c2b98f9f2559bd25f5b3fb410390486cf" name="document-revision">
+  <meta content="88e08658fee8d531831e076bcc6d74e3eeaf5a9a" name="document-revision">
 <style>/* style-autolinks */
 
 .css.css, .property.property, .descriptor.descriptor {
@@ -1316,6 +1316,43 @@ figcaption {
 figcaption:not(.no-marker)::before {
     content: "Figure " counter(figure) " ";
 }</style>
+<style>/* style-dfn-panel */
+
+.dfn-panel {
+    position: absolute;
+    z-index: 35;
+    height: auto;
+    width: -webkit-fit-content;
+    width: fit-content;
+    max-width: 300px;
+    max-height: 500px;
+    overflow: auto;
+    padding: 0.5em 0.75em;
+    font: small Helvetica Neue, sans-serif, Droid Sans Fallback;
+    background: #DDDDDD;
+    color: black;
+    border: outset 0.2em;
+}
+.dfn-panel:not(.on) { display: none; }
+.dfn-panel * { margin: 0; padding: 0; text-indent: 0; }
+.dfn-panel > b { display: block; }
+.dfn-panel a { color: black; }
+.dfn-panel a:not(:hover) { text-decoration: none !important; border-bottom: none !important; }
+.dfn-panel > b + b { margin-top: 0.25em; }
+.dfn-panel ul { padding: 0; }
+.dfn-panel li { list-style: inside; }
+.dfn-panel.activated {
+    display: inline-block;
+    position: fixed;
+    left: .5em;
+    bottom: 2em;
+    margin: 0 auto;
+    max-width: calc(100vw - 1.5em - .4em - .5em);
+    max-height: 30vh;
+}
+
+.dfn-paneled { cursor: pointer; }
+</style>
 <style>/* style-md-lists */
 
 /* This is a weird hack for me not yet following the commonmark spec
@@ -1372,17 +1409,29 @@ dfn > a.self-link:hover {
 a.self-link::before            { content: "¶"; }
 .heading > a.self-link::before { content: "§"; }
 dfn > a.self-link::before      { content: "#"; }</style>
+<style>/* style-var-click-highlighting */
+
+    var { cursor: pointer; }
+    var.selected0 { background-color: #F4D200; box-shadow: 0 0 0 2px #F4D200; }
+    var.selected1 { background-color: #FF87A2; box-shadow: 0 0 0 2px #FF87A2; }
+    var.selected2 { background-color: #96E885; box-shadow: 0 0 0 2px #96E885; }
+    var.selected3 { background-color: #3EEED2; box-shadow: 0 0 0 2px #3EEED2; }
+    var.selected4 { background-color: #EACFB6; box-shadow: 0 0 0 2px #EACFB6; }
+    var.selected5 { background-color: #82DDFF; box-shadow: 0 0 0 2px #82DDFF; }
+    var.selected6 { background-color: #FFBCF2; box-shadow: 0 0 0 2px #FFBCF2; }
+    </style>
  <body class="h-entry">
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-06-03">3 June 2020</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-06-04">4 June 2020</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
      <dd><a class="u-url" href="https://w3c.github.io/webdriver-bidi/">https://w3c.github.io/webdriver-bidi/</a>
      <dt>Issue Tracking:
      <dd><a href="https://github.com/w3c/webdriver-bidi/issues/">GitHub</a>
+     <dd><a href="#issues-index">Inline In Spec</a>
     </dl>
    </div>
    <div data-fill-with="warning"></div>
@@ -1415,23 +1464,122 @@ dfn > a.self-link::before      { content: "#"; }</style>
    <h2 class="no-num no-toc no-ref" id="contents">Table of Contents</h2>
    <ol class="toc" role="directory">
     <li><a href="#intro"><span class="secno">1</span> <span class="content">Introduction</span></a>
+    <li><a href="#transport"><span class="secno">2</span> <span class="content">Transport</span></a>
+    <li><a href="#estabishing"><span class="secno">3</span> <span class="content">Establishing a Connection</span></a>
     <li><a href="#conformance"><span class="secno"></span> <span class="content"> Conformance</span></a>
+    <li>
+     <a href="#index"><span class="secno"></span> <span class="content">Index</span></a>
+     <ol class="toc">
+      <li><a href="#index-defined-here"><span class="secno"></span> <span class="content">Terms defined by this specification</span></a>
+      <li><a href="#index-defined-elsewhere"><span class="secno"></span> <span class="content">Terms defined by reference</span></a>
+     </ol>
     <li>
      <a href="#references"><span class="secno"></span> <span class="content">References</span></a>
      <ol class="toc">
       <li><a href="#normative"><span class="secno"></span> <span class="content">Normative References</span></a>
-      <li><a href="#informative"><span class="secno"></span> <span class="content">Informative References</span></a>
      </ol>
+    <li><a href="#issues-index"><span class="secno"></span> <span class="content">Issues Index</span></a>
    </ol>
   </nav>
   <main>
    <h2 class="heading settled" data-level="1" id="intro"><span class="secno">1. </span><span class="content">Introduction</span><a class="self-link" href="#intro"></a></h2>
-   <p><a data-link-type="biblio" href="#biblio-webdriver">WebDriver</a> defines a protocol for introspection and remote control
-of user agents. This specification extends WebDriver by introducing
-bidirectional communication. In place of the strict command/response
-format of WebDriver, this permits events to stream from the user
-agent to the controlling software, better matching the evented nature
-of the browser DOM.</p>
+   <p><a data-link-type="biblio" href="#biblio-webdriver">WebDriver</a> defines a protocol for introspection and
+remote control of user agents. This specification extends WebDriver by
+introducing bidirectional communication. In place of the strict
+command/response format of WebDriver, this permits events to stream
+from the user agent to the controlling software, better matching the
+evented nature of the browser DOM.</p>
+   <h2 class="heading settled" data-level="2" id="transport"><span class="secno">2. </span><span class="content">Transport</span><a class="self-link" href="#transport"></a></h2>
+   <p>Message transport is provided using a <a data-link-type="biblio" href="#biblio-rfc6455">WebSocket</a> connection.</p>
+   <p>A WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions">session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="websocket-connection">WebSocket connection</dfn>, which
+is a network connection, and a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="websocket-url">WebSocket URL</dfn>, which is a
+string. These are both initially null.</p>
+   <p>When data is recieved on <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection">WebSocket connection</a> <var>connection</var>, it must be processed according to the
+requirements of the <a data-link-type="biblio" href="#biblio-rfc6455">WebSockets</a> specification. When <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-6.2" id="ref-for-section-6.2">a
+WebSocket message has been received</a>, an implementation must <a data-link-type="dfn" href="#handle-an-incoming-message" id="ref-for-handle-an-incoming-message">handle
+an incoming message</a> with argument <var>connection</var>. When <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.1.3" id="ref-for-section-7.1.3">the
+WebSocket closing handshake is started</a> an implementation must <a data-link-type="dfn" href="#close-the-websocket-connection" id="ref-for-close-the-websocket-connection">close the WebSocket connection</a> with argument <var>connection</var>.</p>
+   <div class="algorithm" data-algorithm="start listening for a WebSocket connection">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="start-listening-for-a-websocket-connection">start listening for a WebSocket connection</dfn> for a <var>session</var>, run
+these steps: 
+    <ol>
+     <li data-md>
+      <p>Set up a network connection that listens on an implementation-defined
+hostname <var>host</var> and port <var>port</var>. The connection may TLS encrypted, in which
+case let <var>secure</var> be true, otherwise let <var>secure</var> be false. Set the <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection">connection</a> to this network connection.</p>
+     <li data-md>
+      <p>Let <var>path</var> be the result of concatenating the string "<code>session/</code>"
+with <var>session</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-session-id" id="ref-for-dfn-session-id">session ID</a>.</p>
+     <li data-md>
+      <p>Let <var>url</var> be the result of constructing a <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-3" id="ref-for-section-3">WebSocket URI</a> with scheme
+"<code>wss</code>" if <var>secure</var> is true or "<code>ws</code>"
+otherwise, host <var>host</var>, port <var>port</var>, path <var>path</var> and empty query.</p>
+     <li data-md>
+      <p>Set <var>session</var>’s <a data-link-type="dfn" href="#websocket-url" id="ref-for-websocket-url">WebSocket URL</a> to <var>url</var>.</p>
+    </ol>
+    <p class="issue" id="issue-459ac9c5"><a class="self-link" href="#issue-459ac9c5"></a> This confuses the server listening socket with the actual
+websocket connection</p>
+   </div>
+   <p class="note" role="note"><span>Note:</span> For an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-endpount-node" id="ref-for-dfn-endpount-node">endpoint node</a> the hostname in the above steps will be
+typically be "<code>localhost</code>".</p>
+   <div class="algorithm" data-algorithm="handle an incoming message">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="handle-an-incoming-message">handle an incoming message</dfn> for a <var>connection</var>, run these steps: 
+    <p class="issue" id="issue-ba71f382"><a class="self-link" href="#issue-ba71f382"></a> Figure this out.</p>
+   </div>
+   <div class="algorithm" data-algorithm="close the WebSocket connection">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="close-the-websocket-connection">close the WebSocket connection</dfn> for a <var>connection</var>, run these steps: 
+    <ol>
+     <li data-md>
+      <p>Close the underlying network connection associated with <var>connection</var>.</p>
+     <li data-md>
+      <p>If there is a WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions①">session</a> with <var>connection</var> as its <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection①">connection</a>,
+set the <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection②">connection</a> on that <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions②">session</a> to null.</p>
+    </ol>
+    <p class="issue" id="issue-02ccb156"><a class="self-link" href="#issue-02ccb156"></a> This should also reset any internal state</p>
+   </div>
+   <p class="note" role="note"><span>Note:</span> This does not end any <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions③">session</a>.</p>
+   <h2 class="heading settled" data-level="3" id="estabishing"><span class="secno">3. </span><span class="content">Establishing a Connection</span><a class="self-link" href="#estabishing"></a></h2>
+   <p>WebDriver clients opt in to a bidirectional connection by requesting a
+capability with the name "<code>webSocketUrl</code>" and value
+true.</p>
+   <p>This specification defines an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-additional-webdriver-capability" id="ref-for-dfn-additional-webdriver-capability">additional webdriver capability</a> with the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-capability-name" id="ref-for-dfn-capability-name">capability name</a> "<code>webSocketUrl</code>".</p>
+   <div class="algorithm" data-algorithm="webSocketUrl capability deserialization algorithm">
+     The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-additional-capability-deserialization-algorithm" id="ref-for-dfn-additional-capability-deserialization-algorithm">additional capability deserialization algorithm</a> for the
+"<code>webSocketUrl</code>" capability, with parameter <var>value</var> is: 
+    <ol>
+     <li data-md>
+      <p>If <var>value</var> is not a boolean, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code">code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument">invalid argument</a>.</p>
+     <li data-md>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success">success</a> with data <var>value</var>.</p>
+    </ol>
+   </div>
+   <div class="algorithm" data-algorithm="webSocketUrl capability serialization algorithm">
+     The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-matched-capability-serialization-algorithm" id="ref-for-dfn-matched-capability-serialization-algorithm">matched capability serialization algorithm</a> for the "<code>webSocketUrl</code>" capability,
+with parameter <var>value</var> is: 
+    <ol>
+     <li data-md>
+      <p>If <var>value</var> is false, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①">success</a> with data null.</p>
+     <li data-md>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②">success</a> with data true.</p>
+    </ol>
+   </div>
+   <div class="algorithm" data-algorithm="webSocketUrl new session algorithm">
+     The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-webdriver-new-session-algorithm" id="ref-for-dfn-webdriver-new-session-algorithm">WebDriver new session algorithm</a> defined by this specification,
+with parameters <var>session</var> and <var>capabilities</var> is: 
+    <ol>
+     <li data-md>
+      <p>Let <var>webSocketUrl</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-get-a-property" id="ref-for-dfn-get-a-property">getting a property</a> named
+"<code>webSocketUrl</code>" from <var>capabilities</var>.</p>
+     <li data-md>
+      <p>If <var>webSocketUrl</var> is undefined, return.</p>
+     <li data-md>
+      <p class="assertion">Assert: <var>webSocketUrl</var> is true.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="#start-listening-for-a-websocket-connection" id="ref-for-start-listening-for-a-websocket-connection">Start listening for a WebSocket connection</a> for <var>session</var>.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-set-a-property" id="ref-for-dfn-set-a-property">Set a property</a> "<code>webSocketUrl</code>" to <var>session</var>’s <a data-link-type="dfn" href="#websocket-url" id="ref-for-websocket-url①">WebSocket URL</a> on <var>capabilities</var>.</p>
+    </ol>
+   </div>
   </main>
   <div data-fill-with="conformance">
    <h2 class="no-ref no-num heading settled" id="conformance"><span class="content"> Conformance</span><a class="self-link" href="#conformance"></a></h2>
@@ -1579,14 +1727,343 @@ of the browser DOM.</p>
 
 })();
 </script>
+  <h2 class="no-num no-ref heading settled" id="index"><span class="content">Index</span><a class="self-link" href="#index"></a></h2>
+  <h3 class="no-num no-ref heading settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
+  <ul class="index">
+   <li><a href="#close-the-websocket-connection">close the WebSocket connection</a><span>, in §2</span>
+   <li><a href="#handle-an-incoming-message">handle an incoming message</a><span>, in §2</span>
+   <li><a href="#start-listening-for-a-websocket-connection">start listening for a WebSocket connection</a><span>, in §2</span>
+   <li><a href="#websocket-connection">WebSocket connection</a><span>, in §2</span>
+   <li><a href="#websocket-url">WebSocket URL</a><span>, in §2</span>
+  </ul>
+  <aside class="dfn-panel" data-for="term-for-concept-connection">
+   <a href="https://fetch.spec.whatwg.org/#concept-connection">https://fetch.spec.whatwg.org/#concept-connection</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-connection">2. Transport</a> <a href="#ref-for-concept-connection①">(2)</a> <a href="#ref-for-concept-connection②">(3)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-section-6.2">
+   <a href="https://tools.ietf.org/html/rfc6455#section-6.2">https://tools.ietf.org/html/rfc6455#section-6.2</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-section-6.2">2. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-section-7.1.3">
+   <a href="https://tools.ietf.org/html/rfc6455#section-7.1.3">https://tools.ietf.org/html/rfc6455#section-7.1.3</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-section-7.1.3">2. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-section-3">
+   <a href="https://tools.ietf.org/html/rfc6455#section-3">https://tools.ietf.org/html/rfc6455#section-3</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-section-3">2. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-additional-capability-deserialization-algorithm">
+   <a href="https://w3c.github.io/webdriver/#dfn-additional-capability-deserialization-algorithm">https://w3c.github.io/webdriver/#dfn-additional-capability-deserialization-algorithm</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-additional-capability-deserialization-algorithm">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-additional-webdriver-capability">
+   <a href="https://w3c.github.io/webdriver/#dfn-additional-webdriver-capability">https://w3c.github.io/webdriver/#dfn-additional-webdriver-capability</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-additional-webdriver-capability">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-capability-name">
+   <a href="https://w3c.github.io/webdriver/#dfn-capability-name">https://w3c.github.io/webdriver/#dfn-capability-name</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-capability-name">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-endpount-node">
+   <a href="https://w3c.github.io/webdriver/#dfn-endpount-node">https://w3c.github.io/webdriver/#dfn-endpount-node</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-endpount-node">2. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-errors">
+   <a href="https://w3c.github.io/webdriver/#dfn-errors">https://w3c.github.io/webdriver/#dfn-errors</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-errors">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-error-code">
+   <a href="https://w3c.github.io/webdriver/#dfn-error-code">https://w3c.github.io/webdriver/#dfn-error-code</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-error-code">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-get-a-property">
+   <a href="https://w3c.github.io/webdriver/#dfn-get-a-property">https://w3c.github.io/webdriver/#dfn-get-a-property</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-get-a-property">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-invalid-argument">
+   <a href="https://w3c.github.io/webdriver/#dfn-invalid-argument">https://w3c.github.io/webdriver/#dfn-invalid-argument</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-invalid-argument">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-matched-capability-serialization-algorithm">
+   <a href="https://w3c.github.io/webdriver/#dfn-matched-capability-serialization-algorithm">https://w3c.github.io/webdriver/#dfn-matched-capability-serialization-algorithm</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-matched-capability-serialization-algorithm">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-sessions">
+   <a href="https://w3c.github.io/webdriver/#dfn-sessions">https://w3c.github.io/webdriver/#dfn-sessions</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-sessions">2. Transport</a> <a href="#ref-for-dfn-sessions①">(2)</a> <a href="#ref-for-dfn-sessions②">(3)</a> <a href="#ref-for-dfn-sessions③">(4)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-session-id">
+   <a href="https://w3c.github.io/webdriver/#dfn-session-id">https://w3c.github.io/webdriver/#dfn-session-id</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-session-id">2. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-set-a-property">
+   <a href="https://w3c.github.io/webdriver/#dfn-set-a-property">https://w3c.github.io/webdriver/#dfn-set-a-property</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-set-a-property">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-success">
+   <a href="https://w3c.github.io/webdriver/#dfn-success">https://w3c.github.io/webdriver/#dfn-success</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-success">3. Establishing a Connection</a> <a href="#ref-for-dfn-success①">(2)</a> <a href="#ref-for-dfn-success②">(3)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-webdriver-new-session-algorithm">
+   <a href="https://w3c.github.io/webdriver/#dfn-webdriver-new-session-algorithm">https://w3c.github.io/webdriver/#dfn-webdriver-new-session-algorithm</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-webdriver-new-session-algorithm">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <h3 class="no-num no-ref heading settled" id="index-defined-elsewhere"><span class="content">Terms defined by reference</span><a class="self-link" href="#index-defined-elsewhere"></a></h3>
+  <ul class="index">
+   <li>
+    <a data-link-type="biblio">[FETCH]</a> defines the following terms:
+    <ul>
+     <li><span class="dfn-paneled" id="term-for-concept-connection" style="color:initial">connection</span>
+    </ul>
+   <li>
+    <a data-link-type="biblio">[RFC6455]</a> defines the following terms:
+    <ul>
+     <li><span class="dfn-paneled" id="term-for-section-6.2" style="color:initial">a websocket message has been received</span>
+     <li><span class="dfn-paneled" id="term-for-section-7.1.3" style="color:initial">the websocket closing handshake is started</span>
+     <li><span class="dfn-paneled" id="term-for-section-3" style="color:initial">websocket uri</span>
+    </ul>
+   <li>
+    <a data-link-type="biblio">[WEBDRIVER]</a> defines the following terms:
+    <ul>
+     <li><span class="dfn-paneled" id="term-for-dfn-additional-capability-deserialization-algorithm" style="color:initial">additional capability deserialization algorithm</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-additional-webdriver-capability" style="color:initial">additional webdriver capability</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-capability-name" style="color:initial">capability name</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-endpount-node" style="color:initial">endpoint node</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-errors" style="color:initial">error</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-error-code" style="color:initial">error code</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-get-a-property" style="color:initial">getting a property</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-invalid-argument" style="color:initial">invalid argument</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-matched-capability-serialization-algorithm" style="color:initial">matched capability serialization algorithm</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-sessions" style="color:initial">session</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-session-id" style="color:initial">session id</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-set-a-property" style="color:initial">set a property</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-success" style="color:initial">success</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-webdriver-new-session-algorithm" style="color:initial">webdriver new session algorithm</span>
+    </ul>
+  </ul>
   <h2 class="no-num no-ref heading settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
   <h3 class="no-num no-ref heading settled" id="normative"><span class="content">Normative References</span><a class="self-link" href="#normative"></a></h3>
   <dl>
+   <dt id="biblio-fetch">[FETCH]
+   <dd>Anne van Kesteren. <a href="https://fetch.spec.whatwg.org/">Fetch Standard</a>. Living Standard. URL: <a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>
    <dt id="biblio-rfc2119">[RFC2119]
    <dd>S. Bradner. <a href="https://tools.ietf.org/html/rfc2119">Key words for use in RFCs to Indicate Requirement Levels</a>. March 1997. Best Current Practice. URL: <a href="https://tools.ietf.org/html/rfc2119">https://tools.ietf.org/html/rfc2119</a>
-  </dl>
-  <h3 class="no-num no-ref heading settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
-  <dl>
+   <dt id="biblio-rfc6455">[RFC6455]
+   <dd>I. Fette; A. Melnikov. <a href="https://tools.ietf.org/html/rfc6455">The WebSocket Protocol</a>. December 2011. Proposed Standard. URL: <a href="https://tools.ietf.org/html/rfc6455">https://tools.ietf.org/html/rfc6455</a>
    <dt id="biblio-webdriver">[WEBDRIVER]
-   <dd>Simon Stewart; David Burns. <a href="https://www.w3.org/TR/webdriver1/">WebDriver</a>. 5 June 2018. REC. URL: <a href="https://www.w3.org/TR/webdriver1/">https://www.w3.org/TR/webdriver1/</a>
+   <dd>Simon Stewart; David Burns. <a href="https://w3c.github.io/webdriver/">WebDriver</a>. URL: <a href="https://w3c.github.io/webdriver/">https://w3c.github.io/webdriver/</a>
   </dl>
+  <h2 class="no-num no-ref heading settled" id="issues-index"><span class="content">Issues Index</span><a class="self-link" href="#issues-index"></a></h2>
+  <div style="counter-reset:issue">
+   <div class="issue"> This confuses the server listening socket with the actual
+websocket connection<a href="#issue-459ac9c5"> ↵ </a></div>
+   <div class="issue"> Figure this out.<a href="#issue-ba71f382"> ↵ </a></div>
+   <div class="issue"> This should also reset any internal state<a href="#issue-02ccb156"> ↵ </a></div>
+  </div>
+  <aside class="dfn-panel" data-for="websocket-connection">
+   <b><a href="#websocket-connection">#websocket-connection</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-websocket-connection">2. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="websocket-url">
+   <b><a href="#websocket-url">#websocket-url</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-websocket-url">2. Transport</a>
+    <li><a href="#ref-for-websocket-url①">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="start-listening-for-a-websocket-connection">
+   <b><a href="#start-listening-for-a-websocket-connection">#start-listening-for-a-websocket-connection</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-start-listening-for-a-websocket-connection">3. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="handle-an-incoming-message">
+   <b><a href="#handle-an-incoming-message">#handle-an-incoming-message</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-handle-an-incoming-message">2. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="close-the-websocket-connection">
+   <b><a href="#close-the-websocket-connection">#close-the-websocket-connection</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-close-the-websocket-connection">2. Transport</a>
+   </ul>
+  </aside>
+<script>/* script-dfn-panel */
+
+document.body.addEventListener("click", function(e) {
+    var queryAll = function(sel) { return [].slice.call(document.querySelectorAll(sel)); }
+    // Find the dfn element or panel, if any, that was clicked on.
+    var el = e.target;
+    var target;
+    var hitALink = false;
+    while(el.parentElement) {
+        if(el.tagName == "A") {
+            // Clicking on a link in a <dfn> shouldn't summon the panel
+            hitALink = true;
+        }
+        if(el.classList.contains("dfn-paneled")) {
+            target = "dfn";
+            break;
+        }
+        if(el.classList.contains("dfn-panel")) {
+            target = "dfn-panel";
+            break;
+        }
+        el = el.parentElement;
+    }
+    if(target != "dfn-panel") {
+        // Turn off any currently "on" or "activated" panels.
+        queryAll(".dfn-panel.on, .dfn-panel.activated").forEach(function(el){
+            el.classList.remove("on");
+            el.classList.remove("activated");
+        });
+    }
+    if(target == "dfn" && !hitALink) {
+        // open the panel
+        var dfnPanel = document.querySelector(".dfn-panel[data-for='" + el.id + "']");
+        if(dfnPanel) {
+            dfnPanel.classList.add("on");
+            var rect = el.getBoundingClientRect();
+            dfnPanel.style.left = window.scrollX + rect.right + 5 + "px";
+            dfnPanel.style.top = window.scrollY + rect.top + "px";
+            var panelRect = dfnPanel.getBoundingClientRect();
+            var panelWidth = panelRect.right - panelRect.left;
+            if(panelRect.right > document.body.scrollWidth && (rect.left - (panelWidth + 5)) > 0) {
+                // Reposition, because the panel is overflowing
+                dfnPanel.style.left = window.scrollX + rect.left - (panelWidth + 5) + "px";
+            }
+        } else {
+            console.log("Couldn't find .dfn-panel[data-for='" + el.id + "']");
+        }
+    } else if(target == "dfn-panel") {
+        // Switch it to "activated" state, which pins it.
+        el.classList.add("activated");
+        el.style.left = null;
+        el.style.top = null;
+    }
+
+});
+</script>
+<script>/* script-var-click-highlighting */
+
+    document.addEventListener("click", e=>{
+        if(e.target.nodeName == "VAR") {
+            highlightSameAlgoVars(e.target);
+        }
+    });
+    {
+        const indexCounts = new Map();
+        const indexNames = new Map();
+        function highlightSameAlgoVars(v) {
+            // Find the algorithm container.
+            let algoContainer = null;
+            let searchEl = v;
+            while(algoContainer == null && searchEl != document.body) {
+                searchEl = searchEl.parentNode;
+                if(searchEl.hasAttribute("data-algorithm")) {
+                    algoContainer = searchEl;
+                }
+            }
+
+            // Not highlighting document-global vars,
+            // too likely to be unrelated.
+            if(algoContainer == null) return;
+
+            const algoName = algoContainer.getAttribute("data-algorithm");
+            const varName = getVarName(v);
+            const addClass = !v.classList.contains("selected");
+            let highlightClass = null;
+            if(addClass) {
+                const index = chooseHighlightIndex(algoName, varName);
+                indexCounts.get(algoName)[index] += 1;
+                indexNames.set(algoName+"///"+varName, index);
+                highlightClass = nameFromIndex(index);
+            } else {
+                const index = previousHighlightIndex(algoName, varName);
+                indexCounts.get(algoName)[index] -= 1;
+                highlightClass = nameFromIndex(index);
+            }
+
+            // Find all same-name vars, and toggle their class appropriately.
+            for(const el of algoContainer.querySelectorAll("var")) {
+                if(getVarName(el) == varName) {
+                    el.classList.toggle("selected", addClass);
+                    el.classList.toggle(highlightClass, addClass);
+                }
+            }
+        }
+        function getVarName(el) {
+            return el.textContent.replace(/(\s| )+/, " ").trim();
+        }
+        function chooseHighlightIndex(algoName, varName) {
+            let indexes = null;
+            if(indexCounts.has(algoName)) {
+                indexes = indexCounts.get(algoName);
+            } else {
+                // 7 classes right now
+                indexes = [0,0,0,0,0,0,0];
+                indexCounts.set(algoName, indexes);
+            }
+
+            // If the element was recently unclicked,
+            // *and* that color is still unclaimed,
+            // give it back the same color.
+            const lastIndex = previousHighlightIndex(algoName, varName);
+            if(indexes[lastIndex] === 0) return lastIndex;
+
+            // Find the earliest index with the lowest count.
+            const minCount = Math.min.apply(null, indexes);
+            let index = null;
+            for(var i = 0; i < indexes.length; i++) {
+                if(indexes[i] == minCount) {
+                    return i;
+                }
+            }
+        }
+        function previousHighlightIndex(algoName, varName) {
+            return indexNames.get(algoName+"///"+varName);
+        }
+        function nameFromIndex(index) {
+            return "selected" + index;
+        }
+    }
+    </script>
