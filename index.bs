@@ -1,4 +1,4 @@
-<pre class='metadata'>
+<pre class=metadata>
 Title: WebDriver BiDi
 Shortname: webdriver-bidi
 Level: 1
@@ -7,14 +7,155 @@ Group: browser-testing-tools
 URL: https://w3c.github.io/webdriver-bidi/
 No Editor: true
 Abstract: This document defines the BiDirectional WebDriver Protocol, a mechanism for remote control of user agents.
+Default Ref Status: current
+</pre>
+
+<pre class=anchors>
+spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
+    type: dfn
+        text: WebSocket URI; url: section-3
+        text: A WebSocket Message Has Been Received; url: section-6.2
+        text: The WebSocket Closing Handshake is Started; url: section-7.1.3
+spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
+    type: dfn
+        text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
+        text: additional WebDriver capability; url: dfn-additional-webdriver-capability
+        text: capability name; url: dfn-capability-name
+        text: endpoint node; url: dfn-endpount-node
+        text: error code; url: dfn-error-code
+        text: error; url: dfn-errors
+        text: getting a property; url: dfn-get-a-property
+        text: invalid argument; url: dfn-invalid-argument
+        text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
+        text: remote end; url: dfn-remote-ends
+        text: session; url: dfn-sessions
+        text: session ID; url: dfn-session-id
+        text: set a property; url: dfn-set-a-property
+        text: success; url: dfn-success
+        text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
 </pre>
 
 Introduction {#intro}
 =====================
 
-[[WEBDRIVER|WebDriver]] defines a protocol for introspection and remote control
-of user agents. This specification extends WebDriver by introducing
-bidirectional communication. In place of the strict command/response
-format of WebDriver, this permits events to stream from the user
-agent to the controlling software, better matching the evented nature
-of the browser DOM.
+[[WEBDRIVER|WebDriver]] defines a protocol for introspection and
+remote control of user agents. This specification extends WebDriver by
+introducing bidirectional communication. In place of the strict
+command/response format of WebDriver, this permits events to stream
+from the user agent to the controlling software, better matching the
+evented nature of the browser DOM.
+
+Transport {#transport}
+======================
+
+Message transport is provided using a [[RFC6455|WebSocket]]
+connection.
+
+A WebDriver [=session=] has a <dfn>WebSocket connection</dfn>, which
+is a network connection, and a <dfn>WebSocket URL</dfn>, which is a
+string. These are both initially null.
+
+When data is recieved on [=WebSocket connection=]
+|connection|, it must be processed according to the
+requirements of the [[!RFC6455|WebSockets]] specification. When [=a
+WebSocket message has been received=], an implementation must [=handle
+an incoming message=] with argument |connection|. When [=the
+WebSocket closing handshake is started=] an implementation must
+[=close the WebSocket connection=] with argument
+|connection|.
+
+<div algorithm>
+To <dfn>start listening for a WebSocket connection</dfn> for a |session|, run
+these steps:
+
+ 1. Set up a network connection that listens on an implementation-defined
+    hostname |host| and port |port|. The connection may TLS encrypted, in which
+    case let |secure| be true, otherwise let |secure| be false. Set the
+    [=connection=] to this network connection.
+
+ 2. Let |path| be the result of concatenating the string "<code>session/</code>"
+    with |session|'s [=session ID=].
+
+ 3. Let |url| be the result of constructing a [=WebSocket URI=] with scheme
+    "<code>wss</code>" if |secure| is true or "<code>ws</code>"
+    otherwise, host |host|, port |port|, path |path| and empty query.
+
+ 4. Set |session|'s [=WebSocket URL=] to |url|.
+
+Issue: This confuses the server listening socket with the actual
+websocket connection
+
+</div>
+
+Note: For an [=endpoint node=] the hostname in the above steps will be
+typically be "<code>localhost</code>".
+
+<div algorithm> To <dfn>handle an incoming message</dfn> for a
+<var ignore>connection</var>, run these steps:
+
+Issue: Figure this out.
+
+</div>
+
+<div algorithm> To <dfn>close the WebSocket connection</dfn> for a
+|connection|, run these steps:
+
+ 1. Close the underlying network connection associated with |connection|.
+
+ 2. If there is a WebDriver [=session=] with |connection| as its [=connection=],
+    set the [=connection=] on that [=session=] to null.
+
+Issue: This should also reset any internal state
+
+</div>
+
+Note: This does not end any [=session=].
+
+Establishing a Connection {#estabishing}
+========================================
+
+WebDriver clients opt in to a bidirectional connection by requesting a
+capability with the name "<code>webSocketUrl</code>" and value
+true.
+
+This specification defines an
+[=additional webdriver capability=] with the [=capability name=] "<code>webSocketUrl</code>".
+
+<div algorithm="webSocketUrl capability deserialization algorithm">
+The [=additional capability deserialization algorithm=] for the
+"<code>webSocketUrl</code>" capability, with parameter |value| is:
+
+ 1. If |value| is not a boolean, return [=error=] with [=error code|code=]
+    [=invalid argument=].
+
+ 2. Return [=success=] with data |value|.
+
+</div>
+
+<div algorithm="webSocketUrl capability serialization algorithm">
+The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
+with parameter |value| is:
+
+ 1. If |value| is false, return [=success=] with data null.
+
+ 2. Return [=success=] with data true.
+
+</div>
+
+<div algorithm="webSocketUrl new session algorithm">
+The [=WebDriver new session algorithm=] defined by this specification,
+with parameters |session| and |capabilities| is:
+
+ 1. Let |webSocketUrl| be the result of [=getting a property=] named
+    "<code>webSocketUrl</code>" from |capabilities|.
+
+ 2. If |webSocketUrl| is undefined, return.
+
+ 3. Assert: |webSocketUrl| is true.
+
+ 4. [=Start listening for a WebSocket connection=] for |session|.
+
+ 5. [=Set a property=] "<code>webSocketUrl</code>" to |session|'s
+    [=WebSocket URL=] on |capabilities|.
+
+</div>
