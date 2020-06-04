@@ -61,43 +61,48 @@ message has been received=], an implementation must [=handle an incoming
 message=]. When [=the WebSocket closing handshake is started=] an implementation
 must [=end the session=].
 
+<div algorithm>
 To <dfn>establish a WebSocket connection</dfn>, with
-argument <var>session id</var>, run these steps:
+argument |session id|, run these steps:
 
-1.  Set up a network connection that listens on an
-    implementation-defined hostname <var>host</var> and port
-    <var>port</var>. The connection may TLS encrypted, in which case
-    let <var>secure</var> be <code>true</code>, otherwise let
-    <var>secure</var> be <code>false</code>. Set the [=connection=] to
-    this network connection.
+ 1. Set up a network connection that listens on an implementation-defined
+    hostname |host| and port |port|. The connection may TLS encrypted, in which
+    case let |secure| be <code>true</code>, otherwise let |secure| be
+    <code>false</code>. Set the [=connection=] to this network connection.
 
-2.  Let <var>path</var> be the result of concatenating the string
-    "<code>session/</code>" with <var>session id</var>.
+ 2. Let |path| be the result of concatenating the string "<code>session/</code>"
+    with |session id|.
 
-3.  Let <var>url</var> be the result of constructing a [=WebSocket
-    URI=] with scheme "<code>wss</code>" if <var>secure</var> is
-    <code>true</code> or "<code>ws</code>" otherwise, host
-    <var>host</var>, port <var>port</var>, path <var>path</var> and
-    empty query.
+ 3. Let |url| be the result of constructing a [=WebSocket URI=] with scheme
+    "<code>wss</code>" if |secure| is <code>true</code> or "<code>ws</code>"
+    otherwise, host |host|, port |port|, path |path| and empty query.
 
-4.  Set the [=websocket url=] to <var>url</var>.
+ 4. Set the [=websocket url=] to |url|.
 
-5.  Return <var>url</var>.
+ 5. Return |url|.
+
+</div>
 
 Note: For an [=endpoint node=] the hostname in the above steps will be
 typically be "<code>localhost</code>".
 
+<div algorithm>
 To <dfn>handle an incoming message</dfn>, run thes steps:
 
 Issue: Figure this out.
 
+</div>
+
+<div algorithm>
 To <dfn>end the session</dfn>, run these steps:
 
-1. Close the underlying network connection [=connection=].
+ 1. Close the underlying network connection [=connection=].
 
-2. Set [=connection=] and [=WebSocket URL=] to null.
+ 2. Set [=connection=] and [=WebSocket URL=] to null.
 
 Issue: This should also reset any internal state
+
+</div>
 
 Note: This does not end any [=session=].
 
@@ -111,28 +116,45 @@ capability with the name "<code>bidi</code>" and value
 This specification defines an
 [=additional webdriver capability=] with the [=capability name=] "<code>bidi</code>".
 
+<div algorithm="bidi capability deserialization algorithm">
 The [=additional capability deserialization algorithm=] for the
-"<code>bidi</code>" capability, with argument <var>value</var> is:
- 1. If <var>value</var> is not a boolean, return [=error=] with [=error
-    code|code=] [=invalid argument=].
- 2. Return [=success=] with data <var>value</var>.
+"<code>bidi</code>" capability, with argument |value| is:
 
+ 1. If |value| is not a boolean, return [=error=] with [=error code|code=]
+    [=invalid argument=].
+
+ 2. Return [=success=] with data |value|.
+
+</div>
+
+<div algorithm="bidi capability serialization algorithm">
 The [=matched capability serialization algorithm=] for the "<code>bidi</code>" capability,
-with argument <var>value</var> is:
- 1. If value is <code>false</code>, return [=success=] with data
+with argument |value| is:
+
+ 1. If |value| is <code>false</code>, return [=success=] with data
     <code>null</code>.
+
  2. Return [=success=] with data <code>true</code>.
 
+</div>
+
+<div algorithm="bidi new session algorithm">
 The [=WebDriver new session algorithm=] defined by this specification,
-with arguments <var>session</var> and <var>capabilities</var> is:
- 1. Let <var>bidi</var> be the result of [=getting a property=] named
-    "<code>bidi</code>" from <var>capabilities</var>.
- 2. If <var>bidi</var> is undefined, return.
- 3. Let <var>session id</var> be the [=session ID=] of
-    <var>session</var>.
- 3. Otherwise <var>bidi</var> is <code>true</code>. Let <var>URL</var>
-    be the result of calling the algorithm to [=establish a WebSocket
-    connection=] with argument <var>session id</var>.
- 4. Set the [=WebSocket URL=] for <var>session</var> to <var>URL</var>.
- 5. [=Set a property=] "<code>bidi</code>" to <var>URL</var>
-    on <var>capabilities</var>.
+with arguments |session| and |capabilities| is:
+
+ 1. Let |bidi| be the result of [=getting a property=] named "<code>bidi</code>"
+    from |capabilities|.
+
+ 2. If |bidi| is undefined, return.
+
+ 3. Let |session id| be the [=session ID=] of |session|.
+
+ 3. Otherwise |bidi| is <code>true</code>. Let |url| be the result of calling
+    the algorithm to [=establish a WebSocket connection=] with argument
+    |session id|.
+
+ 4. Set the [=WebSocket URL=] for |session| to |url|.
+
+ 5. [=Set a property=] "<code>bidi</code>" to |url| on |capabilities|.
+
+</div>
