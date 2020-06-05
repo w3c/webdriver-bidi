@@ -37,6 +37,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
     text: remote end; url: dfn-remote-ends
+    text: remote end steps; url: dfn-remote-end-steps
     text: session; url: dfn-sessions
     text: session ID; url: dfn-session-id
     text: set a property; url: dfn-set-a-property
@@ -66,41 +67,34 @@ protocol. These terms are distinct from their representation at the
 Note: These definitions do not form any normative requirements, rather
 they are used elsewhere as part of such requirements.
 
-A <dfn export>command</dfn> is sent by the [=local end=] to the
-[=remote end=], requesting it to perform some action. A [=command=]
-consists of:
- - An <dfn export for=command>id</dfn> (integer) to be used in the
-    resulting [=response=] or [=error=].
- - A <dfn export for=command>name</dfn> (string)
- - <dfn export for=command>parameters</dfn> ([=map=] with string
-    <a for=map>keys</a> and any type as <a for=map>values</a>)
+## Commands ## {#commands}
 
-A <dfn export>response</dfn> is sent by the [=remote end=] to the
-[=local end=] in response to a specific [=command=], and signifies the
-success of that command. A [=response=] consists of:
- - An <dfn export for=response>id</dfn> (integer) equal to the
-    corresponding [=command=]'s <a for=command>id</a>.
- - A <dfn export for=response>result</dfn> (any type)
+A <dfn export>command</dfn> is an asynchronous operation, requested by
+the [=local end=] and run on the [=remote end=], resulting in either
+[=success=] (with a result) or [=error=] (with details) being returned
+to the [=local end=]. Multiples command can run at the same time, and
+commands can potentially be long-running. As a consequence, commands
+can finish out-of-order.
 
-An <dfn export>error</dfn> is sent by the [=remote end=] to the
-[=local end=] in response to a specific [=command=], and signifies the
-failure of that command. An [=error=] consists of:
- - An <dfn export for=error>id</dfn> (integer) equal to the
-    corresponding [=command=]'s <a for=command>id</a>.
- - A <dfn export for=error>code</dfn> (a WebDriver [=error code=]
-    string)
- - A <dfn export for=error>message</dfn> (string)
- - Optional <dfn export for=error>data</dfn> (any type)
+Each concrete [=command=] type is defined by:
+ - A string <dfn export for=command>name</dfn>, implicit in its
+   definition.
+ - A set of <dfn export for=command>parameters</dfn>, which are the
+   inputs to the command
+ - A set of [=remote end steps=].
+ - A <dfn export for=command>return type</dfn>, which may be null.
 
-An <dfn export>event</dfn> is sent by the [=remote end=] to the
-[=local end=]. It is similar to a [=response=], but does not
-correspond to a specific [=command=]. A [=event=] consists of:
- - A <dfn export for=event>name</dfn> (string)
- - <dfn export for=event>parameters</dfn> ([=map=] with string
-    <a for=map>keys</a> and any type as <a for=map>values</a>)
+## Events ## {#events}
 
-Issue: Should the strings here be [=strings=] (a sequence of unsigned
-16-bit integers) or [=scalar value strings=]?
+An <dfn export>event</dfn> is a notification, sent by the [=remote
+end=] to the [=local end=], signaling that something of interest has
+occurred on the [=remote end=].
+
+Each concrete [=event=] type is defined by:
+ - A string <dfn export for=command>name</dfn>, implicit in its
+   definition.
+ - A set of <dfn export for=command>parameters</dfn>, which are the
+   details of the event that has occurred.
 
 Transport {#transport}
 ======================
