@@ -21,6 +21,7 @@ spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
     text: Send a WebSocket Message; url: section-6.1
     text: A WebSocket Message Has Been Received; url: section-6.2
     text: The WebSocket Closing Handshake is Started; url: section-7.1.3
+    text: The WebSocket Connection is Closed; url: section-7.1.4
     text: Fail the WebSocket Connection; url: section-7.1.7
     text: Status Codes; url: section-7.4
     text: Handling Errors in UTF-8-Encoded Data; url: section-8.1
@@ -78,9 +79,13 @@ connection=] |connection| with type |type| and data |data|, a [=remote
 end=] must [=handle an incoming message=] given |connection|, |type|
 and |data|.
 
-When [=the WebSocket closing handshake is started=] for a [=WebSocket
-connection=] |connection|, a [=remote end=] must [=close the WebSocket
-connection=] given |connection|.
+When [=the WebSocket closing handshake is started=] or when [=the
+WebSocket connection is closed=] for a [=WebSocket connection=]
+|connection|, a [=remote end=] must [=handle a connection closing=]
+given |connection|.
+
+Note: Both conditions are needed because it is possible for a
+WebSocket connection to be closed without a closing handshake.
 
 <div algorithm>
 To <dfn>start listening for a WebSocket connection</dfn> given a
@@ -173,12 +178,10 @@ To <dfn>respond with an error</dfn> given a [=WebSocket connection=]
 </div>
 
 <div algorithm>
-To <dfn>close the WebSocket connection</dfn> given a
+To <dfn>handle a connection closing</dfn> given a
 [=WebSocket connection=] |connection|:
 
- 1. Close the underlying network connection associated with |connection|.
-
- 2. If there is a WebDriver [=session=] with |connection| as its [=connection=],
+ 1. If there is a WebDriver [=session=] with |connection| as its [=connection=],
     set the [=connection=] on that [=session=] to null.
 
 Issue: This should also reset any internal state
