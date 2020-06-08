@@ -116,7 +116,7 @@ To use the new bidirectional protocol, the client must first establish a WebSock
 
 >[RESOLUTION](https://www.w3.org/2019/09/20-webdriver-minutes.html#resolution01): Bi-di is always enabled. An optional capability, defaulting to true, indicating that bi-di is desired. When a new session is established, the return value of the new session contains the new top-level property of the bi-directional URL
 
-A bidirectional session starts as a traditional session created with a POST /session command. The client can request a bidirectional using the "webSocketUrl" capability:
+A bidirectional session starts as a traditional session created with a POST /session command. The client can request a bidirectional session using the "webSocketUrl" capability:
 
 ```json
 {
