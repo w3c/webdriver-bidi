@@ -38,6 +38,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
     text: remote end; url: dfn-remote-ends
+    text: remote end steps; url: dfn-remote-end-steps
     text: session; url: dfn-sessions
     text: session ID; url: dfn-session-id
     text: set a property; url: dfn-set-a-property
@@ -48,12 +49,52 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
 Introduction {#intro}
 =====================
 
+<em>This section is non-normative.</em>
+
 [[WEBDRIVER|WebDriver]] defines a protocol for introspection and
 remote control of user agents. This specification extends WebDriver by
 introducing bidirectional communication. In place of the strict
 command/response format of WebDriver, this permits events to stream
 from the user agent to the controlling software, better matching the
 evented nature of the browser DOM.
+
+Model {#model}
+==============
+
+This section defines the basic concepts of the WebDriver BiDi
+protocol. These terms are distinct from their representation at the
+<a href=#transport>transport</a> layer.
+
+Note: These definitions do not form any normative requirements, rather
+they are used elsewhere as part of such requirements.
+
+## Commands ## {#commands}
+
+A <dfn export>command</dfn> is an asynchronous operation, requested by
+the [=local end=] and run on the [=remote end=], resulting in either a
+result or an error being returned to the [=local end=]. Multiples
+command can run at the same time, and commands can potentially be
+long-running. As a consequence, commands can finish out-of-order.
+
+Each concrete [=command=] type is defined by:
+ - A string <dfn export for=command>name</dfn>, implicit in its
+   definition.
+ - A set of <dfn export for=command>parameters</dfn>, which are the
+   inputs to the command
+ - A set of [=remote end steps=].
+ - A <dfn export for=command>return type</dfn>, which may be null.
+
+## Events ## {#events}
+
+An <dfn export>event</dfn> is a notification, sent by the [=remote
+end=] to the [=local end=], signaling that something of interest has
+occurred on the [=remote end=].
+
+Each concrete [=event=] type is defined by:
+ - A string <dfn export for=event>name</dfn>, implicit in its
+   definition.
+ - A set of <dfn export for=event>parameters</dfn>, which are the
+   details of the event that has occurred.
 
 Transport {#transport}
 ======================
@@ -64,11 +105,11 @@ Message transport is provided using the WebSocket protocol.
 Note: In the terms of the WebSocket protocol, the [=local end=] is the
 client and the [=remote end=] is the server / remote host.
 
-Note: The encoding of commands and events as messages is similar to
-JSON-RPC, but this specification does not normatively reference it.
-[[JSON-RPC]] The normative requirements on [=remote ends=] are instead
-given as a precise processing model, while no normative requirements
-are given for [=local ends=].
+Note: The encoding of [=commands=] and [=events=] as messages is
+similar to JSON-RPC, but this specification does not normatively
+reference it. [[JSON-RPC]] The normative requirements on [=remote
+ends=] are instead given as a precise processing model, while no
+normative requirements are given for [=local ends=].
 
 A WebDriver [=session=] has a <dfn>WebSocket connection</dfn>, which
 is a network connection, and a <dfn>WebSocket URL</dfn>, which is a

@@ -5,8 +5,8 @@
 A protocol and transport layer for bidirectional WebDriver should support the following usage patterns:
 
 - Command/response pattern for simple actions like querying a target's URL.
-- Command/response/notification pattern for starting a long-running operation and receiving progress updates (e.g. navigation).
-- Registering for async notifications not associated with a particular command. Useful for listening to DOM events or new targets/contexts, etc.
+- Command/response/event pattern for starting a long-running operation and receiving progress updates (e.g. navigation).
+- Registering for async events not associated with a particular command. Useful for listening to DOM events or new targets/contexts, etc.
 
 The protocol should also be:
 
@@ -34,7 +34,7 @@ A simple approach for adding bidirectional communication is to keep using the ex
 
 Exposing all of WebDriver's functionality via JSON-RPC has a few advantages. The API is more consistent, the client only needs to speak one dialect, and it is easier to reason about the order or messages when they are all going over the same transport. There may be potential performance advantages too. Multiple JSON-RPC commands may be sent as a batch, compared to HTTP which requires a new HTTP request for every command the client wants to send.
 
-The interface for the new protocol would be a set of client-to-server commands, and a set of server-to-client notifications. Clients can send commands and subscribe to notifications. An OpenRPC JSON specification is included alongside this document. It describes a JSON-RPC interpretation of the current WebDriver feature set and adds some useful notifications.
+The interface for the new protocol would be a set of client-to-server commands, and a set of server-to-client events. Clients can send commands and subscribe to events. An OpenRPC JSON specification is included alongside this document. It describes a JSON-RPC interpretation of the current WebDriver feature set and adds some useful events.
 
 #### Commands
 
@@ -77,11 +77,11 @@ Responses from the server include the "id" of the command they are responding to
 
 Note that in this example, "stacktrace" is embedded in the "data" property instead of alongside it (like in an WebDriver HTTP error response). This is to comply with the JSON-RPC spec for Error messages. All custom data needs to be in the "data" field.
 
-#### Notifications
+#### Events
 
-Since notifications may generate a large amount of traffic over the WebSocket, and may have a runtime cost in the browser, these should be opt-in. Commands should be provided so that a client can subscribe and unsubscribe. The first step to receive notifications on the client side would be to send a "subscribe" command:
+Since events may generate a large amount of traffic over the WebSocket, and may have a runtime cost in the browser, these should be opt-in. Commands should be provided so that a client can subscribe and unsubscribe. The first step to receive events on the client side would be to send a "subscribe" command:
 
-*Subscribing for a notification*
+*Subscribing to an event*
 
 ```json
 {
@@ -98,9 +98,9 @@ Subscriptions for each event should be ref-counted on the server side. Calling s
 
 Ref counting is useful here because it would allow multiple consumers on the client side to call "subscribe". For example, some test code might want to subscribe for an event, and the code might use some third-party helper library that also wants to subscribe for the event. Ref counting allows the test code and helper library to subscribe and unsubscribe independently. Otherwise, the first one to call "unsubscribe" would inadvertently shut down events for both consumers.
 
-*Sample notification*
+*Sample event*
 
-Notification messages don't have an "id" property since they are fire-and-forget.
+Event messages don't have an "id" property since they are fire-and-forget.
 
 ```json
 {
@@ -148,7 +148,7 @@ Alternatively, we can omit the WebSocket URL from the new session response and j
 | -------|----------------------------------------------------|-----------------|
 | GET    | ws://localhost:{port}/session/{session id}/upgrade | Upgrade Session |
 
-Once the session is created, the client would then attempt to connect to the WebSocket endpoint. After connecting, they can start sending commands and receiving notifications using the new protocol. Since the WebSocket is tied to a particular session, all commands would implicitly target this session and any notifications received would come from this session only. In other words, the client would need to open additional WebSockets to talk to other sessions.
+Once the session is created, the client would then attempt to connect to the WebSocket endpoint. After connecting, they can start sending commands and receiving events using the new protocol. Since the WebSocket is tied to a particular session, all commands would implicitly target this session and any events received would come from this session only. In other words, the client would need to open additional WebSockets to talk to other sessions.
 
 ## Message Routing
 
@@ -191,7 +191,7 @@ To maintain backwards compatibility with classical WebDriver, Targets would act 
 
 ### Identifying elements
 
-Web element references can continue to work as they do today, with one caveat; since element references are valid only within a particular browsing context, any commands that operate on elements and any notifications involving elements will need to specify which browsing context the element(s) belongs to. For example, a command like getElementText would need both a "browsingContextId" and an "elementId" parameter.
+Web element references can continue to work as they do today, with one caveat; since element references are valid only within a particular browsing context, any commands that operate on elements and any events involving elements will need to specify which browsing context the element(s) belongs to. For example, a command like getElementText would need both a "browsingContextId" and an "elementId" parameter.
 
 ### Message routing examples
 
@@ -264,7 +264,7 @@ This model should make it possible to target all of the contexts that WebDriver 
 
 ## Target Discovery
 
-Now that we've outlined a way to target commands to the right place, there needs to be a way for the client to find out about these contexts. In the traditional command/response paradigm, the user can send a command such as "Get Window Handles" to find out about currently opened tabs, or "Find Element" to grab a reference to an iframe to switch into. In this world, discovering newly opened windows means polling the "Get Window Handles" command until a new handle appears in the list. In a bidirectional world, the server can proactively notify the client when a new target is opened, or a new frame or script context is attached. We should provide a way for the client to register for these notification events.
+Now that we've outlined a way to target commands to the right place, there needs to be a way for the client to find out about these contexts. In the traditional command/response paradigm, the user can send a command such as "Get Window Handles" to find out about currently opened tabs, or "Find Element" to grab a reference to an iframe to switch into. In this world, discovering newly opened windows means polling the "Get Window Handles" command until a new handle appears in the list. In a bidirectional world, the server can proactively notify the client when a new target is opened, or a new frame or script context is attached. We should provide a way for the client to register for these events.
 
 ### Discovering top-level targets
 
@@ -287,9 +287,9 @@ The simplest way to discover targets would be to send a command that replies wit
 } }
 ```
 
-The API could provide "targetCreated" and "targetClosed" notifications to let the client know when the target list changes. The client could subscribe to these events and then send an initial getTargets command. After receiving the initial list of targets, the client would start receiving updates any time the list changes. This makes it possible to do things like wait for new windows without the need for polling.
+The API could provide "targetCreated" and "targetClosed" events to let the client know when the target list changes. The client could subscribe to these events and then send an initial getTargets command. After receiving the initial list of targets, the client would start receiving updates any time the list changes. This makes it possible to do things like wait for new windows without the need for polling.
 
-*Notifications*
+*Events*
 
 ```json
 {
@@ -336,9 +336,9 @@ Returns the tree of browser contexts for a given target:
 }
 ```
 
-*Notifications*
+*Events*
 
-Updates are sent to the client whenever a browsing context is added or removed from the tree. Attach notifications include the parent browsing context's ID so the client has a complete picture of the tree. In this example, browsing context #4, is being added as a child of browsing context #1. Then later, browsing context #3 is being removed from the tree.
+Updates are sent to the client whenever a browsing context is added or removed from the tree. Attach events include the parent browsing context's ID so the client has a complete picture of the tree. In this example, browsing context #4, is being added as a child of browsing context #1. Then later, browsing context #3 is being removed from the tree.
 
 ```json
 {

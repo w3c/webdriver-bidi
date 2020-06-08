@@ -38,7 +38,7 @@ This document doesn't attempt to dive into the any of the new feature scenarios 
 - [Core Functionality](./proposals/core.md)
 - [Bootstrap Scripts](./proposals/bootstrap-scripts.md)
 
-[openrpc.json](./proposals/openrpc.json) contains an OpenRPC specification with an initial set of proposed commands and notifications.
+[openrpc.json](./proposals/openrpc.json) contains an OpenRPC specification with an initial set of proposed commands and events.
 
 ## References
 
