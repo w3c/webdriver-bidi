@@ -26,7 +26,6 @@ A solution would be to not use IDs at all, but to use match patterns. Instead of
 
 ```javascript
 {
-    jsonrpc: "2.0",
     id: 99,
     method: "registerBootstrapScript",
     params: {
@@ -42,7 +41,6 @@ The "match" parameter is an array of rules describing which contexts a script sh
 
 ```javascript
 {
-    jsonrpc: "2.0",
     id: 99,
     result: { bootstrapScriptId: "<ID>" }
 }
@@ -54,7 +52,6 @@ Later, when the client is done with the bootstrap script, they can unregister it
 
 ```javascript
 {
-    jsonrpc: "2.0",
     id: 100,
     method: "unregisterBootstrapScript",
     params: { bootstrapScriptId: "<ID>" }

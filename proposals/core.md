@@ -16,17 +16,13 @@ The protocol should also be:
 
 ### Transport Layer
 
-[JSON-RPC 2.0](https://www.jsonrpc.org/specification) is recommended as the message protocol. JSON-RPC is an open specification which supports the command/response pattern as well as async notifications. The message packets are JSON, so existing WebDriver clients should have no trouble encoding and parsing them. It should also be straightforward for users to share JSON data between the new bidirectional WebDriver API and the existing REST-style API if needed. Off-the-shelf JSON-RPC libraries are available for multiple languages.
+The proposed transport mechanism is WebSockets. They support the full-duplex communication that we'll need for bidirectional WebDriver scenarios, and have broad library support in multiple languages.
 
-The spec describes communication between a JSON-RPC Client and a JSON-RPC Server. In WebDriver's case, the Server would be the WebDriver implementation, and the Client would be some test/automation code. The Client may send either "Request" messages, which are RPC calls for which the Client expects a response; or "Notification" messages, which are fire-and-forget messages that the Server does not need to reply to. For full details, see the spec.
-
-The spec itself doesn't have any actual provisions for Server-to-Client messaging. However, an implementation can easily add bidirectional support by treating the Server as a Client and vice-versa so that messages may be sent in the opposite direction.
-
->[RESOLUTION](https://www.w3.org/2019/09/20-webdriver-minutes.html#resolution04): research having a more formalized schema for defining the transport layer
+The proposed message format is based on [JSON-RPC 2.0](https://www.jsonrpc.org/specification), but without the "jsonrpc" property and a different error message format. Unfortunately, existing JSON-RPC libraries will likely not work with WebDriver BiDi, but could likely be made to work with minor changes.
 
 JSON-RPC is also accompanied by the [OpenRPC](https://open-rpc.org/) spec; an interface description format for JSON-RPC APIs that is both human and machine-readable. Using OpenRPC, we can document and describe the entire bidirectional WebDriver API, and also make it simple for clients to generate language bindings and keep them up to date. OpenRPC is recommended over OpenAPI because OpenRPC is designed specifically with JSON-RPC in mind. OpenAPI is designed to specify REST-style APIs, and so isn't as well suited to a JSON-RPC API. The OpenRPC maintainers provide tools to generate human-readable documenation and typings/bindings for various languages.
 
-The JSON-RPC spec is transport-agnostic and covers only the message data format. WebSockets are the recommended transport mechanism. They support the full-duplex communication that we'll need for bidirectional WebDriver scenarios, and have broad library support in multiple languages. Adopting a technology other than HTTP and WebSockets is not recommended since this would likely require WebDriver implementers and users to take on new library dependencies on both the client and server sides.
+>[RESOLUTION](https://www.w3.org/2019/09/20-webdriver-minutes.html#resolution04): research having a more formalized schema for defining the transport layer
 
 ### High-Level Interface
 
@@ -44,7 +40,6 @@ The interface for the new protocol would be a set of client-to-server commands, 
 
 ```json
 {
-    "jsonrpc": "2.0",
     "id": 0,
     "method": "getTitle",
     "params": { "browsingContextId": "<ID>" }
@@ -57,7 +52,6 @@ Commands include a "method" name and optional "params". Positional parameters in
 
 ```json
 {
-    "jsonrpc": "2.0",
     "id": 0,
     "result": { "title": "Example Domain" }
 }
@@ -69,7 +63,6 @@ Responses from the server include the "id" of the command they are responding to
 
 ```json
 {
-    "jsonrpc": "2.0",
     "id": 0,
     "error": { "code": 8, "message": "no such frame", "data": { "stacktrace": "..." } }
 }
@@ -85,7 +78,6 @@ Since events may generate a large amount of traffic over the WebSocket, and may 
 
 ```json
 {
-    "jsonrpc": "2.0",
     "id": 0,
     "method": "subscribe",
     "params": { "event": "scriptContextCreated" }
@@ -104,7 +96,6 @@ Event messages don't have an "id" property since they are fire-and-forget.
 
 ```json
 {
-    "jsonrpc": "2.0",
     "method": "scriptContextCreated",
     "params": { "scriptContextId": "<ID>" }
 }
@@ -201,7 +192,6 @@ Below are some sample bidi commands that illustrate how message routing would wo
 
 ```json
 {
-    "jsonrpc": "2.0",
     "id": 0,
     "method": "navigateTo",
     "params": { "browsingContextId": "<ID>", "url": "http://example.com" }
@@ -212,7 +202,6 @@ Below are some sample bidi commands that illustrate how message routing would wo
 
 ```json
 {
-    "jsonrpc": "2.0",
     "id": 0,
     "method": "executeSync",
     "params": {
@@ -227,7 +216,6 @@ Below are some sample bidi commands that illustrate how message routing would wo
 
 ```json
 {
-    "jsonrpc": "2.0",
     "id": 0,
     "method": "closeTarget",
     "params": { "targetId": "<ID>" }
@@ -239,7 +227,6 @@ Below are some sample bidi commands that illustrate how message routing would wo
 ```json
 // Send bidi command
 {
-    "jsonrpc": "2.0",
     "id": 0,
     "method": "getFrameOwnerElement",
     "params": { "browsingContextId": "<ID>" }
@@ -273,13 +260,13 @@ The simplest way to discover targets would be to send a command that replies wit
 *Command*
 
 ```json
-{ "jsonrpc": "2.0", "id": 0, "method": "getTargets" }
+{ "id": 0, "method": "getTargets" }
 ```
 
 *Response*
 
 ```json
-{ "jsonrpc": "2.0", "id": 0, "result": {
+{ "id": 0, "result": {
     "targets": [
         { "targetId": "<ID>", "type": "page", "url": "about:blank" }
         ...
@@ -293,7 +280,7 @@ The API could provide "targetCreated" and "targetClosed" events to let the clien
 
 ```json
 {
-    "jsonrpc": "2.0", "method": "targetCreated", "params": {
+    "method": "targetCreated", "params": {
         "targetId": "<ID>", "type": "serviceWorker", "url": "sw.js" }
     }
 }
@@ -301,7 +288,7 @@ The API could provide "targetCreated" and "targetClosed" events to let the clien
 
 ```json
 {
-    "jsonrpc": "2.0", "method": "targetClosed", "params": {
+    "method": "targetClosed", "params": {
         "targetId": "<ID>"
     }
 }
@@ -316,7 +303,7 @@ We need a similar means to discover what browsing contexts exist for a target, b
 Returns the tree of browser contexts for a given target:
 ```json
 {
-    "jsonrpc": "2.0", "id": 0, "method": "getBrowsingContexts", "params": {
+    "id": 0, "method": "getBrowsingContexts", "params": {
         "targetId": "<ID>"
     }
 }
@@ -325,7 +312,7 @@ Returns the tree of browser contexts for a given target:
 *Response*
 ```json
 {
-    "jsonrpc": "2.0", "id": 0, "result": {
+    "id": 0, "result": {
         "browsingContexts": [
             { "browsingContextId": "<ID #0>" },
             { "browsingContextId": "<ID #1>", "parentBrowsingContextId": "<ID #0>" },
@@ -342,7 +329,7 @@ Updates are sent to the client whenever a browsing context is added or removed f
 
 ```json
 {
-    "jsonrpc": "2.0", "method": "browsingContextAttached", "result": {
+    "method": "browsingContextAttached", "result": {
         "parentBrowsingContextId": "<ID #1>",
         "browsingContextId": "<#ID #4>"
     }
@@ -351,7 +338,7 @@ Updates are sent to the client whenever a browsing context is added or removed f
 
 ```json
 {
-    "jsonrpc": "2.0", "method": "browsingContextDetached", "result": {
+    "method": "browsingContextDetached", "result": {
         "browsingContextId": "<#ID #3>"
     }
 }
@@ -367,7 +354,7 @@ Unlike browsing contexts which have parent-child relationships to each other, an
 
 ```json
 {
-    "jsonrpc": "2.0", "id": 0, "method": "getScriptContexts", "params": {
+    "id": 0, "method": "getScriptContexts", "params": {
         "targetId": "<ID>"
     }
 }
@@ -375,7 +362,7 @@ Unlike browsing contexts which have parent-child relationships to each other, an
 
 ```json
 {
-    "jsonrpc": "2.0", "id": 0, "result": {
+    "id": 0, "result": {
         "scriptContexts": [
             { "scriptContextId": "<ID #1>", "type": "page", "browsingContextId": "<ID>" },
             { "scriptContextId": "<ID #2>", "type": "page", "browsingContextId": "<ID>" },
