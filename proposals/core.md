@@ -116,39 +116,35 @@ To use the new bidirectional protocol, the client must first establish a WebSock
 
 >[RESOLUTION](https://www.w3.org/2019/09/20-webdriver-minutes.html#resolution01): Bi-di is always enabled. An optional capability, defaulting to true, indicating that bi-di is desired. When a new session is established, the return value of the new session contains the new top-level property of the bi-directional URL
 
-A bidirectional session starts as a traditional session created with a POST /session command. The client can upgrade their session to a bidirectional one by connecting to the WebSocket URL provided in the response. The client can also request the optional "protocolVersion" capability to explicitly enable or disable bidi:
+A bidirectional session starts as a traditional session created with a POST /session command. The client can request a bidirectional session using the "webSocketUrl" capability:
 
 ```json
 {
     "capabilities": {
         "alwaysMatch": {
             ...
-            "protocolVersion": "2.0"
+            "webSocketUrl": true
         }
     }
 }
 ```
 
-The "protocolVersion" capability may be either "1.0" or "2.0". WebDriver implementations that support the new bidirectional protocol would default to "2.0". "1.0" indicates that the client does not want bidi enabled and will stick to classical WebDriver commands. When the protocol is set to "2.0", bidi is enabled and the new session response includes the WebSocket URL to connect to:
+When "webSocketUrl" is true, bidi is enabled and the new session response includes the WebSocket URL to connect to:
 
 ```json
 {
     "value": {
         "capabilities": {
             ...
-            "webSocketUrl": "ws://localhost:9999/session/<session id>/upgrade"
+            "webSocketUrl": "ws://localhost:9999/session/<session id>"
     },
     "sessionId": "<session id>"
   }
 ```
 
-Alternatively, we can omit the WebSocket URL from the new session response and just return the protocolVersion instead. The WebSocket endpoint can be documented so that clients know where to connect to. This way, the capability key returned in the reponse will match the one the client actually sent.
-
-| Method | URI Template                                       | Command         |
-| -------|----------------------------------------------------|-----------------|
-| GET    | ws://localhost:{port}/session/{session id}/upgrade | Upgrade Session |
-
 Once the session is created, the client would then attempt to connect to the WebSocket endpoint. After connecting, they can start sending commands and receiving events using the new protocol. Since the WebSocket is tied to a particular session, all commands would implicitly target this session and any events received would come from this session only. In other words, the client would need to open additional WebSockets to talk to other sessions.
+
+See [Establishing a Connection](https://w3c.github.io/webdriver-bidi/#establishing) for details.
 
 ## Message Routing
 
