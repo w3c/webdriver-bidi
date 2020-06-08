@@ -139,13 +139,17 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
      2. |parsed|["<code>id</code>"] <a for=map>exists</a> and is an
         integer in the range [−2147483648, 2147483647].
 
+         Issue: Is this (signed 32-bit integer) the precise range we
+         want? It's what CDP uses, what do other protocols do?
+
      3. |parsed|["<code>method</code>"] <a for=map>exists</a> and is a
         string.
 
      4. |parsed|["<code>params</code>"], if it <a for=map>exists</a>,
         is a [=map=].
 
-     Issue: Require that there are no other keys?
+     Issue: Should we fail if there are unknown keys in |parsed|? CDP
+     does, but it's very unusual for unversioned web platform APIs.
 
     Then [=respond with an error=] given |connection| [=error code=]
     [=invalid argument=], and finally return.
@@ -159,7 +163,7 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 To <dfn>respond with an error</dfn> given a [=WebSocket connection=]
 |connection| and an [=error code=] |code|:
 
- 1. Issue: Form a valid and useful JSON |errorObject| given |code|.
+ 1. Issue: Form a valid JSON |errorObject| given |code|.
 
  2. [=Send a WebSocket message=] comprised of |errorObject| over
     |connection|.
