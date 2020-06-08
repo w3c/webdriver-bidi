@@ -17,8 +17,13 @@ Indent: 2
 spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
   type: dfn
     text: WebSocket URI; url: section-3
+    text: %x1 denotes a text frame; url: section-5.2
+    text: Send a WebSocket Message; url: section-6.1
     text: A WebSocket Message Has Been Received; url: section-6.2
     text: The WebSocket Closing Handshake is Started; url: section-7.1.3
+    text: Fail the WebSocket Connection; url: section-7.1.7
+    text: Status Codes; url: section-7.4
+    text: Handling Errors in UTF-8-Encoded Data; url: section-8.1
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
@@ -29,6 +34,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: error; url: dfn-errors
     text: getting a property; url: dfn-get-a-property
     text: invalid argument; url: dfn-invalid-argument
+    text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
     text: remote end; url: dfn-remote-ends
     text: session; url: dfn-sessions
@@ -51,21 +57,30 @@ evented nature of the browser DOM.
 Transport {#transport}
 ======================
 
-Message transport is provided using a [[RFC6455|WebSocket]]
-connection.
+Message transport is provided using the WebSocket protocol.
+[[!RFC6455]]
+
+Note: In the terms of the WebSocket protocol, the [=local end=] is the
+client and the [=remote end=] is the server / remote host.
+
+Note: The encoding of commands and events as messages is similar to
+JSON-RPC, but this specification does not normatively reference it.
+[[JSON-RPC]] The normative requirements on [=remote ends=] are instead
+given as a precise processing model, while no normative requirements
+are given for [=local ends=].
 
 A WebDriver [=session=] has a <dfn>WebSocket connection</dfn>, which
 is a network connection, and a <dfn>WebSocket URL</dfn>, which is a
 string. These are both initially null.
 
-When data is recieved on [=WebSocket connection=]
-|connection|, it must be processed according to the
-requirements of the [[!RFC6455|WebSockets]] specification. When [=a
-WebSocket message has been received=], an implementation must [=handle
-an incoming message=] with argument |connection|. When [=the
-WebSocket closing handshake is started=] an implementation must
-[=close the WebSocket connection=] with argument
-|connection|.
+When [=a WebSocket message has been received=] for a [=WebSocket
+connection=] |connection| with type |type| and data |data|, a [=remote
+end=] must [=handle an incoming message=] given |connection|, |type|
+and |data|.
+
+When [=the WebSocket closing handshake is started=] for a [=WebSocket
+connection=] |connection|, a [=remote end=] must [=close the WebSocket
+connection=] given |connection|.
 
 <div algorithm>
 To <dfn>start listening for a WebSocket connection</dfn> given a
@@ -94,10 +109,60 @@ Note: For an [=endpoint node=] the hostname in the above steps will be
 typically be "<code>localhost</code>".
 
 <div algorithm>
-To <dfn>handle an incoming message</dfn> given a
-[=WebSocket connection=] <var ignore>connection</var>:
+To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
+|connection|, type |type| and data |data|:
 
-Issue: Figure this out.
+ 1. If |type| is not [=%x1 denotes a text frame|text=], return.
+
+    Issue: Should we instead close |connection| with [=status
+    codes|status code=] 1003, or [=respond with an error=]?
+
+ 2. [=Assert=]: |data| is a [=scalar value string=], because the
+     WebSocket [=handling errors in UTF-8-encoded data=] would already
+     have [=fail the WebSocket connection|failed the WebSocket
+     connection=] otherwise.
+
+    Issue: Nothing seems to define what [=status codes|status code=]
+    is used for UTF-8 errors.
+
+ 3. Let |parsed| be the result of [=parse JSON into Infra
+    values|parsing JSON into Infra values=] given |data|. If this
+    throws an exception, then [=respond with an error=] given
+    |connection| and [=error code=] [=invalid argument=], and finally
+    return.
+    <!-- corresponds to Parse error (-32700) in JSON-RPC -->
+
+ 4. If any of the following conditions are false:
+
+     1. |parsed| is a [=map=]
+
+     2. |parsed|["<code>id</code>"] <a for=map>exists</a> and is an
+        integer in the range [−2147483648, 2147483647].
+
+     3. |parsed|["<code>method</code>"] <a for=map>exists</a> and is a
+        string.
+
+     4. |parsed|["<code>params</code>"], if it <a for=map>exists</a>,
+        is a [=map=].
+
+     Issue: Require that there are no other keys?
+
+    Then [=respond with an error=] given |connection| [=error code=]
+    [=invalid argument=], and finally return.
+    <!-- corresponds to Invalid Request (-32600) in JSON-RPC -->
+
+ 5. Issue: Command-specific parameter validation and dispatch.
+
+</div>
+
+<div algorithm>
+To <dfn>respond with an error</dfn> given a [=WebSocket connection=]
+|connection| and an [=error code=] |code|:
+
+ 1. Issue: Form a valid and useful JSON |errorObject| given |code|.
+
+ 2. [=Send a WebSocket message=] comprised of |errorObject| over
+    |connection|.
 
 </div>
 
