@@ -18,9 +18,9 @@ Indent: 2
 spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
   type: dfn
     text: WebSocket URI; url: section-3
-    text: Establishes a WebSocket connection; url: section-4.1
-    text: WebSocket opening handshake; url: section-4.2.1
-    text: The WebSocket server-side requirements; url: section-4.2
+    text: Establish a WebSocket Connection; url: section-4.1
+    text: Reading the Client's Opening Handshake; url: section-4.2.1
+    text: Server-Side Requirements; url: section-4.2
     text: %x1 denotes a text frame; url: section-5.2
     text: Send a WebSocket Message; url: section-6.1
     text: A WebSocket Message Has Been Received; url: section-6.2
@@ -39,7 +39,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: error; url: dfn-errors
     text: getting a property; url: dfn-get-a-property
     text: invalid argument; url: dfn-invalid-argument
-    text: active sessions; url: dfn-active-sessions
+    text: active sessions; url: dfn-active-session
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
     text: remote end; url: dfn-remote-ends
@@ -119,16 +119,16 @@ normative requirements are given for [=local ends=].
 A <dfn>WebSocket listener</dfn> is a network endpoint that is able
 to accept incoming [[!RFC6455|WebSocket]] connections.
 
-A [=WebSocket listener=] has a <dfn>host</dfn>, a <dfn>port</dfn>, a
+A [=WebSocket listener=] has a <dfn for=listener>host</dfn>, a <dfn for=listener>port</dfn>, a
 <dfn>secure flag</dfn>, and a <dfn>list of WebSocket resources</dfn>.
 
-When a [=WebSocket listener=] |listener| is created, an implementation
+When a [=WebSocket listener=] |listener| is created, a [=remote end=]
 must start to listen for WebSocket connections on the host and port
-given by |listener|'s [=host=] and [=port=] properties. If
+given by |listener|'s [=host=] and [=port=]. If
 |listener|'s [=secure flag=] is set, then connections established from
 |listener| must be TLS encrypted.
 
-A [=local end=] has a <dfn>set of active listeners</dfn>,
+A [=remote end=] has a [=set=] of [=WebSocket listeners=] <dfn>active listeners</dfn>,
 which is initially empty.
 
 A WebDriver [=session=] has a <dfn>WebSocket connection</dfn> which is
@@ -183,7 +183,7 @@ WebSocket connection to be closed without a closing handshake.
 
 <div algorithm>
 
-To <dfn lt="constructing a WebSocket resource name">construct a
+To <dfn lt="construct a WebSocket resource name|constructing a WebSocket resource name">construct a
 WebSocket resource name</dfn> given a [=session=] |session|:
 
 1. Return the result of concatenating the string "<code>/session/</code>"
@@ -193,27 +193,27 @@ WebSocket resource name</dfn> given a [=session=] |session|:
 
 <div algorithm>
 
-To <dfn lt="constructing a WebSocket URL">construct a WebSocket
+To <dfn lt="construct a WebSocket URL|constructing a WebSocket URL">construct a WebSocket
 URL</dfn> given a [=WebSocket listener=] |listener| and [=session=]
 |session|:
 
 1. Let |resource name| be the result of [=constructing a WebSocket
-   resource name=] for |session|.
+   resource name=] given |session|.
 
 2. Return a [=WebSocket URI=] constructed with host set to
    |listener|'s [=host=], port set to |listener|'s [=port=], path set to
    |resource name|, following the wss-URI construct if |listener|'s
-   [=secure flag=] is true or the ws-URL construct if it is false.
+   [=secure flag=] is set and the ws-URL construct otherwise.
 
 </div>
 
 <div algorithm>
 
-To <dfn>get a session id for a WebSocket resource</dfn>
+To <dfn>get a session ID for a WebSocket resource</dfn>
 given |resource name|:
 
 1. If |resource name| doesn't begin with the byte string
-   "<code>/session/</code>" return null.
+   "<code>/session/</code>", return null.
 
 2. Let |session id| be the bytes in |resource name| following the
    "<code>/session/</code>" prefix.
@@ -230,19 +230,19 @@ To <dfn>start listening for a WebSocket connection</dfn> given a
 [=session=] |session|:
 
  1. If there is an existing [=WebSocket listener=] in the [=set of
-    active listeners=] which the implementation would like to reuse,
+    active listeners=] which the [=remote end=] would like to reuse,
     let |listener| be that listener. Otherwise let |listener| be a new
-    [=WebSocket listener=] with implementation-defined [=host=],
-    [=port=], and [=secure flag=], an empty [=list of WebSocket
+    [=WebSocket listener=] with [=implementation-defined=] [=host=],
+    [=port=], [=secure flag=], and an empty [=list of WebSocket
     resources=].
 
  2. Let |resource name| be the result of [=constructing a WebSocket
-    resource name=] for |session|.
+    resource name=] given |session|.
 
- 3. Append |resource name| to the |list of WebSocket resources=] for
+ 3. Append |resource name| to the [=list of WebSocket resources=] for
     |listener|.
 
- 4. Append |listener| to the [=set of active listeners=]
+ 4. <a for=set>Add</a> |listener| to the [=remote end=]'s [=active listeners=].
 
  5. Return |listener|.
 
@@ -372,10 +372,10 @@ with parameters |session| and |capabilities| is:
  4. Let |listener| be the result of [=start listening for a WebSocket
     connection=] for |session|.
 
- 4. Let |WebSocket URL| be the result of [=constructing a WebSocket
-    URL=] for |listener| and |session|.
+ 5. Let |WebSocket URL| be the result of [=constructing a WebSocket
+    URL=] given |listener| and |session|.
 
- . [=Set a property=] on |capabilities| named
+ 6. [=Set a property=] on |capabilities| named
     "<code>webSocketUrl</code>" to |WebSocket URL|.
 
 </div>
