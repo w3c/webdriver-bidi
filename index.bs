@@ -18,6 +18,9 @@ Indent: 2
 spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
   type: dfn
     text: WebSocket URI; url: section-3
+    text: Establishes a WebSocket Connection; url: section-4.1
+    text: Server-Side Requirements; url: section-4.2
+    text: Reading the Client's Opening Handshake; url: section-4.2.1
     text: %x1 denotes a text frame; url: section-5.2
     text: Send a WebSocket Message; url: section-6.1
     text: A WebSocket Message Has Been Received; url: section-6.2
@@ -35,7 +38,9 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
     text: getting a property; url: dfn-get-a-property
+    text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
+    text: active sessions; url: dfn-active-session
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
     text: remote end; url: dfn-remote-ends
@@ -45,6 +50,10 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: set a property; url: dfn-set-a-property
     text: success; url: dfn-success
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
+</pre>
+
+<pre class="link-defaults">
+spec:infra; type:dfn; for:/; text:set
 </pre>
 
 Introduction {#intro}
@@ -112,9 +121,61 @@ reference it. [[JSON-RPC]] The normative requirements on [=remote
 ends=] are instead given as a precise processing model, while no
 normative requirements are given for [=local ends=].
 
-A WebDriver [=session=] has a <dfn>WebSocket connection</dfn>, which
-is a network connection, and a <dfn>WebSocket URL</dfn>, which is a
-string. These are both initially null.
+A <dfn>WebSocket listener</dfn> is a network endpoint that is able
+to accept incoming [[!RFC6455|WebSocket]] connections.
+
+A [=WebSocket listener=] has a <dfn for=listener>host</dfn>, a <dfn
+for=listener>port</dfn>, a <dfn for=listener>secure flag</dfn>, and a
+<dfn>list of WebSocket resources</dfn>.
+
+When a [=WebSocket listener=] |listener| is created, a [=remote end=]
+must start to listen for WebSocket connections on the host and port
+given by |listener|'s [=listener/host=] and [=listener/port=]. If
+|listener|'s [=listener/secure flag=] is set, then connections
+established from |listener| must be TLS encrypted.
+
+A [=remote end=] has a [=set=] of [=WebSocket listeners=] <dfn>active
+listeners</dfn>, which is initially empty.
+
+A WebDriver [=session=] has a <dfn>WebSocket connection</dfn> which is
+a network connection that follows the requirements of the
+[[!RFC6455|WebSocket protocol]].
+
+<div>
+
+When a client [=establishes a WebSocket connection=] |connection| by
+connecting to one of the set of [=active listeners=] |listener|, the
+implementation must proceed according to the WebSocket [=server-side
+requirements=], with the following steps run when deciding whether to
+accept the incoming connection:
+
+1. Let |resource name| be the resource name from [=reading the
+   client's opening handshake=]. If |resource name| is not in
+   |listener|'s [=list of WebSocket resources=], then stop
+   running these steps and act as if the requested service is not
+   available.
+
+2. [=Get a session ID for a WebSocket resource=] with |resource name|
+   and let |session id| be that value. If |session id| is null then
+   stop running these steps and act as if the requested service is not
+   available.
+
+3. If there is a [=session=] in the list of [=active sessions=] with
+   |session id| as its [=session ID=] then let |session| be that
+   session. Otherwise stop running these steps and act as if the
+   requested service is not available.
+
+4. Run any other implementation-defined steps to decide if the
+   connection should be accepted, and if it is not stop running these
+   steps and act as if the requested service is not available.
+
+5. Otherwise set |session|'s [=WebSocket connection=] to
+   |connection|, and proceed with the WebSocket [=server-side
+   requirements=] when a server chooses to accept an incoming connection.
+
+Issue: Do we support > 1 connection for a single session?
+
+</div>
 
 When [=a WebSocket message has been received=] for a [=WebSocket
 connection=] |connection| with type |type| and data |data|, a [=remote
@@ -130,29 +191,81 @@ Note: Both conditions are needed because it is possible for a
 WebSocket connection to be closed without a closing handshake.
 
 <div algorithm>
-To <dfn>start listening for a WebSocket connection</dfn> given a
-[=session=] |session|:
 
- 1. Set up a network connection that listens on an implementation-defined
-    hostname |host| and port |port|. The connection may TLS encrypted, in which
-    case let |secure| be true, otherwise let |secure| be false. Set the
-    [=connection=] to this network connection.
+To <dfn lt="construct a WebSocket resource name|constructing a
+WebSocket resource name">construct a WebSocket resource name</dfn>
+given a [=session=] |session|:
 
- 2. Let |path| be the result of concatenating the string "<code>session/</code>"
-    with |session|'s [=session ID=].
-
- 3. Let |url| be the result of constructing a [=WebSocket URI=] with scheme
-    "<code>wss</code>" if |secure| is true or "<code>ws</code>"
-    otherwise, host |host|, port |port|, path |path| and empty query.
-
- 4. Set |session|'s [=WebSocket URL=] to |url|.
-
-Issue: This confuses the server listening socket with the actual
-websocket connection
+1. Return the result of concatenating the string "<code>/session/</code>"
+   with |session|'s [=session ID=].
 
 </div>
 
-Note: For an [=endpoint node=] the hostname in the above steps will
+<div algorithm>
+
+To <dfn lt="construct a WebSocket URL|constructing a WebSocket
+URL">construct a WebSocket URL</dfn> given a [=WebSocket listener=]
+|listener| and [=session=] |session|:
+
+1. Let |resource name| be the result of [=constructing a WebSocket
+   resource name=] given |session|.
+
+2. Return a [=WebSocket URI=] constructed with host set to
+   |listener|'s [=listener/host=], port set to |listener|'s
+   [=listener/port=], path set to |resource name|, following the wss-URI
+   construct if |listener|'s [=listener/secure flag=] is set and the ws-URL
+   construct otherwise.
+
+</div>
+
+<div algorithm>
+
+To <dfn>get a session ID for a WebSocket resource</dfn>
+given |resource name|:
+
+1. If |resource name| doesn't begin with the byte string
+   "<code>/session/</code>", return null.
+
+2. Let |session id| be the bytes in |resource name| following the
+   "<code>/session/</code>" prefix.
+
+3. If |session id| is not the string representation of a
+   [[!RFC4122|UUID]], return null.
+
+4. Return |session id|.
+
+</div>
+
+<div algorithm>
+To <dfn>start listening for a WebSocket connection</dfn> given a
+[=session=] |session|:
+
+ 1. If there is an existing [=WebSocket listener=] in the set of [=
+    active listeners=] which the [=remote end=] would like to reuse,
+    let |listener| be that listener. Otherwise let |listener| be a new
+    [=WebSocket listener=] with [=implementation-defined=]
+    [=listener/host=], [=listener/port=], [=listener/secure flag=],
+    and an empty [=list of WebSocket resources=].
+
+ 2. Let |resource name| be the result of [=constructing a WebSocket
+    resource name=] given |session|.
+
+ 3. Append |resource name| to the [=list of WebSocket resources=] for
+    |listener|.
+
+ 4. [=set/Append=] |listener| to the [=remote end=]'s [=active
+     listeners=].
+
+ 5. Return |listener|.
+
+</div>
+
+Note: An [=intermediary node=] handling multiple sessions can use one
+or many WebSocket listeners. [[!WEBDRIVER|WebDriver]] defines that
+an [=endpoint node=] supports at most one session at a time, so it's
+expected to only have a single listener.
+
+Note: For an [=endpoint node=] the [=listener/host=] in the above steps will
 typically be "<code>localhost</code>".
 
 <div algorithm>
@@ -232,6 +345,9 @@ Issue: This should also reset any internal state
 
 Note: This does not end any [=session=].
 
+Issue: Need to hook in to the session ending to allow the UA to close
+the listener if it wants.
+
 ## Establishing a Connection ## {#establishing}
 
 WebDriver clients opt in to a bidirectional connection by requesting a
@@ -273,10 +389,14 @@ with parameters |session| and |capabilities| is:
 
  3. [=Assert=]: |webSocketUrl| is true.
 
- 4. [=Start listening for a WebSocket connection=] for |session|.
+ 4. Let |listener| be the result of [=start listening for a WebSocket
+    connection=] given |session|.
 
- 5. [=Set a property=] "<code>webSocketUrl</code>" to |session|'s
-    [=WebSocket URL=] on |capabilities|.
+ 5. Set |webSocketUrl| to the result of [=constructing a WebSocket
+    URL=] given |listener| and |session|.
+
+ 6. [=Set a property=] on |capabilities| named
+    "<code>webSocketUrl</code>" to |webSocketUrl|.
 
 </div>
 
