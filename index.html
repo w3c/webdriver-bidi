@@ -1224,7 +1224,7 @@ Possible extra rowspan handling
   <link href="https://www.w3.org/StyleSheets/TR/2016/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version 19c1873c, updated Thu Jun 4 14:44:17 2020 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="ad1ddbb409cc58c697e12567adddba9449cb1849" name="document-revision">
+  <meta content="8673d7009ab3ee42e54768002e1a6ff7fa0ff3ec" name="document-revision">
 <style>/* style-autolinks */
 
 .css.css, .property.property, .descriptor.descriptor {
@@ -1424,7 +1424,7 @@ dfn > a.self-link::before      { content: "#"; }</style>
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-06-10">10 June 2020</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-06-11">11 June 2020</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -1546,40 +1546,118 @@ similar to JSON-RPC, but this specification does not normatively
 reference it. <a data-link-type="biblio" href="#biblio-json-rpc">[JSON-RPC]</a> The normative requirements on <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends④">remote
 ends</a> are instead given as a precise processing model, while no
 normative requirements are given for <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends④">local ends</a>.</p>
-   <p>A WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions">session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="websocket-connection">WebSocket connection</dfn>, which
-is a network connection, and a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="websocket-url">WebSocket URL</dfn>, which is a
-string. These are both initially null.</p>
-   <p>When <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-6.2" id="ref-for-section-6.2">a WebSocket message has been received</a> for a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection">WebSocket
-connection</a> <var>connection</var> with type <var>type</var> and data <var>data</var>, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑤">remote
-end</a> must <a data-link-type="dfn" href="#handle-an-incoming-message" id="ref-for-handle-an-incoming-message">handle an incoming message</a> given <var>connection</var>, <var>type</var> and <var>data</var>.</p>
-   <p>When <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.1.3" id="ref-for-section-7.1.3">the WebSocket closing handshake is started</a> or when <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.1.4" id="ref-for-section-7.1.4">the
-WebSocket connection is closed</a> for a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection①">WebSocket connection</a> <var>connection</var>, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑥">remote end</a> must <a data-link-type="dfn" href="#handle-a-connection-closing" id="ref-for-handle-a-connection-closing">handle a connection closing</a> given <var>connection</var>.</p>
-   <p class="note" role="note"><span>Note:</span> Both conditions are needed because it is possible for a
-WebSocket connection to be closed without a closing handshake.</p>
-   <div class="algorithm" data-algorithm="start listening for a WebSocket connection">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="start-listening-for-a-websocket-connection">start listening for a WebSocket connection</dfn> given a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions①">session</a> <var>session</var>: 
+   <p>A <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="websocket-listener">WebSocket listener</dfn> is a network endpoint that is able
+to accept incoming <a data-link-type="biblio" href="#biblio-rfc6455">WebSocket</a> connections.</p>
+   <p>A <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener">WebSocket listener</a> has a <dfn class="dfn-paneled" data-dfn-for="listener" data-dfn-type="dfn" data-noexport id="listener-host">host</dfn>, a <dfn class="dfn-paneled" data-dfn-for="listener" data-dfn-type="dfn" data-noexport id="listener-port">port</dfn>, a <dfn class="dfn-paneled" data-dfn-for="listener" data-dfn-type="dfn" data-noexport id="listener-secure-flag">secure flag</dfn>, and a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="list-of-websocket-resources">list of WebSocket resources</dfn>.</p>
+   <p>When a <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener①">WebSocket listener</a> <var>listener</var> is created, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑤">remote end</a> must start to listen for WebSocket connections on the host and port
+given by <var>listener</var>’s <a data-link-type="dfn" href="#listener-host" id="ref-for-listener-host">host</a> and <a data-link-type="dfn" href="#listener-port" id="ref-for-listener-port">port</a>. If <var>listener</var>’s <a data-link-type="dfn" href="#listener-secure-flag" id="ref-for-listener-secure-flag">secure flag</a> is set, then connections
+established from <var>listener</var> must be TLS encrypted.</p>
+   <p>A <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑥">remote end</a> has a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-set" id="ref-for-ordered-set">set</a> of <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener②">WebSocket listeners</a> <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="active listeners" data-noexport id="active-listeners">active
+listeners</dfn>, which is initially empty.</p>
+   <p>A WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions">session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="websocket-connection">WebSocket connection</dfn> which is
+a network connection that follows the requirements of the <a data-link-type="biblio" href="#biblio-rfc6455">WebSocket protocol</a>.</p>
+   <div>
+    <p>When a client <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-4.1" id="ref-for-section-4.1">establishes a WebSocket connection</a> <var>connection</var> by
+connecting to one of the set of <a data-link-type="dfn" href="#active-listeners" id="ref-for-active-listeners">active listeners</a> <var>listener</var>, the
+implementation must proceed according to the WebSocket <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-4.2" id="ref-for-section-4.2">server-side
+requirements</a>, with the following steps run when deciding whether to
+accept the incoming connection:</p>
     <ol>
      <li data-md>
-      <p>Set up a network connection that listens on an implementation-defined
-  hostname <var>host</var> and port <var>port</var>. The connection may TLS encrypted, in which
-  case let <var>secure</var> be true, otherwise let <var>secure</var> be false. Set the <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection">connection</a> to this network connection.</p>
+      <p>Let <var>resource name</var> be the resource name from <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-4.2.1" id="ref-for-section-4.2.1">reading the
+ client’s opening handshake</a>. If <var>resource name</var> is not in <var>listener</var>’s <a data-link-type="dfn" href="#list-of-websocket-resources" id="ref-for-list-of-websocket-resources">list of WebSocket resources</a>, then stop
+ running these steps and act as if the requested service is not
+ available.</p>
      <li data-md>
-      <p>Let <var>path</var> be the result of concatenating the string "<code>session/</code>"
-  with <var>session</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-session-id" id="ref-for-dfn-session-id">session ID</a>.</p>
+      <p><a data-link-type="dfn" href="#get-a-session-id-for-a-websocket-resource" id="ref-for-get-a-session-id-for-a-websocket-resource">Get a session ID for a WebSocket resource</a> with <var>resource name</var> and let <var>session id</var> be that value. If <var>session id</var> is null then
+ stop running these steps and act as if the requested service is not
+ available.</p>
      <li data-md>
-      <p>Let <var>url</var> be the result of constructing a <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-3" id="ref-for-section-3">WebSocket URI</a> with scheme
-  "<code>wss</code>" if <var>secure</var> is true or "<code>ws</code>"
-  otherwise, host <var>host</var>, port <var>port</var>, path <var>path</var> and empty query.</p>
+      <p>If there is a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions①">session</a> in the list of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-active-session" id="ref-for-dfn-active-session">active sessions</a> with <var>session id</var> as its <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-session-id" id="ref-for-dfn-session-id">session ID</a> then let <var>session</var> be that
+ session. Otherwise stop running these steps and act as if the
+ requested service is not available.</p>
      <li data-md>
-      <p>Set <var>session</var>’s <a data-link-type="dfn" href="#websocket-url" id="ref-for-websocket-url">WebSocket URL</a> to <var>url</var>.</p>
+      <p>Run any other implementation-defined steps to decide if the
+ connection should be accepted, and if it is not stop running these
+ steps and act as if the requested service is not available.</p>
+     <li data-md>
+      <p>Otherwise set <var>session</var>’s <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection">WebSocket connection</a> to <var>connection</var>, and proceed with the WebSocket <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-4.2" id="ref-for-section-4.2①">server-side
+ requirements</a> when a server chooses to accept an incoming connection.</p>
     </ol>
-    <p class="issue" id="issue-459ac9c5"><a class="self-link" href="#issue-459ac9c5"></a> This confuses the server listening socket with the actual
-websocket connection</p>
+    <p class="issue" id="issue-0dc5e7b6"><a class="self-link" href="#issue-0dc5e7b6"></a> Do we support > 1 connection for a single session?</p>
    </div>
-   <p class="note" role="note"><span>Note:</span> For an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-endpoint-node" id="ref-for-dfn-endpoint-node">endpoint node</a> the hostname in the above steps will
+   <p>When <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-6.2" id="ref-for-section-6.2">a WebSocket message has been received</a> for a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection①">WebSocket
+connection</a> <var>connection</var> with type <var>type</var> and data <var>data</var>, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑦">remote
+end</a> must <a data-link-type="dfn" href="#handle-an-incoming-message" id="ref-for-handle-an-incoming-message">handle an incoming message</a> given <var>connection</var>, <var>type</var> and <var>data</var>.</p>
+   <p>When <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.1.3" id="ref-for-section-7.1.3">the WebSocket closing handshake is started</a> or when <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.1.4" id="ref-for-section-7.1.4">the
+WebSocket connection is closed</a> for a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection②">WebSocket connection</a> <var>connection</var>, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑧">remote end</a> must <a data-link-type="dfn" href="#handle-a-connection-closing" id="ref-for-handle-a-connection-closing">handle a connection closing</a> given <var>connection</var>.</p>
+   <p class="note" role="note"><span>Note:</span> Both conditions are needed because it is possible for a
+WebSocket connection to be closed without a closing handshake.</p>
+   <div class="algorithm" data-algorithm="construct a WebSocket resource name">
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="construct a WebSocket resource name|constructing a
+WebSocket resource name" data-noexport id="construct-a-websocket-resource-name">construct a WebSocket resource name</dfn> given a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions②">session</a> <var>session</var>:</p>
+    <ol>
+     <li data-md>
+      <p>Return the result of concatenating the string "<code>/session/</code>"
+ with <var>session</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-session-id" id="ref-for-dfn-session-id①">session ID</a>.</p>
+    </ol>
+   </div>
+   <div class="algorithm" data-algorithm="construct a WebSocket URL">
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="construct a WebSocket URL|constructing a WebSocket
+URL" data-noexport id="construct-a-websocket-url">construct a WebSocket URL</dfn> given a <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener③">WebSocket listener</a> <var>listener</var> and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions③">session</a> <var>session</var>:</p>
+    <ol>
+     <li data-md>
+      <p>Let <var>resource name</var> be the result of <a data-link-type="dfn" href="#construct-a-websocket-resource-name" id="ref-for-construct-a-websocket-resource-name">constructing a WebSocket
+ resource name</a> given <var>session</var>.</p>
+     <li data-md>
+      <p>Return a <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-3" id="ref-for-section-3">WebSocket URI</a> constructed with host set to <var>listener</var>’s <a data-link-type="dfn" href="#listener-host" id="ref-for-listener-host①">host</a>, port set to <var>listener</var>’s <a data-link-type="dfn" href="#listener-port" id="ref-for-listener-port①">port</a>, path set to <var>resource name</var>, following the wss-URI
+ construct if <var>listener</var>’s <a data-link-type="dfn" href="#listener-secure-flag" id="ref-for-listener-secure-flag①">secure flag</a> is set and the ws-URL
+ construct otherwise.</p>
+    </ol>
+   </div>
+   <div class="algorithm" data-algorithm="get a session ID for a WebSocket resource">
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-a-session-id-for-a-websocket-resource">get a session ID for a WebSocket resource</dfn> given <var>resource name</var>:</p>
+    <ol>
+     <li data-md>
+      <p>If <var>resource name</var> doesn’t begin with the byte string
+ "<code>/session/</code>", return null.</p>
+     <li data-md>
+      <p>Let <var>session id</var> be the bytes in <var>resource name</var> following the
+ "<code>/session/</code>" prefix.</p>
+     <li data-md>
+      <p>If <var>session id</var> is not the string representation of a <a data-link-type="biblio" href="#biblio-rfc4122">UUID</a>, return null.</p>
+     <li data-md>
+      <p>Return <var>session id</var>.</p>
+    </ol>
+   </div>
+   <div class="algorithm" data-algorithm="start listening for a WebSocket connection">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="start-listening-for-a-websocket-connection">start listening for a WebSocket connection</dfn> given a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions④">session</a> <var>session</var>: 
+    <ol>
+     <li data-md>
+      <p>If there is an existing <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener④">WebSocket listener</a> in the set of [=
+  active listeners=] which the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑨">remote end</a> would like to reuse,
+  let <var>listener</var> be that listener. Otherwise let <var>listener</var> be a new <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener⑤">WebSocket listener</a> with <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#implementation-defined" id="ref-for-implementation-defined">implementation-defined</a> <a data-link-type="dfn" href="#listener-host" id="ref-for-listener-host②">host</a>, <a data-link-type="dfn" href="#listener-port" id="ref-for-listener-port②">port</a>, <a data-link-type="dfn" href="#listener-secure-flag" id="ref-for-listener-secure-flag②">secure flag</a>,
+  and an empty <a data-link-type="dfn" href="#list-of-websocket-resources" id="ref-for-list-of-websocket-resources①">list of WebSocket resources</a>.</p>
+     <li data-md>
+      <p>Let <var>resource name</var> be the result of <a data-link-type="dfn" href="#construct-a-websocket-resource-name" id="ref-for-construct-a-websocket-resource-name①">constructing a WebSocket
+  resource name</a> given <var>session</var>.</p>
+     <li data-md>
+      <p>Append <var>resource name</var> to the <a data-link-type="dfn" href="#list-of-websocket-resources" id="ref-for-list-of-websocket-resources②">list of WebSocket resources</a> for <var>listener</var>.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#set-append" id="ref-for-set-append">Append</a> <var>listener</var> to the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①⓪">remote end</a>'s <a data-link-type="dfn" href="#active-listeners" id="ref-for-active-listeners①">active
+   listeners</a>.</p>
+     <li data-md>
+      <p>Return <var>listener</var>.</p>
+    </ol>
+   </div>
+   <p class="note" role="note"><span>Note:</span> An <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-intermediary-node" id="ref-for-dfn-intermediary-node">intermediary node</a> handling multiple sessions can use one
+or many WebSocket listeners. <a data-link-type="biblio" href="#biblio-webdriver">WebDriver</a> defines that
+an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-endpoint-node" id="ref-for-dfn-endpoint-node">endpoint node</a> supports at most one session at a time, so it’s
+expected to only have a single listener.</p>
+   <p class="note" role="note"><span>Note:</span> For an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-endpoint-node" id="ref-for-dfn-endpoint-node①">endpoint node</a> the <a data-link-type="dfn" href="#listener-host" id="ref-for-listener-host③">host</a> in the above steps will
 typically be "<code>localhost</code>".</p>
    <div class="algorithm" data-algorithm="handle an incoming message">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="handle-an-incoming-message">handle an incoming message</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection②">WebSocket connection</a> <var>connection</var>, type <var>type</var> and data <var>data</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="handle-an-incoming-message">handle an incoming message</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection③">WebSocket connection</a> <var>connection</var>, type <var>type</var> and data <var>data</var>: 
     <ol>
      <li data-md>
       <p>If <var>type</var> is not <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-5.2" id="ref-for-section-5.2">text</a>, return.</p>
@@ -1621,7 +1699,7 @@ typically be "<code>localhost</code>".</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="respond with an error">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="respond-with-an-error">respond with an error</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection③">WebSocket connection</a> <var>connection</var> and an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②">error code</a> <var>code</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="respond-with-an-error">respond with an error</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection④">WebSocket connection</a> <var>connection</var> and an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②">error code</a> <var>code</var>: 
     <ol>
      <li data-md>
       <p class="issue" id="issue-aee4ea98"><a class="self-link" href="#issue-aee4ea98"></a> Form a valid JSON <var>errorObject</var> given <var>code</var>.</p>
@@ -1630,15 +1708,17 @@ typically be "<code>localhost</code>".</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="handle a connection closing">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="handle-a-connection-closing">handle a connection closing</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection④">WebSocket connection</a> <var>connection</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="handle-a-connection-closing">handle a connection closing</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection⑤">WebSocket connection</a> <var>connection</var>: 
     <ol>
      <li data-md>
-      <p>If there is a WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions②">session</a> with <var>connection</var> as its <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection①">connection</a>,
-  set the <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection②">connection</a> on that <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions③">session</a> to null.</p>
+      <p>If there is a WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑤">session</a> with <var>connection</var> as its <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection">connection</a>,
+  set the <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection①">connection</a> on that <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑥">session</a> to null.</p>
     </ol>
     <p class="issue" id="issue-02ccb156"><a class="self-link" href="#issue-02ccb156"></a> This should also reset any internal state</p>
    </div>
-   <p class="note" role="note"><span>Note:</span> This does not end any <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions④">session</a>.</p>
+   <p class="note" role="note"><span>Note:</span> This does not end any <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑦">session</a>.</p>
+   <p class="issue" id="issue-9f7aff26"><a class="self-link" href="#issue-9f7aff26"></a> Need to hook in to the session ending to allow the UA to close
+the listener if it wants.</p>
    <h3 class="heading settled" data-level="3.1" id="establishing"><span class="secno">3.1. </span><span class="content">Establishing a Connection</span><a class="self-link" href="#establishing"></a></h3>
    <p>WebDriver clients opt in to a bidirectional connection by requesting a
 capability with the name "<code>webSocketUrl</code>" and value
@@ -1676,9 +1756,14 @@ with parameters <var>session</var> and <var>capabilities</var> is:
      <li data-md>
       <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert①">Assert</a>: <var>webSocketUrl</var> is true.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="#start-listening-for-a-websocket-connection" id="ref-for-start-listening-for-a-websocket-connection">Start listening for a WebSocket connection</a> for <var>session</var>.</p>
+      <p>Let <var>listener</var> be the result of <a data-link-type="dfn" href="#start-listening-for-a-websocket-connection" id="ref-for-start-listening-for-a-websocket-connection">start listening for a WebSocket
+  connection</a> given <var>session</var>.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-set-a-property" id="ref-for-dfn-set-a-property">Set a property</a> "<code>webSocketUrl</code>" to <var>session</var>’s <a data-link-type="dfn" href="#websocket-url" id="ref-for-websocket-url①">WebSocket URL</a> on <var>capabilities</var>.</p>
+      <p>Set <var>webSocketUrl</var> to the result of <a data-link-type="dfn" href="#construct-a-websocket-url" id="ref-for-construct-a-websocket-url">constructing a WebSocket
+  URL</a> given <var>listener</var> and <var>session</var>.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-set-a-property" id="ref-for-dfn-set-a-property">Set a property</a> on <var>capabilities</var> named
+  "<code>webSocketUrl</code>" to <var>webSocketUrl</var>.</p>
     </ol>
    </div>
    <h2 class="heading settled" data-level="4" id="conformance"><span class="secno">4. </span><span class="content">Conformance</span><a class="self-link" href="#conformance"></a></h2>
@@ -1816,10 +1901,18 @@ with parameters <var>session</var> and <var>capabilities</var> is:
   <h2 class="no-num no-ref heading settled" id="index"><span class="content">Index</span><a class="self-link" href="#index"></a></h2>
   <h3 class="no-num no-ref heading settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
   <ul class="index">
+   <li><a href="#active-listeners">active listeners</a><span>, in §3</span>
    <li><a href="#command">command</a><span>, in §2.1</span>
+   <li><a href="#construct-a-websocket-resource-name">construct a WebSocket resource name</a><span>, in §3</span>
+   <li><a href="#construct-a-websocket-url">construct a WebSocket URL</a><span>, in §3</span>
+   <li><a href="#construct-a-websocket-resource-name">constructing a WebSocket resource name</a><span>, in §3</span>
+   <li><a href="#construct-a-websocket-url">constructing a WebSocket URL</a><span>, in §3</span>
    <li><a href="#event">event</a><span>, in §2.2</span>
+   <li><a href="#get-a-session-id-for-a-websocket-resource">get a session ID for a WebSocket resource</a><span>, in §3</span>
    <li><a href="#handle-a-connection-closing">handle a connection closing</a><span>, in §3</span>
    <li><a href="#handle-an-incoming-message">handle an incoming message</a><span>, in §3</span>
+   <li><a href="#listener-host">host</a><span>, in §3</span>
+   <li><a href="#list-of-websocket-resources">list of WebSocket resources</a><span>, in §3</span>
    <li>
     name
     <ul>
@@ -1832,16 +1925,24 @@ with parameters <var>session</var> and <var>capabilities</var> is:
      <li><a href="#command-parameters">dfn for command</a><span>, in §2.1</span>
      <li><a href="#event-parameters">dfn for event</a><span>, in §2.2</span>
     </ul>
+   <li><a href="#listener-port">port</a><span>, in §3</span>
    <li><a href="#respond-with-an-error">respond with an error</a><span>, in §3</span>
    <li><a href="#command-return-type">return type</a><span>, in §2.1</span>
+   <li><a href="#listener-secure-flag">secure flag</a><span>, in §3</span>
    <li><a href="#start-listening-for-a-websocket-connection">start listening for a WebSocket connection</a><span>, in §3</span>
    <li><a href="#websocket-connection">WebSocket connection</a><span>, in §3</span>
-   <li><a href="#websocket-url">WebSocket URL</a><span>, in §3</span>
+   <li><a href="#websocket-listener">WebSocket listener</a><span>, in §3</span>
   </ul>
   <aside class="dfn-panel" data-for="term-for-concept-connection">
    <a href="https://fetch.spec.whatwg.org/#concept-connection">https://fetch.spec.whatwg.org/#concept-connection</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-connection">3. Transport</a> <a href="#ref-for-concept-connection①">(2)</a> <a href="#ref-for-concept-connection②">(3)</a>
+    <li><a href="#ref-for-concept-connection">3. Transport</a> <a href="#ref-for-concept-connection①">(2)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-set-append">
+   <a href="https://infra.spec.whatwg.org/#set-append">https://infra.spec.whatwg.org/#set-append</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-set-append">3. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-assert">
@@ -1855,6 +1956,12 @@ with parameters <var>session</var> and <var>capabilities</var> is:
    <a href="https://infra.spec.whatwg.org/#map-exists">https://infra.spec.whatwg.org/#map-exists</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-map-exists">3. Transport</a> <a href="#ref-for-map-exists①">(2)</a> <a href="#ref-for-map-exists②">(3)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-implementation-defined">
+   <a href="https://infra.spec.whatwg.org/#implementation-defined">https://infra.spec.whatwg.org/#implementation-defined</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-implementation-defined">3. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-ordered-map">
@@ -1875,6 +1982,12 @@ with parameters <var>session</var> and <var>capabilities</var> is:
     <li><a href="#ref-for-scalar-value-string">3. Transport</a>
    </ul>
   </aside>
+  <aside class="dfn-panel" data-for="term-for-ordered-set">
+   <a href="https://infra.spec.whatwg.org/#ordered-set">https://infra.spec.whatwg.org/#ordered-set</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-ordered-set">3. Transport</a>
+   </ul>
+  </aside>
   <aside class="dfn-panel" data-for="term-for-section-5.2">
    <a href="https://tools.ietf.org/html/rfc6455#section-5.2">https://tools.ietf.org/html/rfc6455#section-5.2</a><b>Referenced in:</b>
    <ul>
@@ -1885,6 +1998,12 @@ with parameters <var>session</var> and <var>capabilities</var> is:
    <a href="https://tools.ietf.org/html/rfc6455#section-6.2">https://tools.ietf.org/html/rfc6455#section-6.2</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-section-6.2">3. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-section-4.1">
+   <a href="https://tools.ietf.org/html/rfc6455#section-4.1">https://tools.ietf.org/html/rfc6455#section-4.1</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-section-4.1">3. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-7.1.7">
@@ -1899,10 +2018,22 @@ with parameters <var>session</var> and <var>capabilities</var> is:
     <li><a href="#ref-for-section-8.1">3. Transport</a>
    </ul>
   </aside>
+  <aside class="dfn-panel" data-for="term-for-section-4.2.1">
+   <a href="https://tools.ietf.org/html/rfc6455#section-4.2.1">https://tools.ietf.org/html/rfc6455#section-4.2.1</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-section-4.2.1">3. Transport</a>
+   </ul>
+  </aside>
   <aside class="dfn-panel" data-for="term-for-section-6.1">
    <a href="https://tools.ietf.org/html/rfc6455#section-6.1">https://tools.ietf.org/html/rfc6455#section-6.1</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-section-6.1">3. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-section-4.2">
+   <a href="https://tools.ietf.org/html/rfc6455#section-4.2">https://tools.ietf.org/html/rfc6455#section-4.2</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-section-4.2">3. Transport</a> <a href="#ref-for-section-4.2①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-7.4">
@@ -1929,6 +2060,12 @@ with parameters <var>session</var> and <var>capabilities</var> is:
     <li><a href="#ref-for-section-3">3. Transport</a>
    </ul>
   </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-active-session">
+   <a href="https://w3c.github.io/webdriver/#dfn-active-session">https://w3c.github.io/webdriver/#dfn-active-session</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-active-session">3. Transport</a>
+   </ul>
+  </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-additional-capability-deserialization-algorithm">
    <a href="https://w3c.github.io/webdriver/#dfn-additional-capability-deserialization-algorithm">https://w3c.github.io/webdriver/#dfn-additional-capability-deserialization-algorithm</a><b>Referenced in:</b>
    <ul>
@@ -1950,7 +2087,7 @@ with parameters <var>session</var> and <var>capabilities</var> is:
   <aside class="dfn-panel" data-for="term-for-dfn-endpoint-node">
    <a href="https://w3c.github.io/webdriver/#dfn-endpoint-node">https://w3c.github.io/webdriver/#dfn-endpoint-node</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-endpoint-node">3. Transport</a>
+    <li><a href="#ref-for-dfn-endpoint-node">3. Transport</a> <a href="#ref-for-dfn-endpoint-node①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-errors">
@@ -1970,6 +2107,12 @@ with parameters <var>session</var> and <var>capabilities</var> is:
    <a href="https://w3c.github.io/webdriver/#dfn-get-a-property">https://w3c.github.io/webdriver/#dfn-get-a-property</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-get-a-property">3.1. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-intermediary-node">
+   <a href="https://w3c.github.io/webdriver/#dfn-intermediary-node">https://w3c.github.io/webdriver/#dfn-intermediary-node</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-intermediary-node">3. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-invalid-argument">
@@ -1998,7 +2141,7 @@ with parameters <var>session</var> and <var>capabilities</var> is:
    <ul>
     <li><a href="#ref-for-dfn-remote-ends">2.1. Commands</a>
     <li><a href="#ref-for-dfn-remote-ends①">2.2. Events</a> <a href="#ref-for-dfn-remote-ends②">(2)</a>
-    <li><a href="#ref-for-dfn-remote-ends③">3. Transport</a> <a href="#ref-for-dfn-remote-ends④">(2)</a> <a href="#ref-for-dfn-remote-ends⑤">(3)</a> <a href="#ref-for-dfn-remote-ends⑥">(4)</a>
+    <li><a href="#ref-for-dfn-remote-ends③">3. Transport</a> <a href="#ref-for-dfn-remote-ends④">(2)</a> <a href="#ref-for-dfn-remote-ends⑤">(3)</a> <a href="#ref-for-dfn-remote-ends⑥">(4)</a> <a href="#ref-for-dfn-remote-ends⑦">(5)</a> <a href="#ref-for-dfn-remote-ends⑧">(6)</a> <a href="#ref-for-dfn-remote-ends⑨">(7)</a> <a href="#ref-for-dfn-remote-ends①⓪">(8)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-remote-end-steps">
@@ -2010,13 +2153,13 @@ with parameters <var>session</var> and <var>capabilities</var> is:
   <aside class="dfn-panel" data-for="term-for-dfn-sessions">
    <a href="https://w3c.github.io/webdriver/#dfn-sessions">https://w3c.github.io/webdriver/#dfn-sessions</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-sessions">3. Transport</a> <a href="#ref-for-dfn-sessions①">(2)</a> <a href="#ref-for-dfn-sessions②">(3)</a> <a href="#ref-for-dfn-sessions③">(4)</a> <a href="#ref-for-dfn-sessions④">(5)</a>
+    <li><a href="#ref-for-dfn-sessions">3. Transport</a> <a href="#ref-for-dfn-sessions①">(2)</a> <a href="#ref-for-dfn-sessions②">(3)</a> <a href="#ref-for-dfn-sessions③">(4)</a> <a href="#ref-for-dfn-sessions④">(5)</a> <a href="#ref-for-dfn-sessions⑤">(6)</a> <a href="#ref-for-dfn-sessions⑥">(7)</a> <a href="#ref-for-dfn-sessions⑦">(8)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-session-id">
    <a href="https://w3c.github.io/webdriver/#dfn-session-id">https://w3c.github.io/webdriver/#dfn-session-id</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-session-id">3. Transport</a>
+    <li><a href="#ref-for-dfn-session-id">3. Transport</a> <a href="#ref-for-dfn-session-id①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-set-a-property">
@@ -2047,20 +2190,26 @@ with parameters <var>session</var> and <var>capabilities</var> is:
    <li>
     <a data-link-type="biblio">[INFRA]</a> defines the following terms:
     <ul>
+     <li><span class="dfn-paneled" id="term-for-set-append" style="color:initial">append</span>
      <li><span class="dfn-paneled" id="term-for-assert" style="color:initial">assert</span>
      <li><span class="dfn-paneled" id="term-for-map-exists" style="color:initial">exist</span>
+     <li><span class="dfn-paneled" id="term-for-implementation-defined" style="color:initial">implementation-defined</span>
      <li><span class="dfn-paneled" id="term-for-ordered-map" style="color:initial">map</span>
      <li><span class="dfn-paneled" id="term-for-parse-json-into-infra-values" style="color:initial">parse json into infra values</span>
      <li><span class="dfn-paneled" id="term-for-scalar-value-string" style="color:initial">scalar value string</span>
+     <li><span class="dfn-paneled" id="term-for-ordered-set" style="color:initial">set</span>
     </ul>
    <li>
     <a data-link-type="biblio">[RFC6455]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="term-for-section-5.2" style="color:initial">%x1 denotes a text frame</span>
      <li><span class="dfn-paneled" id="term-for-section-6.2" style="color:initial">a websocket message has been received</span>
+     <li><span class="dfn-paneled" id="term-for-section-4.1" style="color:initial">establishes a websocket connection</span>
      <li><span class="dfn-paneled" id="term-for-section-7.1.7" style="color:initial">fail the websocket connection</span>
      <li><span class="dfn-paneled" id="term-for-section-8.1" style="color:initial">handling errors in utf-8-encoded data</span>
+     <li><span class="dfn-paneled" id="term-for-section-4.2.1" style="color:initial">reading the client's opening handshake</span>
      <li><span class="dfn-paneled" id="term-for-section-6.1" style="color:initial">send a websocket message</span>
+     <li><span class="dfn-paneled" id="term-for-section-4.2" style="color:initial">server-side requirements</span>
      <li><span class="dfn-paneled" id="term-for-section-7.4" style="color:initial">status codes</span>
      <li><span class="dfn-paneled" id="term-for-section-7.1.3" style="color:initial">the websocket closing handshake is started</span>
      <li><span class="dfn-paneled" id="term-for-section-7.1.4" style="color:initial">the websocket connection is closed</span>
@@ -2069,6 +2218,7 @@ with parameters <var>session</var> and <var>capabilities</var> is:
    <li>
     <a data-link-type="biblio">[WEBDRIVER]</a> defines the following terms:
     <ul>
+     <li><span class="dfn-paneled" id="term-for-dfn-active-session" style="color:initial">active sessions</span>
      <li><span class="dfn-paneled" id="term-for-dfn-additional-capability-deserialization-algorithm" style="color:initial">additional capability deserialization algorithm</span>
      <li><span class="dfn-paneled" id="term-for-dfn-additional-webdriver-capability" style="color:initial">additional webdriver capability</span>
      <li><span class="dfn-paneled" id="term-for-dfn-capability-name" style="color:initial">capability name</span>
@@ -2076,6 +2226,7 @@ with parameters <var>session</var> and <var>capabilities</var> is:
      <li><span class="dfn-paneled" id="term-for-dfn-errors" style="color:initial">error</span>
      <li><span class="dfn-paneled" id="term-for-dfn-error-code" style="color:initial">error code</span>
      <li><span class="dfn-paneled" id="term-for-dfn-get-a-property" style="color:initial">getting a property</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-intermediary-node" style="color:initial">intermediary node</span>
      <li><span class="dfn-paneled" id="term-for-dfn-invalid-argument" style="color:initial">invalid argument</span>
      <li><span class="dfn-paneled" id="term-for-dfn-local-ends" style="color:initial">local end</span>
      <li><span class="dfn-paneled" id="term-for-dfn-matched-capability-serialization-algorithm" style="color:initial">matched capability serialization algorithm</span>
@@ -2095,6 +2246,8 @@ with parameters <var>session</var> and <var>capabilities</var> is:
    <dd>Anne van Kesteren. <a href="https://fetch.spec.whatwg.org/">Fetch Standard</a>. Living Standard. URL: <a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>
    <dt id="biblio-infra">[INFRA]
    <dd>Anne van Kesteren; Domenic Denicola. <a href="https://infra.spec.whatwg.org/">Infra Standard</a>. Living Standard. URL: <a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>
+   <dt id="biblio-rfc4122">[RFC4122]
+   <dd>P. Leach; M. Mealling; R. Salz. <a href="https://tools.ietf.org/html/rfc4122">A Universally Unique IDentifier (UUID) URN Namespace</a>. July 2005. Proposed Standard. URL: <a href="https://tools.ietf.org/html/rfc4122">https://tools.ietf.org/html/rfc4122</a>
    <dt id="biblio-rfc6455">[RFC6455]
    <dd>I. Fette; A. Melnikov. <a href="https://tools.ietf.org/html/rfc6455">The WebSocket Protocol</a>. December 2011. Proposed Standard. URL: <a href="https://tools.ietf.org/html/rfc6455">https://tools.ietf.org/html/rfc6455</a>
    <dt id="biblio-webdriver">[WEBDRIVER]
@@ -2107,8 +2260,7 @@ with parameters <var>session</var> and <var>capabilities</var> is:
   </dl>
   <h2 class="no-num no-ref heading settled" id="issues-index"><span class="content">Issues Index</span><a class="self-link" href="#issues-index"></a></h2>
   <div style="counter-reset:issue">
-   <div class="issue"> This confuses the server listening socket with the actual
-websocket connection<a href="#issue-459ac9c5"> ↵ </a></div>
+   <div class="issue"> Do we support > 1 connection for a single session?<a href="#issue-0dc5e7b6"> ↵ </a></div>
    <div class="issue"> Should we instead close <var>connection</var> with <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4">status code</a> 1003, or <a data-link-type="dfn" href="#respond-with-an-error">respond with an error</a>?<a href="#issue-06ad62f1"> ↵ </a></div>
    <div class="issue"> Nothing seems to define what <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4">status code</a> is used for UTF-8 errors.<a href="#issue-449f8f30"> ↵ </a></div>
    <div class="issue"> That’s <i>2<sup>31</sup> - 1</i>, the largest signed
@@ -2119,6 +2271,8 @@ websocket connection<a href="#issue-459ac9c5"> ↵ </a></div>
    <div class="issue"> Command-specific parameter validation and dispatch.<a href="#issue-47277df8"> ↵ </a></div>
    <div class="issue"> Form a valid JSON <var>errorObject</var> given <var>code</var>.<a href="#issue-aee4ea98"> ↵ </a></div>
    <div class="issue"> This should also reset any internal state<a href="#issue-02ccb156"> ↵ </a></div>
+   <div class="issue"> Need to hook in to the session ending to allow the UA to close
+the listener if it wants.<a href="#issue-9f7aff26"> ↵ </a></div>
   </div>
   <aside class="dfn-panel" data-for="command">
    <b><a href="#command">#command</a></b><b>Referenced in:</b>
@@ -2134,17 +2288,64 @@ websocket connection<a href="#issue-459ac9c5"> ↵ </a></div>
     <li><a href="#ref-for-event①">3. Transport</a>
    </ul>
   </aside>
+  <aside class="dfn-panel" data-for="websocket-listener">
+   <b><a href="#websocket-listener">#websocket-listener</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-websocket-listener">3. Transport</a> <a href="#ref-for-websocket-listener①">(2)</a> <a href="#ref-for-websocket-listener②">(3)</a> <a href="#ref-for-websocket-listener③">(4)</a> <a href="#ref-for-websocket-listener④">(5)</a> <a href="#ref-for-websocket-listener⑤">(6)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="listener-host">
+   <b><a href="#listener-host">#listener-host</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-listener-host">3. Transport</a> <a href="#ref-for-listener-host①">(2)</a> <a href="#ref-for-listener-host②">(3)</a> <a href="#ref-for-listener-host③">(4)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="listener-port">
+   <b><a href="#listener-port">#listener-port</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-listener-port">3. Transport</a> <a href="#ref-for-listener-port①">(2)</a> <a href="#ref-for-listener-port②">(3)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="listener-secure-flag">
+   <b><a href="#listener-secure-flag">#listener-secure-flag</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-listener-secure-flag">3. Transport</a> <a href="#ref-for-listener-secure-flag①">(2)</a> <a href="#ref-for-listener-secure-flag②">(3)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="list-of-websocket-resources">
+   <b><a href="#list-of-websocket-resources">#list-of-websocket-resources</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-list-of-websocket-resources">3. Transport</a> <a href="#ref-for-list-of-websocket-resources①">(2)</a> <a href="#ref-for-list-of-websocket-resources②">(3)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="active-listeners">
+   <b><a href="#active-listeners">#active-listeners</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-active-listeners">3. Transport</a> <a href="#ref-for-active-listeners①">(2)</a>
+   </ul>
+  </aside>
   <aside class="dfn-panel" data-for="websocket-connection">
    <b><a href="#websocket-connection">#websocket-connection</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-websocket-connection">3. Transport</a> <a href="#ref-for-websocket-connection①">(2)</a> <a href="#ref-for-websocket-connection②">(3)</a> <a href="#ref-for-websocket-connection③">(4)</a> <a href="#ref-for-websocket-connection④">(5)</a>
+    <li><a href="#ref-for-websocket-connection">3. Transport</a> <a href="#ref-for-websocket-connection①">(2)</a> <a href="#ref-for-websocket-connection②">(3)</a> <a href="#ref-for-websocket-connection③">(4)</a> <a href="#ref-for-websocket-connection④">(5)</a> <a href="#ref-for-websocket-connection⑤">(6)</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="websocket-url">
-   <b><a href="#websocket-url">#websocket-url</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="construct-a-websocket-resource-name">
+   <b><a href="#construct-a-websocket-resource-name">#construct-a-websocket-resource-name</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-websocket-url">3. Transport</a>
-    <li><a href="#ref-for-websocket-url①">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-construct-a-websocket-resource-name">3. Transport</a> <a href="#ref-for-construct-a-websocket-resource-name①">(2)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="construct-a-websocket-url">
+   <b><a href="#construct-a-websocket-url">#construct-a-websocket-url</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-construct-a-websocket-url">3.1. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="get-a-session-id-for-a-websocket-resource">
+   <b><a href="#get-a-session-id-for-a-websocket-resource">#get-a-session-id-for-a-websocket-resource</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-get-a-session-id-for-a-websocket-resource">3. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="start-listening-for-a-websocket-connection">
