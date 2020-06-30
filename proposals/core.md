@@ -47,7 +47,7 @@ The interface for the new protocol would be a set of client-to-server commands, 
 }
 ```
 
-Commands include a "method" name and optional "params" object containing named parameters. A "to" field indicates which actor in the BiDi model to route the request to.
+Commands include a "method" name and optional "params" object containing named parameters. A "to" field indicates which object in the BiDi model to route the request to.
 
 *Sample success response*
 
@@ -71,7 +71,9 @@ Responses from the server include the "id" of the command they are responding to
 
 #### Events
 
-Since events may generate a large amount of traffic over the WebSocket, and may have a runtime cost in the browser, these should be opt-in. Commands should be provided so that a client can subscribe and unsubscribe. Some events that are crucial to target discovery will be enabled by default. These are discussed in the Target Discovery section below.
+Since events may generate a large amount of traffic over the WebSocket, and may have a runtime cost in the browser, these should be opt-in. Commands should be provided so that a client can subscribe and unsubscribe.
+
+Some events that are crucial to target discovery will be enabled by default. These are discussed in the Target Discovery section below.
 
 The first step to receive events on the client side would be to send a "subscribe" command:
 
@@ -92,7 +94,7 @@ The client sends a matching "unsubscribe" command when they no longer want to re
 
 *Sample event*
 
-All event messages have a "from" property indicating which actor in the BiDi model sent the event. Event messages don't have an "id" property since they are not associated with a command request message.
+All event messages have a "from" property indicating which object in the BiDi model sent the event. Event messages don't have an "id" property since they are not associated with a command request message.
 
 ```json
 {
@@ -163,7 +165,7 @@ A session has one or more windows (top-level browsing contexts). Each window has
 
 ### Updated WebDriver/BiDi Model
 
-The object model below represents a somewhat simplified view of the modern user agent as defined in https://html.spec.whatwg.org/. The model includes the all of the actors represented in WebDriver/HTTP and adds new Worker and Worklet actors. It also separates the notion of a JS Realm from a browsing context and introduces a type for representing complex JS Values:
+The object model below represents a somewhat simplified view of the modern user agent as defined in https://html.spec.whatwg.org/. The model includes the all of the objects represented in WebDriver/HTTP and adds new Worker and Worklet objects. It also separates the notion of a JS Realm from a browsing context and introduces a type for representing complex JS Values:
 
 ```ts
 UserAgent
@@ -240,6 +242,8 @@ Value
     id: string?
     value: object?
 ```
+
+The BiDi remote ends will send events to the client whenever new objects become available, or if an objects's basic properties (listed above) change.
 
 ### Identifiers
 
@@ -361,16 +365,18 @@ This model should make it possible to target all of the contexts that WebDriver 
 
 ## Target Discovery
 
-Now that we've outlined a way to target commands to the right place, there needs to be a way for the client to find out about these contexts. In the traditional command/response paradigm, the user can send a command such as "Get Window Handles" to find out about currently opened tabs, or "Find Element" to grab a reference to an iframe to switch into. In this world, discovering newly opened windows means polling the "Get Window Handles" command until a new handle appears in the list. In a bidirectional world, the server can proactively notify the client when a new target is opened, or a new frame or script context is attached. We should provide a way for the client to register for these events.
+Now that we've outlined a way to target commands to the right place, there needs to be a way for the client to find out about these contexts. In the traditional command/response paradigm, the user can send a command such as "Get Window Handles" to find out about currently opened tabs, or "Find Element" to grab a reference to an iframe to switch into. In this world, discovering newly opened windows means polling the "Get Window Handles" command until a new handle appears in the list. In a bidirectional world, the server can proactively notify the client when a new target is opened, or a new frame or script realm is attached.
+
+All of the events described in this section are enabled by default throughout a Session and therefore do not require the client to send a "subscribe" command. This ensures the client can maintain an up-to-date copy of the available contexts and prevents the client from missing events early in a target's lifecycle.
 
 ### Discovering top-level targets
 
-The simplest way to discover targets would be to send a command that replies with the current list of available targets. A new WebDriver session should have a single page target by default. Below is a proposed "getTargets" command which would be the bidi version of the existing "Get Window Handles" command.
+The simplest way to discover targets would be to send a command that replies with the current list of available targets. A new WebDriver session should have a single window target by default. Below is a proposed "getTargets" command which would be the bidi version of the existing "Get Window Handles" command. A key difference is that BiDi also supports top-level targets other than Windows, namely Shared Workers and Service Workers.
 
 *Command*
 
 ```json
-{ "id": 0, "method": "getTargets" }
+{ "id": 0, "to": "userAgent", "method": "getTargets" }
 ```
 
 *Response*
@@ -378,44 +384,42 @@ The simplest way to discover targets would be to send a command that replies wit
 ```json
 { "id": 0, "result": {
     "targets": [
-        { "targetId": "<ID>", "type": "page", "url": "about:blank" }
+        { "id": "window/111", "type": "window", "url": "about:blank" }
         ...
     ]
 } }
 ```
 
-The API could provide "targetCreated" and "targetClosed" events to let the client know when the target list changes. The client could subscribe to these events and then send an initial getTargets command. After receiving the initial list of targets, the client would start receiving updates any time the list changes. This makes it possible to do things like wait for new windows without the need for polling.
+The UserAgent could also provide "targetCreated" and "targetClosed" events to let the client know when the target list changes. This makes it possible to do things like wait for new windows without the need for polling.
 
 *Events*
 
 ```json
 {
-    "method": "targetCreated", "params": {
-        "targetId": "<ID>", "type": "serviceWorker", "url": "sw.js" }
+    "from": "userAgent", "method": "targetCreated", "params": {
+        "id": "serviceWorker/222", "type": "serviceWorker", "url": "sw.js", "urlScope": "https://example.com/" }
     }
 }
 ```
 
 ```json
 {
-    "method": "targetClosed", "params": {
-        "targetId": "<ID>"
+    "from": "userAgent", "method": "targetClosed", "params": {
+        "id": "serviceWorker/222"
     }
 }
 ```
 
 ### Discovering browsing contexts
 
-We need a similar means to discover what browsing contexts exist for a target, but these are a little different since browsing contexts exist as a tree instead of a flat list. Nested browsing contexts should provide a reference to their parent so the client knows what the tree looks like.
+We need a similar means to discover what browsing contexts exist for a Window Target, but these are a little different since browsing contexts exist as a tree instead of a flat list. Nested browsing contexts should provide a reference to their parent so the client knows what the tree looks like.
 
 *Get Browsing Contexts Command*
 
 Returns the tree of browser contexts for a given target:
 ```json
 {
-    "id": 0, "method": "getBrowsingContexts", "params": {
-        "targetId": "<ID>"
-    }
+    "to": "window/111", "id": 0, "method": "getBrowsingContexts"
 }
 ```
 
@@ -424,10 +428,10 @@ Returns the tree of browser contexts for a given target:
 {
     "id": 0, "result": {
         "browsingContexts": [
-            { "browsingContextId": "<ID #0>" },
-            { "browsingContextId": "<ID #1>", "parentBrowsingContextId": "<ID #0>" },
-            { "browsingContextId": "<ID #2>", "parentBrowsingContextId": "<ID #1>" },
-            { "browsingContextId": "<ID #3>", "parentBrowsingContextId": "<ID #0>" }
+            { "id": "<ID #0>" },
+            { "id": "<ID #1>", "parentId": "<ID #0>" },
+            { "id": "<ID #2>", "parentId": "<ID #1>" },
+            { "id": "<ID #3>", "parentId": "<ID #0>" }
         ]
     }
 }
@@ -435,54 +439,51 @@ Returns the tree of browser contexts for a given target:
 
 *Events*
 
-Updates are sent to the client whenever a browsing context is added or removed from the tree. Attach events include the parent browsing context's ID so the client has a complete picture of the tree. In this example, browsing context #4, is being added as a child of browsing context #1. Then later, browsing context #3 is being removed from the tree.
+A Window Target or a BrowsingContext sends updates to the client whenever a nested browsing context is added or removed. These events are always enabled. A client can use these events to maintain an up-to-date copy of the browsing context tree so they don't need to send a getBrowsingContexts command. In this example, browsing context #4 is being added as a child of browsing context #1. Then later, browsing context #3 is being removed from the tree.
 
 ```json
 {
+    "from": "browsingContext/1",
     "method": "browsingContextAttached", "result": {
-        "parentBrowsingContextId": "<ID #1>",
-        "browsingContextId": "<#ID #4>"
+        "id": "browsingContext/4",
+        // ... additional info about new browsing context (e.g. URL)
     }
 }
 ```
 
 ```json
 {
+    "from": "browsingContext/1",
     "method": "browsingContextDetached", "result": {
-        "browsingContextId": "<#ID #3>"
+        "id": "browsingContext/3"
     }
 }
 ```
 
-Once the client has a browsing context's ID, it can send additional commands to get further info about that browsing context such as its title or current URL. These commands can also offer a similar ability to register for updates (e.g. if the client wants to know when a frame's title changes or a navigation occurs).
+The initial browsingContextAttached event carries some basic information about the new context such as its title and URL. The browsing context itself will generate "update" events if any of these properties change (e.g. due to a navigation).
 
-### Discovering script contexts
+### Discovering nested workers
 
-Unlike browsing contexts which have parent-child relationships to each other, and form a tree; there is no inherent relationship between two given script contexts, so these are represented as a flat list. Script contexts that happen to be associated with a browsing context (document scripts) should have a reference back to their browsing context though.
+The following object types may own nested dedicated workers:
 
-*Get Script Contexts Command*
+- Window
+- DedicatedWorker
+- SharedWorker
+- ServiceWorker
 
-```json
-{
-    "id": 0, "method": "getScriptContexts", "params": {
-        "targetId": "<ID>"
-    }
-}
-```
+The client can send a `getWorkers` command to any of these objects to get a list of nested workers. These objects will also send `workerAttached` and `workerDetached` events whenever the list of nested workers is updated.
 
-```json
-{
-    "id": 0, "result": {
-        "scriptContexts": [
-            { "scriptContextId": "<ID #1>", "type": "page", "browsingContextId": "<ID>" },
-            { "scriptContextId": "<ID #2>", "type": "page", "browsingContextId": "<ID>" },
-            { "scriptContextId": "<ID #1>", "type": "worker", "browsingContextId": "<ID>" }
-        ]
-    }
-}
-```
+### Discovering JavaScript realms
 
-As with browsing contexts, there should be similar "scriptContextCreated" and "scriptContextClosed" events to let the client know if the list of script contexts changes.
+The following object types have a JavaScript Realm:
+
+- BrowsingContext
+- DedicatedWorker
+- ShatedWorker
+- ServiceWorker
+- Worklet
+
+The client can send a `getRealm` command to any of these objects to get that object's Realm. These objects will also send `realmCreated` and `realmClosed` events when the Realm is created and closed respectively.
 
 ## Examples
 
@@ -525,11 +526,3 @@ const target = await promise;
 // Send a command to the new target.
 const browsingContexts = await driver.getBrowsingContexts({ target: target.id });
 ```
-
-## Open Issues
-
-### Using element references in script
-
-The execute script command in the current proposal takes a script context ID and not a browsing context ID. But, if the client wants to pass in an element reference, they would need to pass in a browsing context ID as well so the server knows which context the element belongs to. As a fix, the execute script command could just get the browsing context that matches the script context and try to find the element there.
-
-Or, disallow web element references in script commands. Instead, add a new WebDriver concept of "remote JS objects", and use these to represent elements when calling execute script. We would need additional commands to convert between web element references and remote JS object references. Similar to how DOM nodes in the Chrome devtools protocol have both DOM node IDs and remote object IDs.
