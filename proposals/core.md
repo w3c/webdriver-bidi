@@ -18,7 +18,7 @@ The protocol should also be:
 
 The proposed transport mechanism is WebSockets. They support the full-duplex communication that we'll need for bidirectional WebDriver scenarios, and have broad library support in multiple languages.
 
-The proposed message format is based on [JSON-RPC 2.0](https://www.jsonrpc.org/specification), but without the "jsonrpc" property and a different error message format. Unfortunately, existing JSON-RPC libraries will likely not work with WebDriver BiDi, but could likely be made to work with minor changes.
+The proposed message format is based on [JSON-RPC 2.0](https://www.jsonrpc.org/specification), but without the "jsonrpc" property and a different error message format. The proposed message format also adds additional "to" and "from" properties to assist with message routing. Unfortunately, existing JSON-RPC libraries will likely not work with WebDriver BiDi, but could likely be made to work with minor changes.
 
 JSON-RPC is also accompanied by the [OpenRPC](https://open-rpc.org/) spec; an interface description format for JSON-RPC APIs that is both human and machine-readable. Using OpenRPC, we can document and describe the entire bidirectional WebDriver API, and also make it simple for clients to generate language bindings and keep them up to date. OpenRPC is recommended over OpenAPI because OpenRPC is designed specifically with JSON-RPC in mind. OpenAPI is designed to specify REST-style APIs, and so isn't as well suited to a JSON-RPC API. The OpenRPC maintainers provide tools to generate human-readable documentation and typings/bindings for various languages.
 
@@ -41,12 +41,13 @@ The interface for the new protocol would be a set of client-to-server commands, 
 ```json
 {
     "id": 0,
+    "to": "browsingContext/111",
     "method": "getTitle",
-    "params": { "browsingContextId": "<ID>" }
+    "params": {}
 }
 ```
 
-Commands include a "method" name and optional "params". Positional parameters in an array are supported, but named parameters in an object are more descriptive and map more closely to how WebDriver commands currently work.
+Commands include a "method" name and optional "params" object containing named parameters. A "to" field indicates which actor in the BiDi model to route the request to.
 
 *Sample success response*
 
@@ -64,40 +65,40 @@ Responses from the server include the "id" of the command they are responding to
 ```json
 {
     "id": 0,
-    "error": { "code": 8, "message": "no such frame", "data": { "stacktrace": "..." } }
+    "error": { "code": "no such frame", "message": "...", "stacktrace": "", "data": {} }
 }
 ```
 
-Note that in this example, "stacktrace" is embedded in the "data" property instead of alongside it (like in an WebDriver HTTP error response). This is to comply with the JSON-RPC spec for Error messages. All custom data needs to be in the "data" field.
-
 #### Events
 
-Since events may generate a large amount of traffic over the WebSocket, and may have a runtime cost in the browser, these should be opt-in. Commands should be provided so that a client can subscribe and unsubscribe. The first step to receive events on the client side would be to send a "subscribe" command:
+Since events may generate a large amount of traffic over the WebSocket, and may have a runtime cost in the browser, these should be opt-in. Commands should be provided so that a client can subscribe and unsubscribe. Some events that are crucial to target discovery will be enabled by default. These are discussed in the Target Discovery section below.
 
-*Subscribing to an event*
+The first step to receive events on the client side would be to send a "subscribe" command:
+
+*Subscribing to events*
 
 ```json
 {
     "id": 0,
+    "to": "window/222",
     "method": "subscribe",
-    "params": { "event": "scriptContextCreated" }
+    "params": { "domains": ["logging", "network"] }
 }
 ```
 
-Sending this command would tell the server to start firing an event (i.e. "scriptContextCreated") to the client. The client would send a matching "unsubscribe" command when they no longer want to receive that event.
+The "subscribe" command is sent to a top-level Target, in this case a Window. Sending this command tells the server to start sending logging- and network- related events to the client. The scope of a "subscribe" command is a top-level Target. This will enable events on all browsing contexts and realms that belong to that target. Enabling events for individual browsing contexts or realms is not supported. To enable events for a different top-level Target, the client must send another "subscribe" command.
 
-Subscriptions for each event should be ref-counted on the server side. Calling subscribe would increment the ref count for an event and calling unsubscribe would decrement the ref count. The first time the client calls subscribe, the ref count goes from 0 to 1, and the WebDriver implementation would perform whatever browser-specific steps are needed to begin generating the event. When the ref count falls back to 0, the WebDriver implementation would stop generating the event.
-
-Ref counting is useful here because it would allow multiple consumers on the client side to call "subscribe". For example, some test code might want to subscribe for an event, and the code might use some third-party helper library that also wants to subscribe for the event. Ref counting allows the test code and helper library to subscribe and unsubscribe independently. Otherwise, the first one to call "unsubscribe" would inadvertently shut down events for both consumers.
+The client sends a matching "unsubscribe" command when they no longer want to receive events from a Target.
 
 *Sample event*
 
-Event messages don't have an "id" property since they are fire-and-forget.
+All event messages have a "from" property indicating which actor in the BiDi model sent the event. Event messages don't have an "id" property since they are not associated with a command request message.
 
 ```json
 {
-    "method": "scriptContextCreated",
-    "params": { "scriptContextId": "<ID>" }
+    "from": "browsingContext/333",
+    "method": "logging.entryAdded",
+    "params": { "type": "info", message: "Hello World!" }
 }
 ```
 
@@ -137,7 +138,7 @@ Once the session is created, the client would then attempt to connect to the Web
 
 See [Establishing a Connection](https://w3c.github.io/webdriver-bidi/#establishing) for details.
 
-## Message Routing
+## Object Model & Message Routing
 
 Since each WebSocket is tied to a single session, there's no need to identify which session to target when sending commands. However, there still needs to be a way to identify which browsing context, frame, element, etc... a command is targeting.
 
@@ -147,38 +148,125 @@ WebDriver has a notion of a current top-level browsing context, and current brow
 
 In a bidirectional world, where the remote end can generate events at potentially any time, it is possible for events to come from any context. With that in mind, it makes sense to be able to target any context and handle events from that context without the need to switch to it first. Hence, the above resolution.
 
+### WebDriver/HTTP Model
+
 Today, WebDriver models the browser as a hierarchy that looks something like this:
 
+```
 - WebDriver Session
     - Window
         - Frame
             - Element
+```
 
 A session has one or more windows (top-level browsing contexts). Each window has a tree of frames (nested browsing contexts), each with a tree of HTML elements. To send a command to one of these contexts, we'll need a way to identify that context. Additionally, to allow the new bidi protocol to interoperate with the existing protocol, we should try to reuse the existing identifiers where possible.
 
-### Identifying browsing contexts
+### Updated WebDriver/BiDi Model
 
-Today, WebDriver uses strings called "window handles" to uniquely identify top-level browsing contexts. These can easily be reused in the new protocol. Frames (nested browsing contexts) are a little tricker. There is no concept of a "frame ID" in WebDriver yet. The Switch To Frame command accepts either a number or a web element reference as a parameter. The number is context-sensitive and so it can't be used as a globally unique frame ID. Web element references are unique across all browsing contexts in a window so these are a better candidate. However, element references aren't valid across windows, so it seems we'll need to add a new type of globally unique ID for nested browsing contexts. These can be a simple string ID just like window handles. For interop purposes, we should also add commands for users to convert a browsing context ID to a web element reference that can be used with classical commands and vice-versa.
+The object model below represents a somewhat simplified view of the modern user agent as defined in https://html.spec.whatwg.org/. The model includes the all of the actors represented in WebDriver/HTTP and adds new Worker and Worklet actors. It also separates the notion of a JS Realm from a browsing context and introduces a type for representing complex JS Values:
 
-### Identifying windows and other top-level targets
+```ts
+UserAgent
+    // One per session, maintains a list of active targets
+    targets: Target[]
 
-While we didn't arrive at any resolutions on the subject at TPAC this year, there was general interest in adding support for new contexts such as service workers and different JS realms. A WebDriver "window" in the current model considers only browsing contexts. It also conflates the concept of a browsing context with the concept of a script context. What this means in practice is that only document script contexts are visible to WebDriver. This is usually all the user needs/wants, but it precludes access to other script contexts such as web workers, service workers, and web extensions. Since some changes will already be necessary to allow the bidi protocol to target the contexts that already exists (i.e. frames), now seems as good a time as any to define these additional contexts and light up some new customer scenarios. Below is an updated browser model with some new (*) concepts:
+Target
+    // A top-level browsing context or worker
+    id: string
+    type: "Window" | "SharedWorker" | "ServiceWorker"
 
-- WebDriver Session
-    - Target* (Formerly "Window". Can be a page or service worker)
-        - Browsing Context (aka "Frame")
-            - Element
-        - Script Context* (document, web worker, service worker, etc.)
+Window : Target
+    // Window-specific properties
+    url: URL
+    title: string
+    opener: Window?
+    // Reference to browsing context
+    topLevelBrowsingContext: BrowsingContext
 
-In this new model, a Target is simply a thing that can host some browsing contexts, and/or script contexts. A basic page target would host a single top-level browsing context, some nested browsing contexts, and a number of script contexts; one for each browsing context in the tree. There could be additional script contexts as well if, say, the page uses web workers. A service worker target would have no browsing contexts; it would host script contexts only. This is where splitting the notion of browsing and script contexts comes in handy; It is now possible to execute script in the context of a service worker.
+SharedWorker : Target
+    // Shared worker-specific properties
+    name: string
+    // References to nested workers and JS realm
+    workers: DedicatedWorker[]
+    realm: Realm
 
-To maintain backwards compatibility with classical WebDriver, Targets would act just like Windows and continue to use window handles (strings) as IDs. Service workers, and other types of targets that don't host any browsing contexts would be invisible to the old protocol. Calling the classic "Get Window Handles" command would return only the page Targets and attempting to switch to a non-page Target using a classic command would return an error.
+ServiceWorker : Target
+    // Service worker-specific properties
+    scopeURL: string
+    // References to nested workers and JS realm
+    workers: DedicatedWorker[]
+    realm: Realm
 
-*Open Issue: Do we want to add these concepts to the HTTP protocol as well?*
+DedicatedWorker
+    // A dedicated worker always has at most one owner, so it is not an
+    // independent Target like the other types of workers.
+    id: string
+    owner: Window | Worker
+    // References to nested workers and JS realm
+    workers: DedicatedWorker[]
+    realm: Realm
 
-### Identifying elements
+Worker = DedicatedWorker | SharedWorker | ServiceWorker
 
-Web element references can continue to work as they do today, with one caveat; since element references are valid only within a particular browsing context, any commands that operate on elements and any events involving elements will need to specify which browsing context the element(s) belongs to. For example, a command like getElementText would need both a "browsingContextId" and an "elementId" parameter.
+Worklet
+    // There are a handful of Worklet types. A Worklet is associated
+    // with a browsing context and has its own JS realm.
+    id: string
+    owner: BrowsingContext
+    realm: Realm
+
+BrowsingContext
+    // Info about this browsing context
+    id: string
+    url: URL
+    // References to parent and child browsing contexts
+    parent: BrowsingContext?
+    children: BrowsingContext[]
+    // References to nested workers and JS realm
+    workers: DedicatedWorker[]
+    realm: Realm
+    // References to worklets
+    worklets: Worklet[]
+
+Realm
+    id: string
+    owner: BrowsingContext | Worker | Worklet
+
+Value
+    // Obtained from a Realm. Represents a JS value from that Realm.
+    // May represent an HTML Element.
+    realm: Realm
+    type: string
+    id: string?
+    value: object?
+```
+
+### Identifiers
+
+Every object in the model has an `id` property that is unique throughout the Session and indicates what type of object it is. An `id` is a human-readable type name, following by a string UUID. Examples:
+
+ - `"userAgent"` - The root user agent
+ - `"window/83d07169-4143-4ae8-947c-713f6949329f"` - A window target
+ - `"serviceWorker/88f77c44-250f-4c66-b788-74edaa7ba305"` - A service worker target
+ - `"browsingContext/83c286bc-dc72-4678-a79f-c033b76498d7"` - A (possibly nested) browsing context
+
+### Interop with WebDriver/HTTP
+
+It should be possible to convert back-and-forth between WebDriver/HTTP representation and WebDriver/BiDi representations as needed. BiDi object IDs as proposed above are globally-unique within a session, but WebDriver/HTTP handles for frames and elements are valid only within a particular browsing context.  
+
+#### Windows Handles
+
+Today, WebDriver uses strings called "window handles" to uniquely identify top-level browsing contexts.
+
+To obtain an HTTP-compatible window handle given a BiDi Window, the client can either query the BiDi Window for it's `httpWindowHandle` property, or get the `httWindowHandle` from the `targetCreated` event params when the Window is first created.
+
+To obtain a BiDi Window ID given an HTTP window handle, the client can either maintain a mapping of previously-seen BiDi Window IDs to window handles. The `UserAgent` can also provide a `findWindowByHttpHandle` command to perform the conversion.
+
+#### Frames & Elements
+
+WebDriver/HTTP uses Web Element References to represent HTML Elements and to represent Frames in the Switch To Frame command. However, Web Element References are valid only within a particular browsing context. To obtain a BiDi Element or Frame ID given a Web Element Reference, the client would first need to know which browsing context the Web Element Reference belongs to. The `BrowsingContext` can provide `findElementByHttpHandle` and `findBrowsingContextByHttpHandle` commands to convert Web Element Referenced into a BiDi Elements or Frames respectively.
+
+In cases where the client does not yet have the BiDi ID of the `BrowsingContext` to query, the `UserAgent` can provide `getCurrentBrowsingContext` and `getCurrentTopLevelBrowsingContext` commands. These will return BiDi IDs for the HTTP Session's "current browsing context" and "current top-level browsing context". Note that WebDriver/BiDi in this proposal does not have a notion of current or default browsing contexts. Any context is addressable at any time, and may also send events at any time.
 
 ### Message routing examples
 
@@ -189,56 +277,82 @@ Below are some sample bidi commands that illustrate how message routing would wo
 ```json
 {
     "id": 0,
+    "to": "browsingContext/83c286bc-dc72-4678-a79f-c033b76498d7",
     "method": "navigateTo",
-    "params": { "browsingContextId": "<ID>", "url": "http://example.com" }
+    "params": { "url": "http://example.com" }
 }
 ```
 
-*Send command to script context*
+*Send command to JS realm*
 
 ```json
 {
     "id": 0,
+    "to": "realm/83c286bc-dc72-4678-a79f-c033b76498d7",
     "method": "executeSync",
     "params": {
-        "scriptContextId": "<ID>",
         "script": "return document.title;",
         "args": []
     }
 }
 ```
 
-#### Close a target
+#### Close a top-level window target
 
 ```json
 {
     "id": 0,
+    "to": "window/83c286bc-dc72-4678-a79f-c033b76498d7",
     "method": "closeTarget",
-    "params": { "targetId": "<ID>" }
+    "params": { }
 }
 ```
 
 #### Interop with classical WebDriver
 
 ```json
-// Send bidi command
+// HTTP command in existing code - HTTP POST /session/<session id>/element
 {
-    "id": 0,
-    "method": "getFrameOwnerElement",
-    "params": { "browsingContextId": "<ID>" }
+    "using": "css selector",
+    "value": "#button"
 }
 
-// Get response
+// Response
 {
-    "result": {
+    "value": {
         "element-6066-11e4-a52e-4f735466cecf": "<element id>"
     }
 }
 
-// Use it in a classical WebDriver command - HTTP POST /session/<session id>/frame
+// Get BiDi representation of current browsing context
 {
-    "id": {
-        "element-6066-11e4-a52e-4f735466cecf": "<element id>"
+    "id": 0,
+    "to": "userAgent",
+    "method": "getCurrentBrowsingContext",
+    "params": { }
+}
+
+// Response
+{
+    "id": 0,
+    "result": {
+        "browsingContext": "browsingContext/83c286bc-dc72-4678-a79f-c033b76498d7"
+    }
+}
+
+// Get BiDi representation of element from current browsing context
+{
+    "id": 1,
+    "to": "browsingContext/83c286bc-dc72-4678-a79f-c033b76498d7",
+    "method": "findElementByHttpHandle",
+    "params": { "element": { "element-6066-11e4-a52e-4f735466cecf": "<element id>" } }
+}
+
+// Response
+{
+    "id": 1,
+    "result": {
+        "value": "value/88f77c44-250f-4c66-b788-74edaa7ba305"
     }
 }
 ```
