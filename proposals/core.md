@@ -100,7 +100,8 @@ All event messages have a "from" property indicating which object in the BiDi mo
 {
     "from": "browsingContext/333",
     "method": "logging.entryAdded",
-    "params": { "type": "info", message: "Hello World!" }
+    "params": { "type": "info", "message": "Hello World!" }
+
 }
 ```
 
