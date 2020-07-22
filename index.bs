@@ -29,6 +29,9 @@ spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
     text: Fail the WebSocket Connection; url: section-7.1.7
     text: Status Codes; url: section-7.4
     text: Handling Errors in UTF-8-Encoded Data; url: section-8.1
+spec: RFC8610; urlPrefix: https://tools.ietf.org/html/rfc8610
+  type: dfn
+    text: match a CDDL specification; url: appendix-C
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
@@ -40,6 +43,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: getting a property; url: dfn-get-a-property
     text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
+    text: unknown command; url: dfn-unknown-command
     text: active sessions; url: dfn-active-session
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
@@ -131,7 +135,32 @@ specification using [[!RFC8610|CDDL]].
 
 ## Processing Model ## {#processing-model}
 
+<div algorithm>
+To <dfn>process a command</dfn> given a command name |command name|,
+and parameters |parameters|:
 
+   1. Let |command| be the command listed in the [=table of commands=]
+      whose name is |command name|.
+
+   1. If there is no such |command|, return an [=Error=] with [=error
+      code=] [=unknown command=].
+
+   1. If |parameters| does not [=match a CDDL specification|match the
+      CDDL specification=] given by |command|'s [=command/parameter
+      type=], then return an [=Error=] with [=error code=] [=invalid
+      argument=].
+
+   1. Let |result| be the return value obtained by running the [=remote
+      end steps=] for |command| with |parameters|.
+
+   1. If |result| is an [=Error=], then return |result| and abort these
+      steps.
+
+   1. [=Assert=]: |result| [=match a CDDL specification|matches the CDDL
+      specification=] given by |command|'s [=command/return type=].
+
+   1. Return |result|.
+      </div>
 
 Transport {#transport}
 ======================
@@ -344,7 +373,9 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
     code=] [=invalid argument=], and finally return.
     <!-- corresponds to Invalid Request (-32600) in JSON-RPC -->
 
- 5. Issue: Command-specific parameter validation and dispatch.
+ 5. Let |result| be the result of [=process a command|processing a
+    command=] given |parsed|["<code>method</code>"] and
+    |parsed|["<code>params</code>"].
 
 </div>
 
