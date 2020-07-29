@@ -53,6 +53,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: session ID; url: dfn-session-id
     text: set a property; url: dfn-set-a-property
     text: success; url: dfn-success
+    text: try; url: dfn-try
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
 </pre>
 
@@ -86,6 +87,20 @@ This specification uses Concise Data Definition Language (CDDL)
 Note: These definitions do not form any normative requirements, rather
 they are used elsewhere as part of such requirements.
 
+## Modules ## {#protocol-modules}
+
+The WebDriver BiDi protocol is organized into modules. A
+<dfn>module</dfn> is defined by:
+ - A unique string <dfn export for=module>name</dfn>, implicit in its
+   definition.
+ - A set of [=commands=].
+ - A set of [=events=].
+
+Each [=module=] represents a collection of related [=commands=] and
+[=events=] pertaining to a certain aspect of the user agent. For
+example, a module might contain functionality for inspecting and
+manipulating the DOM, or for script execution.
+
 ## Commands ## {#commands}
 
 A <dfn export>command</dfn> is an asynchronous operation, requested by
@@ -107,14 +122,18 @@ type|return types=] are defined in this specification using
 [[!RFC8610|CDDL]].
 
 The following <dfn export for=command>table of commands</dfn> lists the
-available [=command|commands=] by name.
+available [=command|commands=] by module and name.
 
 <table class="simple">
    <tr>
+      <th>Module Name</th>
+      <th>Command Name</th>
       <th>Command</th>
    </tr>
    <tr>
-      <td>[=commands/status=]</td>
+      <td>session</td>
+      <td>status</td>
+      <td>[=commands/status|session.status=]</td>
    </tr>
 </table>
 
@@ -150,17 +169,14 @@ and parameters |parameters|:
       type=], then return an [=Error=] with [=error code=] [=invalid
       argument=].
 
-   1. Let |result| be the return value obtained by running the [=remote
-      end steps=] for |command| with |parameters|.
-
-   1. If |result| is an [=Error=], then return |result| and abort these
-      steps.
+   1. Let |result| be the result of [=trying=] to run the [=remote end
+      steps=] for |command| with |parameters|.
 
    1. [=Assert=]: |result| [=match a CDDL specification|matches the CDDL
       specification=] given by |command|'s [=command/return type=].
 
-   1. Return |result|.
-      </div>
+   1. Return [=success=] with data |result|.
+</div>
 
 Transport {#transport}
 ======================
@@ -193,7 +209,7 @@ established from |listener| must be TLS encrypted.
 A [=remote end=] has a [=set=] of [=WebSocket listeners=] <dfn>active
 listeners</dfn>, which is initially empty.
 
-A WebDriver [=session=] has a <dfn>WebSocket connection</dfn> which is
+A WebDriver [=/session=] has a <dfn>WebSocket connection</dfn> which is
 a network connection that follows the requirements of the
 [[!RFC6455|WebSocket protocol]].
 
@@ -216,7 +232,7 @@ accept the incoming connection:
    stop running these steps and act as if the requested service is not
    available.
 
-3. If there is a [=session=] in the list of [=active sessions=] with
+3. If there is a [=/session=] in the list of [=active sessions=] with
    |session id| as its [=session ID=] then let |session| be that
    session. Otherwise stop running these steps and act as if the
    requested service is not available.
@@ -250,7 +266,7 @@ WebSocket connection to be closed without a closing handshake.
 
 To <dfn lt="construct a WebSocket resource name|constructing a
 WebSocket resource name">construct a WebSocket resource name</dfn>
-given a [=session=] |session|:
+given a [=/session=] |session|:
 
 1. Return the result of concatenating the string "<code>/session/</code>"
    with |session|'s [=session ID=].
@@ -261,7 +277,7 @@ given a [=session=] |session|:
 
 To <dfn lt="construct a WebSocket URL|constructing a WebSocket
 URL">construct a WebSocket URL</dfn> given a [=WebSocket listener=]
-|listener| and [=session=] |session|:
+|listener| and [=/session=] |session|:
 
 1. Let |resource name| be the result of [=constructing a WebSocket
    resource name=] given |session|.
@@ -294,7 +310,7 @@ given |resource name|:
 
 <div algorithm>
 To <dfn>start listening for a WebSocket connection</dfn> given a
-[=session=] |session|:
+[=/session=] |session|:
 
  1. If there is an existing [=WebSocket listener=] in the set of [=
     active listeners=] which the [=remote end=] would like to reuse,
@@ -414,14 +430,14 @@ To <dfn>respond with an error</dfn> given a [=WebSocket connection=]
 To <dfn>handle a connection closing</dfn> given a
 [=WebSocket connection=] |connection|:
 
- 1. If there is a WebDriver [=session=] with |connection| as its [=connection=],
-    set the [=connection=] on that [=session=] to null.
+ 1. If there is a WebDriver [=/session=] with |connection| as its [=connection=],
+    set the [=connection=] on that [=/session=] to null.
 
 Issue: This should also reset any internal state
 
 </div>
 
-Note: This does not end any [=session=].
+Note: This does not end any [=/session=].
 
 Issue: Need to hook in to the session ending to allow the UA to close
 the listener if it wants.
@@ -478,10 +494,15 @@ with parameters |session| and |capabilities| is:
 
 </div>
 
-Sessions {#sessions}
+Modules {#modules}
 ==========================
 
-## status ## {#command-status}
+## session ## {#module-session}
+
+The <dfn export for=modules>session</dfn> module contains commands and
+events for monitoring the status of the remote end.
+
+### status ### {#command-session-status}
 
 The <dfn for=commands>status</dfn> command returns information about
 whether a remote end is in a state in which it can create new sessions,
