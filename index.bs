@@ -29,6 +29,9 @@ spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
     text: Fail the WebSocket Connection; url: section-7.1.7
     text: Status Codes; url: section-7.4
     text: Handling Errors in UTF-8-Encoded Data; url: section-8.1
+spec: RFC8610; urlPrefix: https://tools.ietf.org/html/rfc8610
+  type: dfn
+    text: match a CDDL specification; url: appendix-C
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
@@ -40,6 +43,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: getting a property; url: dfn-get-a-property
     text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
+    text: unknown command; url: dfn-unknown-command
     text: active sessions; url: dfn-active-session
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
@@ -49,6 +53,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: session ID; url: dfn-session-id
     text: set a property; url: dfn-set-a-property
     text: success; url: dfn-success
+    text: try; url: dfn-try
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
 </pre>
 
@@ -68,15 +73,33 @@ command/response format of WebDriver, this permits events to stream
 from the user agent to the controlling software, better matching the
 evented nature of the browser DOM.
 
-Model {#model}
+Protocol {#protocol}
 ==============
 
 This section defines the basic concepts of the WebDriver BiDi
 protocol. These terms are distinct from their representation at the
 <a href=#transport>transport</a> layer.
 
+This specification uses Concise Data Definition Language (CDDL)
+[[!RFC8610]] to describe the format of messages transmitted between the
+[=local end=] and [=remote end=].
+
 Note: These definitions do not form any normative requirements, rather
 they are used elsewhere as part of such requirements.
+
+## Modules ## {#protocol-modules}
+
+The WebDriver BiDi protocol is organized into modules. A
+<dfn>module</dfn> is defined by:
+ - A unique string <dfn export for=module>name</dfn>, implicit in its
+   definition.
+ - A set of [=commands=].
+ - A set of [=events=].
+
+Each [=module=] represents a collection of related [=commands=] and
+[=events=] pertaining to a certain aspect of the user agent. For
+example, a module might contain functionality for inspecting and
+manipulating the DOM, or for script execution.
 
 ## Commands ## {#commands}
 
@@ -89,10 +112,30 @@ long-running. As a consequence, commands can finish out-of-order.
 Each concrete [=command=] type is defined by:
  - A string <dfn export for=command>name</dfn>, implicit in its
    definition.
- - A set of <dfn export for=command>parameters</dfn>, which are the
-   inputs to the command
+ - A <dfn export for=command>parameter type</dfn>, which is a |map|
+   whose entries are the inputs to the command.
  - A set of [=remote end steps=].
  - A <dfn export for=command>return type</dfn>, which may be null.
+
+Command [=command/parameter type|parameter types=] and [=command/return
+type|return types=] are defined in this specification using
+[[!RFC8610|CDDL]].
+
+The following <dfn export for=command>table of commands</dfn> lists the
+available [=command|commands=] by module and name.
+
+<table class="simple">
+   <tr>
+      <th>Module Name</th>
+      <th>Command Name</th>
+      <th>Command</th>
+   </tr>
+   <tr>
+      <td>session</td>
+      <td>status</td>
+      <td>[=commands/status|session.status=]</td>
+   </tr>
+</table>
 
 ## Events ## {#events}
 
@@ -103,8 +146,47 @@ occurred on the [=remote end=].
 Each concrete [=event=] type is defined by:
  - A string <dfn export for=event>name</dfn>, implicit in its
    definition.
- - A set of <dfn export for=event>parameters</dfn>, which are the
-   details of the event that has occurred.
+ - A <dfn export for=event>parameter type</dfn>, which is a |map| whose
+   entries are the details of the event that has occurred.
+
+Event [=event/parameter type|parameter types=] are defined in this
+specification using [[!RFC8610|CDDL]].
+
+## Processing Model ## {#processing-model}
+
+<div algorithm>
+To <dfn>process a command</dfn> given a qualified command name |qualified command name|,
+and parameters |parameters|:
+
+   1. If |qualified command name| does not contain exactly one U+002E
+      FULL STOP character (.), return an [=Error=] with [=error code=]
+      [=unknown command=].
+
+   1. Let |module name| be the bytes in |qualified command name|
+      preceeding the U+002E FULL STOP character.
+
+   1. Let |command name| be the bytes in |qualified command name|
+      following the U+002E FULL STOP character.
+
+   1. Let |command| be the command listed in the [=table of commands=]
+      whose module is |module name| and whose name is |command name|.
+
+   1. If there is no such |command|, return an [=Error=] with [=error
+      code=] [=unknown command=].
+
+   1. If |parameters| does not [=match a CDDL specification|match the
+      CDDL specification=] given by |command|'s [=command/parameter
+      type=], then return an [=Error=] with [=error code=] [=invalid
+      argument=].
+
+   1. Let |result| be the result of [=trying=] to run the [=remote end
+      steps=] for |command| with |parameters|.
+
+   1. [=Assert=]: |result| [=match a CDDL specification|matches the CDDL
+      specification=] given by |command|'s [=command/return type=].
+
+   1. Return [=success=] with data |result|.
+</div>
 
 Transport {#transport}
 ======================
@@ -137,7 +219,7 @@ established from |listener| must be TLS encrypted.
 A [=remote end=] has a [=set=] of [=WebSocket listeners=] <dfn>active
 listeners</dfn>, which is initially empty.
 
-A WebDriver [=session=] has a <dfn>WebSocket connection</dfn> which is
+A WebDriver [=/session=] has a <dfn>WebSocket connection</dfn> which is
 a network connection that follows the requirements of the
 [[!RFC6455|WebSocket protocol]].
 
@@ -160,7 +242,7 @@ accept the incoming connection:
    stop running these steps and act as if the requested service is not
    available.
 
-3. If there is a [=session=] in the list of [=active sessions=] with
+3. If there is a [=/session=] in the list of [=active sessions=] with
    |session id| as its [=session ID=] then let |session| be that
    session. Otherwise stop running these steps and act as if the
    requested service is not available.
@@ -194,7 +276,7 @@ WebSocket connection to be closed without a closing handshake.
 
 To <dfn lt="construct a WebSocket resource name|constructing a
 WebSocket resource name">construct a WebSocket resource name</dfn>
-given a [=session=] |session|:
+given a [=/session=] |session|:
 
 1. Return the result of concatenating the string "<code>/session/</code>"
    with |session|'s [=session ID=].
@@ -205,7 +287,7 @@ given a [=session=] |session|:
 
 To <dfn lt="construct a WebSocket URL|constructing a WebSocket
 URL">construct a WebSocket URL</dfn> given a [=WebSocket listener=]
-|listener| and [=session=] |session|:
+|listener| and [=/session=] |session|:
 
 1. Let |resource name| be the result of [=constructing a WebSocket
    resource name=] given |session|.
@@ -238,7 +320,7 @@ given |resource name|:
 
 <div algorithm>
 To <dfn>start listening for a WebSocket connection</dfn> given a
-[=session=] |session|:
+[=/session=] |session|:
 
  1. If there is an existing [=WebSocket listener=] in the set of [=
     active listeners=] which the [=remote end=] would like to reuse,
@@ -317,7 +399,29 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
     code=] [=invalid argument=], and finally return.
     <!-- corresponds to Invalid Request (-32600) in JSON-RPC -->
 
- 5. Issue: Command-specific parameter validation and dispatch.
+ 5. Let |result| be the result of [=process a command|processing a
+    command=] given |parsed|["<code>method</code>"] and
+    |parsed|["<code>params</code>"].
+
+ 6. If |result| is an [=Error=], then [=respond with an error=] given
+    |connection|, |result|, and |parsed|["<code>id</code>"], and finally
+    return.
+
+ 7. Let |response| be a new [=map=] with the following properties:
+
+   <dl>
+      <dt>"id"</dt>
+      <dd>The value of |parsed|["<code>id</code>"]</dd>
+
+      <dt>"result"</dt>
+      <dd>The value of |result|</dd>
+   </dl>
+
+ 8. Let |serialized| be the result of [=serialize JSON to
+    bytes|serializing JSON to bytes=] given |response|.
+
+ 9. [=Send a WebSocket message=] comprised of |serialized| over
+    |connection|.
 
 </div>
 
@@ -336,14 +440,14 @@ To <dfn>respond with an error</dfn> given a [=WebSocket connection=]
 To <dfn>handle a connection closing</dfn> given a
 [=WebSocket connection=] |connection|:
 
- 1. If there is a WebDriver [=session=] with |connection| as its [=connection=],
-    set the [=connection=] on that [=session=] to null.
+ 1. If there is a WebDriver [=/session=] with |connection| as its [=connection=],
+    set the [=connection=] on that [=/session=] to null.
 
 Issue: This should also reset any internal state
 
 </div>
 
-Note: This does not end any [=session=].
+Note: This does not end any [=/session=].
 
 Issue: Need to hook in to the session ending to allow the UA to close
 the listener if it wants.
@@ -399,6 +503,54 @@ with parameters |session| and |capabilities| is:
     "<code>webSocketUrl</code>" to |webSocketUrl|.
 
 </div>
+
+Modules {#modules}
+==========================
+
+## session ## {#module-session}
+
+The <dfn export for=modules>session</dfn> module contains commands and
+events for monitoring the status of the remote end.
+
+### status ### {#command-session-status}
+
+The <dfn for=commands>status</dfn> command returns information about
+whether a remote end is in a state in which it can create new sessions,
+but may additionally include arbitrary meta information that is specific
+to the implementation.
+
+<dl>
+   <dt>Parameter Type</dt>
+   <dd>
+      ```
+      {}
+      ```
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      ```
+      StatusResult = {
+         ready: bool,
+         message: text,
+         * text => any
+      }
+      ```
+   </dd>
+</dl>
+
+The [=remote end steps=] are:
+
+1. Let |body| be a new [=map=] with the following properties:
+
+   <dl>
+      <dt>"ready"</dt>
+      <dd>The [=remote end=]’s readiness state.</dd>
+
+      <dt>"message"</dt>
+      <dd>An implementation-defined string explaining the [=remote end=]’s readiness state.</dd>
+   </dl>
+
+2. Return [=success=] with data |body|.
 
 Conformance {#conformance}
 ==========================
