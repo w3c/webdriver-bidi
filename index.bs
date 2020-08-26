@@ -73,6 +73,13 @@ command/response format of WebDriver, this permits events to stream
 from the user agent to the controlling software, better matching the
 evented nature of the browser DOM.
 
+Infrastructure {#infrastructure}
+==========================
+
+This specification depends on the Infra Standard. [[!INFRA]]
+
+Network protocol messages are defined using CDDL. [[!RFC8610]]
+
 Protocol {#protocol}
 ==============
 
@@ -80,26 +87,114 @@ This section defines the basic concepts of the WebDriver BiDi
 protocol. These terms are distinct from their representation at the
 <a href=#transport>transport</a> layer.
 
-This specification uses Concise Data Definition Language (CDDL)
-[[!RFC8610]] to describe the format of messages transmitted between the
-[=local end=] and [=remote end=].
+The protocol is defined using [[!RFC8610|CDDL]] schema. For the convenience of
+implementors two seperate schema are defined; the <dfn>remote end schema</dfn>
+which defines the format of messages produced on the [=local end=] and consumed
+on the [=remote end=], and the <dfn>local end schema</dfn> which defines the
+format of messages produced on the [=remote end=] and consumed on the [=local
+end=]
 
-Note: These definitions do not form any normative requirements, rather
-they are used elsewhere as part of such requirements.
+## Schema ## {#protocol-schema}
+
+Issue: Should this be an appendix?
+
+This section gives the initial contents of the [=remote end schema=] and
+[=local end schema=]. These are augmented by the schema fragments defined in
+the remainder of the specification.
+
+[=Remote end schema=]
+
+```
+Command = {
+  id: uint,
+  CommandData,
+}
+
+CommandData = (
+  SessionCommand
+)
+
+EmptyParams = { *text }
+```
+
+[=Local end schema=]
+
+```
+Message = (
+  CommandResponse //
+  Event
+)
+
+CommandResponse = (
+  id: uint,
+  ResponseData,
+)
+
+ResponseData = (
+  Error //
+  CommandResult
+)
+
+Error = (
+  id: uint,
+  error: (
+    "unknown error" /
+    "unknown method" /
+    "invalid argument"
+  ),
+  message: text,
+  stacktrace: text,
+)
+
+CommandResult = {
+  value: ResultData,
+}
+
+ResultData = (
+  EmptyResult //
+  SessionResult
+)
+
+EmptyResult = { *text }
+
+Event = ()
+```
+
+## Session ## {#session}
+
+WebDriver BiDi uses the same [=/session=] concept as WebDriver.
 
 ## Modules ## {#protocol-modules}
 
-The WebDriver BiDi protocol is organized into modules. A
-<dfn>module</dfn> is defined by:
- - A unique string <dfn export for=module>name</dfn>, implicit in its
-   definition.
- - A set of [=commands=].
- - A set of [=events=].
+The WebDriver BiDi protocol is organized into modules.
 
-Each [=module=] represents a collection of related [=commands=] and
-[=events=] pertaining to a certain aspect of the user agent. For
-example, a module might contain functionality for inspecting and
+Each <dfn export for=module>module</dfn> represents a collection of related
+[=commands=] and [=events=] pertaining to a certain aspect of the user
+agent. For example, a module might contain functionality for inspecting and
 manipulating the DOM, or for script execution.
+
+Each module has a <dfn>module name</dfn> which is a string literal. The
+[=command name=] and [=event name=] for commands and events defined in the
+module start with the [=module name=] followed by a period <code>"."</code>.
+
+Modules which contain [=commands=] define [=remote end schema=]
+fragments. These provide choices in the <code>CommandData</code> group for the
+module's [=commands=],and can also define additional schema properties. They
+can also define [=local end schema=] fragments that provide additional choices
+in the <code>ResultData</code> group for the results of commands in the module.
+
+Modules which contain events define [=local end schema=] fragments that are
+choices in the <code>Event</code> group for the module's [=events=].
+
+An implementation may define <dfn>extension modules</dfn>. These must have a
+[=module name=] that contains a single colon <code>":"</code> character. The
+part before the colon is the prefix; this is typically the same for all
+extension modules specific to a given implementation and should be unique for a
+given implementation. Such modules extend the [=local end schema=] and [=remote
+end schema=] providing additional groups as choices for the defined
+[=commands=] and [=events=].
+
+Issue: Can we put the extension modules into the schema in some generic way.
 
 ## Commands ## {#commands}
 
@@ -109,20 +204,35 @@ result or an error being returned to the [=local end=]. Multiple
 commands can run at the same time, and commands can potentially be
 long-running. As a consequence, commands can finish out-of-order.
 
-Each concrete [=command=] type is defined by:
- - A string <dfn export for=command>name</dfn>, implicit in its
-   definition.
- - A <dfn export for=command>parameter type</dfn>, which is a |map|
-   whose entries are the inputs to the command.
- - A set of [=remote end steps=].
- - A <dfn export for=command>return type</dfn>, which may be null.
+Each [=command=] is defined by:
+- A <dfn export for=command>command id</dfn>. This is a unique integer id
+  provided by the [=local end=] for each command.
+ - A <dfn export for=command>command type</dfn> which is defined by a [=remote
+   end schema=] fragment containing a group. Each such group has two fields:
+    - <code>method</code> which is a string literal of the form <code>[module
+      name].[method name]</code>. This is the <dfn export for=command>command
+      name</dfn>.
+    - <code>params</code> which defines a mapping containing data that to be passed into
+      the command. The populated value of this map is the
+      <dfn export for=command>command parameters</dfn>.
+- A <dfn export for=command>result type</dfn>, which is defined by a [=local
+  end schema=] fragment.
+- A set of [=remote end steps=] which define the actions to take for a command
+  given [=command parameters=] and return an instance of the command [=return
+  type=].
 
-Command [=command/parameter type|parameter types=] and [=command/return
-type|return types=] are defined in this specification using
-[[!RFC8610|CDDL]].
+The <dfn export for=command>set of all command names</dfn> is a set containing
+all the defined [=command names=], including any belonging to [=extension
+modules=].
 
-The following <dfn export for=command>table of commands</dfn> lists the
-available [=command|commands=] by module and name.
+### Table of Commands ### {#table-of-commands}
+
+<div class=non-normative>
+
+<em>This section is non-normative.</em>
+
+The following table of commands lists the available [=command|commands=] by
+module and name.
 
 <table class="simple">
    <tr>
@@ -137,55 +247,53 @@ available [=command|commands=] by module and name.
    </tr>
 </table>
 
+</div>
+
 ## Events ## {#events}
 
 An <dfn export>event</dfn> is a notification, sent by the [=remote
 end=] to the [=local end=], signaling that something of interest has
 occurred on the [=remote end=].
 
-Each concrete [=event=] type is defined by:
- - A string <dfn export for=event>name</dfn>, implicit in its
-   definition.
- - A <dfn export for=event>parameter type</dfn>, which is a |map| whose
-   entries are the details of the event that has occurred.
+ - A <dfn export for=event>event type</dfn> which is defined by a [=local
+   end schema=] fragment containing a group. Each such group has two fields:
+    - <code>method</code> which is a string literal of the form <code>[module
+      name].[event name]</code>. This is the <dfn export for=event>event
+      name</dfn>.
 
-Event [=event/parameter type|parameter types=] are defined in this
-specification using [[!RFC8610|CDDL]].
+    - <code>params</code> which defines a mapping containing event data. The
+      populated value of this map is the <dfn export for=command>event
+      parameters</code>.
 
 ## Processing Model ## {#processing-model}
 
+
 <div algorithm>
-To <dfn>process a command</dfn> given a qualified command name |qualified command name|,
-and parameters |parameters|:
+To <dfn>process a command</dfn> given |data|:
 
-   1. If |qualified command name| does not contain exactly one U+002E
-      FULL STOP character (.), return an [=Error=] with [=error code=]
-      [=unknown command=].
+   1. Match |data| against the [=remote end schema=]. If this results in a
+      match, run the following inner steps:
 
-   1. Let |module name| be the bytes in |qualified command name|
-      preceeding the U+002E FULL STOP character.
+      1. Let <var>result</var> be the result running the [=remote end steps=]
+         for the command with the [=command name=] equal to the
+         <code>method</code> property of |data| and with the [=command
+         parameters=] from the matched data.
 
-   1. Let |command name| be the bytes in |qualified command name|
-      following the U+002E FULL STOP character.
+      1. Assert: if <var>result</var> is a [=success=] its |data| matches the
+         schema for the [=result type=] corresponding to the command with name
+         [=command name=].
 
-   1. Let |command| be the command listed in the [=table of commands=]
-      whose module is |module name| and whose name is |command name|.
+      1. Return <var>result</var>.
 
-   1. If there is no such |command|, return an [=Error=] with [=error
-      code=] [=unknown command=].
+   1. Otherwise there is no match. If |data| isn't a map or is a map without a
+      property named </code>method</code> return an [=Error=] with error code
+      [=invalid argument=]. Otherwise let <var>command</var> be the value of
+      the <code>method</code> property of |data|.
 
-   1. If |parameters| does not [=match a CDDL specification|match the
-      CDDL specification=] given by |command|'s [=command/parameter
-      type=], then return an [=Error=] with [=error code=] [=invalid
-      argument=].
+   1. If |command| is not in the [=set of all command names=], return an
+      [=Error=] with [=error code=] [=unknown command=].
 
-   1. Let |result| be the result of [=trying=] to run the [=remote end
-      steps=] for |command| with |parameters|.
-
-   1. [=Assert=]: |result| [=match a CDDL specification|matches the CDDL
-      specification=] given by |command|'s [=command/return type=].
-
-   1. Return [=success=] with data |result|.
+   1. Return an [=Error=] with [=error code=] [=invalid argument=].
 </div>
 
 Transport {#transport}
@@ -374,34 +482,8 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
     return.
     <!-- corresponds to Parse error (-32700) in JSON-RPC -->
 
- 4. If any of the following conditions are false:
-
-     1. |parsed| is a [=map=]
-
-     2. |parsed|["<code>id</code>"] <a for=map>exists</a> and is an
-        integer in the range [0, 2147483647].
-
-         Issue: That's <i>2<sup>31</sup> - 1</i>, the largest signed
-         32-bit integer. Should we allow up to <i>2<sup>53</sup> -
-         1</i>, the largest number such that <i>N</i> and <i>N + 1</i>
-         both have exact representations in a JS Number?
-
-     3. |parsed|["<code>method</code>"] <a for=map>exists</a> and is a
-        string.
-
-     4. |parsed|["<code>params</code>"], if it <a for=map>exists</a>,
-        is a [=map=].
-
-     Issue: Should we fail if there are unknown keys in |parsed|? CDP
-     does, but it's very unusual for unversioned web platform APIs.
-
-    Then [=respond with an error=] given |connection| and [=error
-    code=] [=invalid argument=], and finally return.
-    <!-- corresponds to Invalid Request (-32600) in JSON-RPC -->
-
  5. Let |result| be the result of [=process a command|processing a
-    command=] given |parsed|["<code>method</code>"] and
-    |parsed|["<code>params</code>"].
+    command=] given |data|.
 
  6. If |result| is an [=Error=], then [=respond with an error=] given
     |connection|, |result|, and |parsed|["<code>id</code>"], and finally
@@ -507,12 +589,31 @@ with parameters |session| and |capabilities| is:
 Modules {#modules}
 ==========================
 
-## session ## {#module-session}
+## Session ## {#module-session}
 
 The <dfn export for=modules>session</dfn> module contains commands and
 events for monitoring the status of the remote end.
 
-### status ### {#command-session-status}
+### Schema ### {#module-session-schema}
+
+[=remote end schema=]
+
+```
+
+SessionCommand = (StatusCommand)
+
+```
+
+[=local end schema=]
+
+```
+
+SessionResult = (StatusResult)
+
+```
+
+
+### Status ### {#command-session-status}
 
 The <dfn for=commands>status</dfn> command returns information about
 whether a remote end is in a state in which it can create new sessions,
@@ -520,10 +621,13 @@ but may additionally include arbitrary meta information that is specific
 to the implementation.
 
 <dl>
-   <dt>Parameter Type</dt>
+   <dt>Command Type</dt>
    <dd>
       ```
-      {}
+      StatusCommand = {
+        method: "session.status",
+        params: EmptyParams,
+      }
       ```
    </dd>
    <dt>Return Type</dt>
@@ -547,12 +651,9 @@ The [=remote end steps=] are:
       <dd>The [=remote end=]’s readiness state.</dd>
 
       <dt>"message"</dt>
-      <dd>An implementation-defined string explaining the [=remote end=]’s readiness state.</dd>
+      <dd>An implementation-defined string explaining the [=remote end=]’s readiness
+   state.</dd>
    </dl>
 
-2. Return [=success=] with data |body|.
+2. Return [=success=] with data |body|
 
-Conformance {#conformance}
-==========================
-
-This specification depends on the Infra Standard. [[!INFRA]]
