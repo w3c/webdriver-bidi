@@ -205,9 +205,15 @@ commands can run at the same time, and commands can potentially be
 long-running. As a consequence, commands can finish out-of-order.
 
 Each [=command=] is defined by:
-- A <dfn export for=command>command id</dfn>. This is a unique integer id
-  provided by the [=local end=] for each command.
- - A <dfn export for=command>command type</dfn> which is defined by a [=remote
+- A <dfn export for=command>command id</dfn>. This is an integer id
+  provided by the [=local end=] for each command. The value of the id is not
+  used by the [=remote end=] and can be regarded as opaque.
+
+  Note: In particular nothing guarantees that the [=command id=] is unique
+  for a given session. For example, a [=local end=] that sends only one command
+  at a time could give each the same command id.
+
+- A <dfn export for=command>command type</dfn> which is defined by a [=remote
    end schema=] fragment containing a group. Each such group has two fields:
     - <code>method</code> which is a string literal of the form <code>[module
       name].[method name]</code>. This is the <dfn export for=command>command
@@ -274,12 +280,12 @@ To <dfn>process a command</dfn> given |data|:
    1. Match |data| against the [=remote end schema=]. If this results in a
       match, run the following inner steps:
 
-      1. Let <var>result</var> be the result running the [=remote end steps=]
+      1. Let |result| be the result of running the [=remote end steps=]
          for the command with the [=command name=] equal to the
          <code>method</code> property of |data| and with the [=command
          parameters=] from the matched data.
 
-      1. Assert: if <var>result</var> is a [=success=] its |data| matches the
+      1. Assert: if |result| is a [=success=] its data matches the
          schema for the [=result type=] corresponding to the command with name
          [=command name=].
 
