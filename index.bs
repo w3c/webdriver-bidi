@@ -87,22 +87,22 @@ This section defines the basic concepts of the WebDriver BiDi
 protocol. These terms are distinct from their representation at the
 <a href=#transport>transport</a> layer.
 
-The protocol is defined using [[!RFC8610|CDDL]] schema. For the convenience of
-implementors two seperate schema are defined; the <dfn>remote end schema</dfn>
-which defines the format of messages produced on the [=local end=] and consumed
-on the [=remote end=], and the <dfn>local end schema</dfn> which defines the
-format of messages produced on the [=remote end=] and consumed on the [=local
-end=]
+The protocol is defined using a [[!RFC8610|CDDL]] definition. For the
+convenience of implementors two seperate schema are defined; the <dfn>remote end
+definition</dfn> which defines the format of messages produced on the [=local end=]
+and consumed on the [=remote end=], and the <dfn>local end definition</dfn> which
+defines the format of messages produced on the [=remote end=] and consumed on
+the [=local end=]
 
-## Schema ## {#protocol-schema}
+## Definition ## {#protocol-definition}
 
 Issue: Should this be an appendix?
 
-This section gives the initial contents of the [=remote end schema=] and
-[=local end schema=]. These are augmented by the schema fragments defined in
+This section gives the initial contents of the [=remote end definition=] and
+[=local end definition=]. These are augmented by the definition fragments defined in
 the remainder of the specification.
 
-[=Remote end schema=]
+[=Remote end definition=]
 
 ```
 Command = {
@@ -117,7 +117,7 @@ CommandData = (
 EmptyParams = { *text }
 ```
 
-[=Local end schema=]
+[=Local end definition=]
 
 ```
 Message = (
@@ -177,24 +177,22 @@ Each module has a <dfn>module name</dfn> which is a string. The
 [=command name=] and [=event name=] for commands and events defined in the
 module start with the [=module name=] followed by a period "<code>.</code>".
 
-Modules which contain [=commands=] define [=remote end schema=]
+Modules which contain [=commands=] define [=remote end definition=]
 fragments. These provide choices in the <code>CommandData</code> group for the
-module's [=commands=], and can also define additional schema properties. They
-can also define [=local end schema=] fragments that provide additional choices
+module's [=commands=], and can also define additional definition properties. They
+can also define [=local end definition=] fragments that provide additional choices
 in the <code>ResultData</code> group for the results of commands in the module.
 
-Modules which contain events define [=local end schema=] fragments that are
+Modules which contain events define [=local end definition=] fragments that are
 choices in the <code>Event</code> group for the module's [=events=].
 
 An implementation may define <dfn>extension modules</dfn>. These must have a
 [=module name=] that contains a single colon "<code>:</code>" character. The
 part before the colon is the prefix; this is typically the same for all
 extension modules specific to a given implementation and should be unique for a
-given implementation. Such modules extend the [=local end schema=] and [=remote
-end schema=] providing additional groups as choices for the defined
+given implementation. Such modules extend the [=local end definition=] and [=remote
+end definition=] providing additional groups as choices for the defined
 [=commands=] and [=events=].
-
-Issue: Can we put the extension modules into the schema in some generic way.
 
 ## Commands ## {#commands}
 
@@ -214,7 +212,7 @@ Each [=command=] is defined by:
   at a time could give each the same command id.
 
 - A <dfn export for=command>command type</dfn> which is defined by a [=remote
-   end schema=] fragment containing a group. Each such group has two fields:
+   end definition=] fragment containing a group. Each such group has two fields:
     - <code>method</code> which is a string literal of the form <code>[module
       name].[method name]</code>. This is the <dfn export for=command>command
       name</dfn>.
@@ -222,7 +220,7 @@ Each [=command=] is defined by:
       the command. The populated value of this map is the
       <dfn export for=command>command parameters</dfn>.
 - A <dfn export for=command>result type</dfn>, which is defined by a [=local
-  end schema=] fragment.
+  end definition=] fragment.
 - A set of [=remote end steps=] which define the actions to take for a command
   given [=command parameters=] and return an instance of the command [=return
   type=].
@@ -262,7 +260,7 @@ end=] to the [=local end=], signaling that something of interest has
 occurred on the [=remote end=].
 
  - An <dfn export for=event>event type</dfn> is defined by a [=local
-   end schema=] fragment containing a group. Each such group has two fields:
+   end definition=] fragment containing a group. Each such group has two fields:
     - <code>method</code> which is a string literal of the form <code>[module
       name].[event name]</code>. This is the <dfn export for=event>event
       name</dfn>.
@@ -277,7 +275,7 @@ occurred on the [=remote end=].
 <div algorithm>
 To <dfn>process a command</dfn> given |data|:
 
-   1. Match |data| against the [=remote end schema=]. If this results in a
+   1. Match |data| against the [=remote end definition=]. If this results in a
       match:
 
       1. Let |result| be the result of running the [=remote end steps=]
@@ -286,7 +284,7 @@ To <dfn>process a command</dfn> given |data|:
          parameters=] from the matched data.
 
       1. Assert: if |result| is a [=success=] its data matches the
-         schema for the [=result type=] corresponding to the command with name
+         definition for the [=result type=] corresponding to the command with name
          [=command name=].
 
       1. Return <var>result</var>.
@@ -600,9 +598,9 @@ Modules {#modules}
 The <dfn export for=modules>session</dfn> module contains commands and
 events for monitoring the status of the remote end.
 
-### Schema ### {#module-session-schema}
+### Definition ### {#module-session-definition}
 
-[=remote end schema=]
+[=remote end definition=]
 
 ```
 
@@ -610,7 +608,7 @@ SessionCommand = (StatusCommand)
 
 ```
 
-[=local end schema=]
+[=local end definition=]
 
 ```
 
