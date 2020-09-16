@@ -128,6 +128,7 @@ EmptyParams = { *text }
 <pre class="cddl local-cddl">
 Message = (
   CommandResponse //
+  ErrorResponse //
   Event
 )
 
@@ -137,23 +138,15 @@ CommandResponse = {
   *text => any
 }
 
-ResponseData = (
-  Error //
-  CommandResult
-)
-
-Error = {
+ErrorResponse = {
+  id: uint / null,
   error: (
     "unknown error" /
     "unknown method" /
     "invalid argument"
   ),
   message: text,
-  stacktrace: text,
-}
-
-CommandResult = {
-  value: ResultData,
+  stacktrace?: text,
 }
 
 ResultData = (
@@ -367,9 +360,9 @@ To <dfn>process a command</dfn> given |data|:
       the <code>method</code> property of |data|.
 
    1. If |command| is not in the [=set of all command names=], return an
-      [=Error=] with [=error code=] [=unknown command=].
+      [=error=] with [=error code=] [=unknown command=].
 
-   1. Return an [=Error=] with [=error code=] [=invalid argument=].
+   1. Return an [=error=] with [=error code=] [=invalid argument=].
 </div>
 
 Transport {#transport}
@@ -543,7 +536,7 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
     Issue: Should we instead close |connection| with [=status
     codes|status code=] 1003, or [=respond with an error=]?
 
- 2. [=Assert=]: |data| is a [=scalar value string=], because the
+ 1. [=Assert=]: |data| is a [=scalar value string=], because the
      WebSocket [=handling errors in UTF-8-encoded data=] would already
      have [=fail the WebSocket connection|failed the WebSocket
      connection=] otherwise.
@@ -551,21 +544,13 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
     Issue: Nothing seems to define what [=status codes|status code=]
     is used for UTF-8 errors.
 
- 3. Let |parsed| be the result of [=parse JSON into Infra
-    values|parsing JSON into Infra values=] given |data|. If this
-    throws an exception, then [=respond with an error=] given
-    |connection| and [=error code=] [=invalid argument=], and finally
-    return.
-    <!-- corresponds to Parse error (-32700) in JSON-RPC -->
-
- 5. Let |result| be the result of [=process a command|processing a
+ 1. Let |result| be the result of [=process a command|processing a
     command=] given |data|.
 
- 6. If |result| is an [=Error=], then [=respond with an error=] given
-    |connection|, |result|, and |parsed|["<code>id</code>"], and finally
-    return.
+ 1. If |result| is an [=error=], then [=respond with an error=] given
+    |connection|, |data|, and |result|'s [=error code=], and finally return.
 
- 7. Let |response| be a new [=map=] with the following properties:
+ 1. Let |response| be a new [=map=] with the following properties:
 
    <dl>
       <dt>"id"</dt>
@@ -575,22 +560,55 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
       <dd>The value of |result|</dd>
    </dl>
 
- 8. Let |serialized| be the result of [=serialize JSON to
+ 1. Let |serialized| be the result of [=serialize JSON to
     bytes|serializing JSON to bytes=] given |response|.
 
- 9. [=Send a WebSocket message=] comprised of |serialized| over
+ 1. [=Send a WebSocket message=] comprised of |serialized| over
     |connection|.
 
 </div>
 
 <div algorithm>
 To <dfn>respond with an error</dfn> given a [=WebSocket connection=]
-|connection| and an [=error code=] |code|:
+|connection|, |data| and |error code|:
 
- 1. Issue: Form a valid JSON |errorObject| given |code|.
+ 1. Let |command id| be null.
 
- 2. [=Send a WebSocket message=] comprised of |errorObject| over
-    |connection|.
+ 1.  Let |parsed| be the result of [=parse JSON into Infra values|parsing JSON
+     into Infra values=] given |data|. If this does not throw an exception, and
+     results in a map that contains "<code>id</code>", then let |command id| be
+     |parsed|["<code>id</code>"].
+
+ 1. If |command id| is not an integer greater than or equal to zero, let
+    |command id| be null.
+
+ 1. Let |error data| be a new map matching the <code>ErrorResponse</code>
+    production in the [=local end definition=], with the <code>id</code> field
+    set to |command id|, the <code>error</code> field set to |error code|, the
+    <code>message</code> field set to an implementation-defined string
+    containing a human-readable definition of the error that occured and the
+    <code>stacktrace</code> field optionally set to an implementation-defined
+    string containing a stack trace report of the active stack frames at the
+    time when the error occurred.
+
+ 1. Let |response| be the result of [=serialize JSON to bytes|serializing JSON
+    to bytes=] given |error data|.
+
+ 1. [=Send a WebSocket message=] comprised of |response| over |connection|.
+
+</div>
+
+<div algorithm>
+To |serialize a map as JSON| given |map|
+
+1. Let |object| be a new [=Object=]
+
+1. For each |key| → |value| of |map|:
+
+  1.  [=Set=](|object|, key, value, false)
+
+1. Return the result of [=serialize JSON to bytes|serializing JSON to bytes=]
+   given |object|
 
 </div>
 
