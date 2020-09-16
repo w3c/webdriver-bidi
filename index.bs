@@ -88,11 +88,11 @@ protocol. These terms are distinct from their representation at the
 <a href=#transport>transport</a> layer.
 
 The protocol is defined using a [[!RFC8610|CDDL]] definition. For the
-convenience of implementors two seperate schema are defined; the <dfn>remote end
-definition</dfn> which defines the format of messages produced on the [=local end=]
-and consumed on the [=remote end=], and the <dfn>local end definition</dfn> which
-defines the format of messages produced on the [=remote end=] and consumed on
-the [=local end=]
+convenience of implementors two seperate CDDL definitions are defined; the
+<dfn>remote end definition</dfn> which defines the format of messages produced
+on the [=local end=] and consumed on the [=remote end=], and the <dfn>local end
+definition</dfn> which defines the format of messages produced on the [=remote
+end=] and consumed on the [=local end=]
 
 ## Definition ## {#protocol-definition}
 
@@ -136,7 +136,6 @@ ResponseData = (
 )
 
 Error = (
-  id: uint,
   error: (
     "unknown error" /
     "unknown method" /
@@ -203,13 +202,6 @@ commands can run at the same time, and commands can potentially be
 long-running. As a consequence, commands can finish out-of-order.
 
 Each [=command=] is defined by:
-- A <dfn export for=command>command id</dfn>. This is an integer id
-  provided by the [=local end=] for each command. The value of the id is not
-  used by the [=remote end=] and can be regarded as opaque.
-
-  Note: In particular nothing guarantees that the [=command id=] is unique for a
-  given session. For example, a [=local end=] that isn't interested in matching
-  commands to responses could reuse the same [=command id=] for all commands.
 
 - A <dfn export for=command>command type</dfn> which is defined by a [=remote
    end definition=] fragment containing a group. Each such group has two fields:
@@ -224,6 +216,15 @@ Each [=command=] is defined by:
 - A set of [=remote end steps=] which define the actions to take for a command
   given [=command parameters=] and return an instance of the command [=return
   type=].
+
+When commands are send from the [=local end=] they have a command id. This is an
+identifier used by the [=local end=] to identify the response from a particular
+command. From the point of view of the [=remote end=] this identifier is opaque
+and cannot be used internally to identify the command.
+
+Note: This is because the command id is entirely controlled by the [=local end=]
+and isn't necessarily unique over the course of a session. For example a [=local
+end=] which ignores all responses could use the same command id for each command.
 
 The <dfn export for=command>set of all command names</dfn> is a set containing
 all the defined [=command names=], including any belonging to [=extension
@@ -290,7 +291,7 @@ To <dfn>process a command</dfn> given |data|:
       1. Return <var>result</var>.
 
    1. Otherwise there is no match. If |data| isn't a map or is a map without a
-      property named </code>method</code> return an [=Error=] with error code
+      property named </code>method</code> return an [=error=] with error code
       [=invalid argument=]. Otherwise let <var>command</var> be the value of
       the <code>method</code> property of |data|.
 
