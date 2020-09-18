@@ -37,6 +37,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
     text: additional WebDriver capability; url: dfn-additional-webdriver-capability
     text: capability name; url: dfn-capability-name
+    text: current session; url: dfn-current-session
     text: endpoint node; url: dfn-endpoint-node
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
@@ -273,8 +274,8 @@ occurred on the [=remote end=].
     - <code>params</code> which defines a mapping containing event data. The
       populated value of this map is the <dfn export for=command>event
       parameters</code>.
- - A [=remote end event trigger=] which define when the event is triggered
-   and steps to construct the [=event type=] data.
+ - A <dfn export>remote end event trigger</dfn> which define when the event is
+   triggered and steps to construct the [=event type=] data.
 
 A [=/session=] has a <dfn export for=event>global event set</dfn> which is a set
 containing containing the event names for events that are enabled for all
@@ -288,15 +289,16 @@ disabled for a given browsing context.
 
 <div algorithm>
 
-To determine if an <dfn export>event is enabled</dfn> given an |event name| and
-|browsing context|:
+To determine if an <dfn export>event is enabled</dfn> given |session|,
+|event name| and |browsing context|:
 
   1. While |browsing context| is not null:
 
-    1. If [=browsing context event map=] contains an entry for |browsing
-       context|, let |browsing context events| be [=browsing context event
-       map=][|browsing context|].  Otherwise let |browsing context events| be
-       null.
+    1. Let |event map| be the [=browsing context event map=] for |session|.
+
+    1. If |event map| contains an entry for |browsing context|, let |browsing
+       context events| be |event map|[|browsing context|].  Otherwise let
+       |browsing context events| be null.
 
     1. If |browsing context events| is not null, and |browsing context events|
        contains an entry for |event name| return |browsing context
@@ -305,7 +307,8 @@ To determine if an <dfn export>event is enabled</dfn> given an |event name| and
     1. Let |browsing context| be the [=parent browsing context=] of |browsing
        context|, if it has one, or null otherwise.
 
-  1. If the [=global event set=] contains |event name| return true.
+  1. If the [=global event set=] for |session| contains |event name| return
+     true.
 
   1. Return false.
 
@@ -709,8 +712,12 @@ SessionResult = (StatusResult)
 
 <div algorithm>
 
-To <dfn lt="updating the event map">update the event map</dfn>, given a |list of
-event names|, a |list of contexts|, and a |enabled|:
+To <dfn lt="updating the event map">update the event map</dfn>, given
+|session|, |list of event names|, |list of contexts|, and |enabled|:
+
+  1. Let |global event set| be the [=global event set=] for |session|.
+
+  1. Let |event map| be the [=browsing context event map=] for |session|.
 
   1. Let |event names| be an empty set.
 
@@ -721,9 +728,9 @@ event names|, a |list of contexts|, and a |enabled|:
     1. If the |list of contexts| is null, run the following substeps:
 
       1. If |enabled| is true, for each |event name| in |event names|,
-         append |event name| to the [=global event set=]. Otherwise for for each
-         |event name| in |event names|, if the [=global event set=] contains
-         |event name|, remote |event name| from the [=global event set=].
+         append |event name| to |global event set|. Otherwise for for each
+         |event name| in |event names|, if the |global event set| contains
+         |event name|, remote |event name| from the |global event set|.
 
       1. Return
 
@@ -735,11 +742,11 @@ event names|, a |list of contexts|, and a |enabled|:
          [=error=] with [=error code=] [=invalid argument=]
 
       1. Let |context| be the browsing context with id |context id|. If the
-         [=browsing context event map=] does not contain an entry for |context|,
+         |event map| does not contain an entry for |context|,
          set the value of the entry for |context| to a new empty map.
 
-      1. Get the entry from the [=browsing context event map=] for |context|
-         and append it to |targets|.
+      1. Get the entry from the |event map| for |context| and append it to
+         |targets|.
 
     1. For each |target| in |targets|, run the following steps:
 
@@ -833,8 +840,8 @@ The [=remote end steps=] with |command parameters| are:
     1. Let the |list of contexts| be the value of the <code>contexts</code>
        field of |command parameters| if it is present or null if it isn't.
 
-    1. Return the result of [=updating the event map=] with |list of event
-       names|, |list of contexts| and enabled true.
+    1. Return the result of [=updating the event map=] with [=current session=],
+       |list of event names|, |list of contexts| and enabled true.
 </div>
 
 ### Unsubscribe ### {#command-session-unsubscribe}
@@ -870,6 +877,6 @@ The [=remote end steps=] with |command parameters| are:
     1. Let the |list of contexts| be the value of the <code>contexts</code>
        field of |command parameters| if it is present or null if it isn't.
 
-    1. Return the result of [=updating the event map=] with |list of event
-       names|, |list of contexts| and enabled false.
+    1. Return the result of [=updating the event map=] with [=current session=],
+       |list of event names|, |list of contexts| and enabled false.
 </div>
