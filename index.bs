@@ -273,41 +273,39 @@ occurred on the [=remote end=].
     - <code>params</code> which defines a mapping containing event data. The
       populated value of this map is the <dfn export for=command>event
       parameters</code>.
- - A set of [=remote end steps=] which define how to construct the [=event
-   type=] data.
- - An <dfn export for=event>event trigger</dfn> which is a condition on which
-   the [=remote end steps=] for the event are invoked.
+ - A [=remote end event trigger=] which define when the event is triggered
+   and steps to construct the [=event type=] data.
 
 A [=/session=] has a <dfn export for=event>global event set</dfn> which is a set
-containing containing the [=event types=] that are enabled for all browsing
-contexts. This initially contains events that are <dfn export for=event>in the
-default event set</dfn>.
+containing containing the event names for events that are enabled for all
+browsing contexts. This initially contains the [=event name=] for events that
+are <dfn export for=event>in the default event set</dfn>.
 
 A [=/session=] has a <dfn export for=event>browsing context event map</dfn>,
-which is a map with [=/browsing context=] keys and values that are maps
-from an [=event type=] to a boolean indicating whether the specified event type
-is enabled or disabled for a given browsing context.
+which is a map with [=/browsing context=] keys and values that are maps from an
+[=event name=] to a boolean indicating whether the specified event is enabled or
+disabled for a given browsing context.
 
 <div algorithm>
 
-To determine if an <dfn export>event is enabled</dfn> given an |event type| and
+To determine if an <dfn export>event is enabled</dfn> given an |event name| and
 |browsing context|:
 
   1. While |browsing context| is not null:
 
     1. If [=browsing context event map=] contains an entry for |browsing
-       context|, let |browsing context events| be the result of getting the value of an
-       entry with key |browsing context| from [=browsing context event map=],
-       otherwise let |browsing context events| be <code>undefined</code>.
+       context|, let |browsing context events| be [=browsing context event
+       map=][|browsing context|].  Otherwise let |browsing context events| be
+       null.
 
-    1. If |browsing context events| is not <code>undefined</code>, return the
-       result of getting the value of the entry with key |event type| from
-       |browsing context events|.
+    1. If |browsing context events| is not null, and |browsing context events|
+       contains an entry for |event name| return |browsing context
+       events|[|event name|].
 
     1. Let |browsing context| be the [=parent browsing context=] of |browsing
        context|, if it has one, or null otherwise.
 
-  1. If the [=global event set=] contains |event type| return true.
+  1. If the [=global event set=] contains |event name| return true.
 
   1. Return false.
 
@@ -315,22 +313,23 @@ To determine if an <dfn export>event is enabled</dfn> given an |event type| and
 
 <div algorithm>
 
-To <dfn>obtain a set of events from a name</dfn> given an |event name|:
+To <dfn>obtain a set of event names</dfn> given an |name|:
 
   1. Let |events| be an empty set.
 
-  1. If |event name| contains a U+002E (period):
+  1. If |name| contains a U+002E (period):
 
-    1. If |event name| is the [=event name=] for an event, append that event to
-       |events| and return [=success=] with data |events|.
+    1. If |name| is the [=event name=] for an event, append |name| to |events|
+       and return [=success=] with data |events|.
 
     1. Return an [=error=] with [=error code=] [=Invalid Argument=]
 
-  1. Otherwise |event name| is interpreted as representing all the events in a
-     module. If |event name| is not a [=module name=] return an [=error=] with
+  1. Otherwise |name| is interpreted as representing all the events in a
+     module. If |name| is not a [=module name=] return an [=error=] with
      [=error code=] [=Invalid Argument=].
 
-  1. Add each [=event=] in the module with name |event name| to |events|.
+  1. Append the [=event name=] for each [=event=] in the module with name |name| to
+     |events|.
 
   1. Return [=success=] with data |events|.
 </div>
@@ -711,17 +710,26 @@ SessionResult = (StatusResult)
 <div algorithm>
 
 To <dfn lt="updating the event map">update the event map</dfn>, given a |list of
-event names|, a |list of contexts|, and a |target status|:
+event names|, a |list of contexts|, and a |enabled|:
 
-  1. Let |events| be an empty set.
+  1. Let |event names| be an empty set.
 
-    1. For each entry |event name| in the |list of event names|,
-       let |events| be the union of |events| and the result of [=trying=] to
-       [=obtain a set of events from a name=] with |event name|.
+    1. For each entry |name| in the |list of event names|, let |event names| be
+       the union of |event names| and the result of [=trying=] to [=obtain a set
+       of event names=] with |name|.
 
-    1. If the |list of contexts| is null, let |targets| be a set containing the [=global
-       event set=]. Otherwise for each entry |context id| in the |list of
-       contexts|, run the following substeps:
+    1. If the |list of contexts| is null, run the following substeps:
+
+      1. If |enabled| is true, for each |event name| in |event names|,
+         append |event name| to the [=global event set=]. Otherwise for for each
+         |event name| in |event names|, if the [=global event set=] contains
+         |event name|, remote |event name| from the [=global event set=].
+
+      1. Return
+
+    1. Let |targets| be an empty list.
+
+    1. For each entry |context id| in the |list of contexts|, run the following substeps:
 
       1. If there is no browsing context with [=browsing context id=] |context id| return
          [=error=] with [=error code=] [=invalid argument=]
@@ -735,9 +743,9 @@ event names|, a |list of contexts|, and a |target status|:
 
     1. For each |target| in |targets|, run the following steps:
 
-      1. For each |event| in events, run the following steps:
+      1. For each |event name| in |event names|, run the following steps:
 
-        1. Set the value of |target| for |event| to |target status|.
+        1. Set |target|[|event name|] to |enabled|.
 
     1. Return [=success=] with data null.
 </div>
@@ -791,7 +799,7 @@ The [=remote end steps=] are:
 The <dfn export for=commands>subscribe</dfn> command enables certain events either
 globally or for a set of browsing contexts
 
-Issue: This needs to be generalised to work with realms too
+Issue: This needs to be generalized to work with realms too
 
 <dl>
    <dt>Command Type</dt>
@@ -803,7 +811,7 @@ Issue: This needs to be generalised to work with realms too
       }
 
       SubscribeParameters = {
-        events: [text],
+        events: [*text],
         contexts?: [BrowsingContext],
         * text => any,
       }
@@ -818,7 +826,7 @@ Issue: This needs to be generalised to work with realms too
 </dl>
 
 The [=remote end steps=] with |command parameters| are:
-
+<div algorithm="remote end steps for session.subscribe">
     1. Let the |list of event names| be the value of the <code>events</code> field of
        |command parameters|.
 
@@ -826,7 +834,8 @@ The [=remote end steps=] with |command parameters| are:
        field of |command parameters| if it is present or null if it isn't.
 
     1. Return the result of [=updating the event map=] with |list of event
-       names|, |list of contexts| and the target status set to true.
+       names|, |list of contexts| and enabled true.
+</div>
 
 ### Unsubscribe ### {#command-session-unsubscribe}
 
@@ -854,7 +863,7 @@ Issue: This needs to be generalised to work with realms too
 </dl>
 
 The [=remote end steps=] with |command parameters| are:
-
+<div algorithm="remote end steps for session.unsubscribe">
     1. Let the |list of event names| be the value of the <code>events</code> field of
        |command parameters|.
 
@@ -862,5 +871,5 @@ The [=remote end steps=] with |command parameters| are:
        field of |command parameters| if it is present or null if it isn't.
 
     1. Return the result of [=updating the event map=] with |list of event
-       names|, |list of contexts| and the target status set to false.
-
+       names|, |list of contexts| and enabled false.
+</div>
