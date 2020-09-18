@@ -1224,7 +1224,7 @@ Possible extra rowspan handling
   <link href="https://www.w3.org/StyleSheets/TR/2016/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version 5f7b0e20, updated Tue Aug 18 15:46:28 2020 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="bb5d17e0841c6edbab2d434f993adbcef6d47655" name="document-revision">
+  <meta content="db6776c5f1ed136febbe62a42b4526499b808cb1" name="document-revision">
 <style>/* style-autolinks */
 
 .css.css, .property.property, .descriptor.descriptor {
@@ -1424,7 +1424,7 @@ dfn > a.self-link::before      { content: "#"; }</style>
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-09-11">11 September 2020</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-09-18">18 September 2020</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -1464,29 +1464,36 @@ dfn > a.self-link::before      { content: "#"; }</style>
    <h2 class="no-num no-toc no-ref" id="contents">Table of Contents</h2>
    <ol class="toc" role="directory">
     <li><a href="#intro"><span class="secno">1</span> <span class="content">Introduction</span></a>
+    <li><a href="#infrastructure"><span class="secno">2</span> <span class="content">Infrastructure</span></a>
     <li>
-     <a href="#protocol"><span class="secno">2</span> <span class="content">Protocol</span></a>
+     <a href="#protocol"><span class="secno">3</span> <span class="content">Protocol</span></a>
      <ol class="toc">
-      <li><a href="#protocol-modules"><span class="secno">2.1</span> <span class="content">Modules</span></a>
-      <li><a href="#commands"><span class="secno">2.2</span> <span class="content">Commands</span></a>
-      <li><a href="#events"><span class="secno">2.3</span> <span class="content">Events</span></a>
-      <li><a href="#processing-model"><span class="secno">2.4</span> <span class="content">Processing Model</span></a>
+      <li><a href="#protocol-definition"><span class="secno">3.1</span> <span class="content">Definition</span></a>
+      <li><a href="#session"><span class="secno">3.2</span> <span class="content">Session</span></a>
+      <li><a href="#protocol-modules"><span class="secno">3.3</span> <span class="content">Modules</span></a>
+      <li>
+       <a href="#commands"><span class="secno">3.4</span> <span class="content">Commands</span></a>
+       <ol class="toc">
+        <li><a href="#table-of-commands"><span class="secno">3.4.1</span> <span class="content">Table of Commands</span></a>
+       </ol>
+      <li><a href="#events"><span class="secno">3.5</span> <span class="content">Events</span></a>
+      <li><a href="#processing-model"><span class="secno">3.6</span> <span class="content">Processing Model</span></a>
      </ol>
     <li>
-     <a href="#transport"><span class="secno">3</span> <span class="content">Transport</span></a>
+     <a href="#transport"><span class="secno">4</span> <span class="content">Transport</span></a>
      <ol class="toc">
-      <li><a href="#establishing"><span class="secno">3.1</span> <span class="content">Establishing a Connection</span></a>
+      <li><a href="#establishing"><span class="secno">4.1</span> <span class="content">Establishing a Connection</span></a>
      </ol>
     <li>
-     <a href="#modules"><span class="secno">4</span> <span class="content">Modules</span></a>
+     <a href="#modules"><span class="secno">5</span> <span class="content">Modules</span></a>
      <ol class="toc">
       <li>
-       <a href="#module-session"><span class="secno">4.1</span> <span class="content">session</span></a>
+       <a href="#module-session"><span class="secno">5.1</span> <span class="content">Session</span></a>
        <ol class="toc">
-        <li><a href="#command-session-status"><span class="secno">4.1.1</span> <span class="content">status</span></a>
+        <li><a href="#module-session-definition"><span class="secno">5.1.1</span> <span class="content">Definition</span></a>
+        <li><a href="#command-session-status"><span class="secno">5.1.2</span> <span class="content">Status</span></a>
        </ol>
      </ol>
-    <li><a href="#conformance"><span class="secno">5</span> <span class="content">Conformance</span></a>
     <li>
      <a href="#index"><span class="secno"></span> <span class="content">Index</span></a>
      <ol class="toc">
@@ -1511,123 +1518,210 @@ introducing bidirectional communication. In place of the strict
 command/response format of WebDriver, this permits events to stream
 from the user agent to the controlling software, better matching the
 evented nature of the browser DOM.</p>
-   <h2 class="heading settled" data-level="2" id="protocol"><span class="secno">2. </span><span class="content">Protocol</span><a class="self-link" href="#protocol"></a></h2>
+   <h2 class="heading settled" data-level="2" id="infrastructure"><span class="secno">2. </span><span class="content">Infrastructure</span><a class="self-link" href="#infrastructure"></a></h2>
+   <p>This specification depends on the Infra Standard. <a data-link-type="biblio" href="#biblio-infra">[INFRA]</a></p>
+   <p>Network protocol messages are defined using CDDL. <a data-link-type="biblio" href="#biblio-rfc8610">[RFC8610]</a></p>
+   <h2 class="heading settled" data-level="3" id="protocol"><span class="secno">3. </span><span class="content">Protocol</span><a class="self-link" href="#protocol"></a></h2>
    <p>This section defines the basic concepts of the WebDriver BiDi
 protocol. These terms are distinct from their representation at the <a href="#transport">transport</a> layer.</p>
-   <p>This specification uses Concise Data Definition Language (CDDL) <a data-link-type="biblio" href="#biblio-rfc8610">[RFC8610]</a> to describe the format of messages transmitted between the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends">local end</a> and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends">remote end</a>.</p>
-   <p class="note" role="note"><span>Note:</span> These definitions do not form any normative requirements, rather
-they are used elsewhere as part of such requirements.</p>
-   <h3 class="heading settled" data-level="2.1" id="protocol-modules"><span class="secno">2.1. </span><span class="content">Modules</span><a class="self-link" href="#protocol-modules"></a></h3>
-   <p>The WebDriver BiDi protocol is organized into modules. A <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="module">module</dfn> is defined by:</p>
-   <ul>
-    <li data-md>
-     <p>A unique string <dfn data-dfn-for="module" data-dfn-type="dfn" data-export id="module-name">name<a class="self-link" href="#module-name"></a></dfn>, implicit in its
- definition.</p>
-    <li data-md>
-     <p>A set of <a data-link-type="dfn" href="#command" id="ref-for-command">commands</a>.</p>
-    <li data-md>
-     <p>A set of <a data-link-type="dfn" href="#event" id="ref-for-event">events</a>.</p>
-   </ul>
-   <p>Each <a data-link-type="dfn" href="#module" id="ref-for-module">module</a> represents a collection of related <a data-link-type="dfn" href="#command" id="ref-for-command①">commands</a> and <a data-link-type="dfn" href="#event" id="ref-for-event①">events</a> pertaining to a certain aspect of the user agent. For
-example, a module might contain functionality for inspecting and
+   <p>The protocol is defined using a <a data-link-type="biblio" href="#biblio-rfc8610">CDDL</a> definition. For the
+convenience of implementors two seperate CDDL definitions are defined; the <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="remote-end-definition">remote end definition</dfn> which defines the format of messages produced
+on the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends">local end</a> and consumed on the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends">remote end</a>, and the <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="local end definition" data-noexport id="local-end-definition">local end
+definition</dfn> which defines the format of messages produced on the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①">remote
+end</a> and consumed on the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends①">local end</a></p>
+   <h3 class="heading settled" data-level="3.1" id="protocol-definition"><span class="secno">3.1. </span><span class="content">Definition</span><a class="self-link" href="#protocol-definition"></a></h3>
+   <p class="issue" id="issue-40ad1db0"><a class="self-link" href="#issue-40ad1db0"></a> Should this be an appendix?</p>
+   <p>This section gives the initial contents of the <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition">local end definition</a>. These are augmented by the definition fragments defined in
+the remainder of the specification.</p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①">Remote end definition</a></p>
+<pre class="cddl remote-cddl">Command = {
+  id: uint,
+  CommandData,
+}
+
+CommandData = (
+  SessionCommand
+)
+
+EmptyParams = { *text }
+</pre>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①">Local end definition</a></p>
+<pre class="cddl local-cddl">Message = (
+  CommandResponse //
+  Event
+)
+
+CommandResponse = (
+  id: uint,
+  ResponseData,
+)
+
+ResponseData = (
+  Error //
+  CommandResult
+)
+
+Error = (
+  error: (
+    "unknown error" /
+    "unknown method" /
+    "invalid argument"
+  ),
+  message: text,
+  stacktrace: text,
+)
+
+CommandResult = {
+  value: ResultData,
+}
+
+ResultData = (
+  EmptyResult //
+  SessionResult
+)
+
+EmptyResult = { *text }
+
+Event = ()
+</pre>
+   <h3 class="heading settled" data-level="3.2" id="session"><span class="secno">3.2. </span><span class="content">Session</span><a class="self-link" href="#session"></a></h3>
+   <p>WebDriver BiDi uses the same <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions">session</a> concept as WebDriver.</p>
+   <h3 class="heading settled" data-level="3.3" id="protocol-modules"><span class="secno">3.3. </span><span class="content">Modules</span><a class="self-link" href="#protocol-modules"></a></h3>
+   <p>The WebDriver BiDi protocol is organized into modules.</p>
+   <p>Each <dfn data-dfn-type="dfn" data-export id="module">module<a class="self-link" href="#module"></a></dfn> represents a collection of related <a data-link-type="dfn" href="#command" id="ref-for-command">commands</a> and <a data-link-type="dfn" href="#event" id="ref-for-event">events</a> pertaining to a certain aspect of the user
+agent. For example, a module might contain functionality for inspecting and
 manipulating the DOM, or for script execution.</p>
-   <h3 class="heading settled" data-level="2.2" id="commands"><span class="secno">2.2. </span><span class="content">Commands</span><a class="self-link" href="#commands"></a></h3>
+   <p>Each module has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="module-name">module name</dfn> which is a string. The <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name">command name</a> and <a data-link-type="dfn" href="#event-event-name" id="ref-for-event-event-name">event name</a> for commands and events defined in the
+module start with the <a data-link-type="dfn" href="#module-name" id="ref-for-module-name">module name</a> followed by a period "<code>.</code>".</p>
+   <p>Modules which contain <a data-link-type="dfn" href="#command" id="ref-for-command①">commands</a> define <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition②">remote end definition</a> fragments. These provide choices in the <code>CommandData</code> group for the
+module’s <a data-link-type="dfn" href="#command" id="ref-for-command②">commands</a>, and can also define additional definition properties. They
+can also define <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②">local end definition</a> fragments that provide additional choices
+in the <code>ResultData</code> group for the results of commands in the module.</p>
+   <p>Modules which contain events define <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③">local end definition</a> fragments that are
+choices in the <code>Event</code> group for the module’s <a data-link-type="dfn" href="#event" id="ref-for-event①">events</a>.</p>
+   <p>An implementation may define <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="extension-modules">extension modules</dfn>. These must have a <a data-link-type="dfn" href="#module-name" id="ref-for-module-name①">module name</a> that contains a single colon "<code>:</code>" character. The
+part before the colon is the prefix; this is typically the same for all
+extension modules specific to a given implementation and should be unique for a
+given implementation. Such modules extend the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④">local end definition</a> and <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition③">remote
+end definition</a> providing additional groups as choices for the defined <a data-link-type="dfn" href="#command" id="ref-for-command③">commands</a> and <a data-link-type="dfn" href="#event" id="ref-for-event②">events</a>.</p>
+   <h3 class="heading settled" data-level="3.4" id="commands"><span class="secno">3.4. </span><span class="content">Commands</span><a class="self-link" href="#commands"></a></h3>
    <p>A <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="command">command</dfn> is an asynchronous operation, requested by
-the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends①">local end</a> and run on the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①">remote end</a>, resulting in either a
-result or an error being returned to the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends②">local end</a>. Multiple
+the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends②">local end</a> and run on the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends②">remote end</a>, resulting in either a
+result or an error being returned to the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends③">local end</a>. Multiple
 commands can run at the same time, and commands can potentially be
 long-running. As a consequence, commands can finish out-of-order.</p>
-   <p>Each concrete <a data-link-type="dfn" href="#command" id="ref-for-command②">command</a> type is defined by:</p>
+   <p>Each <a data-link-type="dfn" href="#command" id="ref-for-command④">command</a> is defined by:</p>
    <ul>
     <li data-md>
-     <p>A string <dfn data-dfn-for="command" data-dfn-type="dfn" data-export id="command-name">name<a class="self-link" href="#command-name"></a></dfn>, implicit in its
- definition.</p>
+     <p>A <dfn data-dfn-for="command" data-dfn-type="dfn" data-export id="command-command-type">command type<a class="self-link" href="#command-command-type"></a></dfn> which is defined by a <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition④">remote
+ end definition</a> fragment containing a group. Each such group has two fields:</p>
+     <ul>
+      <li data-md>
+       <p><code>method</code> which is a string literal of the form <code>[module
+name].[method name]</code>. This is the <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export data-lt="command name" id="command-command-name">command
+name</dfn>.</p>
+      <li data-md>
+       <p><code>params</code> which defines a mapping containing data that to be passed into
+the command. The populated value of this map is the <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export id="command-command-parameters">command parameters</dfn>.</p>
+     </ul>
     <li data-md>
-     <p>A <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export id="command-parameter-type">parameter type</dfn>, which is a <var>map</var> whose entries are the inputs to the command.</p>
+     <p>A <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export id="command-result-type">result type</dfn>, which is defined by a <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑤">local
+end definition</a> fragment.</p>
     <li data-md>
-     <p>A set of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps">remote end steps</a>.</p>
-    <li data-md>
-     <p>A <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export id="command-return-type">return type</dfn>, which may be null.</p>
+     <p>A set of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps">remote end steps</a> which define the actions to take for a command
+given <a data-link-type="dfn" href="#command-command-parameters" id="ref-for-command-command-parameters">command parameters</a> and return an instance of the command <a data-link-type="dfn" href="https://heycam.github.io/webidl/#dfn-return-type" id="ref-for-dfn-return-type">return
+type</a>.</p>
    </ul>
-   <p>Command <a data-link-type="dfn" href="#command-parameter-type" id="ref-for-command-parameter-type">parameter types</a> and <a data-link-type="dfn" href="#command-return-type" id="ref-for-command-return-type">return types</a> are defined in this specification using <a data-link-type="biblio" href="#biblio-rfc8610">CDDL</a>.</p>
-   <p>The following <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export id="command-table-of-commands">table of commands</dfn> lists the
-available <a data-link-type="dfn" href="#command" id="ref-for-command③">commands</a> by module and name.</p>
-   <table class="simple">
-    <tbody>
-     <tr>
-      <th>Module Name
-      <th>Command Name
-      <th>Command
-     <tr>
-      <td>session
-      <td>status
-      <td><a data-link-type="dfn" href="#commands-status" id="ref-for-commands-status">session.status</a>
-   </table>
-   <h3 class="heading settled" data-level="2.3" id="events"><span class="secno">2.3. </span><span class="content">Events</span><a class="self-link" href="#events"></a></h3>
-   <p>An <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="event">event</dfn> is a notification, sent by the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends②">remote
-end</a> to the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends③">local end</a>, signaling that something of interest has
-occurred on the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends③">remote end</a>.</p>
-   <p>Each concrete <a data-link-type="dfn" href="#event" id="ref-for-event②">event</a> type is defined by:</p>
+   <p>When commands are send from the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends④">local end</a> they have a command id. This is an
+identifier used by the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends⑤">local end</a> to identify the response from a particular
+command. From the point of view of the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends③">remote end</a> this identifier is opaque
+and cannot be used internally to identify the command.</p>
+   <p class="note" role="note"><span>Note:</span> This is because the command id is entirely controlled by the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends⑥">local end</a> and isn’t necessarily unique over the course of a session. For example a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends⑦">local
+end</a> which ignores all responses could use the same command id for each command.</p>
+   <p>The <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export id="command-set-of-all-command-names">set of all command names</dfn> is a set containing
+all the defined <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name①">command names</a>, including any belonging to <a data-link-type="dfn" href="#extension-modules" id="ref-for-extension-modules">extension
+modules</a>.</p>
+   <h4 class="heading settled" data-level="3.4.1" id="table-of-commands"><span class="secno">3.4.1. </span><span class="content">Table of Commands</span><a class="self-link" href="#table-of-commands"></a></h4>
+   <div class="non-normative">
+    <p><em>This section is non-normative.</em></p>
+    <p>The following table of commands lists the available <a data-link-type="dfn" href="#command" id="ref-for-command⑤">commands</a> by
+module and name.</p>
+    <table class="simple">
+     <tbody>
+      <tr>
+       <th>Module Name
+       <th>Command Name
+       <th>Command
+      <tr>
+       <td>session
+       <td>status
+       <td><a data-link-type="dfn" href="#commands-status" id="ref-for-commands-status">session.status</a>
+    </table>
+   </div>
+   <h3 class="heading settled" data-level="3.5" id="events"><span class="secno">3.5. </span><span class="content">Events</span><a class="self-link" href="#events"></a></h3>
+   <p>An <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="event">event</dfn> is a notification, sent by the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends④">remote
+end</a> to the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends⑧">local end</a>, signaling that something of interest has
+occurred on the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑤">remote end</a>.</p>
    <ul>
     <li data-md>
-     <p>A string <dfn data-dfn-for="event" data-dfn-type="dfn" data-export id="event-name">name<a class="self-link" href="#event-name"></a></dfn>, implicit in its
- definition.</p>
-    <li data-md>
-     <p>A <dfn class="dfn-paneled" data-dfn-for="event" data-dfn-type="dfn" data-export id="event-parameter-type">parameter type</dfn>, which is a <var>map</var> whose
- entries are the details of the event that has occurred.</p>
+     <p>An <dfn data-dfn-for="event" data-dfn-type="dfn" data-export id="event-event-type">event type<a class="self-link" href="#event-event-type"></a></dfn> is defined by a <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑥">local
+ end definition</a> fragment containing a group. Each such group has two fields:</p>
+     <ul>
+      <li data-md>
+       <p><code>method</code> which is a string literal of the form <code>[module
+name].[event name]</code>. This is the <dfn class="dfn-paneled" data-dfn-for="event" data-dfn-type="dfn" data-export data-lt="event name" id="event-event-name">event
+name</dfn>.</p>
+      <li data-md>
+       <p><code>params</code> which defines a mapping containing event data. The
+populated value of this map is the <dfn data-dfn-for="command" data-dfn-type="dfn" data-export data-lt="event parameters." id="command-event-parameters">event
+parameters.<a class="self-link" href="#command-event-parameters"></a></dfn></p>
+     </ul>
    </ul>
-   <p>Event <a data-link-type="dfn" href="#event-parameter-type" id="ref-for-event-parameter-type">parameter types</a> are defined in this
-specification using <a data-link-type="biblio" href="#biblio-rfc8610">CDDL</a>.</p>
-   <h3 class="heading settled" data-level="2.4" id="processing-model"><span class="secno">2.4. </span><span class="content">Processing Model</span><a class="self-link" href="#processing-model"></a></h3>
+   <h3 class="heading settled" data-level="3.6" id="processing-model"><span class="secno">3.6. </span><span class="content">Processing Model</span><a class="self-link" href="#processing-model"></a></h3>
    <div class="algorithm" data-algorithm="process a command">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="process-a-command">process a command</dfn> given a qualified command name <var>qualified command name</var>,
-and parameters <var>parameters</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="process-a-command">process a command</dfn> given <var>data</var>: 
     <ol>
      <li data-md>
-      <p>If <var>qualified command name</var> does not contain exactly one U+002E
-  FULL STOP character (.), return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors">Error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-command" id="ref-for-dfn-unknown-command">unknown command</a>.</p>
+      <p>Match <var>data</var> against the <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑤">remote end definition</a>. If this results in a
+  match:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>result</var> be the result of running the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①">remote end steps</a> for the command with <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name②">command name</a> equal to the <code>method</code> property of <var>data</var> and with the <a data-link-type="dfn" href="#command-command-parameters" id="ref-for-command-command-parameters①">command
+ parameters</a> from the matched data.</p>
+       <li data-md>
+        <p class="assertion">Assert: if <var>result</var> is a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success">success</a> its data matches the
+ definition for the <a data-link-type="dfn" href="#command-result-type" id="ref-for-command-result-type">result type</a> corresponding to the command with name <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name③">command name</a>.</p>
+       <li data-md>
+        <p>Return <var>result</var>.</p>
+      </ol>
      <li data-md>
-      <p>Let <var>module name</var> be the bytes in <var>qualified command name</var> preceeding the U+002E FULL STOP character.</p>
+      <p>Otherwise there is no match. If <var>data</var> isn’t a map or is a map without a
+  property named method return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors">error</a> with error code <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument">invalid argument</a>. Otherwise let <var>command</var> be the value of
+  the <code>method</code> property of <var>data</var>.</p>
      <li data-md>
-      <p>Let <var>command name</var> be the bytes in <var>qualified command name</var> following the U+002E FULL STOP character.</p>
+      <p>If <var>command</var> is not in the <a data-link-type="dfn" href="#command-set-of-all-command-names" id="ref-for-command-set-of-all-command-names">set of all command names</a>, return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①">Error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-command" id="ref-for-dfn-unknown-command">unknown command</a>.</p>
      <li data-md>
-      <p>Let <var>command</var> be the command listed in the <a data-link-type="dfn" href="#command-table-of-commands" id="ref-for-command-table-of-commands">table of commands</a> whose module is <var>module name</var> and whose name is <var>command name</var>.</p>
-     <li data-md>
-      <p>If there is no such <var>command</var>, return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①">Error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①">error
-  code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-command" id="ref-for-dfn-unknown-command①">unknown command</a>.</p>
-     <li data-md>
-      <p>If <var>parameters</var> does not <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc8610#appendix-C" id="ref-for-appendix-C">match the
-  CDDL specification</a> given by <var>command</var>’s <a data-link-type="dfn" href="#command-parameter-type" id="ref-for-command-parameter-type①">parameter
-  type</a>, then return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②">Error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument">invalid
-  argument</a>.</p>
-     <li data-md>
-      <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try">trying</a> to run the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①">remote end
-  steps</a> for <var>command</var> with <var>parameters</var>.</p>
-     <li data-md>
-      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert">Assert</a>: <var>result</var> <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc8610#appendix-C" id="ref-for-appendix-C①">matches the CDDL
-  specification</a> given by <var>command</var>’s <a data-link-type="dfn" href="#command-return-type" id="ref-for-command-return-type①">return type</a>.</p>
-     <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success">success</a> with data <var>result</var>.</p>
+      <p>Return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②">Error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①">invalid argument</a>.</p>
     </ol>
    </div>
-   <h2 class="heading settled" data-level="3" id="transport"><span class="secno">3. </span><span class="content">Transport</span><a class="self-link" href="#transport"></a></h2>
+   <h2 class="heading settled" data-level="4" id="transport"><span class="secno">4. </span><span class="content">Transport</span><a class="self-link" href="#transport"></a></h2>
    <p>Message transport is provided using the WebSocket protocol. <a data-link-type="biblio" href="#biblio-rfc6455">[RFC6455]</a></p>
-   <p class="note" role="note"><span>Note:</span> In the terms of the WebSocket protocol, the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends④">local end</a> is the
-client and the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends④">remote end</a> is the server / remote host.</p>
-   <p class="note" role="note"><span>Note:</span> The encoding of <a data-link-type="dfn" href="#command" id="ref-for-command④">commands</a> and <a data-link-type="dfn" href="#event" id="ref-for-event③">events</a> as messages is
+   <p class="note" role="note"><span>Note:</span> In the terms of the WebSocket protocol, the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends⑨">local end</a> is the
+client and the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑥">remote end</a> is the server / remote host.</p>
+   <p class="note" role="note"><span>Note:</span> The encoding of <a data-link-type="dfn" href="#command" id="ref-for-command⑥">commands</a> and <a data-link-type="dfn" href="#event" id="ref-for-event③">events</a> as messages is
 similar to JSON-RPC, but this specification does not normatively
-reference it. <a data-link-type="biblio" href="#biblio-json-rpc">[JSON-RPC]</a> The normative requirements on <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑤">remote
+reference it. <a data-link-type="biblio" href="#biblio-json-rpc">[JSON-RPC]</a> The normative requirements on <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑦">remote
 ends</a> are instead given as a precise processing model, while no
-normative requirements are given for <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends⑤">local ends</a>.</p>
+normative requirements are given for <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-local-ends" id="ref-for-dfn-local-ends①⓪">local ends</a>.</p>
    <p>A <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="websocket-listener">WebSocket listener</dfn> is a network endpoint that is able
 to accept incoming <a data-link-type="biblio" href="#biblio-rfc6455">WebSocket</a> connections.</p>
    <p>A <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener">WebSocket listener</a> has a <dfn class="dfn-paneled" data-dfn-for="listener" data-dfn-type="dfn" data-noexport id="listener-host">host</dfn>, a <dfn class="dfn-paneled" data-dfn-for="listener" data-dfn-type="dfn" data-noexport id="listener-port">port</dfn>, a <dfn class="dfn-paneled" data-dfn-for="listener" data-dfn-type="dfn" data-noexport id="listener-secure-flag">secure flag</dfn>, and a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="list-of-websocket-resources">list of WebSocket resources</dfn>.</p>
-   <p>When a <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener①">WebSocket listener</a> <var>listener</var> is created, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑥">remote end</a> must start to listen for WebSocket connections on the host and port
+   <p>When a <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener①">WebSocket listener</a> <var>listener</var> is created, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑧">remote end</a> must start to listen for WebSocket connections on the host and port
 given by <var>listener</var>’s <a data-link-type="dfn" href="#listener-host" id="ref-for-listener-host">host</a> and <a data-link-type="dfn" href="#listener-port" id="ref-for-listener-port">port</a>. If <var>listener</var>’s <a data-link-type="dfn" href="#listener-secure-flag" id="ref-for-listener-secure-flag">secure flag</a> is set, then connections
 established from <var>listener</var> must be TLS encrypted.</p>
-   <p>A <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑦">remote end</a> has a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-set" id="ref-for-ordered-set">set</a> of <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener②">WebSocket listeners</a> <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="active listeners" data-noexport id="active-listeners">active
+   <p>A <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑨">remote end</a> has a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-set" id="ref-for-ordered-set">set</a> of <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener②">WebSocket listeners</a> <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="active listeners" data-noexport id="active-listeners">active
 listeners</dfn>, which is initially empty.</p>
-   <p>A WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions">session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="websocket-connection">WebSocket connection</dfn> which is
+   <p>A WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions①">session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="websocket-connection">WebSocket connection</dfn> which is
 a network connection that follows the requirements of the <a data-link-type="biblio" href="#biblio-rfc6455">WebSocket protocol</a>.</p>
    <div>
     <p>When a client <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-4.1" id="ref-for-section-4.1">establishes a WebSocket connection</a> <var>connection</var> by
@@ -1646,7 +1740,7 @@ accept the incoming connection:</p>
  stop running these steps and act as if the requested service is not
  available.</p>
      <li data-md>
-      <p>If there is a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions①">session</a> in the list of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-active-session" id="ref-for-dfn-active-session">active sessions</a> with <var>session id</var> as its <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-session-id" id="ref-for-dfn-session-id">session ID</a> then let <var>session</var> be that
+      <p>If there is a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions②">session</a> in the list of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-active-session" id="ref-for-dfn-active-session">active sessions</a> with <var>session id</var> as its <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-session-id" id="ref-for-dfn-session-id">session ID</a> then let <var>session</var> be that
  session. Otherwise stop running these steps and act as if the
  requested service is not available.</p>
      <li data-md>
@@ -1660,15 +1754,15 @@ accept the incoming connection:</p>
     <p class="issue" id="issue-0dc5e7b6"><a class="self-link" href="#issue-0dc5e7b6"></a> Do we support > 1 connection for a single session?</p>
    </div>
    <p>When <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-6.2" id="ref-for-section-6.2">a WebSocket message has been received</a> for a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection①">WebSocket
-connection</a> <var>connection</var> with type <var>type</var> and data <var>data</var>, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑧">remote
+connection</a> <var>connection</var> with type <var>type</var> and data <var>data</var>, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①⓪">remote
 end</a> must <a data-link-type="dfn" href="#handle-an-incoming-message" id="ref-for-handle-an-incoming-message">handle an incoming message</a> given <var>connection</var>, <var>type</var> and <var>data</var>.</p>
    <p>When <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.1.3" id="ref-for-section-7.1.3">the WebSocket closing handshake is started</a> or when <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.1.4" id="ref-for-section-7.1.4">the
-WebSocket connection is closed</a> for a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection②">WebSocket connection</a> <var>connection</var>, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑨">remote end</a> must <a data-link-type="dfn" href="#handle-a-connection-closing" id="ref-for-handle-a-connection-closing">handle a connection closing</a> given <var>connection</var>.</p>
+WebSocket connection is closed</a> for a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection②">WebSocket connection</a> <var>connection</var>, a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①①">remote end</a> must <a data-link-type="dfn" href="#handle-a-connection-closing" id="ref-for-handle-a-connection-closing">handle a connection closing</a> given <var>connection</var>.</p>
    <p class="note" role="note"><span>Note:</span> Both conditions are needed because it is possible for a
 WebSocket connection to be closed without a closing handshake.</p>
    <div class="algorithm" data-algorithm="construct a WebSocket resource name">
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="construct a WebSocket resource name|constructing a
-WebSocket resource name" data-noexport id="construct-a-websocket-resource-name">construct a WebSocket resource name</dfn> given a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions②">session</a> <var>session</var>:</p>
+WebSocket resource name" data-noexport id="construct-a-websocket-resource-name">construct a WebSocket resource name</dfn> given a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions③">session</a> <var>session</var>:</p>
     <ol>
      <li data-md>
       <p>Return the result of concatenating the string "<code>/session/</code>"
@@ -1677,7 +1771,7 @@ WebSocket resource name" data-noexport id="construct-a-websocket-resource-name">
    </div>
    <div class="algorithm" data-algorithm="construct a WebSocket URL">
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="construct a WebSocket URL|constructing a WebSocket
-URL" data-noexport id="construct-a-websocket-url">construct a WebSocket URL</dfn> given a <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener③">WebSocket listener</a> <var>listener</var> and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions③">session</a> <var>session</var>:</p>
+URL" data-noexport id="construct-a-websocket-url">construct a WebSocket URL</dfn> given a <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener③">WebSocket listener</a> <var>listener</var> and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions④">session</a> <var>session</var>:</p>
     <ol>
      <li data-md>
       <p>Let <var>resource name</var> be the result of <a data-link-type="dfn" href="#construct-a-websocket-resource-name" id="ref-for-construct-a-websocket-resource-name">constructing a WebSocket
@@ -1704,10 +1798,10 @@ URL" data-noexport id="construct-a-websocket-url">construct a WebSocket URL</dfn
     </ol>
    </div>
    <div class="algorithm" data-algorithm="start listening for a WebSocket connection">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="start-listening-for-a-websocket-connection">start listening for a WebSocket connection</dfn> given a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions④">session</a> <var>session</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="start-listening-for-a-websocket-connection">start listening for a WebSocket connection</dfn> given a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑤">session</a> <var>session</var>: 
     <ol>
      <li data-md>
-      <p>If there is an existing <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener④">WebSocket listener</a> in the set of <a data-link-type="dfn" href="#active-listeners" id="ref-for-active-listeners①">active listeners</a> which the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①⓪">remote end</a> would like to reuse,
+      <p>If there is an existing <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener④">WebSocket listener</a> in the set of <a data-link-type="dfn" href="#active-listeners" id="ref-for-active-listeners①">active listeners</a> which the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①②">remote end</a> would like to reuse,
   let <var>listener</var> be that listener. Otherwise let <var>listener</var> be a new <a data-link-type="dfn" href="#websocket-listener" id="ref-for-websocket-listener⑤">WebSocket listener</a> with <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#implementation-defined" id="ref-for-implementation-defined">implementation-defined</a> <a data-link-type="dfn" href="#listener-host" id="ref-for-listener-host②">host</a>, <a data-link-type="dfn" href="#listener-port" id="ref-for-listener-port②">port</a>, <a data-link-type="dfn" href="#listener-secure-flag" id="ref-for-listener-secure-flag②">secure flag</a>,
   and an empty <a data-link-type="dfn" href="#list-of-websocket-resources" id="ref-for-list-of-websocket-resources①">list of WebSocket resources</a>.</p>
      <li data-md>
@@ -1716,7 +1810,7 @@ URL" data-noexport id="construct-a-websocket-url">construct a WebSocket URL</dfn
      <li data-md>
       <p>Append <var>resource name</var> to the <a data-link-type="dfn" href="#list-of-websocket-resources" id="ref-for-list-of-websocket-resources②">list of WebSocket resources</a> for <var>listener</var>.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#set-append" id="ref-for-set-append">Append</a> <var>listener</var> to the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①①">remote end</a>'s <a data-link-type="dfn" href="#active-listeners" id="ref-for-active-listeners②">active
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#set-append" id="ref-for-set-append">Append</a> <var>listener</var> to the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①③">remote end</a>'s <a data-link-type="dfn" href="#active-listeners" id="ref-for-active-listeners②">active
    listeners</a>.</p>
      <li data-md>
       <p>Return <var>listener</var>.</p>
@@ -1735,45 +1829,23 @@ typically be "<code>localhost</code>".</p>
       <p>If <var>type</var> is not <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-5.2" id="ref-for-section-5.2">text</a>, return.</p>
       <p class="issue" id="issue-06ad62f1"><a class="self-link" href="#issue-06ad62f1"></a> Should we instead close <var>connection</var> with <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4" id="ref-for-section-7.4">status code</a> 1003, or <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error">respond with an error</a>?</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert①">Assert</a>: <var>data</var> is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#scalar-value-string" id="ref-for-scalar-value-string">scalar value string</a>, because the
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert">Assert</a>: <var>data</var> is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#scalar-value-string" id="ref-for-scalar-value-string">scalar value string</a>, because the
    WebSocket <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-8.1" id="ref-for-section-8.1">handling errors in UTF-8-encoded data</a> would already
    have <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.1.7" id="ref-for-section-7.1.7">failed the WebSocket
    connection</a> otherwise.</p>
       <p class="issue" id="issue-449f8f30"><a class="self-link" href="#issue-449f8f30"></a> Nothing seems to define what <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4" id="ref-for-section-7.4①">status code</a> is used for UTF-8 errors.</p>
      <li data-md>
       <p>Let <var>parsed</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#parse-json-into-infra-values" id="ref-for-parse-json-into-infra-values">parsing JSON into Infra values</a> given <var>data</var>. If this
-  throws an exception, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error①">respond with an error</a> given <var>connection</var> and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①">invalid argument</a>, and finally
+  throws an exception, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error①">respond with an error</a> given <var>connection</var> and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②">invalid argument</a>, and finally
   return.</p>
-     <li data-md>
-      <p>If any of the following conditions are false:</p>
-      <ol>
-       <li data-md>
-        <p><var>parsed</var> is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map">map</a></p>
-       <li data-md>
-        <p><var>parsed</var>["<code>id</code>"] <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists">exists</a> and is an
-  integer in the range [0, 2147483647].</p>
-        <p class="issue" id="issue-1f846779"><a class="self-link" href="#issue-1f846779"></a> That’s <i>2<sup>31</sup> - 1</i>, the largest signed
-   32-bit integer. Should we allow up to <i>2<sup>53</sup> -
-   1</i>, the largest number such that <i>N</i> and <i>N + 1</i> both have exact representations in a JS Number?</p>
-       <li data-md>
-        <p><var>parsed</var>["<code>method</code>"] <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①">exists</a> and is a
-  string.</p>
-       <li data-md>
-        <p><var>parsed</var>["<code>params</code>"], if it <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②">exists</a>,
-  is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①">map</a>.</p>
-      </ol>
-      <p class="issue" id="issue-9112f633"><a class="self-link" href="#issue-9112f633"></a> Should we fail if there are unknown keys in <var>parsed</var>? CDP
-   does, but it’s very unusual for unversioned web platform APIs.</p>
-      <p>Then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error②">respond with an error</a> given <var>connection</var> and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④">error
-  code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②">invalid argument</a>, and finally return.</p>
      <li data-md>
       <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#process-a-command" id="ref-for-process-a-command">processing a
-  command</a> given <var>parsed</var>["<code>method</code>"] and <var>parsed</var>["<code>params</code>"].</p>
+  command</a> given <var>data</var>.</p>
      <li data-md>
-      <p>If <var>result</var> is an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③">Error</a>, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error③">respond with an error</a> given <var>connection</var>, <var>result</var>, and <var>parsed</var>["<code>id</code>"], and finally
+      <p>If <var>result</var> is an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③">Error</a>, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error②">respond with an error</a> given <var>connection</var>, <var>result</var>, and <var>parsed</var>["<code>id</code>"], and finally
   return.</p>
      <li data-md>
-      <p>Let <var>response</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map②">map</a> with the following properties:</p>
+      <p>Let <var>response</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map">map</a> with the following properties:</p>
       <dl>
        <dt>"id"
        <dd>The value of <var>parsed</var>["<code>id</code>"]
@@ -1787,7 +1859,7 @@ typically be "<code>localhost</code>".</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="respond with an error">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="respond-with-an-error">respond with an error</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection④">WebSocket connection</a> <var>connection</var> and an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑤">error code</a> <var>code</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="respond-with-an-error">respond with an error</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection④">WebSocket connection</a> <var>connection</var> and an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③">error code</a> <var>code</var>: 
     <ol>
      <li data-md>
       <p class="issue" id="issue-aee4ea98"><a class="self-link" href="#issue-aee4ea98"></a> Form a valid JSON <var>errorObject</var> given <var>code</var>.</p>
@@ -1799,15 +1871,15 @@ typically be "<code>localhost</code>".</p>
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="handle-a-connection-closing">handle a connection closing</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection⑤">WebSocket connection</a> <var>connection</var>: 
     <ol>
      <li data-md>
-      <p>If there is a WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑤">session</a> with <var>connection</var> as its <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection">connection</a>,
-  set the <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection①">connection</a> on that <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑥">session</a> to null.</p>
+      <p>If there is a WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑥">session</a> with <var>connection</var> as its <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection">connection</a>,
+  set the <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-connection" id="ref-for-concept-connection①">connection</a> on that <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑦">session</a> to null.</p>
     </ol>
     <p class="issue" id="issue-02ccb156"><a class="self-link" href="#issue-02ccb156"></a> This should also reset any internal state</p>
    </div>
-   <p class="note" role="note"><span>Note:</span> This does not end any <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑦">session</a>.</p>
+   <p class="note" role="note"><span>Note:</span> This does not end any <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions⑧">session</a>.</p>
    <p class="issue" id="issue-9f7aff26"><a class="self-link" href="#issue-9f7aff26"></a> Need to hook in to the session ending to allow the UA to close
 the listener if it wants.</p>
-   <h3 class="heading settled" data-level="3.1" id="establishing"><span class="secno">3.1. </span><span class="content">Establishing a Connection</span><a class="self-link" href="#establishing"></a></h3>
+   <h3 class="heading settled" data-level="4.1" id="establishing"><span class="secno">4.1. </span><span class="content">Establishing a Connection</span><a class="self-link" href="#establishing"></a></h3>
    <p>WebDriver clients opt in to a bidirectional connection by requesting a
 capability with the name "<code>webSocketUrl</code>" and value
 true.</p>
@@ -1817,7 +1889,7 @@ true.</p>
 "<code>webSocketUrl</code>" capability, with parameter <var>value</var> is: 
     <ol>
      <li data-md>
-      <p>If <var>value</var> is not a boolean, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑥">code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③">invalid argument</a>.</p>
+      <p>If <var>value</var> is not a boolean, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④">code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③">invalid argument</a>.</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①">success</a> with data <var>value</var>.</p>
     </ol>
@@ -1842,7 +1914,7 @@ with parameters <var>session</var> and <var>capabilities</var> is:
      <li data-md>
       <p>If <var>webSocketUrl</var> is undefined, return.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert②">Assert</a>: <var>webSocketUrl</var> is true.</p>
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert①">Assert</a>: <var>webSocketUrl</var> is true.</p>
      <li data-md>
       <p>Let <var>listener</var> be the result of <a data-link-type="dfn" href="#start-listening-for-a-websocket-connection" id="ref-for-start-listening-for-a-websocket-connection">start listening for a WebSocket
   connection</a> given <var>session</var>.</p>
@@ -1854,44 +1926,55 @@ with parameters <var>session</var> and <var>capabilities</var> is:
   "<code>webSocketUrl</code>" to <var>webSocketUrl</var>.</p>
     </ol>
    </div>
-   <h2 class="heading settled" data-level="4" id="modules"><span class="secno">4. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h2>
-   <h3 class="heading settled" data-level="4.1" id="module-session"><span class="secno">4.1. </span><span class="content">session</span><a class="self-link" href="#module-session"></a></h3>
+   <h2 class="heading settled" data-level="5" id="modules"><span class="secno">5. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h2>
+   <h3 class="heading settled" data-level="5.1" id="module-session"><span class="secno">5.1. </span><span class="content">Session</span><a class="self-link" href="#module-session"></a></h3>
    <p>The <dfn data-dfn-for="modules" data-dfn-type="dfn" data-export id="modules-session">session<a class="self-link" href="#modules-session"></a></dfn> module contains commands and
 events for monitoring the status of the remote end.</p>
-   <h4 class="heading settled" data-level="4.1.1" id="command-session-status"><span class="secno">4.1.1. </span><span class="content">status</span><a class="self-link" href="#command-session-status"></a></h4>
+   <h4 class="heading settled" data-level="5.1.1" id="module-session-definition"><span class="secno">5.1.1. </span><span class="content">Definition</span><a class="self-link" href="#module-session-definition"></a></h4>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑥">remote end definition</a></p>
+<pre class="cddl remote-cddl">SessionCommand = (StatusCommand)
+
+</pre>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑦">local end definition</a></p>
+<pre class="cddl local-cddl">SessionResult = (StatusResult)
+
+</pre>
+   <h4 class="heading settled" data-level="5.1.2" id="command-session-status"><span class="secno">5.1.2. </span><span class="content">Status</span><a class="self-link" href="#command-session-status"></a></h4>
    <p>The <dfn class="dfn-paneled" data-dfn-for="commands" data-dfn-type="dfn" data-noexport id="commands-status">status</dfn> command returns information about
 whether a remote end is in a state in which it can create new sessions,
 but may additionally include arbitrary meta information that is specific
 to the implementation.</p>
    <dl>
-    <dt>Parameter Type
+    <dt>Command Type
     <dd>
-<pre>      {}
+<pre class="cddl remote-cddl">StatusCommand = {
+  method: "session.status",
+  params: EmptyParams,
+}
 </pre>
     <dt>Return Type
     <dd>
-<pre>      StatusResult = {
-         ready: bool,
-         message: text,
-         * text => any
-      }
+<pre class="cddl local-cddl">StatusResult = {
+   ready: bool,
+   message: text,
+   * text => any
+}
 </pre>
    </dl>
    <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps②">remote end steps</a> are:</p>
    <ol>
     <li data-md>
-     <p>Let <var>body</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map③">map</a> with the following properties:</p>
+     <p>Let <var>body</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①">map</a> with the following properties:</p>
      <dl>
       <dt>"ready"
-      <dd>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①②">remote end</a>’s readiness state.
+      <dd>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①④">remote end</a>’s readiness state.
       <dt>"message"
-      <dd>An implementation-defined string explaining the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①③">remote end</a>’s readiness state.
+      <dd>An implementation-defined string explaining the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①⑤">remote end</a>’s readiness
+ state.
      </dl>
     <li data-md>
-     <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④">success</a> with data <var>body</var>.</p>
+     <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④">success</a> with data <var>body</var></p>
    </ol>
-   <h2 class="heading settled" data-level="5" id="conformance"><span class="secno">5. </span><span class="content">Conformance</span><a class="self-link" href="#conformance"></a></h2>
-   <p>This specification depends on the Infra Standard. <a data-link-type="biblio" href="#biblio-infra">[INFRA]</a></p>
   </main>
 <script>
 (function() {
@@ -2025,326 +2108,311 @@ to the implementation.</p>
   <h2 class="no-num no-ref heading settled" id="index"><span class="content">Index</span><a class="self-link" href="#index"></a></h2>
   <h3 class="no-num no-ref heading settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
   <ul class="index">
-   <li><a href="#active-listeners">active listeners</a><span>, in §3</span>
-   <li><a href="#command">command</a><span>, in §2.2</span>
-   <li><a href="#construct-a-websocket-resource-name">construct a WebSocket resource name</a><span>, in §3</span>
-   <li><a href="#construct-a-websocket-url">construct a WebSocket URL</a><span>, in §3</span>
-   <li><a href="#construct-a-websocket-resource-name">constructing a WebSocket resource name</a><span>, in §3</span>
-   <li><a href="#construct-a-websocket-url">constructing a WebSocket URL</a><span>, in §3</span>
-   <li><a href="#event">event</a><span>, in §2.3</span>
-   <li><a href="#get-a-session-id-for-a-websocket-resource">get a session ID for a WebSocket resource</a><span>, in §3</span>
-   <li><a href="#handle-a-connection-closing">handle a connection closing</a><span>, in §3</span>
-   <li><a href="#handle-an-incoming-message">handle an incoming message</a><span>, in §3</span>
-   <li><a href="#listener-host">host</a><span>, in §3</span>
-   <li><a href="#list-of-websocket-resources">list of WebSocket resources</a><span>, in §3</span>
-   <li><a href="#module">module</a><span>, in §2.1</span>
-   <li>
-    name
-    <ul>
-     <li><a href="#command-name">dfn for command</a><span>, in §2.2</span>
-     <li><a href="#event-name">dfn for event</a><span>, in §2.3</span>
-     <li><a href="#module-name">dfn for module</a><span>, in §2.1</span>
-    </ul>
-   <li>
-    parameter type
-    <ul>
-     <li><a href="#command-parameter-type">dfn for command</a><span>, in §2.2</span>
-     <li><a href="#event-parameter-type">dfn for event</a><span>, in §2.3</span>
-    </ul>
-   <li><a href="#listener-port">port</a><span>, in §3</span>
-   <li><a href="#process-a-command">process a command</a><span>, in §2.4</span>
-   <li><a href="#respond-with-an-error">respond with an error</a><span>, in §3</span>
-   <li><a href="#command-return-type">return type</a><span>, in §2.2</span>
-   <li><a href="#listener-secure-flag">secure flag</a><span>, in §3</span>
-   <li><a href="#modules-session">session</a><span>, in §4.1</span>
-   <li><a href="#start-listening-for-a-websocket-connection">start listening for a WebSocket connection</a><span>, in §3</span>
-   <li><a href="#commands-status">status</a><span>, in §4.1.1</span>
-   <li><a href="#command-table-of-commands">table of commands</a><span>, in §2.2</span>
-   <li><a href="#websocket-connection">WebSocket connection</a><span>, in §3</span>
-   <li><a href="#websocket-listener">WebSocket listener</a><span>, in §3</span>
+   <li><a href="#active-listeners">active listeners</a><span>, in §4</span>
+   <li><a href="#command">command</a><span>, in §3.4</span>
+   <li><a href="#command-command-name">command name</a><span>, in §3.4</span>
+   <li><a href="#command-command-parameters">command parameters</a><span>, in §3.4</span>
+   <li><a href="#command-command-type">command type</a><span>, in §3.4</span>
+   <li><a href="#construct-a-websocket-resource-name">construct a WebSocket resource name</a><span>, in §4</span>
+   <li><a href="#construct-a-websocket-url">construct a WebSocket URL</a><span>, in §4</span>
+   <li><a href="#construct-a-websocket-resource-name">constructing a WebSocket resource name</a><span>, in §4</span>
+   <li><a href="#construct-a-websocket-url">constructing a WebSocket URL</a><span>, in §4</span>
+   <li><a href="#event">event</a><span>, in §3.5</span>
+   <li><a href="#event-event-name">event name</a><span>, in §3.5</span>
+   <li><a href="#command-event-parameters">event parameters.</a><span>, in §3.5</span>
+   <li><a href="#event-event-type">event type</a><span>, in §3.5</span>
+   <li><a href="#extension-modules">extension modules</a><span>, in §3.3</span>
+   <li><a href="#get-a-session-id-for-a-websocket-resource">get a session ID for a WebSocket resource</a><span>, in §4</span>
+   <li><a href="#handle-a-connection-closing">handle a connection closing</a><span>, in §4</span>
+   <li><a href="#handle-an-incoming-message">handle an incoming message</a><span>, in §4</span>
+   <li><a href="#listener-host">host</a><span>, in §4</span>
+   <li><a href="#list-of-websocket-resources">list of WebSocket resources</a><span>, in §4</span>
+   <li><a href="#local-end-definition">local end definition</a><span>, in §3</span>
+   <li><a href="#module">module</a><span>, in §3.3</span>
+   <li><a href="#module-name">module name</a><span>, in §3.3</span>
+   <li><a href="#listener-port">port</a><span>, in §4</span>
+   <li><a href="#process-a-command">process a command</a><span>, in §3.6</span>
+   <li><a href="#remote-end-definition">remote end definition</a><span>, in §3</span>
+   <li><a href="#respond-with-an-error">respond with an error</a><span>, in §4</span>
+   <li><a href="#command-result-type">result type</a><span>, in §3.4</span>
+   <li><a href="#listener-secure-flag">secure flag</a><span>, in §4</span>
+   <li><a href="#modules-session">session</a><span>, in §5.1</span>
+   <li><a href="#command-set-of-all-command-names">set of all command names</a><span>, in §3.4</span>
+   <li><a href="#start-listening-for-a-websocket-connection">start listening for a WebSocket connection</a><span>, in §4</span>
+   <li><a href="#commands-status">status</a><span>, in §5.1.2</span>
+   <li><a href="#websocket-connection">WebSocket connection</a><span>, in §4</span>
+   <li><a href="#websocket-listener">WebSocket listener</a><span>, in §4</span>
   </ul>
   <aside class="dfn-panel" data-for="term-for-concept-connection">
    <a href="https://fetch.spec.whatwg.org/#concept-connection">https://fetch.spec.whatwg.org/#concept-connection</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-connection">3. Transport</a> <a href="#ref-for-concept-connection①">(2)</a>
+    <li><a href="#ref-for-concept-connection">4. Transport</a> <a href="#ref-for-concept-connection①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-set-append">
    <a href="https://infra.spec.whatwg.org/#set-append">https://infra.spec.whatwg.org/#set-append</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-set-append">3. Transport</a>
+    <li><a href="#ref-for-set-append">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-assert">
    <a href="https://infra.spec.whatwg.org/#assert">https://infra.spec.whatwg.org/#assert</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-assert">2.4. Processing Model</a>
-    <li><a href="#ref-for-assert①">3. Transport</a>
-    <li><a href="#ref-for-assert②">3.1. Establishing a Connection</a>
-   </ul>
-  </aside>
-  <aside class="dfn-panel" data-for="term-for-map-exists">
-   <a href="https://infra.spec.whatwg.org/#map-exists">https://infra.spec.whatwg.org/#map-exists</a><b>Referenced in:</b>
-   <ul>
-    <li><a href="#ref-for-map-exists">3. Transport</a> <a href="#ref-for-map-exists①">(2)</a> <a href="#ref-for-map-exists②">(3)</a>
+    <li><a href="#ref-for-assert">4. Transport</a>
+    <li><a href="#ref-for-assert①">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-implementation-defined">
    <a href="https://infra.spec.whatwg.org/#implementation-defined">https://infra.spec.whatwg.org/#implementation-defined</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-implementation-defined">3. Transport</a>
+    <li><a href="#ref-for-implementation-defined">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-ordered-map">
    <a href="https://infra.spec.whatwg.org/#ordered-map">https://infra.spec.whatwg.org/#ordered-map</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-ordered-map">3. Transport</a> <a href="#ref-for-ordered-map①">(2)</a> <a href="#ref-for-ordered-map②">(3)</a>
-    <li><a href="#ref-for-ordered-map③">4.1.1. status</a>
+    <li><a href="#ref-for-ordered-map">4. Transport</a>
+    <li><a href="#ref-for-ordered-map①">5.1.2. Status</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-parse-json-into-infra-values">
    <a href="https://infra.spec.whatwg.org/#parse-json-into-infra-values">https://infra.spec.whatwg.org/#parse-json-into-infra-values</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-parse-json-into-infra-values">3. Transport</a>
+    <li><a href="#ref-for-parse-json-into-infra-values">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-scalar-value-string">
    <a href="https://infra.spec.whatwg.org/#scalar-value-string">https://infra.spec.whatwg.org/#scalar-value-string</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-scalar-value-string">3. Transport</a>
+    <li><a href="#ref-for-scalar-value-string">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-serialize-json-to-bytes">
    <a href="https://infra.spec.whatwg.org/#serialize-json-to-bytes">https://infra.spec.whatwg.org/#serialize-json-to-bytes</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-serialize-json-to-bytes">3. Transport</a>
+    <li><a href="#ref-for-serialize-json-to-bytes">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-ordered-set">
    <a href="https://infra.spec.whatwg.org/#ordered-set">https://infra.spec.whatwg.org/#ordered-set</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-ordered-set">3. Transport</a>
+    <li><a href="#ref-for-ordered-set">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-5.2">
    <a href="https://tools.ietf.org/html/rfc6455#section-5.2">https://tools.ietf.org/html/rfc6455#section-5.2</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-5.2">3. Transport</a>
+    <li><a href="#ref-for-section-5.2">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-6.2">
    <a href="https://tools.ietf.org/html/rfc6455#section-6.2">https://tools.ietf.org/html/rfc6455#section-6.2</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-6.2">3. Transport</a>
+    <li><a href="#ref-for-section-6.2">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-4.1">
    <a href="https://tools.ietf.org/html/rfc6455#section-4.1">https://tools.ietf.org/html/rfc6455#section-4.1</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-4.1">3. Transport</a>
+    <li><a href="#ref-for-section-4.1">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-7.1.7">
    <a href="https://tools.ietf.org/html/rfc6455#section-7.1.7">https://tools.ietf.org/html/rfc6455#section-7.1.7</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-7.1.7">3. Transport</a>
+    <li><a href="#ref-for-section-7.1.7">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-8.1">
    <a href="https://tools.ietf.org/html/rfc6455#section-8.1">https://tools.ietf.org/html/rfc6455#section-8.1</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-8.1">3. Transport</a>
+    <li><a href="#ref-for-section-8.1">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-4.2.1">
    <a href="https://tools.ietf.org/html/rfc6455#section-4.2.1">https://tools.ietf.org/html/rfc6455#section-4.2.1</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-4.2.1">3. Transport</a>
+    <li><a href="#ref-for-section-4.2.1">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-6.1">
    <a href="https://tools.ietf.org/html/rfc6455#section-6.1">https://tools.ietf.org/html/rfc6455#section-6.1</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-6.1">3. Transport</a> <a href="#ref-for-section-6.1①">(2)</a>
+    <li><a href="#ref-for-section-6.1">4. Transport</a> <a href="#ref-for-section-6.1①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-4.2">
    <a href="https://tools.ietf.org/html/rfc6455#section-4.2">https://tools.ietf.org/html/rfc6455#section-4.2</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-4.2">3. Transport</a> <a href="#ref-for-section-4.2①">(2)</a>
+    <li><a href="#ref-for-section-4.2">4. Transport</a> <a href="#ref-for-section-4.2①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-7.4">
    <a href="https://tools.ietf.org/html/rfc6455#section-7.4">https://tools.ietf.org/html/rfc6455#section-7.4</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-7.4">3. Transport</a> <a href="#ref-for-section-7.4①">(2)</a>
+    <li><a href="#ref-for-section-7.4">4. Transport</a> <a href="#ref-for-section-7.4①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-7.1.3">
    <a href="https://tools.ietf.org/html/rfc6455#section-7.1.3">https://tools.ietf.org/html/rfc6455#section-7.1.3</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-7.1.3">3. Transport</a>
+    <li><a href="#ref-for-section-7.1.3">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-7.1.4">
    <a href="https://tools.ietf.org/html/rfc6455#section-7.1.4">https://tools.ietf.org/html/rfc6455#section-7.1.4</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-7.1.4">3. Transport</a>
+    <li><a href="#ref-for-section-7.1.4">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-3">
    <a href="https://tools.ietf.org/html/rfc6455#section-3">https://tools.ietf.org/html/rfc6455#section-3</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-3">3. Transport</a>
-   </ul>
-  </aside>
-  <aside class="dfn-panel" data-for="term-for-appendix-C">
-   <a href="https://tools.ietf.org/html/rfc8610#appendix-C">https://tools.ietf.org/html/rfc8610#appendix-C</a><b>Referenced in:</b>
-   <ul>
-    <li><a href="#ref-for-appendix-C">2.4. Processing Model</a> <a href="#ref-for-appendix-C①">(2)</a>
+    <li><a href="#ref-for-section-3">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-active-session">
    <a href="https://w3c.github.io/webdriver/#dfn-active-session">https://w3c.github.io/webdriver/#dfn-active-session</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-active-session">3. Transport</a>
+    <li><a href="#ref-for-dfn-active-session">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-additional-capability-deserialization-algorithm">
    <a href="https://w3c.github.io/webdriver/#dfn-additional-capability-deserialization-algorithm">https://w3c.github.io/webdriver/#dfn-additional-capability-deserialization-algorithm</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-additional-capability-deserialization-algorithm">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-additional-capability-deserialization-algorithm">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-additional-webdriver-capability">
    <a href="https://w3c.github.io/webdriver/#dfn-additional-webdriver-capability">https://w3c.github.io/webdriver/#dfn-additional-webdriver-capability</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-additional-webdriver-capability">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-additional-webdriver-capability">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-capability-name">
    <a href="https://w3c.github.io/webdriver/#dfn-capability-name">https://w3c.github.io/webdriver/#dfn-capability-name</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-capability-name">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-capability-name">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-endpoint-node">
    <a href="https://w3c.github.io/webdriver/#dfn-endpoint-node">https://w3c.github.io/webdriver/#dfn-endpoint-node</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-endpoint-node">3. Transport</a> <a href="#ref-for-dfn-endpoint-node①">(2)</a>
+    <li><a href="#ref-for-dfn-endpoint-node">4. Transport</a> <a href="#ref-for-dfn-endpoint-node①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-errors">
    <a href="https://w3c.github.io/webdriver/#dfn-errors">https://w3c.github.io/webdriver/#dfn-errors</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-errors">2.4. Processing Model</a> <a href="#ref-for-dfn-errors①">(2)</a> <a href="#ref-for-dfn-errors②">(3)</a>
-    <li><a href="#ref-for-dfn-errors③">3. Transport</a>
-    <li><a href="#ref-for-dfn-errors④">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-errors">3.6. Processing Model</a> <a href="#ref-for-dfn-errors①">(2)</a> <a href="#ref-for-dfn-errors②">(3)</a>
+    <li><a href="#ref-for-dfn-errors③">4. Transport</a>
+    <li><a href="#ref-for-dfn-errors④">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-error-code">
    <a href="https://w3c.github.io/webdriver/#dfn-error-code">https://w3c.github.io/webdriver/#dfn-error-code</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-error-code">2.4. Processing Model</a> <a href="#ref-for-dfn-error-code①">(2)</a> <a href="#ref-for-dfn-error-code②">(3)</a>
-    <li><a href="#ref-for-dfn-error-code③">3. Transport</a> <a href="#ref-for-dfn-error-code④">(2)</a> <a href="#ref-for-dfn-error-code⑤">(3)</a>
-    <li><a href="#ref-for-dfn-error-code⑥">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-error-code">3.6. Processing Model</a> <a href="#ref-for-dfn-error-code①">(2)</a>
+    <li><a href="#ref-for-dfn-error-code②">4. Transport</a> <a href="#ref-for-dfn-error-code③">(2)</a>
+    <li><a href="#ref-for-dfn-error-code④">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-get-a-property">
    <a href="https://w3c.github.io/webdriver/#dfn-get-a-property">https://w3c.github.io/webdriver/#dfn-get-a-property</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-get-a-property">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-get-a-property">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-intermediary-node">
    <a href="https://w3c.github.io/webdriver/#dfn-intermediary-node">https://w3c.github.io/webdriver/#dfn-intermediary-node</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-intermediary-node">3. Transport</a>
+    <li><a href="#ref-for-dfn-intermediary-node">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-invalid-argument">
    <a href="https://w3c.github.io/webdriver/#dfn-invalid-argument">https://w3c.github.io/webdriver/#dfn-invalid-argument</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-invalid-argument">2.4. Processing Model</a>
-    <li><a href="#ref-for-dfn-invalid-argument①">3. Transport</a> <a href="#ref-for-dfn-invalid-argument②">(2)</a>
-    <li><a href="#ref-for-dfn-invalid-argument③">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-invalid-argument">3.6. Processing Model</a> <a href="#ref-for-dfn-invalid-argument①">(2)</a>
+    <li><a href="#ref-for-dfn-invalid-argument②">4. Transport</a>
+    <li><a href="#ref-for-dfn-invalid-argument③">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-local-ends">
    <a href="https://w3c.github.io/webdriver/#dfn-local-ends">https://w3c.github.io/webdriver/#dfn-local-ends</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-local-ends">2. Protocol</a>
-    <li><a href="#ref-for-dfn-local-ends①">2.2. Commands</a> <a href="#ref-for-dfn-local-ends②">(2)</a>
-    <li><a href="#ref-for-dfn-local-ends③">2.3. Events</a>
-    <li><a href="#ref-for-dfn-local-ends④">3. Transport</a> <a href="#ref-for-dfn-local-ends⑤">(2)</a>
+    <li><a href="#ref-for-dfn-local-ends">3. Protocol</a> <a href="#ref-for-dfn-local-ends①">(2)</a>
+    <li><a href="#ref-for-dfn-local-ends②">3.4. Commands</a> <a href="#ref-for-dfn-local-ends③">(2)</a> <a href="#ref-for-dfn-local-ends④">(3)</a> <a href="#ref-for-dfn-local-ends⑤">(4)</a> <a href="#ref-for-dfn-local-ends⑥">(5)</a> <a href="#ref-for-dfn-local-ends⑦">(6)</a>
+    <li><a href="#ref-for-dfn-local-ends⑧">3.5. Events</a>
+    <li><a href="#ref-for-dfn-local-ends⑨">4. Transport</a> <a href="#ref-for-dfn-local-ends①⓪">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-matched-capability-serialization-algorithm">
    <a href="https://w3c.github.io/webdriver/#dfn-matched-capability-serialization-algorithm">https://w3c.github.io/webdriver/#dfn-matched-capability-serialization-algorithm</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-matched-capability-serialization-algorithm">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-matched-capability-serialization-algorithm">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-remote-ends">
    <a href="https://w3c.github.io/webdriver/#dfn-remote-ends">https://w3c.github.io/webdriver/#dfn-remote-ends</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-remote-ends">2. Protocol</a>
-    <li><a href="#ref-for-dfn-remote-ends①">2.2. Commands</a>
-    <li><a href="#ref-for-dfn-remote-ends②">2.3. Events</a> <a href="#ref-for-dfn-remote-ends③">(2)</a>
-    <li><a href="#ref-for-dfn-remote-ends④">3. Transport</a> <a href="#ref-for-dfn-remote-ends⑤">(2)</a> <a href="#ref-for-dfn-remote-ends⑥">(3)</a> <a href="#ref-for-dfn-remote-ends⑦">(4)</a> <a href="#ref-for-dfn-remote-ends⑧">(5)</a> <a href="#ref-for-dfn-remote-ends⑨">(6)</a> <a href="#ref-for-dfn-remote-ends①⓪">(7)</a> <a href="#ref-for-dfn-remote-ends①①">(8)</a>
-    <li><a href="#ref-for-dfn-remote-ends①②">4.1.1. status</a> <a href="#ref-for-dfn-remote-ends①③">(2)</a>
+    <li><a href="#ref-for-dfn-remote-ends">3. Protocol</a> <a href="#ref-for-dfn-remote-ends①">(2)</a>
+    <li><a href="#ref-for-dfn-remote-ends②">3.4. Commands</a> <a href="#ref-for-dfn-remote-ends③">(2)</a>
+    <li><a href="#ref-for-dfn-remote-ends④">3.5. Events</a> <a href="#ref-for-dfn-remote-ends⑤">(2)</a>
+    <li><a href="#ref-for-dfn-remote-ends⑥">4. Transport</a> <a href="#ref-for-dfn-remote-ends⑦">(2)</a> <a href="#ref-for-dfn-remote-ends⑧">(3)</a> <a href="#ref-for-dfn-remote-ends⑨">(4)</a> <a href="#ref-for-dfn-remote-ends①⓪">(5)</a> <a href="#ref-for-dfn-remote-ends①①">(6)</a> <a href="#ref-for-dfn-remote-ends①②">(7)</a> <a href="#ref-for-dfn-remote-ends①③">(8)</a>
+    <li><a href="#ref-for-dfn-remote-ends①④">5.1.2. Status</a> <a href="#ref-for-dfn-remote-ends①⑤">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-remote-end-steps">
    <a href="https://w3c.github.io/webdriver/#dfn-remote-end-steps">https://w3c.github.io/webdriver/#dfn-remote-end-steps</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-remote-end-steps">2.2. Commands</a>
-    <li><a href="#ref-for-dfn-remote-end-steps①">2.4. Processing Model</a>
-    <li><a href="#ref-for-dfn-remote-end-steps②">4.1.1. status</a>
+    <li><a href="#ref-for-dfn-remote-end-steps">3.4. Commands</a>
+    <li><a href="#ref-for-dfn-remote-end-steps①">3.6. Processing Model</a>
+    <li><a href="#ref-for-dfn-remote-end-steps②">5.1.2. Status</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-sessions">
    <a href="https://w3c.github.io/webdriver/#dfn-sessions">https://w3c.github.io/webdriver/#dfn-sessions</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-sessions">3. Transport</a> <a href="#ref-for-dfn-sessions①">(2)</a> <a href="#ref-for-dfn-sessions②">(3)</a> <a href="#ref-for-dfn-sessions③">(4)</a> <a href="#ref-for-dfn-sessions④">(5)</a> <a href="#ref-for-dfn-sessions⑤">(6)</a> <a href="#ref-for-dfn-sessions⑥">(7)</a> <a href="#ref-for-dfn-sessions⑦">(8)</a>
+    <li><a href="#ref-for-dfn-sessions">3.2. Session</a>
+    <li><a href="#ref-for-dfn-sessions①">4. Transport</a> <a href="#ref-for-dfn-sessions②">(2)</a> <a href="#ref-for-dfn-sessions③">(3)</a> <a href="#ref-for-dfn-sessions④">(4)</a> <a href="#ref-for-dfn-sessions⑤">(5)</a> <a href="#ref-for-dfn-sessions⑥">(6)</a> <a href="#ref-for-dfn-sessions⑦">(7)</a> <a href="#ref-for-dfn-sessions⑧">(8)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-session-id">
    <a href="https://w3c.github.io/webdriver/#dfn-session-id">https://w3c.github.io/webdriver/#dfn-session-id</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-session-id">3. Transport</a> <a href="#ref-for-dfn-session-id①">(2)</a>
+    <li><a href="#ref-for-dfn-session-id">4. Transport</a> <a href="#ref-for-dfn-session-id①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-set-a-property">
    <a href="https://w3c.github.io/webdriver/#dfn-set-a-property">https://w3c.github.io/webdriver/#dfn-set-a-property</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-set-a-property">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-set-a-property">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-success">
    <a href="https://w3c.github.io/webdriver/#dfn-success">https://w3c.github.io/webdriver/#dfn-success</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-success">2.4. Processing Model</a>
-    <li><a href="#ref-for-dfn-success①">3.1. Establishing a Connection</a> <a href="#ref-for-dfn-success②">(2)</a> <a href="#ref-for-dfn-success③">(3)</a>
-    <li><a href="#ref-for-dfn-success④">4.1.1. status</a>
-   </ul>
-  </aside>
-  <aside class="dfn-panel" data-for="term-for-dfn-try">
-   <a href="https://w3c.github.io/webdriver/#dfn-try">https://w3c.github.io/webdriver/#dfn-try</a><b>Referenced in:</b>
-   <ul>
-    <li><a href="#ref-for-dfn-try">2.4. Processing Model</a>
+    <li><a href="#ref-for-dfn-success">3.6. Processing Model</a>
+    <li><a href="#ref-for-dfn-success①">4.1. Establishing a Connection</a> <a href="#ref-for-dfn-success②">(2)</a> <a href="#ref-for-dfn-success③">(3)</a>
+    <li><a href="#ref-for-dfn-success④">5.1.2. Status</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-unknown-command">
    <a href="https://w3c.github.io/webdriver/#dfn-unknown-command">https://w3c.github.io/webdriver/#dfn-unknown-command</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-unknown-command">2.4. Processing Model</a> <a href="#ref-for-dfn-unknown-command①">(2)</a>
+    <li><a href="#ref-for-dfn-unknown-command">3.6. Processing Model</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-webdriver-new-session-algorithm">
    <a href="https://w3c.github.io/webdriver/#dfn-webdriver-new-session-algorithm">https://w3c.github.io/webdriver/#dfn-webdriver-new-session-algorithm</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-webdriver-new-session-algorithm">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-webdriver-new-session-algorithm">4.1. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-return-type">
+   <a href="https://heycam.github.io/webidl/#dfn-return-type">https://heycam.github.io/webidl/#dfn-return-type</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-return-type">3.4. Commands</a>
    </ul>
   </aside>
   <h3 class="no-num no-ref heading settled" id="index-defined-elsewhere"><span class="content">Terms defined by reference</span><a class="self-link" href="#index-defined-elsewhere"></a></h3>
@@ -2359,7 +2427,6 @@ to the implementation.</p>
     <ul>
      <li><span class="dfn-paneled" id="term-for-set-append" style="color:initial">append</span>
      <li><span class="dfn-paneled" id="term-for-assert" style="color:initial">assert</span>
-     <li><span class="dfn-paneled" id="term-for-map-exists" style="color:initial">exist</span>
      <li><span class="dfn-paneled" id="term-for-implementation-defined" style="color:initial">implementation-defined</span>
      <li><span class="dfn-paneled" id="term-for-ordered-map" style="color:initial">map</span>
      <li><span class="dfn-paneled" id="term-for-parse-json-into-infra-values" style="color:initial">parse json into infra values</span>
@@ -2384,11 +2451,6 @@ to the implementation.</p>
      <li><span class="dfn-paneled" id="term-for-section-3" style="color:initial">websocket uri</span>
     </ul>
    <li>
-    <a data-link-type="biblio">[RFC8610]</a> defines the following terms:
-    <ul>
-     <li><span class="dfn-paneled" id="term-for-appendix-C" style="color:initial">match a cddl specification</span>
-    </ul>
-   <li>
     <a data-link-type="biblio">[WEBDRIVER]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="term-for-dfn-active-session" style="color:initial">active sessions</span>
@@ -2409,9 +2471,13 @@ to the implementation.</p>
      <li><span class="dfn-paneled" id="term-for-dfn-session-id" style="color:initial">session id</span>
      <li><span class="dfn-paneled" id="term-for-dfn-set-a-property" style="color:initial">set a property</span>
      <li><span class="dfn-paneled" id="term-for-dfn-success" style="color:initial">success</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-try" style="color:initial">try</span>
      <li><span class="dfn-paneled" id="term-for-dfn-unknown-command" style="color:initial">unknown command</span>
      <li><span class="dfn-paneled" id="term-for-dfn-webdriver-new-session-algorithm" style="color:initial">webdriver new session algorithm</span>
+    </ul>
+   <li>
+    <a data-link-type="biblio">[WebIDL]</a> defines the following terms:
+    <ul>
+     <li><span class="dfn-paneled" id="term-for-dfn-return-type" style="color:initial">return type</span>
     </ul>
   </ul>
   <h2 class="no-num no-ref heading settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
@@ -2429,6 +2495,8 @@ to the implementation.</p>
    <dd>H. Birkholz; C. Vigano; C. Bormann. <a href="https://tools.ietf.org/html/rfc8610">Concise Data Definition Language (CDDL): A Notational Convention to Express Concise Binary Object Representation (CBOR) and JSON Data Structures</a>. June 2019. Proposed Standard. URL: <a href="https://tools.ietf.org/html/rfc8610">https://tools.ietf.org/html/rfc8610</a>
    <dt id="biblio-webdriver">[WEBDRIVER]
    <dd>Simon Stewart; David Burns. <a href="https://w3c.github.io/webdriver/">WebDriver</a>. URL: <a href="https://w3c.github.io/webdriver/">https://w3c.github.io/webdriver/</a>
+   <dt id="biblio-webidl">[WebIDL]
+   <dd>Boris Zbarsky. <a href="https://heycam.github.io/webidl/">Web IDL</a>. URL: <a href="https://heycam.github.io/webidl/">https://heycam.github.io/webidl/</a>
   </dl>
   <h3 class="no-num no-ref heading settled" id="informative"><span class="content">Informative References</span><a class="self-link" href="#informative"></a></h3>
   <dl>
@@ -2437,161 +2505,190 @@ to the implementation.</p>
   </dl>
   <h2 class="no-num no-ref heading settled" id="issues-index"><span class="content">Issues Index</span><a class="self-link" href="#issues-index"></a></h2>
   <div style="counter-reset:issue">
+   <div class="issue"> Should this be an appendix?<a href="#issue-40ad1db0"> ↵ </a></div>
    <div class="issue"> Do we support > 1 connection for a single session?<a href="#issue-0dc5e7b6"> ↵ </a></div>
    <div class="issue"> Should we instead close <var>connection</var> with <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4">status code</a> 1003, or <a data-link-type="dfn" href="#respond-with-an-error">respond with an error</a>?<a href="#issue-06ad62f1"> ↵ </a></div>
    <div class="issue"> Nothing seems to define what <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4">status code</a> is used for UTF-8 errors.<a href="#issue-449f8f30"> ↵ </a></div>
-   <div class="issue"> That’s <i>2<sup>31</sup> - 1</i>, the largest signed
-   32-bit integer. Should we allow up to <i>2<sup>53</sup> -
-   1</i>, the largest number such that <i>N</i> and <i>N + 1</i> both have exact representations in a JS Number?<a href="#issue-1f846779"> ↵ </a></div>
-   <div class="issue"> Should we fail if there are unknown keys in <var>parsed</var>? CDP
-   does, but it’s very unusual for unversioned web platform APIs.<a href="#issue-9112f633"> ↵ </a></div>
    <div class="issue"> Form a valid JSON <var>errorObject</var> given <var>code</var>.<a href="#issue-aee4ea98"> ↵ </a></div>
    <div class="issue"> This should also reset any internal state<a href="#issue-02ccb156"> ↵ </a></div>
    <div class="issue"> Need to hook in to the session ending to allow the UA to close
 the listener if it wants.<a href="#issue-9f7aff26"> ↵ </a></div>
   </div>
-  <aside class="dfn-panel" data-for="module">
-   <b><a href="#module">#module</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="remote-end-definition">
+   <b><a href="#remote-end-definition">#remote-end-definition</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-module">2.1. Modules</a>
+    <li><a href="#ref-for-remote-end-definition">3.1. Definition</a> <a href="#ref-for-remote-end-definition①">(2)</a>
+    <li><a href="#ref-for-remote-end-definition②">3.3. Modules</a> <a href="#ref-for-remote-end-definition③">(2)</a>
+    <li><a href="#ref-for-remote-end-definition④">3.4. Commands</a>
+    <li><a href="#ref-for-remote-end-definition⑤">3.6. Processing Model</a>
+    <li><a href="#ref-for-remote-end-definition⑥">5.1.1. Definition</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="local-end-definition">
+   <b><a href="#local-end-definition">#local-end-definition</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-local-end-definition">3.1. Definition</a> <a href="#ref-for-local-end-definition①">(2)</a>
+    <li><a href="#ref-for-local-end-definition②">3.3. Modules</a> <a href="#ref-for-local-end-definition③">(2)</a> <a href="#ref-for-local-end-definition④">(3)</a>
+    <li><a href="#ref-for-local-end-definition⑤">3.4. Commands</a>
+    <li><a href="#ref-for-local-end-definition⑥">3.5. Events</a>
+    <li><a href="#ref-for-local-end-definition⑦">5.1.1. Definition</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="module-name">
+   <b><a href="#module-name">#module-name</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-module-name">3.3. Modules</a> <a href="#ref-for-module-name①">(2)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="extension-modules">
+   <b><a href="#extension-modules">#extension-modules</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-extension-modules">3.4. Commands</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="command">
    <b><a href="#command">#command</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-command">2.1. Modules</a> <a href="#ref-for-command①">(2)</a>
-    <li><a href="#ref-for-command②">2.2. Commands</a> <a href="#ref-for-command③">(2)</a>
-    <li><a href="#ref-for-command④">3. Transport</a>
+    <li><a href="#ref-for-command">3.3. Modules</a> <a href="#ref-for-command①">(2)</a> <a href="#ref-for-command②">(3)</a> <a href="#ref-for-command③">(4)</a>
+    <li><a href="#ref-for-command④">3.4. Commands</a>
+    <li><a href="#ref-for-command⑤">3.4.1. Table of Commands</a>
+    <li><a href="#ref-for-command⑥">4. Transport</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="command-parameter-type">
-   <b><a href="#command-parameter-type">#command-parameter-type</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="command-command-name">
+   <b><a href="#command-command-name">#command-command-name</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-command-parameter-type">2.2. Commands</a>
-    <li><a href="#ref-for-command-parameter-type①">2.4. Processing Model</a>
+    <li><a href="#ref-for-command-command-name">3.3. Modules</a>
+    <li><a href="#ref-for-command-command-name①">3.4. Commands</a>
+    <li><a href="#ref-for-command-command-name②">3.6. Processing Model</a> <a href="#ref-for-command-command-name③">(2)</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="command-return-type">
-   <b><a href="#command-return-type">#command-return-type</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="command-command-parameters">
+   <b><a href="#command-command-parameters">#command-command-parameters</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-command-return-type">2.2. Commands</a>
-    <li><a href="#ref-for-command-return-type①">2.4. Processing Model</a>
+    <li><a href="#ref-for-command-command-parameters">3.4. Commands</a>
+    <li><a href="#ref-for-command-command-parameters①">3.6. Processing Model</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="command-table-of-commands">
-   <b><a href="#command-table-of-commands">#command-table-of-commands</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="command-result-type">
+   <b><a href="#command-result-type">#command-result-type</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-command-table-of-commands">2.4. Processing Model</a>
+    <li><a href="#ref-for-command-result-type">3.6. Processing Model</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="command-set-of-all-command-names">
+   <b><a href="#command-set-of-all-command-names">#command-set-of-all-command-names</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-command-set-of-all-command-names">3.6. Processing Model</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="event">
    <b><a href="#event">#event</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-event">2.1. Modules</a> <a href="#ref-for-event①">(2)</a>
-    <li><a href="#ref-for-event②">2.3. Events</a>
-    <li><a href="#ref-for-event③">3. Transport</a>
+    <li><a href="#ref-for-event">3.3. Modules</a> <a href="#ref-for-event①">(2)</a> <a href="#ref-for-event②">(3)</a>
+    <li><a href="#ref-for-event③">4. Transport</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="event-parameter-type">
-   <b><a href="#event-parameter-type">#event-parameter-type</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="event-event-name">
+   <b><a href="#event-event-name">#event-event-name</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-event-parameter-type">2.3. Events</a>
+    <li><a href="#ref-for-event-event-name">3.3. Modules</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="process-a-command">
    <b><a href="#process-a-command">#process-a-command</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-process-a-command">3. Transport</a>
+    <li><a href="#ref-for-process-a-command">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="websocket-listener">
    <b><a href="#websocket-listener">#websocket-listener</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-websocket-listener">3. Transport</a> <a href="#ref-for-websocket-listener①">(2)</a> <a href="#ref-for-websocket-listener②">(3)</a> <a href="#ref-for-websocket-listener③">(4)</a> <a href="#ref-for-websocket-listener④">(5)</a> <a href="#ref-for-websocket-listener⑤">(6)</a>
+    <li><a href="#ref-for-websocket-listener">4. Transport</a> <a href="#ref-for-websocket-listener①">(2)</a> <a href="#ref-for-websocket-listener②">(3)</a> <a href="#ref-for-websocket-listener③">(4)</a> <a href="#ref-for-websocket-listener④">(5)</a> <a href="#ref-for-websocket-listener⑤">(6)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="listener-host">
    <b><a href="#listener-host">#listener-host</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-listener-host">3. Transport</a> <a href="#ref-for-listener-host①">(2)</a> <a href="#ref-for-listener-host②">(3)</a> <a href="#ref-for-listener-host③">(4)</a>
+    <li><a href="#ref-for-listener-host">4. Transport</a> <a href="#ref-for-listener-host①">(2)</a> <a href="#ref-for-listener-host②">(3)</a> <a href="#ref-for-listener-host③">(4)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="listener-port">
    <b><a href="#listener-port">#listener-port</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-listener-port">3. Transport</a> <a href="#ref-for-listener-port①">(2)</a> <a href="#ref-for-listener-port②">(3)</a>
+    <li><a href="#ref-for-listener-port">4. Transport</a> <a href="#ref-for-listener-port①">(2)</a> <a href="#ref-for-listener-port②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="listener-secure-flag">
    <b><a href="#listener-secure-flag">#listener-secure-flag</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-listener-secure-flag">3. Transport</a> <a href="#ref-for-listener-secure-flag①">(2)</a> <a href="#ref-for-listener-secure-flag②">(3)</a>
+    <li><a href="#ref-for-listener-secure-flag">4. Transport</a> <a href="#ref-for-listener-secure-flag①">(2)</a> <a href="#ref-for-listener-secure-flag②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="list-of-websocket-resources">
    <b><a href="#list-of-websocket-resources">#list-of-websocket-resources</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-list-of-websocket-resources">3. Transport</a> <a href="#ref-for-list-of-websocket-resources①">(2)</a> <a href="#ref-for-list-of-websocket-resources②">(3)</a>
+    <li><a href="#ref-for-list-of-websocket-resources">4. Transport</a> <a href="#ref-for-list-of-websocket-resources①">(2)</a> <a href="#ref-for-list-of-websocket-resources②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="active-listeners">
    <b><a href="#active-listeners">#active-listeners</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-active-listeners">3. Transport</a> <a href="#ref-for-active-listeners①">(2)</a> <a href="#ref-for-active-listeners②">(3)</a>
+    <li><a href="#ref-for-active-listeners">4. Transport</a> <a href="#ref-for-active-listeners①">(2)</a> <a href="#ref-for-active-listeners②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="websocket-connection">
    <b><a href="#websocket-connection">#websocket-connection</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-websocket-connection">3. Transport</a> <a href="#ref-for-websocket-connection①">(2)</a> <a href="#ref-for-websocket-connection②">(3)</a> <a href="#ref-for-websocket-connection③">(4)</a> <a href="#ref-for-websocket-connection④">(5)</a> <a href="#ref-for-websocket-connection⑤">(6)</a>
+    <li><a href="#ref-for-websocket-connection">4. Transport</a> <a href="#ref-for-websocket-connection①">(2)</a> <a href="#ref-for-websocket-connection②">(3)</a> <a href="#ref-for-websocket-connection③">(4)</a> <a href="#ref-for-websocket-connection④">(5)</a> <a href="#ref-for-websocket-connection⑤">(6)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="construct-a-websocket-resource-name">
    <b><a href="#construct-a-websocket-resource-name">#construct-a-websocket-resource-name</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-construct-a-websocket-resource-name">3. Transport</a> <a href="#ref-for-construct-a-websocket-resource-name①">(2)</a>
+    <li><a href="#ref-for-construct-a-websocket-resource-name">4. Transport</a> <a href="#ref-for-construct-a-websocket-resource-name①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="construct-a-websocket-url">
    <b><a href="#construct-a-websocket-url">#construct-a-websocket-url</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-construct-a-websocket-url">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-construct-a-websocket-url">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-a-session-id-for-a-websocket-resource">
    <b><a href="#get-a-session-id-for-a-websocket-resource">#get-a-session-id-for-a-websocket-resource</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-get-a-session-id-for-a-websocket-resource">3. Transport</a>
+    <li><a href="#ref-for-get-a-session-id-for-a-websocket-resource">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="start-listening-for-a-websocket-connection">
    <b><a href="#start-listening-for-a-websocket-connection">#start-listening-for-a-websocket-connection</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-start-listening-for-a-websocket-connection">3.1. Establishing a Connection</a>
+    <li><a href="#ref-for-start-listening-for-a-websocket-connection">4.1. Establishing a Connection</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="handle-an-incoming-message">
    <b><a href="#handle-an-incoming-message">#handle-an-incoming-message</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-handle-an-incoming-message">3. Transport</a>
+    <li><a href="#ref-for-handle-an-incoming-message">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="respond-with-an-error">
    <b><a href="#respond-with-an-error">#respond-with-an-error</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-respond-with-an-error">3. Transport</a> <a href="#ref-for-respond-with-an-error①">(2)</a> <a href="#ref-for-respond-with-an-error②">(3)</a> <a href="#ref-for-respond-with-an-error③">(4)</a>
+    <li><a href="#ref-for-respond-with-an-error">4. Transport</a> <a href="#ref-for-respond-with-an-error①">(2)</a> <a href="#ref-for-respond-with-an-error②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="handle-a-connection-closing">
    <b><a href="#handle-a-connection-closing">#handle-a-connection-closing</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-handle-a-connection-closing">3. Transport</a>
+    <li><a href="#ref-for-handle-a-connection-closing">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="commands-status">
    <b><a href="#commands-status">#commands-status</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-commands-status">2.2. Commands</a>
+    <li><a href="#ref-for-commands-status">3.4.1. Table of Commands</a>
    </ul>
   </aside>
 <script>/* script-dfn-panel */
