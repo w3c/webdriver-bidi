@@ -113,6 +113,7 @@ the remainder of the specification.
 Command = {
   id: uint,
   CommandData,
+  *text => any,
 }
 
 CommandData = (
@@ -130,17 +131,18 @@ Message = (
   Event
 )
 
-CommandResponse = (
+CommandResponse = {
   id: uint,
   ResponseData,
-)
+  *text => any
+}
 
 ResponseData = (
   Error //
   CommandResult
 )
 
-Error = (
+Error = {
   error: (
     "unknown error" /
     "unknown method" /
@@ -148,7 +150,7 @@ Error = (
   ),
   message: text,
   stacktrace: text,
-)
+}
 
 CommandResult = {
   value: ResultData,
@@ -159,9 +161,11 @@ ResultData = (
   SessionResult
 )
 
-EmptyResult = { *text }
+EmptyResult = {}
 
-Event = ()
+Event = (
+  *text => any
+)
 </pre>
 
 ## Session ## {#session}
@@ -730,7 +734,7 @@ To <dfn lt="updating the event map">update the event map</dfn>, given
       1. If |enabled| is true, for each |event name| in |event names|,
          append |event name| to |global event set|. Otherwise for for each
          |event name| in |event names|, if the |global event set| contains
-         |event name|, remote |event name| from the |global event set|.
+         |event name|, remove |event name| from the |global event set|.
 
       1. Return
 
@@ -755,6 +759,12 @@ To <dfn lt="updating the event map">update the event map</dfn>, given
         1. Set |target|[|event name|] to |enabled|.
 
     1. Return [=success=] with data null.
+
+    Note: Implementations that do additional work when an event is enabled,
+    e.g. subscribing to the relevant engine-internal events, will likely perform
+    those additional steps when updating the event map. This specification uses
+    a model where hooks are always called and then the event map is used to
+    filter only those that ought to be returned to the local end.
 </div>
 
 ### Status ### {#command-session-status}
@@ -780,7 +790,6 @@ to the implementation.
       StatusResult = {
          ready: bool,
          message: text,
-         * text => any
       }
       </pre>
    </dd>
@@ -819,8 +828,7 @@ Issue: This needs to be generalized to work with realms too
 
       SubscribeParameters = {
         events: [*text],
-        contexts?: [BrowsingContext],
-        * text => any,
+        contexts?: [*BrowsingContext],
       }
       </pre>
    </dd>
