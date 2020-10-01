@@ -59,7 +59,10 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: window handle; url: dfn-window-handle
 spec: ECMASCRIPT urlPrefix: https://tc39.es/ecma262/
   type: dfn
+    text: Object; url: sec-object-objects
+    text: Set; url: sec-set
     text: realm; url: sec-code-realms
+
 </pre>
 
 <pre class="link-defaults">
@@ -340,19 +343,24 @@ To <dfn>obtain a set of event names</dfn> given an |name|:
 <div algorithm>
 To <dfn>process a command</dfn> given |data|:
 
+Issue: The way we get the matched data is a bit handwavy.
+
    1. Match |data| against the [=remote end definition=]. If this results in a
       match:
+      1. Let |parsed| be the map representing the matched data.
 
-      1. Let |result| be the result of running the [=remote end steps=]
-         for the command with [=command name=] equal to the
-         <code>method</code> property of |data| and with the [=command
-         parameters=] from the matched data.
+      1. Assert: |parsed| contains "<code>id</code>", "method", and
+         "<code>params</code>"
 
-      1. Assert: if |result| is a [=success=] its data matches the
-         definition for the [=result type=] corresponding to the command with name
-         [=command name=].
+      1. Let |value| be the result of [=trying=] to run the [=remote end steps=]
+         for the command with [=command name=] |parsed|["<code>method</code>"]
+         given [=command parameters=] |parsed|["<code>params</code>"]
 
-      1. Return <var>result</var>.
+      1. Assert: |value| matches the definition for the [=result type=]
+         corresponding to the command with name [=command name=].
+
+      1. Return [=success=] with data (|parsed|["<code>id</code>"],
+         |value|).
 
    1. Otherwise there is no match. If |data| isn't a map or is a map without a
       property named </code>method</code> return an [=error=] with error code
@@ -550,18 +558,22 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
  1. If |result| is an [=error=], then [=respond with an error=] given
     |connection|, |data|, and |result|'s [=error code=], and finally return.
 
+ 1. Assert: |result| is a [=success=]
+
+ 1. Let |command id| and |value| be the two fields |result|'s data.
+
  1. Let |response| be a new [=map=] with the following properties:
 
    <dl>
       <dt>"id"</dt>
-      <dd>The value of |parsed|["<code>id</code>"]</dd>
+      <dd>|command id|</dd>
 
-      <dt>"result"</dt>
-      <dd>The value of |result|</dd>
+      <dt>"value"</dt>
+      <dd>|value|</dd>
    </dl>
 
- 1. Let |serialized| be the result of [=serialize JSON to
-    bytes|serializing JSON to bytes=] given |response|.
+ 1. Let |serialized| be the result of [=serialize a map as JSON=] given
+    |response|.
 
  1. [=Send a WebSocket message=] comprised of |serialized| over
     |connection|.
@@ -591,21 +603,23 @@ To <dfn>respond with an error</dfn> given a [=WebSocket connection=]
     string containing a stack trace report of the active stack frames at the
     time when the error occurred.
 
- 1. Let |response| be the result of [=serialize JSON to bytes|serializing JSON
-    to bytes=] given |error data|.
+ 1. Let |response| be the result of [=serialize a map as JSON=] given |error
+    data|.
 
  1. [=Send a WebSocket message=] comprised of |response| over |connection|.
 
 </div>
 
 <div algorithm>
-To |serialize a map as JSON| given |map|
+To <dfn>serialize a map as JSON</dfn> given |map|
 
 1. Let |object| be a new [=Object=]
 
 1. For each |key| → |value| of |map|:
 
-  1.  [=Set=](|object|, key, value, false)
+  1.  [=Set=](|object|, |key|, |value|, false)
+
+  1. Assert: The previous step does not fail for input data in this specification
 
 1. Return the result of [=serialize JSON to bytes|serializing JSON to bytes=]
    given |object|
