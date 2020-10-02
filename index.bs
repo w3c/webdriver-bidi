@@ -37,6 +37,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
     text: additional WebDriver capability; url: dfn-additional-webdriver-capability
     text: capability name; url: dfn-capability-name
+    text: current session; url: dfn-current-session
     text: endpoint node; url: dfn-endpoint-node
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
@@ -55,6 +56,10 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: success; url: dfn-success
     text: try; url: dfn-try
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
+    text: window handle; url: dfn-window-handle
+spec: ECMASCRIPT urlPrefix: https://tc39.es/ecma262/
+  type: dfn
+    text: realm; url: sec-code-realms
 </pre>
 
 <pre class="link-defaults">
@@ -108,6 +113,7 @@ the remainder of the specification.
 Command = {
   id: uint,
   CommandData,
+  *text => any,
 }
 
 CommandData = (
@@ -125,17 +131,18 @@ Message = (
   Event
 )
 
-CommandResponse = (
+CommandResponse = {
   id: uint,
   ResponseData,
-)
+  *text => any
+}
 
 ResponseData = (
   Error //
   CommandResult
 )
 
-Error = (
+Error = {
   error: (
     "unknown error" /
     "unknown method" /
@@ -143,7 +150,7 @@ Error = (
   ),
   message: text,
   stacktrace: text,
-)
+}
 
 CommandResult = {
   value: ResultData,
@@ -154,9 +161,11 @@ ResultData = (
   SessionResult
 )
 
-EmptyResult = { *text }
+EmptyResult = {}
 
-Event = ()
+Event = (
+  *text => any
+)
 </pre>
 
 ## Session ## {#session}
@@ -269,6 +278,68 @@ occurred on the [=remote end=].
     - <code>params</code> which defines a mapping containing event data. The
       populated value of this map is the <dfn export for=command>event
       parameters</code>.
+ - A <dfn export>remote end event trigger</dfn> which defines when the event is
+   triggered and steps to construct the [=event type=] data.
+
+A [=/session=] has a <dfn export for=event>global event set</dfn> which is a set
+containing containing the event names for events that are enabled for all
+browsing contexts. This initially contains the [=event name=] for events that
+are <dfn export for=event>in the default event set</dfn>.
+
+A [=/session=] has a <dfn export for=event>browsing context event map</dfn>,
+which is a map with [=/browsing context=] keys and values that are maps from an
+[=event name=] to a boolean indicating whether the specified event is enabled or
+disabled for a given browsing context.
+
+<div algorithm>
+
+To determine if an <dfn export>event is enabled</dfn> given |session|,
+|event name| and |browsing context|:
+
+  1. While |browsing context| is not null:
+
+    1. Let |event map| be the [=browsing context event map=] for |session|.
+
+    1. If |event map| contains an entry for |browsing context|, let |browsing
+       context events| be |event map|[|browsing context|].  Otherwise let
+       |browsing context events| be null.
+
+    1. If |browsing context events| is not null, and |browsing context events|
+       contains an entry for |event name| return |browsing context
+       events|[|event name|].
+
+    1. Let |browsing context| be the [=parent browsing context=] of |browsing
+       context|, if it has one, or null otherwise.
+
+  1. If the [=global event set=] for |session| contains |event name| return
+     true.
+
+  1. Return false.
+
+</div>
+
+<div algorithm>
+
+To <dfn>obtain a set of event names</dfn> given an |name|:
+
+  1. Let |events| be an empty set.
+
+  1. If |name| contains a U+002E (period):
+
+    1. If |name| is the [=event name=] for an event, append |name| to |events|
+       and return [=success=] with data |events|.
+
+    1. Return an [=error=] with [=error code=] [=Invalid Argument=]
+
+  1. Otherwise |name| is interpreted as representing all the events in a
+     module. If |name| is not a [=module name=] return an [=error=] with
+     [=error code=] [=Invalid Argument=].
+
+  1. Append the [=event name=] for each [=event=] in the module with name |name| to
+     |events|.
+
+  1. Return [=success=] with data |events|.
+</div>
 
 ## Processing Model ## {#processing-model}
 
@@ -591,8 +662,35 @@ with parameters |session| and |capabilities| is:
 
 </div>
 
+Common Data Types {#data-types}
+===============================
+
+This section defines data types which are common to many modules.
+
+## Browsing Context ## {#data_types-browsing_context}
+
+[=remote end schema=] and [=local end schema=]
+```
+BrowsingContext = text;
+```
+
+Each [=/browsing context=] has an associated <dfn export>browsing context id</dfn>,
+which is a string uniquely identifying that browsing context. For browsing
+contexts with an associated WebDriver [=window handle=] the [=/browsing context
+id=] must be the same as the [=window handle=].
+
+## Realm ## {#data-types-realm}
+
+[=remote end schema=] and [=local end schema=]
+```
+Realm = text;
+```
+
+Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
+uniquely identifying that realm.
+
 Modules {#modules}
-==========================
+==================
 
 ## Session ## {#module-session}
 
@@ -604,9 +702,8 @@ events for monitoring the status of the remote end.
 [=remote end definition=]
 
 <pre class="cddl remote-cddl">
-
-SessionCommand = (StatusCommand)
-
+SessionCommand = (StatusCommand //
+                  SubscribeCommand)
 </pre>
 
 [=local end definition=]
@@ -617,6 +714,58 @@ SessionResult = (StatusResult)
 
 </pre>
 
+<div algorithm>
+
+To <dfn lt="updating the event map">update the event map</dfn>, given
+|session|, |list of event names|, |list of contexts|, and |enabled|:
+
+  1. Let |global event set| be the [=global event set=] for |session|.
+
+  1. Let |event map| be the [=browsing context event map=] for |session|.
+
+  1. Let |event names| be an empty set.
+
+    1. For each entry |name| in the |list of event names|, let |event names| be
+       the union of |event names| and the result of [=trying=] to [=obtain a set
+       of event names=] with |name|.
+
+    1. If the |list of contexts| is null:
+
+      1. If |enabled| is true, for each |event name| in |event names|,
+         append |event name| to |global event set|. Otherwise for for each
+         |event name| in |event names|, if the |global event set| contains
+         |event name|, remove |event name| from the |global event set|.
+
+      1. Return
+
+    1. Let |targets| be an empty list.
+
+    1. For each entry |context id| in the |list of contexts|:
+
+      1. If there is no browsing context with [=browsing context id=] |context id| return
+         [=error=] with [=error code=] [=invalid argument=]
+
+      1. Let |context| be the browsing context with id |context id|. If the
+         |event map| does not contain an entry for |context|,
+         set the value of the entry for |context| to a new empty map.
+
+      1. Get the entry from the |event map| for |context| and append it to
+         |targets|.
+
+    1. For each |target| in |targets|:
+
+      1. For each |event name| in |event names|:
+
+        1. Set |target|[|event name|] to |enabled|.
+
+    1. Return [=success=] with data null.
+
+    Note: Implementations that do additional work when an event is enabled,
+    e.g. subscribing to the relevant engine-internal events, will likely perform
+    those additional steps when updating the event map. This specification uses
+    a model where hooks are always called and then the event map is used to
+    filter only those that ought to be returned to the local end.
+</div>
 
 ### Status ### {#command-session-status}
 
@@ -641,7 +790,6 @@ to the implementation.
       StatusResult = {
          ready: bool,
          message: text,
-         * text => any
       }
       </pre>
    </dd>
@@ -661,3 +809,82 @@ The [=remote end steps=] are:
    </dl>
 
 2. Return [=success=] with data |body|
+
+### Subscribe ### {#command-session-subscribe}
+
+The <dfn export for=commands>subscribe</dfn> command enables certain events either
+globally or for a set of browsing contexts
+
+Issue: This needs to be generalized to work with realms too
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      SubscribeCommand = {
+        method: "session.subscribe",
+        params: SubscribeParameters
+      }
+
+      SubscribeParameters = {
+        events: [*text],
+        contexts?: [*BrowsingContext],
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+The [=remote end steps=] with |command parameters| are:
+<div algorithm="remote end steps for session.subscribe">
+    1. Let the |list of event names| be the value of the <code>events</code> field of
+       |command parameters|.
+
+    1. Let the |list of contexts| be the value of the <code>contexts</code>
+       field of |command parameters| if it is present or null if it isn't.
+
+    1. Return the result of [=updating the event map=] with [=current session=],
+       |list of event names|, |list of contexts| and enabled true.
+</div>
+
+### Unsubscribe ### {#command-session-unsubscribe}
+
+The <dfn export for=commands>unsubscribe</dfn> command disables events either
+globally or for a set of browsing contexts
+
+Issue: This needs to be generalised to work with realms too
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+     <pre class="cddl remote-cddl">
+       UnsubscribeCommand = {
+         method: "session.unsubscribe",
+         params: SubscribeParameters
+       }
+     </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+The [=remote end steps=] with |command parameters| are:
+<div algorithm="remote end steps for session.unsubscribe">
+    1. Let the |list of event names| be the value of the <code>events</code> field of
+       |command parameters|.
+
+    1. Let the |list of contexts| be the value of the <code>contexts</code>
+       field of |command parameters| if it is present or null if it isn't.
+
+    1. Return the result of [=updating the event map=] with [=current session=],
+       |list of event names|, |list of contexts| and enabled false.
+</div>
