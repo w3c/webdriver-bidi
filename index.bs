@@ -718,14 +718,14 @@ Realm = text;
 Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
 uniquely identifying that realm.
 
-## Remote Object ## {#data_types-remote_object}
+## Remote Value ## {#data-types-remote-value}
 
-Objects accessible from the ECMAScript runtime are represented by a mirror
-object, specified as <code>RemoteObject</code>. The object type is specified in
+Values accessible from the ECMAScript runtime are represented by a mirror
+object, specified as <code>RemoteValue</code>. The value's type is specified in
 the <code>type</code> property. In the case of JSON-representable primitive
-objects, this contains the object value in the <code>value</code> property; in
-the case of non-JSON-representable primitives, the <code>value</code> property
-contains a string representation of the object. For non-primitive objects, the
+values, this contains the value in the <code>value</code> property; in the case
+of non-JSON-representable primitives, the <code>value</code> property contains a
+string representation of the object. For non-primitive objects, the
 <code>objectId</code> property contains a string id that provides a unique
 handle to the object, valid for its lifetime inside the engine. In this case the
 <code>value</code> property can contain a complex object (either a list or a
@@ -775,82 +775,82 @@ To get the <dfn>object for an object id</dfn> given an |object id|:
 
 [=remote end definition=] and [=local end definition=]
 ```
-RemoteObject = {
-  UndefinedObject //
-  NullObject //
-  StringObject //
-  NumberObject //
-  BooleanObject //
-  BigIntObject //
-  SymbolObject //
-  ArrayObject //
-  FunctionObject //
-  ObjectObject //
-  FunctionObject //
-  RegexObject //
-  DateObject //
-  MapObject //
-  SetObject //
-  WeakMapObject //
-  WeakSetObject //
-  IteratorObject //
-  GeneratorObject //
-  ErrorObject //
-  ProxyObject //
-  PromiseObject //
-  TypedArrayObject //
-  ArrayBufferObject //
-  NodeObject //
-  WindowProxyObject //
+RemoteValue = {
+  UndefinedValue //
+  NullValue //
+  StringValue //
+  NumberValue //
+  BooleanValue //
+  BigIntValue //
+  Symbol //
+  ArrayValue //
+  FunctionValue //
+  ObjectValue //
+  FunctionValue //
+  RegexValue //
+  DateValue //
+  MapValue //
+  SetValue //
+  WeakMapValue //
+  WeakSetValue //
+  IteratorValue //
+  GeneratorValue //
+  ErrorValue //
+  ProxyValue //
+  PromiseValue //
+  TypedArrayValue //
+  ArrayBufferValue //
+  NodeValue //
+  WindowProxyValue //
 }
 
 ObjectId = text;
 
-UndefinedObject = {
+UndefinedValue = {
   type: "undefined",
 }
 
-NullObject = {
+NullValue = {
   type: "null",
 }
 
-StringObject = {
+StringValue = {
   type: "string",
   value: text,
 }
 
 SpecialNumber = "NaN" / "-0" / "+Infinity" / "-Infinity";
 
-NumberObject = {
+NumberValue = {
   type: "number",
   value: number / SpecialNumber,
 }
 
-BooleanObject = {
+BooleanValue = {
   type: "boolean",
   value: bool,
 }
 
-BigIntObject = {
+BigIntValue = {
   type: "bigint",
   value: text,
 }
 
-SymbolObject = {
+SymbolValue = {
   type: "symbol",
   objectId: ObjectId,
 }
 
-ArrayObject = {
+ArrayValue = {
   type: "array",
   objectId: ObjectId,
-  value?: [*RemoteObject]
+  value?: [*RemoteValue]
 }
 
-ObjectObject = {
+ObjectValue = {
   type: "object",
   objectId: ObjectId,
-  value?: {* text => RemoteObject}
+  value?: {* text => RemoteValue}
 }
 
 FunctionObject = {
@@ -858,90 +858,90 @@ FunctionObject = {
   objectId: ObjectId,
 }
 
-RegExpObject = {
+RegExpValue = {
   type: "regexp",
   objectId: ObjectId,
   value: text
 }
 
-DateObject = {
+DateValue = {
   type: "date",
   objectId: ObjectId,
   value: text
 }
 
-MapObject = {
+MapValue = {
   type: "map",
   objectId: ObjectId,
 }
 
-SetObject = {
+SetValue = {
   type: "set",
   objectId: ObjectId
 }
 
-WeakMapObject = {
+WeakMapValue = {
   type: "map",
   objectId: ObjectId,
 }
 
-WeakSetObject = {
+WeakSetValue = {
   type: "set",
   objectId: ObjectId,
 }
 
-IteratorObject = {
+IteratorValue = {
   type: "iterator",
   objectId: ObjectId,
 }
 
-GeneratorObject = {
+GeneratorValue = {
   type: "iterator",
   objectId: ObjectId,
 }
 
-ErrorObject = {
+ErrorValue = {
   type: "error",
   objectId: ObjectId,
 }
 
-ProxyObject = {
+ProxyValue = {
   type: "proxy",
   objectId: ObjectId,
 }
 
-PromiseObject = {
+PromiseValue = {
   type: "promise",
   objectId: ObjectId,
 }
 
-TypedArrayObject = {
+TypedArrayValue = {
   type: "typedarray",
   objectId: ObjectId,
 }
 
-ArrayBufferObject = {
+ArrayBufferValue = {
   type: "arraybuffer",
   objectId: ObjectId,
 }
 
-NodeObject = {
+NodeValue = {
   type: "node",
   objectId: ObjectId,
-  value?: NodeValue,
+  value?: NodeProperties,
 }
 
-NodeValue = {
+NodeProperties = {
   nodeType: uint,
   nodeName: text,
   localName: text,
   nodeValue: text,
   childNodeCount: uint,
-  children?: [*NodeObject],
+  children?: [*NodeValue],
   attributes?: {*text: text},
 }
 
-WindowProxyObject = {
+WindowProxyValue = {
   type: "window",
   objectId: ObjectId,
 }
@@ -962,15 +962,15 @@ To <dfn>serialize as a remote object</dfn> given an |object|, a |max depth|,
 
     <dl>
       <dt>Undefined
-      <dd>Let |remote object| be an [=object=] matching the `UndefinedObject`
+      <dd>Let |remote object| be an [=object=] matching the `UndefinedValue`
       production in the [=local end definition=].
 
       <dt>Null
-      <dd>Let |remote object| be an [=object=] matching the `NullObject`
+      <dd>Let |remote object| be an [=object=] matching the `NullValue`
       production in the [=local end definition=].
 
       <dt>String
-      <dd>Let |remote object| be an [=object=] matching the `StringObject`
+      <dd>Let |remote object| be an [=object=] matching the `StringValue`
       production in the [=local end definition=], with the <code>value</code>
       property set to |object|.
 
@@ -989,23 +989,23 @@ To <dfn>serialize as a remote object</dfn> given an |object|, a |max depth|,
           <dt>Otherwise:
           <dt>Let |value| be |object|
         </dl>
-        Let |remote object| be an [=object=] matching the `NumberObject`
+        Let |remote object| be an [=object=] matching the `NumberValue`
         production in the [=local end definition=], with the <code>value</code>
         property set to |value|.
 
       <dt>Boolean
-      <dd>Let |remote object| be an [=object=] matching the `BooleanObject`
+      <dd>Let |remote object| be an [=object=] matching the `BooleanValue`
           production in the [=local end definition=], with the <code>value</code>
           property set to |object|.
 
       <dt>BigInt
-      <dd>Let |remote object| be an [=object=] matching the `BigIntObject`
+      <dd>Let |remote object| be an [=object=] matching the `BigIntValue`
           production in the [=local end definition=], with the <code>value</code>
           property set to the result of running the [=ToString=] operation on
       |object|.
 
       <dt>Symbol
-      <dd>Let |remote object| be an [=object=] matching the `SymbolObject`
+      <dd>Let |remote object| be an [=object=] matching the `SymbolValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
@@ -1033,18 +1033,18 @@ To <dfn>serialize as a remote object</dfn> given an |object|, a |max depth|,
                      depth| - 1, |node details| and |set of known objects|.
 
                   Otherwise let |child remote object| be an [=object=] matching
-                  the `UndefinedObject` production in the [=remote end
+                  the `UndefinedValue` production in the [=remote end
                   definition=].
 
                 1. Append [=CreateArrayFromList=](|child remote object|) to |value|.
 
-      1. Let |remote object| be an [=object=] matching the `ArrayObject` production
+      1. Let |remote object| be an [=object=] matching the `ArrayValue` production
          in the [=local end definition=], with the <code>objectId</code> property set
          to the [=object id for an object=] |object|, and the <code>value</code> field
          set to |value| if it's not null, or ommitted otherwise.
 
       <dt>Function
-      <dd>Let |remote object| be an [=object=] matching the `FunctionObject`
+      <dd>Let |remote object| be an [=object=] matching the `FunctionValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
@@ -1056,7 +1056,7 @@ To <dfn>serialize as a remote object</dfn> given an |object|, a |max depth|,
 
           1. Let |value| be the string-concatenation of "/", |pattern|, "/", and |flags|.
 
-          1. Let |remote object| be an [=object=] matching the `RegexObject`
+          1. Let |remote object| be an [=object=] matching the `RegexValue`
              production in the [=local end definition=], with the <code>objectId</code>
              property set to the [=object id for an object=] |object| and the value
              set to |value|
@@ -1065,63 +1065,63 @@ To <dfn>serialize as a remote object</dfn> given an |object|, a |max depth|,
       <dd>
         1. Let |value| be [=ToDateString=]([=thisTimeValue=](|object|)).
 
-        1. Let |remote object| be an [=object=] matching the `DateObject`
+        1. Let |remote object| be an [=object=] matching the `DateValue`
            production in the [=local end definition=], with the <code>objectId</code>
            property set to the [=object id for an object=] |object| and the value
            set to |value|.
 
       <dt>Map
-      <dd>Let |remote object| be an [=object=] matching the `MapObject`
+      <dd>Let |remote object| be an [=object=] matching the `MapValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>Set
-      <dd>Let |remote object| be an [=object=] matching the `SetObject`
+      <dd>Let |remote object| be an [=object=] matching the `SetValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>WeakMap
-      <dd>Let |remote object| be an [=object=] matching the `WeakMapObject`
+      <dd>Let |remote object| be an [=object=] matching the `WeakMapValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>WeakSet
-      <dd>Let |remote object| be an [=object=] matching the `WeakSetObject`
+      <dd>Let |remote object| be an [=object=] matching the `WeakSetValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>Iterator
-      <dd>Let |remote object| be an [=object=] matching the `IteratorObject`
+      <dd>Let |remote object| be an [=object=] matching the `IteratorValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>Generator
-      <dd>Let |remote object| be an [=object=] matching the `IteratorObject`
+      <dd>Let |remote object| be an [=object=] matching the `IteratorValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>Error
-      <dd>Let |remote object| be an [=object=] matching the `ErrorObject`
+      <dd>Let |remote object| be an [=object=] matching the `ErrorValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>Proxy
-      <dd>Let |remote object| be an [=object=] matching the `ProxyObject`
+      <dd>Let |remote object| be an [=object=] matching the `ProxyValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>Promise
-      <dd>Let |remote object| be an [=object=] matching the `PromiseObject`
+      <dd>Let |remote object| be an [=object=] matching the `PromiseValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>TypedArray
-      <dd>Let |remote object| be an [=object=] matching the `TypedArrayObject`
+      <dd>Let |remote object| be an [=object=] matching the `TypedArrayValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
       <dt>ArrayBuffer
-      <dd>Let |remote object| be an [=object=] matching the `ArrayBufferObject`
+      <dd>Let |remote object| be an [=object=] matching the `ArrayBufferValue`
           production in the [=local end definition=], with the <code>objectId</code>
           property set to the [=object id for an object=] |object|.
 
@@ -1169,13 +1169,13 @@ To <dfn>serialize as a remote object</dfn> given an |object|, a |max depth|,
 
             1. [=Set=](|value|, "attributes", |attributes|, false)
 
-        1. Let |remote object| be an [=object=] matching the `NodeObject`
+        1. Let |remote object| be an [=object=] matching the `NodeValue`
            production in the [=local end definition=], with the <code>objectId</code>
            property set to the [=object id for an object=] |object|, and <code>value</code>
            set to |value|, if |value| is not null.
 
       <dt>WindowProxy
-      <dd>1. Let |remote object| be an [=object=] matching the `WindowProxyObject`
+      <dd>1. Let |remote object| be an [=object=] matching the `WindowProxyValue`
              production in the [=local end definition=], with the <code>objectId</code>
              property set to the [=object id for an object=] |object|.
 
@@ -1200,7 +1200,7 @@ To <dfn>serialize as a remote object</dfn> given an |object|, a |max depth|,
 
             1. [=Set=](|value|, |key|, |child object|, false)
 
-      1. Let |remote object| be an [=object=] matching the `ObjectObject` production
+      1. Let |remote object| be an [=object=] matching the `ObjectValue` production
          in the [=local end definition=], with the <code>objectId</code> property set
          to the [=object id for an object=] |object|, and the <code>value</code> field
          set to |value|.
