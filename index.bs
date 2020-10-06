@@ -718,7 +718,7 @@ Realm = text;
 Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
 uniquely identifying that realm.
 
-## Remote Value ## {#data-types-remote-value}
+## Remote Value ## {#data-types-remote-object}
 
 Values accessible from the ECMAScript runtime are represented by a mirror
 object, specified as <code>RemoteValue</code>. The value's type is specified in
@@ -955,69 +955,69 @@ Issue: Should WindowProxy get attributes in a similar style to Node?
 
 <div algorithm>
 
-To <dfn>serialize as a remote object</dfn> given an |object|, a |max depth|,
+To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
 |node details|, and a |set of known objects|:
 
-  1. Switch on the type of |object|:
+  1. Switch on the type of |value|:
 
     <dl>
       <dt>Undefined
-      <dd>Let |remote object| be an [=object=] matching the `UndefinedValue`
+      <dd>Let |remote value| be an [=object=] matching the `UndefinedValue`
       production in the [=local end definition=].
 
       <dt>Null
-      <dd>Let |remote object| be an [=object=] matching the `NullValue`
+      <dd>Let |remote value| be an [=object=] matching the `NullValue`
       production in the [=local end definition=].
 
       <dt>String
-      <dd>Let |remote object| be an [=object=] matching the `StringValue`
+      <dd>Let |remote value| be an [=object=] matching the `StringValue`
       production in the [=local end definition=], with the <code>value</code>
-      property set to |object|.
+      property set to |value|.
 
       <dt>Number
       <dd>
-      1. Switch on the value of |object|:
+      1. Switch on the value of |value|:
         <dl>
           <dt>NaN
-          <dt>Let |value| be <code>"NaN"</code>
+          <dt>Let |serialized| be <code>"NaN"</code>
           <dt>-0
-          <dt>Let |value| be <code>"-0"</code>
+          <dt>Let |serialized| be <code>"-0"</code>
           <dt>+Infinity
-          <dt>Let |value| be <code>"+Infinity"</code>
+          <dt>Let |serialized| be <code>"+Infinity"</code>
           <dt>-Infinity
-          <dt>Let |value| be <code>"-Infinity"</code>
+          <dt>Let |serialized| be <code>"-Infinity"</code>
           <dt>Otherwise:
-          <dt>Let |value| be |object|
+          <dt>Let |serialized| be |value|
         </dl>
-        Let |remote object| be an [=object=] matching the `NumberValue`
+        Let |remote value| be an [=object=] matching the `NumberValue`
         production in the [=local end definition=], with the <code>value</code>
-        property set to |value|.
+        property set to |serialized|.
 
       <dt>Boolean
-      <dd>Let |remote object| be an [=object=] matching the `BooleanValue`
+      <dd>Let |remote value| be an [=object=] matching the `BooleanValue`
           production in the [=local end definition=], with the <code>value</code>
-          property set to |object|.
+          property set to |value|.
 
       <dt>BigInt
-      <dd>Let |remote object| be an [=object=] matching the `BigIntValue`
+      <dd>Let |remote value| be an [=object=] matching the `BigIntValue`
           production in the [=local end definition=], with the <code>value</code>
           property set to the result of running the [=ToString=] operation on
-      |object|.
+          |value|.
 
       <dt>Symbol
-      <dd>Let |remote object| be an [=object=] matching the `SymbolValue`
+      <dd>Let |remote value| be an [=object=] matching the `SymbolValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>Array
       <dd>
-      1. Let |value| be null.
+      1. Let |serialized| be null.
 
-      1. If |object| is not in the |set of known objects|, and |max depth|
+      1. If |value| is not in the |set of known objects|, and |max depth|
          is not null and greater than 0, run the following steps:
-             1. Append |object| to the |set of known objects|
+             1. Append |value| to the |set of known objects|
 
-             1. Let |value| be a new List.
+             1. Let |serialized| be a new List.
 
              1. For each integer |index| in the range 0 to
                 [=LengthOfArrayLike=](|object|), run the following steps:
@@ -1026,187 +1026,187 @@ To <dfn>serialize as a remote object</dfn> given an |object|, a |max depth|,
 
                 1. If [=HasProperty=](|index name|) is true:
 
-                  1. Let |child object| be [=Get=](|object|, |index name|)
+                  1. Let |child value| be [=Get=](|object|, |index name|)
 
-                  1. Let |child remote object| be the result of [=serialize as a
-                     remote object=] with arguments |child object|, |max
+                  1. Let |serialized child| be the result of [=serialize as a
+                     remote value=] with arguments |child value|, |max
                      depth| - 1, |node details| and |set of known objects|.
 
-                  Otherwise let |child remote object| be an [=object=] matching
+                  Otherwise let |serialized child| be an [=object=] matching
                   the `UndefinedValue` production in the [=remote end
                   definition=].
 
-                1. Append [=CreateArrayFromList=](|child remote object|) to |value|.
+                1. Append [=CreateArrayFromList=](|serialized child|) to |serialized|.
 
-      1. Let |remote object| be an [=object=] matching the `ArrayValue` production
+      1. Let |remote value| be an [=object=] matching the `ArrayValue` production
          in the [=local end definition=], with the <code>objectId</code> property set
          to the [=object id for an object=] |object|, and the <code>value</code> field
-         set to |value| if it's not null, or ommitted otherwise.
+         set to |serialized| if it's not null, or ommitted otherwise.
 
       <dt>Function
-      <dd>Let |remote object| be an [=object=] matching the `FunctionValue`
+      <dd>Let |remote value| be an [=object=] matching the `FunctionValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>RegExp
       <dd>
-          1. Let |pattern| be [=ToString=]([=Get=](|object|, "source")).
+          1. Let |pattern| be [=ToString=]([=Get=](|value|, "source")).
 
-          1. Let |flags| be [=ToString=]([=Get=](|object|, "flags")).
+          1. Let |flags| be [=ToString=]([=Get=](|value|, "flags")).
 
-          1. Let |value| be the string-concatenation of "/", |pattern|, "/", and |flags|.
+          1. Let |serialized| be the string-concatenation of "/", |pattern|, "/", and |flags|.
 
-          1. Let |remote object| be an [=object=] matching the `RegExpValue`
+          1. Let |remote | be an [=object=] matching the `RegExpValue`
              production in the [=local end definition=], with the <code>objectId</code>
              property set to the [=object id for an object=] |object| and the value
-             set to |value|
+             set to |serialized|
 
       <dt>Date
       <dd>
-        1. Let |value| be [=ToDateString=]([=thisTimeValue=](|object|)).
+        1. Let |serialized| be [=ToDateString=]([=thisTimeValue=](|value|)).
 
-        1. Let |remote object| be an [=object=] matching the `DateValue`
+        1. Let |remote value| be an [=object=] matching the `DateValue`
            production in the [=local end definition=], with the <code>objectId</code>
            property set to the [=object id for an object=] |object| and the value
-           set to |value|.
+           set to |serialized|.
 
       <dt>Map
-      <dd>Let |remote object| be an [=object=] matching the `MapValue`
+      <dd>Let |remote value| be an [=object=] matching the `MapValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>Set
-      <dd>Let |remote object| be an [=object=] matching the `SetValue`
+      <dd>Let |remote value| be an [=object=] matching the `SetValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>WeakMap
-      <dd>Let |remote object| be an [=object=] matching the `WeakMapValue`
+      <dd>Let |remote value| be an [=object=] matching the `WeakMapValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>WeakSet
-      <dd>Let |remote object| be an [=object=] matching the `WeakSetValue`
+      <dd>Let |remote value| be an [=object=] matching the `WeakSetValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>Iterator
-      <dd>Let |remote object| be an [=object=] matching the `IteratorValue`
+      <dd>Let |remote value| be an [=object=] matching the `IteratorValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>Generator
-      <dd>Let |remote object| be an [=object=] matching the `IteratorValue`
+      <dd>Let |remote value| be an [=object=] matching the `IteratorValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>Error
-      <dd>Let |remote object| be an [=object=] matching the `ErrorValue`
+      <dd>Let |remote value| be an [=object=] matching the `ErrorValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>Proxy
-      <dd>Let |remote object| be an [=object=] matching the `ProxyValue`
+      <dd>Let |remote value| be an [=object=] matching the `ProxyValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>Promise
-      <dd>Let |remote object| be an [=object=] matching the `PromiseValue`
+      <dd>Let |remote value| be an [=object=] matching the `PromiseValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>TypedArray
-      <dd>Let |remote object| be an [=object=] matching the `TypedArrayValue`
+      <dd>Let |remote value| be an [=object=] matching the `TypedArrayValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>ArrayBuffer
-      <dd>Let |remote object| be an [=object=] matching the `ArrayBufferValue`
+      <dd>Let |remote value| be an [=object=] matching the `ArrayBufferValue`
           production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |object|.
+          property set to the [=object id for an object=] |value|.
 
       <dt>Node
       <dd>
-        1. Let |value| be null.
+        1. Let |serialized| be null.
 
         1. If |node details| is true, run the following steps:
 
-            1. Let |value| be a new [=Object=].
+            1. Let |serialized| be a new [=Object=].
 
-            1. [=Set=](|value|, "nodeType", [=Get=](|object|, "nodeType"), false)
+            1. [=Set=](|serialized|, "nodeType", [=Get=](|value|, "nodeType"), false)
 
-            1. [=Set=](|value|, "nodeName", [=Get=](|object|, "nodeName"), false)
+            1. [=Set=](|serialized|, "nodeName", [=Get=](|value|, "nodeName"), false)
 
-            1. [=Set=](|value|, "localName", [=Get=](|object|, "localName"), false)
+            1. [=Set=](|serialized|, "localName", [=Get=](|value|, "localName"), false)
 
-            1. [=Set=](|value|, "nodeValue", [=Get=](|object|, "nodeValue"), false)
+            1. [=Set=](|serialized|, "nodeValue", [=Get=](|value|, "nodeValue"), false)
 
-            1. Let |child node count| be the size of |value|'s [=children=].
+            1. Let |child node count| be the size of |serialized|'s [=children=].
 
-            1. [=Set=](|value|, "childNodeCount", |child node count|, false)
+            1. [=Set=](|serialized|, "childNodeCount", |child node count|, false)
 
             1. If |max depth| is null and or equal to 0 let |children| be null.
                Otherwise, let |children| be an empty list and, for each node
-               |child| in the [=children=] of |object|:
+               |child| in the [=children=] of |value|:
 
-              1. Let |serialized| be the result of [=serialize as a remote object=]
+              1. Let |serialized| be the result of [=serialize as a remote value=]
                  with |child|, |max depth| - 1, |node details| and
                  |set of known objects|.
 
               1. Append |serialized| to |children|.
 
-            1. [=Set=](|value|, "children", |serialized|, false)
+            1. [=Set=](|serialized|, "children", |serialized|, false)
 
             1. Let |attributes| be a new [=Object=].
 
-            1. For each |attribute| in |object|'s <a spec=dom>attributes</a>:
+            1. For each |attribute| in |value|'s <a spec=dom>attributes</a>:
 
               1. Let |name| be |attribute|'s [=Attr/qualified name=]
 
-              1. Let |value| be |attribute|'s [=Attr/value=].
+              1. Let |serialized| be |attribute|'s [=Attr/value=].
 
-              1. [=Set=](|attributes|, |name|, |value|, false)
+              1. [=Set=](|attributes|, |name|, |serialized|, false)
 
-            1. [=Set=](|value|, "attributes", |attributes|, false)
+            1. [=Set=](|serialized|, "attributes", |attributes|, false)
 
-        1. Let |remote object| be an [=object=] matching the `NodeValue`
+        1. Let |remote value| be an [=object=] matching the `NodeValue`
            production in the [=local end definition=], with the <code>objectId</code>
-           property set to the [=object id for an object=] |object|, and <code>value</code>
-           set to |value|, if |value| is not null.
+           property set to the [=object id for an object=] |value|, and <code>value</code>
+           set to |serialized|, if |serialized| is not null.
 
       <dt>WindowProxy
-      <dd>1. Let |remote object| be an [=object=] matching the `WindowProxyValue`
+      <dd>1. Let |remote value| be an [=object=] matching the `WindowProxyValue`
              production in the [=local end definition=], with the <code>objectId</code>
-             property set to the [=object id for an object=] |object|.
+             property set to the [=object id for an object=] |value|.
 
       <dt>Otherwise:
       <dd>
-      1. let |value| be null.
+      1. let |serialized| be null.
 
-      1. If |object| is not in the |set of known objects|, and |max depth|
+      1. If |value| is not in the |set of known objects|, and |max depth|
          is not null and greater than 0, run the following steps:
-         1. Append |object| to the |set of known objects|
+         1. Append |value| to the |set of known objects|
 
-         1. Let |value| be a new [=Object=].
+         1. Let |serialized| be a new [=Object=].
 
-         1. For each |key| of [=EnumerableOwnPropertyNames=](|object|, key)
+         1. For each |key| of [=EnumerableOwnPropertyNames=](|value|, key)
             run the following steps:
 
-            1. Let |child object| be [=Get=](|object|, |key|)
+            1. Let |child value| be [=Get=](|value|, |key|)
 
-            1. Let |child remote object| be the result of [=serialize as a
-               remote object=] with arguments |child object|, |max
+            1. Let |child remote value| be the result of [=serialize as a
+               remote value=] with arguments |child value|, |max
                depth| - 1, |node details| and |set of known objects|.
 
-            1. [=Set=](|value|, |key|, |child object|, false)
+            1. [=Set=](|serialized|, |key|, |child remote value|, false)
 
-      1. Let |remote object| be an [=object=] matching the `ObjectValue` production
+      1. Let |remote value| be an [=object=] matching the `ObjectValue` production
          in the [=local end definition=], with the <code>objectId</code> property set
-         to the [=object id for an object=] |object|, and the <code>value</code> field
-         set to |value|.
+         to the [=object id for an object=] |value|, and the <code>value</code> field
+         set to |serialized|.
     </dl>
 
-  1. Return |remote object|
+  1. Return |remote value|
 
 Issue: the way we check types is all wrong
 
