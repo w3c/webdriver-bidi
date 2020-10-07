@@ -63,6 +63,10 @@ spec: ECMASCRIPT urlPrefix: https://tc39.es/ecma262/
   type: dfn
     text: Array; url: sec-array-objects
     text: CreateArrayFromList; url: sec-createarrayfromlist
+    text: CreateArrayIterator; url: sec-createarrayiterator
+    text: CreateListFromArrayLike; url: sec-createlistfromarraylike
+    text: CreateMapIterator; url: sec-createmapiterator
+    text: CreateSetIterator; url: sec-createsetiterator
     text: EnumerableOwnPropertyNames; url: sec-enumerableownpropertynames
     text: Get; url: sec-get
     text: HasProperty; url: sec-hasproperty
@@ -812,6 +816,10 @@ RemoteValue = {
 
 ObjectId = text;
 
+ListValue = [*RemoteValue];
+
+MappingValue = [*[RemoteValue / text, RemoteValue]];
+
 UndefinedValue = {
   type: "undefined",
 }
@@ -850,13 +858,13 @@ SymbolValue = {
 ArrayValue = {
   type: "array",
   objectId: ObjectId,
-  value?: [*RemoteValue]
+  value?: ListValue,
 }
 
 ObjectValue = {
   type: "object",
   objectId: ObjectId,
-  value?: {* text => RemoteValue}
+  value?: MappingValue,
 }
 
 FunctionObject = {
@@ -879,11 +887,13 @@ DateValue = {
 MapValue = {
   type: "map",
   objectId: ObjectId,
+  value?: MappingValue,
 }
 
 SetValue = {
   type: "set",
-  objectId: ObjectId
+  objectId: ObjectId,
+  value?: ListValue
 }
 
 WeakMapValue = {
@@ -929,7 +939,7 @@ NodeProperties = {
   nodeValue: text,
   childNodeCount: uint,
   children?: [*NodeValue],
-  attributes?: {*text: text},
+  attributes?: {*text => text},
 }
 
 WindowProxyValue = {
@@ -1014,31 +1024,14 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
          is not null and greater than 0, run the following steps:
              1. Append |value| to the |set of known objects|
 
-             1. Let |serialized| be a new List.
-
-             1. For each integer |index| in the range 0 to
-                [=LengthOfArrayLike=](|object|), run the following steps:
-
-                1. Let |index name| be [=ToString=](|index|)
-
-                1. If [=HasProperty=](|index name|) is true:
-
-                  1. Let |child value| be [=Get=](|object|, |index name|)
-
-                  1. Let |serialized child| be the result of [=serialize as a
-                     remote value=] with arguments |child value|, |max
-                     depth| - 1, |node details| and |set of known objects|.
-
-                  Otherwise let |serialized child| be an [=object=] matching
-                  the <code>UndefinedValue</code> production in the [=remote end
-                  definition=].
-
-                1. Append [=CreateArrayFromList=](|serialized child|) to |serialized|.
+             1. Let |serialized| be the result of [=serialize as a list=] given
+                [=CreateArrayIterator=](|value|, value), |max depth|, |node details| and
+                |set of known objects|.
 
       1. Let |remote value| be an [=object=] matching the <code>ArrayValue</code> production
          in the [=local end definition=], with the <code>objectId</code> property set
-         to the [=object id for an object=] |object|, and the <code>value</code> field
-         set to |serialized| if it's not null, or ommitted otherwise.
+         to the [=object id for an object=] |value|, and the <code>value</code>
+         field set to |serialized| if it's not null, or ommitted otherwise.
 
       <dt>[=IsRegExp=](|value|)
       <dd>
@@ -1063,14 +1056,40 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
            set to |serialized|.
 
       <dt>|value| has a \[[MapData]] [=internal slot=]
-      <dd>Let |remote value| be an [=object=] matching the <code>MapValue</code>
-          production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |value|.
+      <dd>
+        1. Let |serialized| be null.
+
+        1. If |value| is not in the |set of known objects|, and |max depth|
+           is not null and greater than 0, run the following steps:
+             1. Append |value| to the |set of known objects|
+
+             1. Let |serialized| be the result of [=serialize as a list=] given
+                [=CreateMapIterator=](|value|, key+value), |max depth|, |node details| and
+                |set of known objects|.
+
+      1. Let |remote value| be an [=object=] matching the <code>MapValue</code>
+         production in the [=local end definition=], with the
+         <code>objectId</code> property set to the [=object id for an object=]
+         |value|, and the <code>value</code> field set to |serialized| if it's
+         not null, or ommitted otherwise.
 
       <dt>|value| has a \[[SetData]] [=internal slot=]
-      <dd>Let |remote value| be an [=object=] matching the <code>SetValue</code>
-          production in the [=local end definition=], with the <code>objectId</code>
-          property set to the [=object id for an object=] |value|.
+      <dd>
+        1. Let |serialized| be null.
+
+        1. If |value| is not in the |set of known objects|, and |max depth|
+           is not null and greater than 0, run the following steps:
+             1. Append |value| to the |set of known objects|
+
+             1. Let |serialized| be the result of [=serialize as a list=] given
+                [=CreateSetIterator=](|value|, value), |max depth|, |node details| and
+                |set of known objects|.
+
+       1. Let |remote value| be an [=object=] matching the <code>SetValue</code>
+          production in the [=local end definition=], with the
+          <code>objectId</code> property set to the [=object id for an object=]
+          |value|, and the <code>value</code> field set to |serialized| if it's
+          not null, or ommitted otherwise.
 
       <dt>|value| has a \[[WeakMapData]] [=internal slot=]
       <dd>Let |remote value| be an [=object=] matching the <code>WeakMapValue</code>
@@ -1169,18 +1188,9 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
          is not null and greater than 0, run the following steps:
          1. Append |value| to the |set of known objects|
 
-         1. Let |serialized| be a new [=Object=].
-
-         1. For each |key| of [=EnumerableOwnPropertyNames=](|value|, key)
-            run the following steps:
-
-            1. Let |child value| be [=Get=](|value|, |key|)
-
-            1. Let |child remote value| be the result of [=serialize as a
-               remote value=] with arguments |child value|, |max
-               depth| - 1, |node details| and |set of known objects|.
-
-            1. [=Set=](|serialized|, |key|, |child remote value|, false)
+         1. Let |serialized| be the result of [=serialize as a mapping=] given
+            [=EnumerableOwnPropertyNames=](|value|, key+value), |max depth|, |node
+            details| and |set of known objects|
 
       1. Let |remote value| be an [=object=] matching the <code>ObjectValue</code> production
          in the [=local end definition=], with the <code>objectId</code> property set
@@ -1196,6 +1206,59 @@ Issue: Does it make sense to use the same depth parameter for nodes and objects
 in general?
 
 </div>
+
+<div algorithm>
+Issue: this assumes for-in works on iterators
+
+To <dfn>serialize as a list</dfn> given |iterable|, |max depth|,
+|node details| and |set of known objects|:
+
+  1. Let |serialized| be a new list.
+
+  1. For each |child value| in |iterable|:
+
+    1. Let |serialized child| be the result of [=serialize as a
+       remote value=] with arguments |child value|, |max
+       depth| - 1, |node details| and |set of known objects|.
+
+    1. Append |serialized child| to |serialized|.
+
+  1. Return [=CreateArrayFromList=](|serialized|)
+</div>
+
+<div algorithm>
+To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
+|node details| and |set of known objects|:
+
+  1. Let |serialized| be a new list.
+
+  1. For |item| in |iterable|:
+    1. Assert: [=IsArray=](|item|)
+
+    1. Let |property| be [=CreateListFromArrayLike=](|item|)
+
+    1. Assert |property| is a list of size 2
+
+    1. Let |key| be |property|[0] and let |value| be |property|[1]
+
+    1. If [=Type=](|key|) is String, let |serialized key| be |child key|,
+       otherwise let |serialized key| be the result of [=serialize as a remote
+       value=] with arguments |child key|, |max depth| - 1, |node details| and
+       |set of known objects|.
+
+    1. Let |serialized value| be the result of [=serialize as a
+       remote value=] with arguments |value|, |max
+       depth| - 1, |node details| and |set of known objects|.
+
+    1. Let |serialized child| be [=CreateArrayFromList=](«|serialized key|,
+       |serialized value|»).
+
+    1. Append |serialized child| to |serialized|.
+
+  1. Return [=CreateArrayFromList=](|serialized|)
+</div>
+
+
 
 Modules {#modules}
 ==================
