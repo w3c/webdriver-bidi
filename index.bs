@@ -45,6 +45,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
     text: unknown command; url: dfn-unknown-command
+    text: no such element; url: dfn-no-such-element
     text: active sessions; url: dfn-active-session
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
@@ -56,13 +57,35 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: success; url: dfn-success
     text: try; url: dfn-try
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
+    text: web element reference; url: dfn-web-element-reference
     text: window handle; url: dfn-window-handle
-spec: ECMASCRIPT urlPrefix: https://tc39.es/ecma262/
+spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
   type: dfn
+    text: Array; url: sec-array-objects
+    text: CreateArrayFromList; url: sec-createarrayfromlist
+    text: CreateArrayIterator; url: sec-createarrayiterator
+    text: CreateListFromArrayLike; url: sec-createlistfromarraylike
+    text: CreateMapIterator; url: sec-createmapiterator
+    text: CreateSetIterator; url: sec-createsetiterator
+    text: EnumerableOwnPropertyNames; url: sec-enumerableownpropertynames
+    text: Get; url: sec-get
+    text: HasProperty; url: sec-hasproperty
+    text: internal slot; url: sec-object-internal-methods-and-internal-slots
+    text: IsArray; url: sec-isarray
+    text: IsCallable; url: sec-iscallable
+    text: IsPromise; url: sec-ispromise
+    text: IsRegExp; url: sec-isregexp
+    text: LengthOfArrayLike; url: sec-lengthofarraylike
     text: Object; url: sec-object-objects
     text: Set; url: sec-set
+    text: ThisTimeValue; url: thistimevalue
+    text: ToDateString; url: sec-todatestring
+    text: ToString; url: sec-tostring
+    text: Type; url: sec-ecmascript-data-types-and-values
     text: realm; url: sec-code-realms
-
+spec: HTML; urlPrefix: https://html.spec.whatwg.org/
+  type: dfn
+    text: WindowProxy; url: windowproxy
 </pre>
 
 <pre class="link-defaults">
@@ -704,6 +727,563 @@ Realm = text;
 
 Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
 uniquely identifying that realm.
+
+## Remote Value ## {#data-types-remote-value}
+
+Values accessible from the ECMAScript runtime are represented by a mirror
+object, specified as <code>RemoteValue</code>. The value's type is specified in
+the <code>type</code> property. In the case of JSON-representable primitive
+values, this contains the value in the <code>value</code> property; in the case
+of non-JSON-representable primitives, the <code>value</code> property contains a
+string representation of the value. For non-primitive objects, the
+<code>objectId</code> property contains a string id that provides a unique
+handle to the object, valid for its lifetime inside the engine. For some
+non-primitive types, the <code>value</code> property contains a representation
+of the data in the ECMAScript object; for container types this can contain
+further <code>RemoteValue</code> instances. The <code>value</code> property can
+be null if there is a duplicate object i.e. the object has already been
+serialized in the current <code>RemoteValue</code>, perhaps as part of a
+cycle, or otherwise when the maximum serialization depth is reached.
+
+[=Nodes=] are also represented by <code>RemoteValue</code> instances. These have
+a partial serialization of the node in the value property.
+
+Note: mirror objects do not keep the original object alive in the runtime. If an
+object is discarded in the runtime subsequent attempts to access it via the
+protocol will result in an error.
+
+A [=/session=] has an <dfn>object id map</dfn>. This is a weak map from objects to
+their corresponding id.
+
+Issue: Should this be explicitly per realm?
+
+<div algorithm>
+To get the <dfn>object id for an object</dfn> given an |object|:
+
+  1. If the [=object id map=] for the [=current session=] does not contain |object|
+     run the following steps:
+
+     1. Let |object id| be a new, unique, string identifier for |object|. If
+        |object| is an [=/element=] this must be the [=web element reference=]
+        for |object|; if it's a [=WindowProxy=] object, this must be the
+        [=window handle=] for |object|.
+
+    1. Set the value of |object| in the [=object id map=] to |object id|.
+
+  1. Return the result of getting the value for |object| in [=object id map=].
+</div>
+
+<div algorithm>
+To get the <dfn>object for an object id</dfn> given an |object id|:
+
+  1. For each |object| → |id value| of [=object id map=]:
+
+    1. If |id value| is equal to |object id|, return [=success=] with data
+       |object|
+
+  1. Return [=error=] with [=error code=] [=no such element=]
+
+  Issue: This error code isn't right.
+</div>
+
+[=remote end definition=] and [=local end definition=]
+```
+RemoteValue = {
+  UndefinedValue //
+  NullValue //
+  StringValue //
+  NumberValue //
+  BooleanValue //
+  BigIntValue //
+  SymbolValue //
+  ArrayValue //
+  FunctionValue //
+  ObjectValue //
+  FunctionValue //
+  RegExpValue //
+  DateValue //
+  MapValue //
+  SetValue //
+  WeakMapValue //
+  WeakSetValue //
+  IteratorValue //
+  GeneratorValue //
+  ErrorValue //
+  ProxyValue //
+  PromiseValue //
+  TypedArrayValue //
+  ArrayBufferValue //
+  NodeValue //
+  WindowProxyValue //
+}
+
+ObjectId = text;
+
+ListValue = [*RemoteValue];
+
+MappingValue = [*[(RemoteValue / text), RemoteValue]];
+
+UndefinedValue = {
+  type: "undefined",
+}
+
+NullValue = {
+  type: "null",
+}
+
+StringValue = {
+  type: "string",
+  value: text,
+}
+
+SpecialNumber = "NaN" / "-0" / "+Infinity" / "-Infinity";
+
+NumberValue = {
+  type: "number",
+  value: number / SpecialNumber,
+}
+
+BooleanValue = {
+  type: "boolean",
+  value: bool,
+}
+
+BigIntValue = {
+  type: "bigint",
+  value: text,
+}
+
+SymbolValue = {
+  type: "symbol",
+  objectId: ObjectId,
+}
+
+ArrayValue = {
+  type: "array",
+  objectId: ObjectId,
+  value?: ListValue,
+}
+
+ObjectValue = {
+  type: "object",
+  objectId: ObjectId,
+  value?: MappingValue,
+}
+
+FunctionValue = {
+  type: "function",
+  objectId: ObjectId,
+}
+
+RegExpValue = {
+  type: "regexp",
+  objectId: ObjectId,
+  value: text
+}
+
+DateValue = {
+  type: "date",
+  objectId: ObjectId,
+  value: text
+}
+
+MapValue = {
+  type: "map",
+  objectId: ObjectId,
+  value?: MappingValue,
+}
+
+SetValue = {
+  type: "set",
+  objectId: ObjectId,
+  value?: ListValue
+}
+
+WeakMapValue = {
+  type: "weakmap",
+  objectId: ObjectId,
+}
+
+WeakSetValue = {
+  type: "weakset",
+  objectId: ObjectId,
+}
+
+ErrorValue = {
+  type: "error",
+  objectId: ObjectId,
+}
+
+PromiseValue = {
+  type: "promise",
+  objectId: ObjectId,
+}
+
+TypedArrayValue = {
+  type: "typedarray",
+  objectId: ObjectId,
+}
+
+ArrayBufferValue = {
+  type: "arraybuffer",
+  objectId: ObjectId,
+}
+
+NodeValue = {
+  type: "node",
+  objectId: ObjectId,
+  value?: NodeProperties,
+}
+
+NodeProperties = {
+  nodeType: uint,
+  nodeValue: text,
+  localName?: text,
+  namespaceURI?: text,
+  childNodeCount: uint,
+  children?: [*NodeValue],
+  attributes?: {*text => text},
+  shadowRoot?: NodeValue / null,
+}
+
+WindowProxyValue = {
+  type: "window",
+  objectId: ObjectId,
+}
+```
+
+Issue: Add WASM types?
+
+Issue: Should WindowProxy get attributes in a similar style to Node?
+
+Issue: handle String / Number / etc. wrapper objects specially?
+
+<div algorithm>
+
+To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
+|node details|, and a |set of known objects|:
+
+  1. In the following list of conditions and associated steps, run the first set
+     of steps for which the associated condition is true:
+
+    <dl>
+      <dt>[=Type=](|value|) is Undefined
+      <dd>Let |remote value| be a map matching the <code>UndefinedValue</code>
+      production in the [=local end definition=].
+
+      <dt>[=Type=](|value|) is Null
+      <dd>Let |remote value| be a map matching the <code>NullValue</code>
+      production in the [=local end definition=].
+
+      <dt>[=Type=](|value|) is String
+      <dd>Let |remote value| be a map matching the <code>StringValue</code>
+      production in the [=local end definition=], with the <code>value</code>
+      property set to |value|.
+
+      Issue: This doesn't handle lone surrogates
+
+      <dt>[=Type=](|value|) is Number
+      <dd>
+      1. Switch on the value of |value|:
+        <dl>
+          <dt>NaN
+          <dd>Let |serialized| be <code>"NaN"</code>
+          <dt>-0
+          <dd>Let |serialized| be <code>"-0"</code>
+          <dt>+Infinity
+          <dd>Let |serialized| be <code>"+Infinity"</code>
+          <dt>-Infinity
+          <dd>Let |serialized| be <code>"-Infinity"</code>
+          <dt>Otherwise:
+          <dd>Let |serialized| be |value|
+        </dl>
+
+      1. Let |remote value| be a map matching the <code>NumberValue</code>
+         production in the [=local end definition=], with the <code>value</code>
+         property set to |serialized|.
+
+      <dt>[=Type=](|value|) is Boolean
+      <dd>Let |remote value| be a map matching the <code>BooleanValue</code>
+          production in the [=local end definition=], with the <code>value</code>
+          property set to |value|.
+
+      <dt>[=Type=](|value|) is BigInt
+      <dd>Let |remote value| be a map matching the <code>BigIntValue</code>
+          production in the [=local end definition=], with the <code>value</code>
+          property set to the result of running the [=ToString=] operation on
+          |value|.
+
+      <dt>[=Type=](|value|) is Symbol
+      <dd>Let |remote value| be a map matching the <code>SymbolValue</code>
+          production in the [=local end definition=], with the <code>objectId</code>
+          property set to the [=object id for an object=] |value|.
+
+      <dt>[=IsArray=](|value|)
+      <dd>
+      1. Let |serialized| be null.
+
+      1. If |value| is not in the |set of known objects|, and |max depth|
+         is not null and greater than 0, run the following steps:
+             1. Append |value| to the |set of known objects|
+
+             1. Let |serialized| be the result of [=serialize as a list=] given
+                [=CreateArrayIterator=](|value|, value), |max depth|, |node details| and
+                |set of known objects|.
+
+      1. Let |remote value| be a map matching the <code>ArrayValue</code> production
+         in the [=local end definition=], with the <code>objectId</code> property set
+         to the [=object id for an object=] |value|, and the <code>value</code>
+         field set to |serialized| if it's not null, or ommitted otherwise.
+
+      <dt>[=IsRegExp=](|value|)
+      <dd>
+          1. Let |pattern| be [=ToString=]([=Get=](|value|, "source")).
+
+          1. Let |flags| be [=ToString=]([=Get=](|value|, "flags")).
+
+          1. Let |serialized| be the string-concatenation of "/", |pattern|, "/", and |flags|.
+
+          1. Let |remote value| be a map matching the <code>RegExpValue</code>
+             production in the [=local end definition=], with the <code>objectId</code>
+             property set to the [=object id for an object=] |object| and the value
+             set to |serialized|
+
+      <dt>|value| has a \[[DateValue]] [=internal slot=].
+      <dd>
+        1. Let |serialized| be [=ToDateString=]([=thisTimeValue=](|value|)).
+
+        1. Let |remote value| be a map matching the <code>DateValue</code>
+           production in the [=local end definition=], with the <code>objectId</code>
+           property set to the [=object id for an object=] |object| and the value
+           set to |serialized|.
+
+      <dt>|value| has a \[[MapData]] [=internal slot=]
+      <dd>
+        1. Let |serialized| be null.
+
+        1. If |value| is not in the |set of known objects|, and |max depth|
+           is not null and greater than 0, run the following steps:
+             1. Append |value| to the |set of known objects|
+
+             1. Let |serialized| be the result of [=serialize as a mapping=] given
+                [=CreateMapIterator=](|value|, key+value), |max depth|, |node details| and
+                |set of known objects|.
+
+      1. Let |remote value| be a map matching the <code>MapValue</code>
+         production in the [=local end definition=], with the
+         <code>objectId</code> property set to the [=object id for an object=]
+         |value|, and the <code>value</code> field set to |serialized| if it's
+         not null, or ommitted otherwise.
+
+      <dt>|value| has a \[[SetData]] [=internal slot=]
+      <dd>
+        1. Let |serialized| be null.
+
+        1. If |value| is not in the |set of known objects|, and |max depth|
+           is not null and greater than 0, run the following steps:
+             1. Append |value| to the |set of known objects|
+
+             1. Let |serialized| be the result of [=serialize as a list=] given
+                [=CreateSetIterator=](|value|, value), |max depth|, |node details| and
+                |set of known objects|.
+
+       1. Let |remote value| be a map matching the <code>SetValue</code>
+          production in the [=local end definition=], with the
+          <code>objectId</code> property set to the [=object id for an object=]
+          |value|, and the <code>value</code> field set to |serialized| if it's
+          not null, or ommitted otherwise.
+
+      <dt>|value| has a \[[WeakMapData]] [=internal slot=]
+      <dd>Let |remote value| be a map matching the <code>WeakMapValue</code>
+          production in the [=local end definition=], with the <code>objectId</code>
+          property set to the [=object id for an object=] |value|.
+
+      <dt>|value| has a \[[WeakSetData]] [=internal slot=]
+      <dd>Let |remote value| be a map matching the <code>WeakSetValue</code>
+          production in the [=local end definition=], with the <code>objectId</code>
+          property set to the [=object id for an object=] |value|.
+
+      <dt>|value| has an \[[ErrorData]] [=internal slot=]
+      <dd>Let |remote value| be a map matching the <code>ErrorValue</code>
+          production in the [=local end definition=], with the <code>objectId</code>
+          property set to the [=object id for an object=] |value|.
+
+      <dt>[=IsPromise=](|value|)
+      <dd>Let |remote value| be a map matching the <code>PromiseValue</code>
+          production in the [=local end definition=], with the <code>objectId</code>
+          property set to the [=object id for an object=] |value|.
+
+      <dt>|value| has a \[[TypedArrayName]] [=internal slot=]
+      <dd>Let |remote value| be a map matching the <code>TypedArrayValue</code>
+          production in the [=local end definition=], with the <code>objectId</code>
+          property set to the [=object id for an object=] |value|.
+
+      <dt>|value| has an \[[ArrayBufferData]] [=internal slot=]
+      <dd>Let |remote value| be a map matching the <code>ArrayBufferValue</code>
+          production in the [=local end definition=], with the <code>objectId</code>
+          property set to the [=object id for an object=] |value|.
+
+      <dt>|value| is a [=platform object=] that implements [=Node=]
+      <dd>
+        1. Let |serialized| be null.
+
+        1. If |node details| is true, run the following steps:
+
+            1. Let |serialized| be a map.
+
+            1. "nodeType", [=Get=](|value|, "nodeType"), false)
+
+            1. Set |serialized|["<code>nodeValue</code>"] to [=Get=](|value|, "nodeValue")
+
+            1. If |value| is an [=/Element=] or an <a spec=dom>Attribute</a>:
+
+
+              1. Set |serialized|["<code>localName</code>" to [=Get=](|value|, "localName")
+
+              1. Set |serialized|["<code>namespaceURI</code>"] to [=Get=](|value|, "namespaceURI")
+
+
+            1. Let |child node count| be the size of |serialized|'s [=children=].
+
+            1. Set |serialized|["<code>childNodeCount</code>" to |child node count|
+
+            1. If |max depth| is equal to 0 let |children| be null.
+               Otherwise, let |children| be an empty list and, for each node
+               |child| in the [=children=] of |value|:
+
+              1. Let |serialized| be the result of [=serialize as a remote value=]
+                 with |child|, |max depth| - 1, |node details| and
+                 |set of known objects|.
+
+              1. Append |serialized| to |children|.
+
+            1. Set |serialized|["<code>children</code>"] to |children|.
+
+            1. If |value| is an [=/Element=]:
+
+               1. Let |attributes| be a new map.
+
+               1. For each |attribute| in |value|'s [=Element/attribute list=]:
+
+                 1. Let |name| be |attribute|'s [=Attr/qualified name=]
+
+                 1. Let |value| be |attribute|'s [=Attr/value=].
+
+                 1. Set |attributes|[|name|] to |value|
+
+               1. Set |serialized|["<code>attributes</code>"] to |attributes|.
+
+               1. Let |shadow root| be |value|'s [=Element/shadow root=].
+
+               1. If |shadow root| is null, let |serialized shadow| be null.
+                  Otherwise let |serialized shadow| be the result of
+                  [=serialize as a remote value=] with |shadow root|, |max depth| - 1,
+                  false and |set of known objects|.
+
+                  Note: this means the <code>objectId</code> for the shadow root
+                  will be serialized irrespective of whether the shadow is open or closed,
+                  but no properties of the node will be returned.
+
+               1. Set= |serialized|["<code>shadowRoot</code>"] to |serialized shadow|.
+
+        1. Let |remote value| be a map matching the <code>NodeValue</code>
+           production in the [=local end definition=], with the <code>objectId</code>
+           property set to the [=object id for an object=] |value|, and <code>value</code>
+           set to |serialized|, if |serialized| is not null.
+
+      <dt>|value| is a [=platform object=] that implements [=WindowProxy=]
+      <dd>1. Let |remote value| be a map matching the <code>WindowProxyValue</code>
+             production in the [=local end definition=], with the <code>objectId</code>
+             property set to the [=object id for an object=] |value|.
+
+      <dt>|value| is a [=platform object=]
+      <dd>1. Let |remote value| be a map matching the <code>ObjectValue</code>
+             production in the [=local end definition=], with the <code>objectId</code>
+             property set to the [=object id for an object=] |value|.
+
+      <dt>[=IsCallable=](|value|)
+      <dd>Let |remote value| be a map matching the <code>FunctionValue</code>
+          production in the [=local end definition=], with the <code>objectId</code>
+          property set to the [=object id for an object=] |value|.
+
+      <dt>Otherwise:
+      <dd>
+      1. [=Assert=]: [=type=](|value|) is Object
+
+      1. let |serialized| be null.
+
+      1. If |value| is not in the |set of known objects|, and |max depth|
+         is greater than 0, run the following steps:
+         1. Append |value| to the |set of known objects|
+
+         1. Let |serialized| be the result of [=serialize as a mapping=] given
+            [=EnumerableOwnPropertyNames=](|value|, key+value), |max depth|, |node
+            details| and |set of known objects|
+
+      1. Let |remote value| be a map matching the <code>ObjectValue</code> production
+         in the [=local end definition=], with the <code>objectId</code> property set
+         to the [=object id for an object=] |value|, and the <code>value</code> field
+         set to |serialized|.
+    </dl>
+
+  1. Return |remote value|
+
+Issue: Does it make sense to use the same depth parameter for nodes and objects
+in general?
+
+</div>
+
+<div algorithm>
+To <dfn>serialize as a list</dfn> given |iterable|, |max depth|,
+|node details| and |set of known objects|:
+
+  1. Let |serialized| be a new list.
+
+  1. For each |child value| in |iterable|:
+
+    1. Let |serialized child| be the result of [=serialize as a
+       remote value=] with arguments |child value|, |max
+       depth| - 1, |node details| and |set of known objects|.
+
+    1. Append |serialized child| to |serialized|.
+
+  1. Return |serialized|
+</div>
+
+Issue: this assumes for-in works on iterators
+
+<div algorithm>
+To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
+|node details| and |set of known objects|:
+
+  1. Let |serialized| be a new list.
+
+  1. For |item| in |iterable|:
+    1. Assert: [=IsArray=](|item|)
+
+    1. Let |property| be [=CreateListFromArrayLike=](|item|)
+
+    1. Assert: |property| is a list of size 2
+
+    1. Let |key| be |property|[0] and let |value| be |property|[1]
+
+    1. If [=Type=](|key|) is String, let |serialized key| be |child key|,
+       otherwise let |serialized key| be the result of [=serialize as a remote
+       value=] with arguments |child key|, |max depth| - 1, |node details| and
+       |set of known objects|.
+
+    1. Let |serialized value| be the result of [=serialize as a
+       remote value=] with arguments |value|, |max
+       depth| - 1, |node details| and |set of known objects|.
+
+    1. Let |serialized child| be («|serialized key|, |serialized value|»).
+
+    1. Append |serialized child| to |serialized|.
+
+  1. Return |serialized|
+</div>
+
+
 
 Modules {#modules}
 ==================
