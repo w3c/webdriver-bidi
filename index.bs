@@ -160,7 +160,7 @@ Message = (
 
 CommandResponse = {
   id: uint,
-  ResponseData,
+  value: ResultData,
   *text => any
 }
 
@@ -360,42 +360,6 @@ To <dfn>obtain a set of event names</dfn> given an |name|:
   1. Return [=success=] with data |events|.
 </div>
 
-## Processing Model ## {#processing-model}
-
-
-<div algorithm>
-To <dfn>process a command</dfn> given |data|:
-
-Issue: The way we get the matched data is a bit handwavy.
-
-   1. Match |data| against the [=remote end definition=]. If this results in a
-      match:
-      1. Let |parsed| be the map representing the matched data.
-
-      1. Assert: |parsed| contains "<code>id</code>", "method", and
-         "<code>params</code>"
-
-      1. Let |value| be the result of [=trying=] to run the [=remote end steps=]
-         for the command with [=command name=] |parsed|["<code>method</code>"]
-         given [=command parameters=] |parsed|["<code>params</code>"]
-
-      1. Assert: |value| matches the definition for the [=result type=]
-         corresponding to the command with name [=command name=].
-
-      1. Return [=success=] with data (|parsed|["<code>id</code>"],
-         |value|).
-
-   1. Otherwise there is no match. If |data| isn't a map or is a map without a
-      property named </code>method</code> return an [=error=] with error code
-      [=invalid argument=]. Otherwise let <var>command</var> be the value of
-      the <code>method</code> property of |data|.
-
-   1. If |command| is not in the [=set of all command names=], return an
-      [=error=] with [=error code=] [=unknown command=].
-
-   1. Return an [=error=] with [=error code=] [=invalid argument=].
-</div>
-
 Transport {#transport}
 ======================
 
@@ -575,31 +539,52 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
     Issue: Nothing seems to define what [=status codes|status code=]
     is used for UTF-8 errors.
 
- 1. Let |result| be the result of [=process a command|processing a
-    command=] given |data|.
+ 1. Match |data| against the [=remote end definition=]. If this results in a
+    match:
 
- 1. If |result| is an [=error=], then [=respond with an error=] given
-    |connection|, |data|, and |result|'s [=error code=], and finally return.
+    1. Let |parsed| be the map representing the matched data.
 
- 1. Assert: |result| is a [=success=]
+    1. Assert: |parsed| contains "<code>id</code>", "method", and
+       "<code>params</code>"
 
- 1. Let |command id| and |value| be the two fields |result|'s data.
+    1. Let |command id| be |parsed|["<code>id</code>"].
 
- 1. Let |response| be a new [=map=] with the following properties:
+    1. Let |method| be |parsed|["<code>method</code>"]
 
-   <dl>
-      <dt>"id"</dt>
-      <dd>|command id|</dd>
+    1. Run the following steps in parallel:
 
-      <dt>"value"</dt>
-      <dd>|value|</dd>
-   </dl>
+      1. Let |result| be the result of running the [=remote end steps=] for the
+         command with [=command name=] |method| given [=command parameters=]
+         |parsed|["<code>params</code>"]
 
- 1. Let |serialized| be the result of [=serialize an infra value to JSON
-    bytes=] given |response|.
+      1. If |result| is an [=error=], then [=respond with an error=] given
+         |connection|, |data|, and |result|'s [=error code=], and finally return.
 
- 1. [=Send a WebSocket message=] comprised of |serialized| over
-    |connection|.
+      1. Let |value| be |result|'s data.
+
+      1. Assert: |value| matches the definition for the [=result type=]
+         corresponding to the command with [=command name=] |method|.
+
+      1. Let |response| be a new map matching the <code>CommandResponse</code>
+         production in the [=local end definition=] with the <code>id</code>
+         field set to |command id| and the <code>value</code> field set to
+         |value|.
+
+      1. Let |serialized| be the result of [=serialize an infra value to JSON
+         bytes=] given |response|.
+
+      1. [=Send a WebSocket message=] comprised of |serialized| over
+         |connection| and return.
+
+  1. Otherwise there is no match.
+
+     Let |error code| be [=invalid argument=].
+
+  1. If |data| is a map and |data|["<code>method</code>"] exists and is a
+     string, but |data|["<code>method</code>"] is not in the [=set of all
+     command names=], let |error code| be [=unknown command=].
+
+  1. [=Respond with an error=] given |connection|, |data|, and |error code|.
 
 </div>
 
