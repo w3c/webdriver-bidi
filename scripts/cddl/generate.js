@@ -2,48 +2,65 @@
 
 const fs = require('fs')
 const path = require('path')
+const parse5 = require('parse5')
+
+const { getCDDLNodes } = require('./utils')
 
 const spec = path.resolve(__dirname, '..', '..', 'index.bs')
 const specContent = fs.readFileSync(spec, 'utf-8')
+const specParsed = parse5.parse(specContent)
 
-const preFormattedTexts = [...specContent.match(/<pre .*>([^<]*)<\/pre>/g)]
-    /**
-     * filter for CDDL code
-     */
-    .filter((pre) => pre.split('\n')[0].includes('cddl'))
-    /**
-     * drop HTML tags
-     */
-    .map((pre) => pre.split('\n').slice(1, -1))
-    /**
-     * remove obsolete whitespace
-     */
-    .map((pre) => {
-        const preceedingSpace = pre.reduce((prev, line) => {
-            if (line.length === 0) {
-                return prev
-            }
-    
-            const spaces = line.match(/^\s+/)
-            if (spaces) {
-                return Math.min(prev, spaces[0].length)
-            }
-    
-            return 0
-        }, Infinity)
-        return pre.map((line) => line.slice(preceedingSpace))
-    })
-    /**
-     * drop all cddl snippets without declarations, e.g.
-     * ```
-     * EmptyResult
-     * ```
-     */
-    .filter((pre) => pre.length > 1)
-    /**
-     * join code lines
-     */
-    .map((pre) => pre.join('\n'))
-    .join('\n')
+/**
+ * format the result and sort pre content to their corresponding classes
+ */
+const cddlContent = getCDDLNodes([specParsed]).reduce((val, node) => {
+    if (!val[node.nodeClass]) {
+        val[node.nodeClass] = []
+    }
+    val[node.nodeClass].push(node.content)
+    return val
+}, {})
 
-fs.writeFileSync(path.join(process.cwd(), 'index.cddl'), preFormattedTexts)
+/**
+ * iterate over all pre cddl classes found in the document, sanitize the
+ * content and write them to file.
+ */
+Object.entries(cddlContent).forEach(([cddlClass, content]) => {
+    const fileContent = content
+        /**
+         * remove obsolete whitespace
+         */
+        .map((entry) => {
+            const preceedingSpace = entry.split('\n').reduce((prev, line) => {
+                if (line.length === 0) {
+                    return prev
+                }
+
+                const spaces = line.match(/^\s+/)
+                if (spaces) {
+                    return Math.min(prev, spaces[0].length)
+                }
+
+                return 0
+            }, Infinity)
+            return entry
+                .split('\n')
+                .map((line) => line.slice(preceedingSpace))
+        })
+        /**
+         * drop all cddl snippets without declarations, e.g.
+         * ```
+         * EmptyResult
+         * ```
+         */
+        .filter((pre) => {
+            return pre.filter(Boolean).length > 1
+        })
+        /**
+         * join code lines
+         */
+        .map((pre) => pre.join('\n'))
+        .join('\n')
+
+    fs.writeFileSync(path.join(process.cwd(), `${cddlClass.split('-').shift()}.cddl`), fileContent)
+})
