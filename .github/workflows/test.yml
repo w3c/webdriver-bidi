@@ -1,0 +1,28 @@
+name: test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  cddl:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - name: Install Dependencies
+        run: npm install cddl parse5
+      - name: Extract CDDL content from spec into files
+        run: ./scripts/cddl/generate.js
+      - name: Print remote.cddl
+        run: cat remote.cddl
+      - name: Print local.cddl
+        run: cat local.cddl
+      - name: Validate CDDL files
+        run: |
+          npx cddl validate local.cddl
+          npx cddl validate remote.cddl
