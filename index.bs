@@ -60,6 +60,9 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
     text: web element reference; url: dfn-web-element-reference
     text: window handle; url: dfn-window-handle
+spec: CONSOLE; urlPrefix: https://console.spec.whatwg.org
+  type: dfn
+    text: printer; url: printer
 spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
   type: dfn
     text: Array; url: sec-array-objects
@@ -83,12 +86,17 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: ToDateString; url: sec-todatestring
     text: ToString; url: sec-tostring
     text: Type; url: sec-ecmascript-data-types-and-values
+    text: current realm record; url: current-realm
     text: realm; url: sec-code-realms
+    text: time value; url: sec-time-values-and-time-range
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/
   type: dfn
+    text: WindowProxy; url: windowproxy
     text: a browsing context is discarded; url: a-browsing-context-is-discarded
     text: create a new browsing context; url: creating-a-new-browsing-context
     text: environment settings object's Realm; url: environment-settings-object's-realm
+    text: not handled; url: concept-error-nothandled
+    text: report an error; url: report-the-error
     text: remove a browsing context; url: bcg-remove
     text: session history; url: session-history
     text: set up a window environment settings object; url: set-up-a-window-environment-settings-object
@@ -592,6 +600,25 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 </div>
 
 <div algorithm>
+
+To <dfn>get related contexts</dfn> given an [=script/settings object=]
+|settings|:
+
+1. Let |related contexts| be an empty set
+
+1. If the [=responsible document=] of |settings| is a [=Document=], append the
+   [=responsible document=]'s [=Document/browsing context=] to |related contexts|.
+
+   Otherwise if the [=Realm/global object=] specified by |settings| is a
+   {{WorkerGlobalScope}}, for each |owner| in the [=Realm/global object=]'s
+   [=owner set=], if |owner| is a [=Document=], append |owner|'s
+   [=Document/browsing context=] to |related contexts|.
+
+1. Return |related contexts|
+
+</div>
+
+<div algorithm>
 To <dfn export>emit an event</dfn> given |body| and |related contexts|:
 
  1. [=Assert=]: |body| has [=map/size=] 2 and [=contains=] "<code>method</code>"
@@ -637,8 +664,9 @@ To <dfn>respond with an error</dfn> given a [=WebSocket connection=]
 
 
 <div algorithm>
-To <dfn>handle a connection closing</dfn> given a
-[=WebSocket connection=] |connection|:
+
+To <dfn>handle a connection closing</dfn> given a [=WebSocket connection=]
+|connection|:
 
  1. If there is a WebDriver [=/session=] with |connection| as its [=connection=],
     set the [=connection=] on that [=/session=] to null.
@@ -1739,6 +1767,7 @@ relating to script realms and execution.
 <pre class="cddl remote-cddl">
 
 ScriptCommand = (ScriptGetRealmsCommand)
+
 </pre>
 
 [=local end definition=]
@@ -2085,6 +2114,148 @@ worker=] algorithm:
 
  1. Let |body| be a map matching the <code>RealmDestroyedEvent</code>
     production, with the <code>params</code> field set to |params|.
+
+## Log ## {#module-log}
+
+The <dfn export for=modules>log</dfn> module contains functionality and events
+related to logging.
+
+### Definition ### {#module-log-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+
+Command = (GetCommand)
+
+LogEvent = (
+  LogEntryAddedEvent
+)
+</pre>
+
+### Types ### {#module-log-types}
+
+#### Log Entry #### {#types-log-log-entry}
+
+<pre class="cddl local-cddl">
+
+LogLevel = "debug" / "info" / "warning" / "error"
+
+LogEntry = {
+  type: text,
+  level: LogLevel,
+  text: text / null,
+  timestamp: int,
+  extra: { *text => any }
+}
+
+ConsoleLogExtra = {
+  type: text,
+  realm: Realm,
+  args: [RemoteValue*],
+}
+
+JavascriptLogExtra = {
+  lineNumber: int,
+  columnNumber: int,
+  url: text
+}
+
+</pre>
+
+Each log event is represented by a <code>LogEntry</code> object. This has a
+<code>kind</code> property which represents the kind of log entry added, a
+<code>level</code> property representing serverity, a <code>text</code> property
+with the log message string itself, and a <code>timesteamp</code> property
+corresponding to the time the log entry was generated. The <code>extra</code>
+property contains additional data specific to the given type.
+
+#### entryAdded #### {#event-log-entryAdded}
+
+LogEntryAddedEvent = {
+  method: "log.entryAdded",
+  params: LogEntry
+
+<div algorithm="remote end event trigger for log.entryAdded">
+
+When the [=Printer=] algorithm is invoked with arguments |logLevel|, |args| and,
+optionally, <var ignore>options</var>:
+
+1. If |logLevel| is "<code>error</code>" or "<code>assert</code>", let |level|
+   be "<code>error</code>". If |logLevel| is "<code>debug</code>" or
+   "<code>trace</code>" let |level| be "<code>debug</code>". If |logLevel| is
+   "<code>warn</code>", let |level| be "<code>warning</code>". Otherwise let
+   |level| be "<code>info</code>".
+
+1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
+
+1. Let |text| be an implementation-defined string representing the arguments
+   passed as |args|, or null if there is no appropriate string representation.
+
+1. Let |serialized args| be a new list.
+
+1. For each |arg| of |args|, append the result of [=serialize as a remote
+   value=] given |arg| to |serialized args|.
+
+1. Let |realm| be the [=realm id=] of the [=current Realm Record=].
+
+1. Let |extra| be a map matching the <code>ConsoleLogExtra</code> production,
+   with the <code>type</code> field set to |logLevel|, the <code>real</code>
+   field set to |realm| and the <code>args</code> field set to |serialized
+   args|.
+
+1. Let |entry| be a map matching the <code>LogEntry</code> production, with the
+   <code>type</code> field set to "<code>console</code>", the <code>level</code>
+   field set to |level|, the <code>text</code> field set to |text|, the
+   <code>timestap</code> field set to |timestamp| and the <code>extra</code>
+   field set to |extra|.
+
+1. Let |body| be a map matching the <code>LogEntryAdded</code> production, with
+   the <code>params</code> field set to |entry|.
+
+1. Let |related contexts| be an empty set.
+
+1. Let |settings| be the [=current settings object=]
+
+1. Let |related contexts| be the result of [=get related contexts=] given |settings|.
+
+1. [=Emit an event=] with |body| and |related contexts|.
+
+After an implementation is required to [=report an exception=] from |script|,
+and the error is [=not handled=]:
+
+1. Let |settings| be |script|'s [=script/settings object=].
+
+1. Let |message| be the implementation-defined string that was
+   used as the message in [=report an error=].
+
+1. Let |line number| and |column number| be the one-based line number and
+   zero-based column number, respectively, in the resource containing |script|,
+   at the line where the error originated.
+
+1. Let |url| be the result of running the [=URL serializer=], given
+   |settings|'s [=creation URL=].
+
+1. Let |extra| a map matching the <code>JavascriptLogExtra</code> production,
+   with the <code>lineNumber</code> field set to |line number|, the
+   <code>columnNumber</code> field set to |column number| and the
+   <code>url</code> field set to |url|.
+
+1. Let |entry| be a map matching the <code>LogEntry</code> production, with the
+   <code>type</code> field set to "<code>javascript</code>", <code>level</code>
+   set to "<code>error</code>", <code>text</code> set to |message|, the
+   <code>timestap</code> field set to |timestamp| and the <code>extra</code>
+   field set to |extra|.
+
+1. Let |related contexts| be the result of [=get related contexts=] given |settings|.
+
+1. [=Emit an event=] with |body| and |related contexts|.
+
+Issue: Add support for stacktraces
+
+Issue: Lots more things require logging
+
+Issue: Allow implementation-defined log types
 
 </div>
 
