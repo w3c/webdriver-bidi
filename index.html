@@ -26,6 +26,7 @@
  *   - .figure and .caption (HTML4) and figure and figcaption (HTML5)
  *     -> .sidefigure for right-floated figures
  *   - ins/del
+ *     -> ins/del.c### for candidate and proposed changes (amendments)
  *
  * Code
  *   - pre and code
@@ -34,9 +35,12 @@
  *   - .note       for informative notes             (div, p, span, aside, details)
  *   - .example    for informative examples          (div, p, pre, span)
  *   - .issue      for issues                        (div, p, span)
- *   - .assertion  for assertions                    (div, p, span)
  *   - .advisement for loud normative statements     (div, p, strong)
  *   - .annoying-warning for spec obsoletion notices (div, aside, details)
+ *   - .correction for "candidate corrections"       (div, aside, details, section)
+ *   - .addition   for "candidate additions"         (div, aside, details, section)
+ *   - .correction.proposed for "proposed corrections" (div, aside, details, section)
+ *   - .addition.proposed   for "proposed additions"   (div, aside, details, section)
  *
  * Definition Boxes
  *   - pre.def   for WebIDL definitions
@@ -57,6 +61,8 @@
  *   - .head for the header
  *   - .copyright for the copyright
  *
+ * Outdated warning for old specs
+ *
  * Miscellaneous
  *   - .overlarge for things that should be as wide as possible, even if
  *     that overflows the body text area. This can be used on an item or
@@ -64,6 +70,7 @@
  *     Note that this styling basically doesn't help at all when printing,
  *     since A4 paper isn't much wider than the max-width here.
  *     It's better to design things to fit into a narrower measure if possible.
+ *
  *   - js-added ToC jump links (see fixup.js)
  *
  ******************************************************************************/
@@ -71,24 +78,20 @@
 /* color variables included separately for reliability */
 
 /******************************************************************************/
-/*                                   Body                                     */
+/*                                    Body                                    */
 /******************************************************************************/
 
 	html {
-		color: black;
-		color: var(--text);
-		background-color: white;
-		background-color: var(--bg);
 	}
 
 	body {
 		counter-reset: example figure issue;
 
 		/* Layout */
-		max-width: 50em;               /* limit line length to 50em for readability   */
-		margin: 0 auto;                /* center text within page                     */
+		max-width: 50em;			  /* limit line length to 50em for readability   */
+		margin: 0 auto;				/* center text within page                    */
 		padding: 1.6em 1.5em 2em 50px; /* assume 16px font size for downlevel clients */
-		padding: 1.6em 1.5em 2em calc(26px + 1.5em); /* leave space for status flag     */
+		padding: 1.6em 1.5em 2em calc(26px + 1.5em); /* leave space for status flag    */
 
 		/* Typography */
 		line-height: 1.5;
@@ -99,7 +102,10 @@
 		overflow-wrap: break-word;
 		hyphens: auto;
 
-		background: transparent top left fixed no-repeat;
+		color: black;
+		color: var(--text);
+		background: white top left fixed no-repeat;
+		background: var(--bg) top left fixed no-repeat;
 		background-size: 25px auto;
 	}
 
@@ -110,7 +116,7 @@
 
 /** Header ********************************************************************/
 
-	div.head { margin-bottom: 1em }
+	div.head { margin-bottom: 1em; }
 	div.head hr { border-style: solid; }
 
 	div.head h1 {
@@ -158,7 +164,7 @@
 /** Copyright *****************************************************************/
 
 	p.copyright,
-	p.copyright small { font-size: small }
+	p.copyright small { font-size: small; }
 
 /** Back to Top / ToC Toggle **************************************************/
 
@@ -170,7 +176,7 @@
 	@media not print {
 		#toc-nav {
 			position: fixed;
-			z-index: 2;
+			z-index: 3;
 			bottom: 0; left: 0;
 			margin: 0;
 			min-width: 1.33em;
@@ -337,9 +343,9 @@
 		page-break-after: avoid;
 		page-break-inside: avoid;
 		font: 100% sans-serif;   /* Reset all font styling to clear out UA styles */
-		font-family: inherit;    /* Inherit the font family. */
-		line-height: 1.2;        /* Keep wrapped headings compact */
-		hyphens: manual;         /* Hyphenated headings look weird */
+		font-family: inherit;	/* Inherit the font family. */
+		line-height: 1.2;		/* Keep wrapped headings compact */
+		hyphens: manual;		/* Hyphenated headings look weird */
 	}
 
 	h2, h3, h4, h5, h6 {
@@ -423,51 +429,51 @@
 	/* Style for algorithms */
 	ol.algorithm ol:not(.algorithm),
 	.algorithm > ol ol:not(.algorithm) {
-	 border-left: 0.5em solid #DEF;
-	 border-left: 0.5em solid var(--algo-border);
+	border-left: 0.5em solid #DEF;
+	border-left: 0.5em solid var(--algo-border);
 	}
 
 	/* Put nice boxes around each algorithm. */
 	[data-algorithm]:not(.heading) {
-	  padding: .5em;
-	  border: thin solid #ddd;
-	  border: thin solid var(--algo-border);
-	  border-radius: .5em;
-	  margin: .5em calc(-0.5em - 1px);
+	 padding: .5em;
+	 border: thin solid #ddd;
+	 border: thin solid var(--algo-border);
+	 border-radius: .5em;
+	 margin: .5em calc(-0.5em - 1px);
 	}
 	[data-algorithm]:not(.heading) > :first-child {
-	  margin-top: 0;
+	 margin-top: 0;
 	}
 	[data-algorithm]:not(.heading) > :last-child {
-	  margin-bottom: 0;
+	 margin-bottom: 0;
 	}
 
 	/* Style for switch/case <dl>s */
 	dl.switch > dd > ol.only,
 	dl.switch > dd > .only > ol {
-	 margin-left: 0;
+	margin-left: 0;
 	}
 	dl.switch > dd > ol.algorithm,
 	dl.switch > dd > .algorithm > ol {
-	 margin-left: -2em;
+	margin-left: -2em;
 	}
 	dl.switch {
-	 padding-left: 2em;
+	padding-left: 2em;
 	}
 	dl.switch > dt {
-	 text-indent: -1.5em;
-	 margin-top: 1em;
+	text-indent: -1.5em;
+	margin-top: 1em;
 	}
 	dl.switch > dt + dt {
-	 margin-top: 0;
+	margin-top: 0;
 	}
 	dl.switch > dt::before {
-	 content: '\21AA';
-	 padding: 0 0.5em 0 0;
-	 display: inline-block;
-	 width: 1em;
-	 text-align: right;
-	 line-height: 0.5em;
+	content: '\21AA';
+	padding: 0 0.5em 0 0;
+	display: inline-block;
+	width: 1em;
+	text-align: right;
+	line-height: 0.5em;
 	}
 
 /** Terminology Markup ********************************************************/
@@ -485,7 +491,7 @@
 		font-style: normal;
 	}
 	dt dfn code, code.idl {
-		font-size: medium;
+		font-size: inherit;
 	}
 	dfn var {
 		font-style: normal;
@@ -494,18 +500,37 @@
 /** Change Marking ************************************************************/
 
 	del {
-		color: red;
+		color: #aa0000;
 		color: var(--del-text);
 		background: transparent;
 		background: var(--del-bg);
 		text-decoration: line-through;
 	}
 	ins {
-		color: #080;
+		color: #006100;
 		color: var(--ins-text);
 		background: transparent;
 		background: var(--ins-bg);
 		text-decoration: underline;
+	}
+
+	/* for amendments (candidate/proposed changes) */
+
+	.amendment ins, .correction ins, .addition ins,
+	ins[class^=c] {
+		text-decoration-style: dotted;
+	}
+	.amendment del, .correction del, .addition del,
+	del[class^=c] {
+		text-decoration-style: dotted;
+	}
+	.amendment.proposed ins, .correction.proposed ins, .addition.proposed ins,
+	ins[class^=c].proposed {
+		text-decoration-style: double;
+	}
+	.amendment.proposed del, .correction.proposed del, .addition.proposed del,
+	del[class^=c].proposed {
+		text-decoration-style: double;
 	}
 
 /** Miscellaneous improvements to inline formatting ***************************/
@@ -546,7 +571,7 @@
 
 /** Inline Code fragments *****************************************************/
 
-  /* Do something nice. */
+	/* Do something nice. */
 
 /******************************************************************************/
 /*                                    Links                                   */
@@ -610,7 +635,7 @@
 	}
 
 	/* For autogen numbers, add
-	   .caption::before, figcaption::before { content: "Figure " counter(figure) ". "; }
+	  .caption::before, figcaption::before { content: "Figure " counter(figure) ". "; }
 	*/
 
 	figure, .figure, .sidefigure {
@@ -618,7 +643,7 @@
 		text-align: center;
 		margin: 2.5em 0;
 	}
-	.figure img,    .sidefigure img,    figure img,
+	.figure img,	.sidefigure img,	figure img,
 	.figure object, .sidefigure object, figure object {
 		max-width: 100%;
 		margin: auto;
@@ -636,7 +661,7 @@
 		.sidefigure {
 			float: right;
 			width: 50%;
-			margin: 0 0 0.5em 0.5em
+			margin: 0 0 0.5em 0.5em;
 		}
 	}
 	.caption, figcaption, caption {
@@ -651,13 +676,15 @@
 	}
 
 	/* DL list is indented 2em, but figure inside it is not */
-	dd > .figure, dd > figure { margin-left: -2em }
+	dd > .figure, dd > figure { margin-left: -2em; }
 
 /******************************************************************************/
 /*                             Colored Boxes                                  */
 /******************************************************************************/
 
-	.issue, .note, .example, .assertion, .advisement, blockquote {
+	.issue, .note, .example, .assertion, .advisement, blockquote,
+	.amendment, .correction, .addition {
+		margin: 1em auto;
 		padding: .5em;
 		border: .5em;
 		border-left-style: solid;
@@ -668,20 +695,20 @@
 		border-right-style: solid;
 	}
 
-	.issue,
-	.note,
-	.example,
-	.advisement,
-	.assertion,
-	blockquote {
-		margin: 1em auto;
-	}
+	blockquote > :first-child,
 	.note  > p:first-child,
 	.issue > p:first-child,
-	blockquote > :first-child {
+	.amendment > p:first-child,
+	.correction > p:first-child,
+	.addition > p:first-child {
 		margin-top: 0;
 	}
-	blockquote > :last-child {
+	blockquote > :last-child,
+	.note  > p:last-child,
+	.issue > p:last-child,
+	.amendment > p:last-child,
+	.correction > p:last-child,
+	.addition > p:last-child {
 		margin-bottom: 0;
 	}
 
@@ -689,7 +716,14 @@
 	.issue::before, .issue > .marker,
 	.example::before, .example > .marker,
 	.note::before, .note > .marker,
-	details.note > summary > .marker {
+	details.note > summary > .marker,
+	.amendment::before, .amendment > .marker,
+	details.amendment > summary > .marker,
+	.addition::before, .addition > .marker,
+	addition.amendment > summary > .marker,
+	.correction::before, .correction > .marker,
+	correction.amendment > summary > .marker
+	{
 		text-transform: uppercase;
 		padding-right: 1em;
 	}
@@ -727,7 +761,7 @@
 		color: var(--issueheading-text);
 	}
 	/* Add .issue::before { content: "Issue " counter(issue) " "; } for autogen numbers,
-	   or use class="marker" to mark up the issue number in source. */
+	  or use class="marker" to mark up the issue number in source. */
 
 /** Example *******************************************************************/
 
@@ -747,7 +781,7 @@
 		color: var(--exampleheading-text);
 	}
 	/* Add .example::before { content: "Example " counter(example) " "; } for autogen numbers,
-	   or use class="marker" to mark up the example number in source. */
+	  or use class="marker" to mark up the example number in source. */
 
 /** Non-normative Note ********************************************************/
 
@@ -767,7 +801,7 @@
 		color: var(--noteheading-text);
 	}
 	/* Add .note::before { content: "Note "; } for autogen label,
-	   or use class="marker" to mark up the label in source. */
+	  or use class="marker" to mark up the label in source. */
 
 	details.note[open] > summary {
 		border-bottom: 1px silver solid;
@@ -807,6 +841,38 @@
 		color: var(--advisementheading-text);
 	}
 
+/** Amendment Box *************************************************************/
+
+	.amendment, .correction, .addition {
+		border-color: #330099;
+		border-color: var(--amendment-border);
+		background: #F5F0FF;
+		background: var(--amendment-bg);
+		color: black;
+		color: var(--amendment-text);
+	}
+	.amendment.proposed, .correction.proposed, .addition.proposed {
+		border-style: solid;
+		border-block-width: 0.25em;
+	}
+	.amendment::before, .amendment > .marker,
+	details.amendment > summary::before, details.amendment > summary > .marker,
+	.correction::before, .correction > .marker,
+	details.correction > summary::before, details.correction > summary > .marker,
+	.addition::before, .addition > .marker,
+	details.addition > summary::before, details.addition > summary > .marker {
+		color: #220066;
+		color: var(--amendmentheading-text);
+	}
+	.amendment.proposed::before, .amendment.proposed > .marker,
+	details.amendment.proposed > summary::before, details.amendment.proposed > summary > .marker,
+	.correction.proposed::before, .correction.proposed > .marker,
+	details.correction.proposed > summary::before, details.correction.proposed > summary > .marker,
+	.addition.proposed::before, .addition.proposed > .marker,
+	details.addition.proposed > summary::before, details.addition.proposed > summary > .marker {
+		font-weight: bold;
+	}
+
 /** Spec Obsoletion Notice ****************************************************/
 	/* obnoxious obsoletion notice for older/abandoned specs. */
 
@@ -835,15 +901,15 @@
 		margin-bottom: 0;
 	}
 
-	@media not print {
-		details.annoying-warning[open] {
-			position: fixed;
-			left: 0;
-			right: 0;
-			bottom: 2em;
-			z-index: 1000;
-		}
+@media not print {
+	details.annoying-warning[open] {
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 2em;
+		z-index: 1000;
 	}
+}
 
 	details.annoying-warning:not([open]) > summary {
 		text-align: center;
@@ -918,15 +984,15 @@
 
 /** Data tables (and properly marked-up index tables) *************************/
 	/*
-		 <table class="data"> highlights structural relationships in a table
-		 when correct markup is used (e.g. thead/tbody, th vs. td, scope attribute)
+		<table class="data"> highlights structural relationships in a table
+		when correct markup is used (e.g. thead/tbody, th vs. td, scope attribute)
 
-		 Use class="complex data" for particularly complicated tables --
-		 (This will draw more lines: busier, but clearer.)
+		Use class="complex data" for particularly complicated tables --
+		(This will draw more lines: busier, but clearer.)
 
-		 Use class="long" on table cells with paragraph-like contents
-		 (This will adjust text alignment accordingly.)
-		 Alternately use class="longlastcol" on tables, to have the last column assume "long".
+		Use class="long" on table cells with paragraph-like contents
+		(This will adjust text alignment accordingly.)
+		Alternately use class="longlastcol" on tables, to have the last column assume "long".
 	*/
 
 	table {
@@ -1075,22 +1141,22 @@ Possible extra rowspan handling
 		/* because generated content isn't search/selectable and markers can't do multilevel yet */
 		margin:  0;
 		padding: 0;
-		line-height: 1.1rem; /* consistent spacing */
+	}
+	.toc {
+		line-height: 1.1em;
 	}
 
 	/* ToC not indented until third level, but font style & margins show hierarchy */
-	.toc > li             { font-weight: bold;   }
-	.toc > li li          { font-weight: normal; }
-	.toc > li li li       { font-size:   95%;    }
-	.toc > li li li li    { font-size:   90%;    }
-	.toc > li li li li .secno { font-size: 85%; }
-	.toc > li li li li li { font-size:   85%;    }
-	.toc > li li li li li .secno { font-size: 100%; }
+	.toc > li			{ font-weight: bold;   }
+	.toc > li li		 { font-weight: normal; }
+	.toc > li li li	  { font-size:   95%;	}
+	.toc > li li li li	{ font-size:   90%;	}
+	.toc > li li li li li { font-size:   85%;	}
 
 	/* @supports not (display:grid) { */
-		.toc > li             { margin: 1.5rem 0;    }
-		.toc > li li          { margin: 0.3rem 0;    }
-		.toc > li li li       { margin-left: 2rem;   }
+		.toc > li			{ margin: 1.5rem 0;	}
+		.toc > li li		 { margin: 0.3rem 0;	}
+		.toc > li li li	  { margin-left: 2rem;   }
 
 		/* Section numbers in a column of their own */
 		.toc .secno {
@@ -1098,33 +1164,35 @@ Possible extra rowspan handling
 			width: 4rem;
 			white-space: nowrap;
 		}
+		.toc > li li li li .secno { font-size: 85%; }
+		.toc > li li li li li .secno { font-size: 100%; }
 
 		.toc li {
 			clear: both;
 		}
 
-		:not(li) > .toc              { margin-left:  5rem; }
-		.toc .secno                  { margin-left: -5rem; }
-		.toc > li li li .secno       { margin-left: -7rem; }
-		.toc > li li li li .secno    { margin-left: -9rem; }
+		:not(li) > .toc			 { margin-left:  5rem; }
+		.toc .secno				 { margin-left: -5rem; }
+		.toc > li li li .secno	  { margin-left: -7rem; }
+		.toc > li li li li .secno	{ margin-left: -9rem; }
 		.toc > li li li li li .secno { margin-left: -11rem; }
 
 		/* Tighten up indentation in narrow ToCs */
 		@media (max-width: 30em) {
-			:not(li) > .toc              { margin-left:  4rem; }
-			.toc .secno                  { margin-left: -4rem; }
-			.toc > li li li              { margin-left:  1rem; }
-			.toc > li li li .secno       { margin-left: -5rem; }
-			.toc > li li li li .secno    { margin-left: -6rem; }
+			:not(li) > .toc			 { margin-left:  4rem; }
+			.toc .secno				 { margin-left: -4rem; }
+			.toc > li li li			 { margin-left:  1rem; }
+			.toc > li li li .secno	  { margin-left: -5rem; }
+			.toc > li li li li .secno	{ margin-left: -6rem; }
 			.toc > li li li li li .secno { margin-left: -7rem; }
 		}
 		/* Loosen it on wide screens */
 		@media screen and (min-width: 78em) {
-			body:not(.toc-inline) :not(li) > .toc              { margin-left:  4rem; }
-			body:not(.toc-inline) .toc .secno                  { margin-left: -4rem; }
-			body:not(.toc-inline) .toc > li li li              { margin-left:  1rem; }
-			body:not(.toc-inline) .toc > li li li .secno       { margin-left: -5rem; }
-			body:not(.toc-inline) .toc > li li li li .secno    { margin-left: -6rem; }
+			body:not(.toc-inline) :not(li) > .toc			 { margin-left:  4rem; }
+			body:not(.toc-inline) .toc .secno				 { margin-left: -4rem; }
+			body:not(.toc-inline) .toc > li li li			 { margin-left:  1rem; }
+			body:not(.toc-inline) .toc > li li li .secno	  { margin-left: -5rem; }
+			body:not(.toc-inline) .toc > li li li li .secno	{ margin-left: -6rem; }
 			body:not(.toc-inline) .toc > li li li li li .secno { margin-left: -7rem; }
 	}
 	/* } */
@@ -1155,7 +1223,7 @@ Possible extra rowspan handling
 		}
 		#toc > .toc > li > a > span {
 			/* The spans of the top-level list,
-			   comprising the first items of each top-level section. */
+			  comprising the first items of each top-level section. */
 			margin-top: 1.1rem;
 		}
 		#toc#toc .secno { /* Ugh, need more specificity to override base.css */
@@ -1188,17 +1256,17 @@ Possible extra rowspan handling
 /** Index *********************************************************************/
 
 	/* Index Lists: Layout */
-	ul.index       { margin-left: 0; columns: 15em; text-indent: 1em hanging; }
-	ul.index li    { margin-left: 0; list-style: none; break-inside: avoid; }
-	ul.index li li { margin-left: 1em }
-	ul.index dl    { margin-top: 0; }
-	ul.index dt    { margin: .2em 0 .2em 20px;}
-	ul.index dd    { margin: .2em 0 .2em 40px;}
+	ul.index	  { margin-left: 0; columns: 15em; text-indent: 1em hanging; }
+	ul.index li	{ margin-left: 0; list-style: none; break-inside: avoid; }
+	ul.index li li { margin-left: 1em; }
+	ul.index dl	{ margin-top: 0; }
+	ul.index dt	{ margin: .2em 0 .2em 20px;}
+	ul.index dd	{ margin: .2em 0 .2em 40px;}
 	/* Index Lists: Typography */
 	ul.index ul,
 	ul.index dl { font-size: smaller; }
 	@media not print {
-		ul.index li span {
+		ul.index li span:not(.dfn-paneled) {
 			white-space: nowrap;
 			color: transparent; }
 		ul.index li a:hover + span,
@@ -1237,6 +1305,91 @@ Possible extra rowspan handling
 		font-weight: bold;
 	}
 
+/** Outdated warning **********************************************************/
+
+.outdated-spec {
+	color: black;
+	color: var(--outdatedspec-text);
+	background-color: rgba(0,0,0,0.5);
+	background-color: var(--outdatedspec-bg);
+}
+
+.outdated-warning {
+	position: fixed;
+	bottom: 50%;
+	left: 0;
+	right: 0;
+	margin: 0 auto;
+	width: 50%;
+	background: maroon;
+	background: var(--outdated-bg);
+	color: white;
+	color: var(--outdated-text);
+	border-radius: 1em;
+	box-shadow: 0 0 1em red;
+	box-shadow: 0 0 1em var(--outdated-shadow);
+	padding: 2em;
+	text-align: center;
+	z-index: 2;
+}
+
+.outdated-warning a {
+	color: currentcolor;
+	background: transparent;
+}
+
+.edited-rec-warning {
+	background: darkorange;
+	background: var(--editedrec-bg);
+	box-shadow: 0 0 1em;
+}
+
+.outdated-warning button {
+	color: var(--outdated-text);
+	border-radius: 1em;
+	box-shadow: 0 0 1em red;
+	box-shadow: 0 0 1em var(--outdated-shadow);
+	padding: 2em;
+	text-align: center;
+	z-index: 2;
+}
+
+.outdated-warning a {
+	color: currentcolor;
+	background: transparent;
+}
+
+.edited-rec-warning {
+	background: darkorange;
+	background: var(--editedrec-bg);
+	box-shadow: 0 0 1em;
+}
+
+.outdated-warning button {
+	position: absolute;
+	top: 0;
+	right:0;
+	margin: 0;
+	border: 0;
+	padding: 0.25em 0.5em;
+	background: transparent;
+	color: white;
+	color: var(--outdated-text);
+	font:1em sans-serif;
+	text-align:center;
+}
+
+.outdated-warning span {
+	display: block;
+}
+
+.outdated-collapsed {
+	bottom: 0;
+	border-radius: 0;
+	width: 100%;
+	padding: 0;
+}
+
 /******************************************************************************/
 /*                                    Print                                   */
 /******************************************************************************/
@@ -1249,6 +1402,16 @@ Possible extra rowspan handling
 		/* Serif for print. */
 		body {
 			font-family: serif;
+		}
+
+		.outdated-warning {
+			position: absolute;
+			border-style: solid;
+			border-color: red;
+		}
+
+		.outdated-warning input {
+			display: none;
 		}
 	}
 	@page {
@@ -1268,13 +1431,13 @@ Possible extra rowspan handling
 		margin-right: auto;
 	}
 	.overlarge {
-		/* Magic to create good table positioning:
-		   "content column" is 50ems wide at max; less on smaller screens.
-		   Extra space (after ToC + content) is empty on the right.
+		/* Magic to create good item positioning:
+		  "content column" is 50ems wide at max; less on smaller screens.
+		  Extra space (after ToC + content) is empty on the right.
 
-		   1. When table < content column, centers table in column.
-		   2. When content < table < available, left-aligns.
-		   3. When table > available, fills available + scroll bar.
+		  1. When item < content column, centers item in column.
+		  2. When content < item < available, left-aligns.
+		  3. When item > available, fills available + scroll bar.
 		*/
 		display: grid;
 		grid-template-columns: minmax(0, 50em);
@@ -1309,22 +1472,22 @@ Possible extra rowspan handling
 		.overlarge {
 			overflow-x: auto;
 			/* See Lea Verou's explanation background-attachment:
-			 * http://lea.verou.me/2012/04/background-attachment-local/
-			 *
+			* http://lea.verou.me/2012/04/background-attachment-local/
+			*
 			background: top left  / 4em 100% linear-gradient(to right,  #ffffff, rgba(255, 255, 255, 0)) local,
-			            top right / 4em 100% linear-gradient(to left, #ffffff, rgba(255, 255, 255, 0)) local,
-			            top left  / 1em 100% linear-gradient(to right,  #c3c3c5, rgba(195, 195, 197, 0)) scroll,
-			            top right / 1em 100% linear-gradient(to left, #c3c3c5, rgba(195, 195, 197, 0)) scroll,
-			            white;
+						top right / 4em 100% linear-gradient(to left, #ffffff, rgba(255, 255, 255, 0)) local,
+						top left  / 1em 100% linear-gradient(to right,  #c3c3c5, rgba(195, 195, 197, 0)) scroll,
+						top right / 1em 100% linear-gradient(to left, #c3c3c5, rgba(195, 195, 197, 0)) scroll,
+						white;
 			background-repeat: no-repeat;
 			*/
 		}
 	}
 </style>
   <link href="https://www.w3.org/StyleSheets/TR/2016/W3C-ED" rel="stylesheet">
-  <meta content="Bikeshed version f9f60c8f, updated Fri Sep 25 16:39:03 2020 -0700" name="generator">
+  <meta content="Bikeshed version c5172e83, updated Fri Nov 20 15:35:20 2020 -0800" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="6c72ee42af27a2e1cc6422f4237f87f5520211c8" name="document-revision">
+  <meta content="b1bfe6a136374a8db275a9c27fc3bd6ffe00d511" name="document-revision">
 <style>/* style-autolinks */
 
 .css.css, .property.property, .descriptor.descriptor {
@@ -1390,17 +1553,13 @@ pre .property::before, pre .property::after {
 <style>/* style-colors */
 
 /* Any --*-text not paired with a --*-bg is assumed to have a transparent bg */
-html {
-    color: black;
-    color: var(--text);
-    background-color: white;
-    background-color: var(--bg);
-}
 :root {
     color-scheme: light dark;
 
     --text: black;
     --bg: white;
+
+    --unofficial-watermark: url(https://www.w3.org/StyleSheets/TR/2016/logos/UD-watermark);
 
     --logo-bg: #1a5e9a;
     --logo-active-bg: #c00;
@@ -1475,6 +1634,11 @@ html {
     --warning-bg: hsla(40,100%,50%,0.95);
     --warning-text: var(--text);
 
+    --amendment-border: #330099;
+    --amendment-bg: #F5F0FF;
+    --amendment-text: var(--text);
+    --amendmentheading-text: #220066;
+
     --def-border: #8ccbf2;
     --def-bg: #def;
     --def-text: var(--text);
@@ -1548,7 +1712,7 @@ figcaption:not(.no-marker)::before {
 .dfn-panel:not(.on) { display: none; }
 .dfn-panel * { margin: 0; padding: 0; text-indent: 0; }
 .dfn-panel > b { display: block; }
-.dfn-panel a { color: black; }
+.dfn-panel a { color: var(--dfnpanel-text); }
 .dfn-panel a:not(:hover) { text-decoration: none !important; border-bottom: none !important; }
 .dfn-panel > b + b { margin-top: 0.25em; }
 .dfn-panel ul { padding: 0; }
@@ -1645,6 +1809,8 @@ dfn > a.self-link::before      { content: "#"; }
         --text: #ddd;
         --bg: black;
 
+        --unofficial-watermark: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cg fill='%23100808' transform='translate(200 200) rotate(-45) translate(-200 -200)' stroke='%23100808' stroke-width='3'%3E%3Ctext x='50%25' y='220' style='font: bold 70px sans-serif; text-anchor: middle; letter-spacing: 6px;'%3EUNOFFICIAL%3C/text%3E%3Ctext x='50%25' y='305' style='font: bold 70px sans-serif; text-anchor: middle; letter-spacing: 6px;'%3EDRAFT%3C/text%3E%3C/g%3E%3C/svg%3E");
+
         --logo-bg: #1a5e9a;
         --logo-active-bg: #c00;
         --logo-text: white;
@@ -1720,6 +1886,11 @@ dfn > a.self-link::before      { content: "#"; }
         --warning-bg: hsla(40,100%,20%,0.95);
         --warning-text: var(--text);
 
+        --amendment-border: #330099;
+        --amendment-bg: #080010;
+        --amendment-text: var(--text);
+        --amendmentheading-text: #cc00ff;
+
         --def-border: #8ccbf2;
         --def-bg: #080818;
         --def-text: var(--text);
@@ -1760,9 +1931,9 @@ dfn > a.self-link::before      { content: "#"; }
 }</style>
  <body class="h-entry">
   <div class="head">
-   <p data-fill-with="logo"></p>
+   <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2016/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-10-02">2 October 2020</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-11-26">26 November 2020</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -1790,10 +1961,10 @@ dfn > a.self-link::before      { content: "#"; }
    <p> <a href="https://github.com/w3c/webdriver-bidi/issues">GitHub Issues</a> are preferred for discussion of this specification. </p>
    <p> This document was produced by the <a href="https://www.w3.org/testing/browser/">Browser Testing and Tools Working Group</a>. </p>
    <p> This document was produced by a group operating under
-        the <a href="https://www.w3.org/Consortium/Patent-Policy/">W3C Patent Policy</a>.
+        the <a href="https://www.w3.org/Consortium/Patent-Policy-20170801/">W3C Patent Policy</a>.
         W3C maintains a <a href="https://www.w3.org/2004/01/pp-impl/32061/status" rel="disclosure">public list of any patent disclosures</a> made in connection with the deliverables of the group;
         that page also includes instructions for disclosing a patent.
-        An individual who has actual knowledge of a patent which the individual believes contains <a href="https://www.w3.org/Consortium/Patent-Policy/#def-essential">Essential Claim(s)</a> must disclose the information in accordance with <a href="https://www.w3.org/Consortium/Patent-Policy/#sec-Disclosure">section 6 of the W3C Patent Policy</a>. </p>
+        An individual who has actual knowledge of a patent which the individual believes contains <a href="https://www.w3.org/Consortium/Patent-Policy-20170801/#def-essential">Essential Claim(s)</a> must disclose the information in accordance with <a href="https://www.w3.org/Consortium/Patent-Policy-20170801/#sec-Disclosure">section 6 of the W3C Patent Policy</a>. </p>
    <p> This document is governed by the <a href="https://www.w3.org/2020/Process-20200915/" id="w3c_process_revision">15 September 2020 W3C Process Document</a>. </p>
    <p></p>
   </div>
@@ -1815,7 +1986,6 @@ dfn > a.self-link::before      { content: "#"; }
         <li><a href="#table-of-commands"><span class="secno">3.4.1</span> <span class="content">Table of Commands</span></a>
        </ol>
       <li><a href="#events"><span class="secno">3.5</span> <span class="content">Events</span></a>
-      <li><a href="#processing-model"><span class="secno">3.6</span> <span class="content">Processing Model</span></a>
      </ol>
     <li>
      <a href="#transport"><span class="secno">4</span> <span class="content">Transport</span></a>
@@ -1827,6 +1997,7 @@ dfn > a.self-link::before      { content: "#"; }
      <ol class="toc">
       <li><a href="#data_types-browsing_context"><span class="secno">5.1</span> <span class="content">Browsing Context</span></a>
       <li><a href="#data-types-realm"><span class="secno">5.2</span> <span class="content">Realm</span></a>
+      <li><a href="#data-types-remote-value"><span class="secno">5.3</span> <span class="content">Remote Value</span></a>
      </ol>
     <li>
      <a href="#modules"><span class="secno">6</span> <span class="content">Modules</span></a>
@@ -1895,32 +2066,21 @@ EmptyParams = { *text }
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①">Local end definition</a></p>
 <pre class="cddl local-cddl">Message = (
   CommandResponse //
+  ErrorResponse //
   Event
 )
 
 CommandResponse = {
   id: uint,
-  ResponseData,
+  value: ResultData,
   *text => any
 }
 
-ResponseData = (
-  Error //
-  CommandResult
-)
-
-Error = {
-  error: (
-    "unknown error" /
-    "unknown method" /
-    "invalid argument"
-  ),
+ErrorResponse = {
+  id: uint / null,
+  error: "unknown error" / "unknown method" / "invalid argument",
   message: text,
-  stacktrace: text,
-}
-
-CommandResult = {
-  value: ResultData,
+  ?stacktrace: text,
 }
 
 ResultData = (
@@ -2031,7 +2191,7 @@ parameters.<a class="self-link" href="#command-event-parameters"></a></dfn></p>
  triggered and steps to construct the <a data-link-type="dfn" href="#event-event-type" id="ref-for-event-event-type">event type</a> data.</p>
    </ul>
    <p>A <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions①">session</a> has a <dfn class="dfn-paneled" data-dfn-for="event" data-dfn-type="dfn" data-export id="event-global-event-set">global event set</dfn> which is a set
-containing containing the event names for events that are enabled for all
+containing the event names for events that are enabled for all
 browsing contexts. This initially contains the <a data-link-type="dfn" href="#event-event-name" id="ref-for-event-event-name①">event name</a> for events that
 are <dfn data-dfn-for="event" data-dfn-type="dfn" data-export id="event-in-the-default-event-set">in the default event set<a class="self-link" href="#event-in-the-default-event-set"></a></dfn>.</p>
    <p>A <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions②">session</a> has a <dfn class="dfn-paneled" data-dfn-for="event" data-dfn-type="dfn" data-export id="event-browsing-context-event-map">browsing context event map</dfn>,
@@ -2082,33 +2242,6 @@ disabled for a given browsing context.</p>
       <p>Append the <a data-link-type="dfn" href="#event-event-name" id="ref-for-event-event-name④">event name</a> for each <a data-link-type="dfn" href="#event" id="ref-for-event③">event</a> in the module with name <var>name</var> to <var>events</var>.</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①">success</a> with data <var>events</var>.</p>
-    </ol>
-   </div>
-   <h3 class="heading settled" data-level="3.6" id="processing-model"><span class="secno">3.6. </span><span class="content">Processing Model</span><a class="self-link" href="#processing-model"></a></h3>
-   <div class="algorithm" data-algorithm="process a command">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="process-a-command">process a command</dfn> given <var>data</var>: 
-    <ol>
-     <li data-md>
-      <p>Match <var>data</var> against the <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑤">remote end definition</a>. If this results in a
-  match:</p>
-      <ol>
-       <li data-md>
-        <p>Let <var>result</var> be the result of running the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①">remote end steps</a> for the command with <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name②">command name</a> equal to the <code>method</code> property of <var>data</var> and with the <a data-link-type="dfn" href="#command-command-parameters" id="ref-for-command-command-parameters①">command
- parameters</a> from the matched data.</p>
-       <li data-md>
-        <p class="assertion">Assert: if <var>result</var> is a <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②">success</a> its data matches the
- definition for the <a data-link-type="dfn" href="#command-result-type" id="ref-for-command-result-type">result type</a> corresponding to the command with name <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name③">command name</a>.</p>
-       <li data-md>
-        <p>Return <var>result</var>.</p>
-      </ol>
-     <li data-md>
-      <p>Otherwise there is no match. If <var>data</var> isn’t a map or is a map without a
-  property named method return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②">error</a> with error code <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②">invalid argument</a>. Otherwise let <var>command</var> be the value of
-  the <code>method</code> property of <var>data</var>.</p>
-     <li data-md>
-      <p>If <var>command</var> is not in the <a data-link-type="dfn" href="#command-set-of-all-command-names" id="ref-for-command-set-of-all-command-names">set of all command names</a>, return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③">Error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-command" id="ref-for-dfn-unknown-command">unknown command</a>.</p>
-     <li data-md>
-      <p>Return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④">Error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③">invalid argument</a>.</p>
     </ol>
    </div>
    <h2 class="heading settled" data-level="4" id="transport"><span class="secno">4. </span><span class="content">Transport</span><a class="self-link" href="#transport"></a></h2>
@@ -2242,36 +2375,73 @@ typically be "<code>localhost</code>".</p>
    connection</a> otherwise.</p>
       <p class="issue" id="issue-449f8f30"><a class="self-link" href="#issue-449f8f30"></a> Nothing seems to define what <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4" id="ref-for-section-7.4①">status code</a> is used for UTF-8 errors.</p>
      <li data-md>
-      <p>Let <var>parsed</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#parse-json-into-infra-values" id="ref-for-parse-json-into-infra-values">parsing JSON into Infra values</a> given <var>data</var>. If this
-  throws an exception, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error①">respond with an error</a> given <var>connection</var> and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument④">invalid argument</a>, and finally
-  return.</p>
-     <li data-md>
-      <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#process-a-command" id="ref-for-process-a-command">processing a
-  command</a> given <var>data</var>.</p>
-     <li data-md>
-      <p>If <var>result</var> is an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑤">Error</a>, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error②">respond with an error</a> given <var>connection</var>, <var>result</var>, and <var>parsed</var>["<code>id</code>"], and finally
-  return.</p>
-     <li data-md>
-      <p>Let <var>response</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map">map</a> with the following properties:</p>
-      <dl>
-       <dt>"id"
-       <dd>The value of <var>parsed</var>["<code>id</code>"]
-       <dt>"result"
-       <dd>The value of <var>result</var>
-      </dl>
-     <li data-md>
-      <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#serialize-json-to-bytes" id="ref-for-serialize-json-to-bytes">serializing JSON to bytes</a> given <var>response</var>.</p>
-     <li data-md>
-      <p><a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-6.1" id="ref-for-section-6.1">Send a WebSocket message</a> comprised of <var>serialized</var> over <var>connection</var>.</p>
+      <p>Match <var>data</var> against the <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑤">remote end definition</a>. If this results in a
+  match:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>parsed</var> be the map representing the matched data.</p>
+       <li data-md>
+        <p class="assertion">Assert: <var>parsed</var> contains "<code>id</code>", "method", and
+ "<code>params</code>"</p>
+       <li data-md>
+        <p>Let <var>command id</var> be <var>parsed</var>["<code>id</code>"].</p>
+       <li data-md>
+        <p>Let <var>method</var> be <var>parsed</var>["<code>method</code>"]</p>
+       <li data-md>
+        <p>Run the following steps in parallel:</p>
+        <ol>
+         <li data-md>
+          <p>Let <var>result</var> be the result of running the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①">remote end steps</a> for the
+ command with <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name②">command name</a> <var>method</var> given <a data-link-type="dfn" href="#command-command-parameters" id="ref-for-command-command-parameters①">command parameters</a> <var>parsed</var>["<code>params</code>"]</p>
+         <li data-md>
+          <p>If <var>result</var> is an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②">error</a>, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error①">respond with an error</a> given <var>connection</var>, <var>data</var>, and <var>result</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②">error code</a>, and finally return.</p>
+         <li data-md>
+          <p>Let <var>value</var> be <var>result</var>’s data.</p>
+         <li data-md>
+          <p class="assertion">Assert: <var>value</var> matches the definition for the <a data-link-type="dfn" href="#command-result-type" id="ref-for-command-result-type">result type</a> corresponding to the command with <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name③">command name</a> <var>method</var>.</p>
+         <li data-md>
+          <p>Let <var>response</var> be a new map matching the <code>CommandResponse</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑦">local end definition</a> with the <code>id</code> field set to <var>command id</var> and the <code>value</code> field set to <var>value</var>.</p>
+         <li data-md>
+          <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#serialize-an-infra-value-to-json-bytes" id="ref-for-serialize-an-infra-value-to-json-bytes">serialize an infra value to JSON
+ bytes</a> given <var>response</var>.</p>
+         <li data-md>
+          <p><a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-6.1" id="ref-for-section-6.1">Send a WebSocket message</a> comprised of <var>serialized</var> over <var>connection</var> and return.</p>
+        </ol>
+      </ol>
+      <ol>
+       <li data-md>
+        <p>Otherwise there is no match.</p>
+        <p>Let <var>error code</var> be <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②">invalid argument</a>.</p>
+       <li data-md>
+        <p>If <var>data</var> is a map and <var>data</var>["<code>method</code>"] exists and is a
+ string, but <var>data</var>["<code>method</code>"] is not in the <a data-link-type="dfn" href="#command-set-of-all-command-names" id="ref-for-command-set-of-all-command-names">set of all
+ command names</a>, let <var>error code</var> be <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-command" id="ref-for-dfn-unknown-command">unknown command</a>.</p>
+       <li data-md>
+        <p><a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error②">Respond with an error</a> given <var>connection</var>, <var>data</var>, and <var>error code</var>.</p>
+      </ol>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="respond with an error">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="respond-with-an-error">respond with an error</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection④">WebSocket connection</a> <var>connection</var> and an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑤">error code</a> <var>code</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="respond-with-an-error">respond with an error</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection④">WebSocket connection</a> <var>connection</var>, <var>data</var> and <var>error code</var>: 
     <ol>
      <li data-md>
-      <p class="issue" id="issue-aee4ea98"><a class="self-link" href="#issue-aee4ea98"></a> Form a valid JSON <var>errorObject</var> given <var>code</var>.</p>
+      <p>Let <var>command id</var> be null.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-6.1" id="ref-for-section-6.1①">Send a WebSocket message</a> comprised of <var>errorObject</var> over <var>connection</var>.</p>
+      <p>Let <var>parsed</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#parse-a-json-string-to-an-infra-value" id="ref-for-parse-a-json-string-to-an-infra-value">parsing JSON
+   into Infra values</a> given <var>data</var>. If this does not throw an exception, and
+   results in a map that contains "<code>id</code>", then let <var>command id</var> be <var>parsed</var>["<code>id</code>"].</p>
+     <li data-md>
+      <p>If <var>command id</var> is not an integer greater than or equal to zero, let <var>command id</var> be null.</p>
+     <li data-md>
+      <p>Let <var>error data</var> be a new map matching the <code>ErrorResponse</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑧">local end definition</a>, with the <code>id</code> field
+  set to <var>command id</var>, the <code>error</code> field set to <var>error code</var>, the <code>message</code> field set to an implementation-defined string
+  containing a human-readable definition of the error that occured and the <code>stacktrace</code> field optionally set to an implementation-defined
+  string containing a stack trace report of the active stack frames at the
+  time when the error occurred.</p>
+     <li data-md>
+      <p>Let <var>response</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#serialize-an-infra-value-to-json-bytes" id="ref-for-serialize-an-infra-value-to-json-bytes①">serialize an infra value to JSON bytes</a> given <var>error data</var>.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-6.1" id="ref-for-section-6.1①">Send a WebSocket message</a> comprised of <var>response</var> over <var>connection</var>.</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="handle a connection closing">
@@ -2296,9 +2466,9 @@ true.</p>
 "<code>webSocketUrl</code>" capability, with parameter <var>value</var> is: 
     <ol>
      <li data-md>
-      <p>If <var>value</var> is not a boolean, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑥">code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑤">invalid argument</a>.</p>
+      <p>If <var>value</var> is not a boolean, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③">code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③">invalid argument</a>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③">success</a> with data <var>value</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②">success</a> with data <var>value</var>.</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="webSocketUrl capability serialization algorithm">
@@ -2306,9 +2476,9 @@ true.</p>
 with parameter <var>value</var> is: 
     <ol>
      <li data-md>
-      <p>If <var>value</var> is false, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④">success</a> with data null.</p>
+      <p>If <var>value</var> is false, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③">success</a> with data null.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤">success</a> with data true.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④">success</a> with data true.</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="webSocketUrl new session algorithm">
@@ -2336,7 +2506,7 @@ with parameters <var>session</var> and <var>capabilities</var> is:
    <h2 class="heading settled" data-level="5" id="data-types"><span class="secno">5. </span><span class="content">Common Data Types</span><a class="self-link" href="#data-types"></a></h2>
    <p>This section defines data types which are common to many modules.</p>
    <h3 class="heading settled" data-level="5.1" id="data_types-browsing_context"><span class="secno">5.1. </span><span class="content">Browsing Context</span><a class="self-link" href="#data_types-browsing_context"></a></h3>
-   <p><a data-link-type="dfn">remote end schema</a> and <a data-link-type="dfn">local end schema</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑥">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑨">local end definition</a></p>
 <pre>BrowsingContext = text;
 </pre>
    <p>Each <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context①">browsing context</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="browsing-context-id">browsing context id</dfn>,
@@ -2344,21 +2514,528 @@ which is a string uniquely identifying that browsing context. For browsing
 contexts with an associated WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-window-handle" id="ref-for-dfn-window-handle">window handle</a> the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id">browsing context
 id</a> must be the same as the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-window-handle" id="ref-for-dfn-window-handle①">window handle</a>.</p>
    <h3 class="heading settled" data-level="5.2" id="data-types-realm"><span class="secno">5.2. </span><span class="content">Realm</span><a class="self-link" href="#data-types-realm"></a></h3>
-   <p><a data-link-type="dfn">remote end schema</a> and <a data-link-type="dfn">local end schema</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑦">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⓪">local end definition</a></p>
 <pre>Realm = text;
 </pre>
-   <p>Each <a data-link-type="dfn" href="#sec-code-realms" id="ref-for-sec-code-realms">realm</a> has an associated <dfn data-dfn-type="dfn" data-export id="realm-id">realm id<a class="self-link" href="#realm-id"></a></dfn>, which is a string
+   <p>Each <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms">realm</a> has an associated <dfn data-dfn-type="dfn" data-export id="realm-id">realm id<a class="self-link" href="#realm-id"></a></dfn>, which is a string
 uniquely identifying that realm.</p>
+   <h3 class="heading settled" data-level="5.3" id="data-types-remote-value"><span class="secno">5.3. </span><span class="content">Remote Value</span><a class="self-link" href="#data-types-remote-value"></a></h3>
+   <p>Values accessible from the ECMAScript runtime are represented by a mirror
+object, specified as <code>RemoteValue</code>. The value’s type is specified in
+the <code>type</code> property. In the case of JSON-representable primitive
+values, this contains the value in the <code>value</code> property; in the case
+of non-JSON-representable primitives, the <code>value</code> property contains a
+string representation of the value. For non-primitive objects, the <code>objectId</code> property contains a string id that provides a unique
+handle to the object, valid for its lifetime inside the engine. For some
+non-primitive types, the <code>value</code> property contains a representation
+of the data in the ECMAScript object; for container types this can contain
+further <code>RemoteValue</code> instances. The <code>value</code> property can
+be null if there is a duplicate object i.e. the object has already been
+serialized in the current <code>RemoteValue</code>, perhaps as part of a
+cycle, or otherwise when the maximum serialization depth is reached.</p>
+   <p><a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-node" id="ref-for-concept-node">Nodes</a> are also represented by <code>RemoteValue</code> instances. These have
+a partial serialization of the node in the value property.</p>
+   <p class="note" role="note"><span>Note:</span> mirror objects do not keep the original object alive in the runtime. If an
+object is discarded in the runtime subsequent attempts to access it via the
+protocol will result in an error.</p>
+   <p>A <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions①①">session</a> has an <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="object-id-map">object id map</dfn>. This is a weak map from objects to
+their corresponding id.</p>
+   <p class="issue" id="issue-992788ee"><a class="self-link" href="#issue-992788ee"></a> Should this be explicitly per realm?</p>
+   <div class="algorithm" data-algorithm="object id for an object">
+     To get the <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="object-id-for-an-object">object id for an object</dfn> given an <var>object</var>: 
+    <ol>
+     <li data-md>
+      <p>If the <a data-link-type="dfn" href="#object-id-map" id="ref-for-object-id-map">object id map</a> for the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-current-session" id="ref-for-dfn-current-session">current session</a> does not contain <var>object</var> run the following steps:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>object id</var> be a new, unique, string identifier for <var>object</var>. If <var>object</var> is an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element" id="ref-for-concept-element">element</a> this must be the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-web-element-reference" id="ref-for-dfn-web-element-reference">web element reference</a> for <var>object</var>; if it’s a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy" id="ref-for-windowproxy">WindowProxy</a></code> object, this must be the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-window-handle" id="ref-for-dfn-window-handle②">window handle</a> for <var>object</var>.</p>
+       <li data-md>
+        <p>Set the value of <var>object</var> in the <a data-link-type="dfn" href="#object-id-map" id="ref-for-object-id-map①">object id map</a> to <var>object id</var>.</p>
+      </ol>
+     <li data-md>
+      <p>Return the result of getting the value for <var>object</var> in <a data-link-type="dfn" href="#object-id-map" id="ref-for-object-id-map②">object id map</a>.</p>
+    </ol>
+   </div>
+   <div class="algorithm" data-algorithm="object for an object id">
+     To get the <dfn data-dfn-type="dfn" data-noexport id="object-for-an-object-id">object for an object id<a class="self-link" href="#object-for-an-object-id"></a></dfn> given an <var>object id</var>: 
+    <ol>
+     <li data-md>
+      <p>For each <var>object</var> → <var>id value</var> of <a data-link-type="dfn" href="#object-id-map" id="ref-for-object-id-map③">object id map</a>:</p>
+      <ol>
+       <li data-md>
+        <p>If <var>id value</var> is equal to <var>object id</var>, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤">success</a> with data <var>object</var></p>
+      </ol>
+     <li data-md>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-element" id="ref-for-dfn-no-such-element">no such element</a></p>
+    </ol>
+    <p class="issue" id="issue-824932d2"><a class="self-link" href="#issue-824932d2"></a> This error code isn’t right.</p>
+   </div>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑧">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①①">local end definition</a></p>
+<pre>RemoteValue = {
+  UndefinedValue //
+  NullValue //
+  StringValue //
+  NumberValue //
+  BooleanValue //
+  BigIntValue //
+  SymbolValue //
+  ArrayValue //
+  FunctionValue //
+  ObjectValue //
+  FunctionValue //
+  RegExpValue //
+  DateValue //
+  MapValue //
+  SetValue //
+  WeakMapValue //
+  WeakSetValue //
+  IteratorValue //
+  GeneratorValue //
+  ErrorValue //
+  ProxyValue //
+  PromiseValue //
+  TypedArrayValue //
+  ArrayBufferValue //
+  NodeValue //
+  WindowProxyValue //
+}
+
+ObjectId = text;
+
+ListValue = [*RemoteValue];
+
+MappingValue = [*[(RemoteValue / text), RemoteValue]];
+
+UndefinedValue = {
+  type: "undefined",
+}
+
+NullValue = {
+  type: "null",
+}
+
+StringValue = {
+  type: "string",
+  value: text,
+}
+
+SpecialNumber = "NaN" / "-0" / "+Infinity" / "-Infinity";
+
+NumberValue = {
+  type: "number",
+  value: number / SpecialNumber,
+}
+
+BooleanValue = {
+  type: "boolean",
+  value: bool,
+}
+
+BigIntValue = {
+  type: "bigint",
+  value: text,
+}
+
+SymbolValue = {
+  type: "symbol",
+  objectId: ObjectId,
+}
+
+ArrayValue = {
+  type: "array",
+  objectId: ObjectId,
+  value?: ListValue,
+}
+
+ObjectValue = {
+  type: "object",
+  objectId: ObjectId,
+  value?: MappingValue,
+}
+
+FunctionValue = {
+  type: "function",
+  objectId: ObjectId,
+}
+
+RegExpValue = {
+  type: "regexp",
+  objectId: ObjectId,
+  value: text
+}
+
+DateValue = {
+  type: "date",
+  objectId: ObjectId,
+  value: text
+}
+
+MapValue = {
+  type: "map",
+  objectId: ObjectId,
+  value?: MappingValue,
+}
+
+SetValue = {
+  type: "set",
+  objectId: ObjectId,
+  value?: ListValue
+}
+
+WeakMapValue = {
+  type: "weakmap",
+  objectId: ObjectId,
+}
+
+WeakSetValue = {
+  type: "weakset",
+  objectId: ObjectId,
+}
+
+ErrorValue = {
+  type: "error",
+  objectId: ObjectId,
+}
+
+PromiseValue = {
+  type: "promise",
+  objectId: ObjectId,
+}
+
+TypedArrayValue = {
+  type: "typedarray",
+  objectId: ObjectId,
+}
+
+ArrayBufferValue = {
+  type: "arraybuffer",
+  objectId: ObjectId,
+}
+
+NodeValue = {
+  type: "node",
+  objectId: ObjectId,
+  value?: NodeProperties,
+}
+
+NodeProperties = {
+  nodeType: uint,
+  nodeValue: text,
+  localName?: text,
+  namespaceURI?: text,
+  childNodeCount: uint,
+  children?: [*NodeValue],
+  attributes?: {*text => text},
+  shadowRoot?: NodeValue / null,
+}
+
+WindowProxyValue = {
+  type: "window",
+  objectId: ObjectId,
+}
+</pre>
+   <p class="issue" id="issue-14921645"><a class="self-link" href="#issue-14921645"></a> Add WASM types?</p>
+   <p class="issue" id="issue-ace5d7fc"><a class="self-link" href="#issue-ace5d7fc"></a> Should WindowProxy get attributes in a similar style to Node?</p>
+   <p class="issue" id="issue-daee5863"><a class="self-link" href="#issue-daee5863"></a> handle String / Number / etc. wrapper objects specially?</p>
+   <div class="algorithm" data-algorithm="serialize as a remote value">
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-remote-value">serialize as a remote value</dfn> given an <var>value</var>, a <var>max depth</var>, <var>node details</var>, and a <var>set of known objects</var>:</p>
+    <ol>
+     <li data-md>
+      <p>In the following list of conditions and associated steps, run the first set
+ of steps for which the associated condition is true:</p>
+      <dl>
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values">Type</a>(<var>value</var>) is Undefined 
+       <dd>Let <var>remote value</var> be a map matching the <code>UndefinedValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①②">local end definition</a>. 
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values①">Type</a>(<var>value</var>) is Null 
+       <dd>Let <var>remote value</var> be a map matching the <code>NullValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①③">local end definition</a>. 
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values②">Type</a>(<var>value</var>) is String 
+       <dd>
+        Let <var>remote value</var> be a map matching the <code>StringValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①④">local end definition</a>, with the <code>value</code> property set to <var>value</var>. 
+        <p class="issue" id="issue-d33a79cf"><a class="self-link" href="#issue-d33a79cf"></a> This doesn’t handle lone surrogates</p>
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values③">Type</a>(<var>value</var>) is Number 
+       <dd>
+        <ol>
+         <li data-md>
+          <p>Switch on the value of <var>value</var>:</p>
+          <dl>
+           <dt>NaN 
+           <dd>Let <var>serialized</var> be <code>"NaN"</code> 
+           <dt>-0 
+           <dd>Let <var>serialized</var> be <code>"-0"</code> 
+           <dt>+Infinity 
+           <dd>Let <var>serialized</var> be <code>"+Infinity"</code> 
+           <dt>-Infinity 
+           <dd>Let <var>serialized</var> be <code>"-Infinity"</code> 
+           <dt>Otherwise: 
+           <dd>Let <var>serialized</var> be <var>value</var> 
+          </dl>
+         <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>NumberValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑤">local end definition</a>, with the <code>value</code> property set to <var>serialized</var>.</p>
+        </ol>
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values④">Type</a>(<var>value</var>) is Boolean 
+       <dd>Let <var>remote value</var> be a map matching the <code>BooleanValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑥">local end definition</a>, with the <code>value</code> property set to <var>value</var>. 
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑤">Type</a>(<var>value</var>) is BigInt 
+       <dd>Let <var>remote value</var> be a map matching the <code>BigIntValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑦">local end definition</a>, with the <code>value</code> property set to the result of running the <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-tostring" id="ref-for-sec-tostring">ToString</a> operation on <var>value</var>. 
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑥">Type</a>(<var>value</var>) is Symbol 
+       <dd>Let <var>remote value</var> be a map matching the <code>SymbolValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑧">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object">object id for an object</a> <var>value</var>. 
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-isarray" id="ref-for-sec-isarray">IsArray</a>(<var>value</var>) 
+       <dd>
+        <ol>
+         <li data-md>
+          <p>Let <var>serialized</var> be null.</p>
+         <li data-md>
+          <p>If <var>value</var> is not in the <var>set of known objects</var>, and <var>max depth</var> is not null and greater than 0, run the following steps:</p>
+          <ol>
+           <li data-md>
+            <p>Append <var>value</var> to the <var>set of known objects</var></p>
+           <li data-md>
+            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayiterator" id="ref-for-sec-createarrayiterator">CreateArrayIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>node details</var> and <var>set of known objects</var>.</p>
+          </ol>
+         <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>ArrayValue</code> production
+ in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑨">local end definition</a>, with the <code>objectId</code> property set
+ to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①">object id for an object</a> <var>value</var>, and the <code>value</code> field set to <var>serialized</var> if it’s not null, or ommitted otherwise.</p>
+        </ol>
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-isregexp" id="ref-for-sec-isregexp">IsRegExp</a>(<var>value</var>) 
+       <dd>
+        <ol>
+         <li data-md>
+          <p>Let <var>pattern</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-tostring" id="ref-for-sec-tostring①">ToString</a>(<a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get">Get</a>(<var>value</var>, "source")).</p>
+         <li data-md>
+          <p>Let <var>flags</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-tostring" id="ref-for-sec-tostring②">ToString</a>(<a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get①">Get</a>(<var>value</var>, "flags")).</p>
+         <li data-md>
+          <p>Let <var>serialized</var> be the string-concatenation of "/", <var>pattern</var>, "/", and <var>flags</var>.</p>
+         <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>RegExpValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⓪">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object②">object id for an object</a> <var>object</var> and the value
+ set to <var>serialized</var></p>
+        </ol>
+       <dt><var>value</var> has a [[DateValue]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots">internal slot</a>. 
+       <dd>
+        <ol>
+         <li data-md>
+          <p>Let <var>serialized</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-todatestring" id="ref-for-sec-todatestring">ToDateString</a>(<a data-link-type="dfn" href="https://tc39.es/ecma262/#thistimevalue" id="ref-for-thistimevalue">thisTimeValue</a>(<var>value</var>)).</p>
+         <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>DateValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②①">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object③">object id for an object</a> <var>object</var> and the value
+ set to <var>serialized</var>.</p>
+        </ol>
+       <dt><var>value</var> has a [[MapData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots①">internal slot</a> 
+       <dd>
+        <ol>
+         <li data-md>
+          <p>Let <var>serialized</var> be null.</p>
+         <li data-md>
+          <p>If <var>value</var> is not in the <var>set of known objects</var>, and <var>max depth</var> is not null and greater than 0, run the following steps:</p>
+          <ol>
+           <li data-md>
+            <p>Append <var>value</var> to the <var>set of known objects</var></p>
+           <li data-md>
+            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createmapiterator" id="ref-for-sec-createmapiterator">CreateMapIterator</a>(<var>value</var>, key+value), <var>max depth</var>, <var>node details</var> and <var>set of known objects</var>.</p>
+          </ol>
+        </ol>
+        <ol>
+         <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>MapValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②②">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object④">object id for an object</a> <var>value</var>, and the <code>value</code> field set to <var>serialized</var> if it’s
+ not null, or ommitted otherwise.</p>
+        </ol>
+       <dt><var>value</var> has a [[SetData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots②">internal slot</a> 
+       <dd>
+        <ol>
+         <li data-md>
+          <p>Let <var>serialized</var> be null.</p>
+         <li data-md>
+          <p>If <var>value</var> is not in the <var>set of known objects</var>, and <var>max depth</var> is not null and greater than 0, run the following steps:</p>
+          <ol>
+           <li data-md>
+            <p>Append <var>value</var> to the <var>set of known objects</var></p>
+           <li data-md>
+            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list①">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createsetiterator" id="ref-for-sec-createsetiterator">CreateSetIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>node details</var> and <var>set of known objects</var>.</p>
+          </ol>
+        </ol>
+        <ol>
+         <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>SetValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②③">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑤">object id for an object</a> <var>value</var>, and the <code>value</code> field set to <var>serialized</var> if it’s
+  not null, or ommitted otherwise.</p>
+        </ol>
+       <dt><var>value</var> has a [[WeakMapData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots③">internal slot</a> 
+       <dd>Let <var>remote value</var> be a map matching the <code>WeakMapValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②④">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑥">object id for an object</a> <var>value</var>. 
+       <dt><var>value</var> has a [[WeakSetData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots④">internal slot</a> 
+       <dd>Let <var>remote value</var> be a map matching the <code>WeakSetValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑤">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑦">object id for an object</a> <var>value</var>. 
+       <dt><var>value</var> has an [[ErrorData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑤">internal slot</a> 
+       <dd>Let <var>remote value</var> be a map matching the <code>ErrorValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑥">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑧">object id for an object</a> <var>value</var>. 
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ispromise" id="ref-for-sec-ispromise">IsPromise</a>(<var>value</var>) 
+       <dd>Let <var>remote value</var> be a map matching the <code>PromiseValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑦">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑨">object id for an object</a> <var>value</var>. 
+       <dt><var>value</var> has a [[TypedArrayName]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑥">internal slot</a> 
+       <dd>Let <var>remote value</var> be a map matching the <code>TypedArrayValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑧">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①⓪">object id for an object</a> <var>value</var>. 
+       <dt><var>value</var> has an [[ArrayBufferData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑦">internal slot</a> 
+       <dd>Let <var>remote value</var> be a map matching the <code>ArrayBufferValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑨">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①①">object id for an object</a> <var>value</var>. 
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://heycam.github.io/webidl/#dfn-platform-object" id="ref-for-dfn-platform-object">platform object</a> that implements <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#boundary-point-node" id="ref-for-boundary-point-node">Node</a> 
+       <dd>
+        <ol>
+         <li data-md>
+          <p>Let <var>serialized</var> be null.</p>
+         <li data-md>
+          <p>If <var>node details</var> is true, run the following steps:</p>
+          <ol>
+           <li data-md>
+            <p>Let <var>serialized</var> be a map.</p>
+           <li data-md>
+            <p>"nodeType", <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get②">Get</a>(<var>value</var>, "nodeType"), false)</p>
+           <li data-md>
+            <p>Set <var>serialized</var>["<code>nodeValue</code>"] to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get③">Get</a>(<var>value</var>, "nodeValue")</p>
+           <li data-md>
+            <p>If <var>value</var> is an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element" id="ref-for-concept-element①">Element</a> or an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-attribute" id="ref-for-concept-attribute">Attribute</a>:</p>
+            <ol>
+             <li data-md>
+              <p>Set <var>serialized</var>["<code>localName</code>" to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get④">Get</a>(<var>value</var>, "localName")</p>
+             <li data-md>
+              <p>Set <var>serialized</var>["<code>namespaceURI</code>"] to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get⑤">Get</a>(<var>value</var>, "namespaceURI")</p>
+            </ol>
+           <li data-md>
+            <p>Let <var>child node count</var> be the size of <var>serialized</var>’s <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-tree-child" id="ref-for-concept-tree-child">children</a>.</p>
+           <li data-md>
+            <p>Set <var>serialized</var>["<code>childNodeCount</code>" to <var>child node count</var></p>
+           <li data-md>
+            <p>If <var>max depth</var> is equal to 0 let <var>children</var> be null.
+ Otherwise, let <var>children</var> be an empty list and, for each node <var>child</var> in the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-tree-child" id="ref-for-concept-tree-child①">children</a> of <var>value</var>:</p>
+            <ol>
+             <li data-md>
+              <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value">serialize as a remote value</a> with <var>child</var>, <var>max depth</var> - 1, <var>node details</var> and <var>set of known objects</var>.</p>
+             <li data-md>
+              <p>Append <var>serialized</var> to <var>children</var>.</p>
+            </ol>
+           <li data-md>
+            <p>Set <var>serialized</var>["<code>children</code>"] to <var>children</var>.</p>
+           <li data-md>
+            <p>If <var>value</var> is an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element" id="ref-for-concept-element②">Element</a>:</p>
+            <ol>
+             <li data-md>
+              <p>Let <var>attributes</var> be a new map.</p>
+             <li data-md>
+              <p>For each <var>attribute</var> in <var>value</var>’s <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element-attribute" id="ref-for-concept-element-attribute">attribute list</a>:</p>
+              <ol>
+               <li data-md>
+                <p>Let <var>name</var> be <var>attribute</var>’s <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-attribute-qualified-name" id="ref-for-concept-attribute-qualified-name">qualified name</a></p>
+               <li data-md>
+                <p>Let <var>value</var> be <var>attribute</var>’s <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-attribute-value" id="ref-for-concept-attribute-value">value</a>.</p>
+               <li data-md>
+                <p>Set <var>attributes</var>[<var>name</var>] to <var>value</var></p>
+              </ol>
+             <li data-md>
+              <p>Set <var>serialized</var>["<code>attributes</code>"] to <var>attributes</var>.</p>
+             <li data-md>
+              <p>Let <var>shadow root</var> be <var>value</var>’s <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element-shadow-root" id="ref-for-concept-element-shadow-root">shadow root</a>.</p>
+             <li data-md>
+              <p>If <var>shadow root</var> is null, let <var>serialized shadow</var> be null.
+  Otherwise let <var>serialized shadow</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value①">serialize as a remote value</a> with <var>shadow root</var>, <var>max depth</var> - 1,
+  false and <var>set of known objects</var>.</p>
+              <p class="note" role="note"><span>Note:</span> this means the <code>objectId</code> for the shadow root
+  will be serialized irrespective of whether the shadow is open or closed,
+  but no properties of the node will be returned.</p>
+             <li data-md>
+              <p>Set= <var>serialized</var>["<code>shadowRoot</code>"] to <var>serialized shadow</var>.</p>
+            </ol>
+          </ol>
+         <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>NodeValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⓪">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①②">object id for an object</a> <var>value</var>, and <code>value</code> set to <var>serialized</var>, if <var>serialized</var> is not null.</p>
+        </ol>
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://heycam.github.io/webidl/#dfn-platform-object" id="ref-for-dfn-platform-object①">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy" id="ref-for-windowproxy①">WindowProxy</a></code> 
+       <dd>1. Let <var>remote value</var> be a map matching the <code>WindowProxyValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③①">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①③">object id for an object</a> <var>value</var>. 
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://heycam.github.io/webidl/#dfn-platform-object" id="ref-for-dfn-platform-object②">platform object</a> 
+       <dd>1. Let <var>remote value</var> be a map matching the <code>ObjectValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③②">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①④">object id for an object</a> <var>value</var>. 
+       <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-iscallable" id="ref-for-sec-iscallable">IsCallable</a>(<var>value</var>) 
+       <dd>Let <var>remote value</var> be a map matching the <code>FunctionValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③③">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①⑤">object id for an object</a> <var>value</var>. 
+       <dt>Otherwise: 
+       <dd>
+        <ol>
+         <li data-md>
+          <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert②">Assert</a>: <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑦">type</a>(<var>value</var>) is Object</p>
+         <li data-md>
+          <p>let <var>serialized</var> be null.</p>
+         <li data-md>
+          <p>If <var>value</var> is not in the <var>set of known objects</var>, and <var>max depth</var> is greater than 0, run the following steps:</p>
+          <ol>
+           <li data-md>
+            <p>Append <var>value</var> to the <var>set of known objects</var></p>
+           <li data-md>
+            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping①">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-enumerableownpropertynames" id="ref-for-sec-enumerableownpropertynames">EnumerableOwnPropertyNames</a>(<var>value</var>, key+value), <var>max depth</var>, <var>node
+  details</var> and <var>set of known objects</var></p>
+          </ol>
+         <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>ObjectValue</code> production
+ in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③④">local end definition</a>, with the <code>objectId</code> property set
+ to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①⑥">object id for an object</a> <var>value</var>, and the <code>value</code> field
+ set to <var>serialized</var>.</p>
+        </ol>
+      </dl>
+     <li data-md>
+      <p>Return <var>remote value</var></p>
+    </ol>
+    <p class="issue" id="issue-66909ae2"><a class="self-link" href="#issue-66909ae2"></a> Does it make sense to use the same depth parameter for nodes and objects
+in general?</p>
+   </div>
+   <div class="algorithm" data-algorithm="serialize as a list">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-list">serialize as a list</dfn> given <var>iterable</var>, <var>max depth</var>, <var>node details</var> and <var>set of known objects</var>: 
+    <ol>
+     <li data-md>
+      <p>Let <var>serialized</var> be a new list.</p>
+     <li data-md>
+      <p>For each <var>child value</var> in <var>iterable</var>:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>serialized child</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value②">serialize as a
+ remote value</a> with arguments <var>child value</var>, <var>max
+ depth</var> - 1, <var>node details</var> and <var>set of known objects</var>.</p>
+       <li data-md>
+        <p>Append <var>serialized child</var> to <var>serialized</var>.</p>
+      </ol>
+     <li data-md>
+      <p>Return <var>serialized</var></p>
+    </ol>
+   </div>
+   <p class="issue" id="issue-c12b3c7f"><a class="self-link" href="#issue-c12b3c7f"></a> this assumes for-in works on iterators</p>
+   <div class="algorithm" data-algorithm="serialize as a mapping">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-mapping">serialize as a mapping</dfn> given <var>iterable</var>, <var>max depth</var>, <var>node details</var> and <var>set of known objects</var>: 
+    <ol>
+     <li data-md>
+      <p>Let <var>serialized</var> be a new list.</p>
+     <li data-md>
+      <p>For <var>item</var> in <var>iterable</var>:</p>
+      <ol>
+       <li data-md>
+        <p class="assertion">Assert: <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-isarray" id="ref-for-sec-isarray①">IsArray</a>(<var>item</var>)</p>
+       <li data-md>
+        <p>Let <var>property</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createlistfromarraylike" id="ref-for-sec-createlistfromarraylike">CreateListFromArrayLike</a>(<var>item</var>)</p>
+       <li data-md>
+        <p class="assertion">Assert: <var>property</var> is a list of size 2</p>
+       <li data-md>
+        <p>Let <var>key</var> be <var>property</var>[0] and let <var>value</var> be <var>property</var>[1]</p>
+       <li data-md>
+        <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑧">Type</a>(<var>key</var>) is String, let <var>serialized key</var> be <var>child key</var>,
+ otherwise let <var>serialized key</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value③">serialize as a remote
+ value</a> with arguments <var>child key</var>, <var>max depth</var> - 1, <var>node details</var> and <var>set of known objects</var>.</p>
+       <li data-md>
+        <p>Let <var>serialized value</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value④">serialize as a
+ remote value</a> with arguments <var>value</var>, <var>max
+ depth</var> - 1, <var>node details</var> and <var>set of known objects</var>.</p>
+       <li data-md>
+        <p>Let <var>serialized child</var> be («<var>serialized key</var>, <var>serialized value</var>»).</p>
+       <li data-md>
+        <p>Append <var>serialized child</var> to <var>serialized</var>.</p>
+      </ol>
+     <li data-md>
+      <p>Return <var>serialized</var></p>
+    </ol>
+   </div>
    <h2 class="heading settled" data-level="6" id="modules"><span class="secno">6. </span><span class="content">Modules</span><a class="self-link" href="#modules"></a></h2>
    <h3 class="heading settled" data-level="6.1" id="module-session"><span class="secno">6.1. </span><span class="content">Session</span><a class="self-link" href="#module-session"></a></h3>
    <p>The <dfn data-dfn-for="modules" data-dfn-type="dfn" data-export id="modules-session">session<a class="self-link" href="#modules-session"></a></dfn> module contains commands and
 events for monitoring the status of the remote end.</p>
    <h4 class="heading settled" data-level="6.1.1" id="module-session-definition"><span class="secno">6.1.1. </span><span class="content">Definition</span><a class="self-link" href="#module-session-definition"></a></h4>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑥">remote end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑨">remote end definition</a></p>
 <pre class="cddl remote-cddl">SessionCommand = (StatusCommand //
                   SubscribeCommand)
 </pre>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑦">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑤">local end definition</a></p>
 <pre class="cddl local-cddl">SessionResult = (StatusResult)
 
 </pre>
@@ -2391,7 +3068,7 @@ events for monitoring the status of the remote end.</p>
         <p>For each entry <var>context id</var> in the <var>list of contexts</var>:</p>
         <ol>
          <li data-md>
-          <p>If there is no browsing context with <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①">browsing context id</a> <var>context id</var> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑦">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑦">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑥">invalid argument</a></p>
+          <p>If there is no browsing context with <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①">browsing context id</a> <var>context id</var> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑤">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑤">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument④">invalid argument</a></p>
          <li data-md>
           <p>Let <var>context</var> be the browsing context with id <var>context id</var>. If the <var>event map</var> does not contain an entry for <var>context</var>,
  set the value of the entry for <var>context</var> to a new empty map.</p>
@@ -2434,15 +3111,15 @@ to the implementation.</p>
     <dt>Return Type
     <dd>
 <pre class="cddl local-cddl">StatusResult = {
-   ready: bool,
-   message: text,
+  ready: bool,
+  message: text,
 }
 </pre>
    </dl>
    <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps②">remote end steps</a> are:</p>
    <ol>
     <li data-md>
-     <p>Let <var>body</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①">map</a> with the following properties:</p>
+     <p>Let <var>body</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map">map</a> with the following properties:</p>
      <dl>
       <dt>"ready"
       <dd>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①④">remote end</a>’s readiness state.
@@ -2467,7 +3144,7 @@ globally or for a set of browsing contexts</p>
 
 SubscribeParameters = {
   events: [*text],
-  contexts?: [*BrowsingContext],
+  ?contexts: [*BrowsingContext],
 }
 </pre>
     <dt>Return Type
@@ -2483,7 +3160,7 @@ SubscribeParameters = {
      <li data-md>
       <p>Let the <var>list of contexts</var> be the value of the <code>contexts</code> field of <var>command parameters</var> if it is present or null if it isn’t.</p>
      <li data-md>
-      <p>Return the result of <a data-link-type="dfn" href="#updating-the-event-map" id="ref-for-updating-the-event-map">updating the event map</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-current-session" id="ref-for-dfn-current-session">current session</a>, <var>list of event names</var>, <var>list of contexts</var> and enabled true.</p>
+      <p>Return the result of <a data-link-type="dfn" href="#updating-the-event-map" id="ref-for-updating-the-event-map">updating the event map</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-current-session" id="ref-for-dfn-current-session①">current session</a>, <var>list of event names</var>, <var>list of contexts</var> and enabled true.</p>
     </ol>
    </div>
    <h4 class="heading settled" data-level="6.1.4" id="command-session-unsubscribe"><span class="secno">6.1.4. </span><span class="content">Unsubscribe</span><a class="self-link" href="#command-session-unsubscribe"></a></h4>
@@ -2511,139 +3188,11 @@ globally or for a set of browsing contexts</p>
      <li data-md>
       <p>Let the <var>list of contexts</var> be the value of the <code>contexts</code> field of <var>command parameters</var> if it is present or null if it isn’t.</p>
      <li data-md>
-      <p>Return the result of <a data-link-type="dfn" href="#updating-the-event-map" id="ref-for-updating-the-event-map①">updating the event map</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-current-session" id="ref-for-dfn-current-session①">current session</a>, <var>list of event names</var>, <var>list of contexts</var> and enabled false.</p>
+      <p>Return the result of <a data-link-type="dfn" href="#updating-the-event-map" id="ref-for-updating-the-event-map①">updating the event map</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-current-session" id="ref-for-dfn-current-session②">current session</a>, <var>list of event names</var>, <var>list of contexts</var> and enabled false.</p>
     </ol>
    </div>
   </main>
-<script>
-(function() {
-  "use strict";
-  var collapseSidebarText = '<span aria-hidden="true">←</span> '
-                          + '<span>Collapse Sidebar</span>';
-  var expandSidebarText   = '<span aria-hidden="true">→</span> '
-                          + '<span>Pop Out Sidebar</span>';
-  var tocJumpText         = '<span aria-hidden="true">↑</span> '
-                          + '<span>Jump to Table of Contents</span>';
-
-  var sidebarMedia = window.matchMedia('screen and (min-width: 78em)');
-  var autoToggle   = function(e){ toggleSidebar(e.matches) };
-  if(sidebarMedia.addListener) {
-    sidebarMedia.addListener(autoToggle);
-  }
-
-  function toggleSidebar(on) {
-    if (on == undefined) {
-      on = !document.body.classList.contains('toc-sidebar');
-    }
-
-    /* Don’t scroll to compensate for the ToC if we’re above it already. */
-    var headY = 0;
-    var head = document.querySelector('.head');
-    if (head) {
-      // terrible approx of "top of ToC"
-      headY += head.offsetTop + head.offsetHeight;
-    }
-    var skipScroll = window.scrollY < headY;
-
-    var toggle = document.getElementById('toc-toggle');
-    var tocNav = document.getElementById('toc');
-    if (on) {
-      var tocHeight = tocNav.offsetHeight;
-      document.body.classList.add('toc-sidebar');
-      document.body.classList.remove('toc-inline');
-      toggle.innerHTML = collapseSidebarText;
-      if (!skipScroll) {
-        window.scrollBy(0, 0 - tocHeight);
-      }
-      tocNav.focus();
-      sidebarMedia.addListener(autoToggle); // auto-collapse when out of room
-    }
-    else {
-      document.body.classList.add('toc-inline');
-      document.body.classList.remove('toc-sidebar');
-      toggle.innerHTML = expandSidebarText;
-      if (!skipScroll) {
-        window.scrollBy(0, tocNav.offsetHeight);
-      }
-      if (toggle.matches(':hover')) {
-        /* Unfocus button when not using keyboard navigation,
-           because I don’t know where else to send the focus. */
-        toggle.blur();
-      }
-    }
-  }
-
-  function createSidebarToggle() {
-    /* Create the sidebar toggle in JS; it shouldn’t exist when JS is off. */
-    var toggle = document.createElement('a');
-      /* This should probably be a button, but appearance isn’t standards-track.*/
-    toggle.id = 'toc-toggle';
-    toggle.class = 'toc-toggle';
-    toggle.href = '#toc';
-    toggle.innerHTML = collapseSidebarText;
-
-    sidebarMedia.addListener(autoToggle);
-    var toggler = function(e) {
-      e.preventDefault();
-      sidebarMedia.removeListener(autoToggle); // persist explicit off states
-      toggleSidebar();
-      return false;
-    }
-    toggle.addEventListener('click', toggler, false);
-
-
-    /* Get <nav id=toc-nav>, or make it if we don’t have one. */
-    var tocNav = document.getElementById('toc-nav');
-    if (!tocNav) {
-      tocNav = document.createElement('p');
-      tocNav.id = 'toc-nav';
-      /* Prepend for better keyboard navigation */
-      document.body.insertBefore(tocNav, document.body.firstChild);
-    }
-    /* While we’re at it, make sure we have a Jump to Toc link. */
-    var tocJump = document.getElementById('toc-jump');
-    if (!tocJump) {
-      tocJump = document.createElement('a');
-      tocJump.id = 'toc-jump';
-      tocJump.href = '#toc';
-      tocJump.innerHTML = tocJumpText;
-      tocNav.appendChild(tocJump);
-    }
-
-    tocNav.appendChild(toggle);
-  }
-
-  var toc = document.getElementById('toc');
-  if (toc) {
-    createSidebarToggle();
-    toggleSidebar(sidebarMedia.matches);
-
-    /* If the sidebar has been manually opened and is currently overlaying the text
-       (window too small for the MQ to add the margin to body),
-       then auto-close the sidebar once you click on something in there. */
-    toc.addEventListener('click', function(e) {
-      if(e.target.tagName.toLowerCase() == "a" && document.body.classList.contains('toc-sidebar') && !sidebarMedia.matches) {
-        toggleSidebar(false);
-      }
-    }, false);
-  }
-  else {
-    console.warn("Can’t find Table of Contents. Please use <nav id='toc'> around the ToC.");
-  }
-
-  /* Wrap tables in case they overflow */
-  var tables = document.querySelectorAll(':not(.overlarge) > table.data, :not(.overlarge) > table.index');
-  var numTables = tables.length;
-  for (var i = 0; i < numTables; i++) {
-    var table = tables[i];
-    var wrapper = document.createElement('div');
-    wrapper.className = 'overlarge';
-    table.parentNode.insertBefore(wrapper, table);
-    wrapper.appendChild(table);
-  }
-
-})();
-</script>
+<script src="https://www.w3.org/scripts/TR/2016/fixup.js"></script>
   <h2 class="no-num no-ref heading settled" id="index"><span class="content">Index</span><a class="self-link" href="#index"></a></h2>
   <h3 class="no-num no-ref heading settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
   <ul class="index">
@@ -2674,15 +3223,20 @@ globally or for a set of browsing contexts</p>
    <li><a href="#local-end-definition">local end definition</a><span>, in §3</span>
    <li><a href="#module">module</a><span>, in §3.3</span>
    <li><a href="#module-name">module name</a><span>, in §3.3</span>
+   <li><a href="#object-for-an-object-id">object for an object id</a><span>, in §5.3</span>
+   <li><a href="#object-id-for-an-object">object id for an object</a><span>, in §5.3</span>
+   <li><a href="#object-id-map">object id map</a><span>, in §5.3</span>
    <li><a href="#obtain-a-set-of-event-names">obtain a set of event names</a><span>, in §3.5</span>
    <li><a href="#listener-port">port</a><span>, in §4</span>
-   <li><a href="#process-a-command">process a command</a><span>, in §3.6</span>
    <li><a href="#realm-id">realm id</a><span>, in §5.2</span>
    <li><a href="#remote-end-definition">remote end definition</a><span>, in §3</span>
    <li><a href="#remote-end-event-trigger">remote end event trigger</a><span>, in §3.5</span>
    <li><a href="#respond-with-an-error">respond with an error</a><span>, in §4</span>
    <li><a href="#command-result-type">result type</a><span>, in §3.4</span>
    <li><a href="#listener-secure-flag">secure flag</a><span>, in §4</span>
+   <li><a href="#serialize-as-a-list">serialize as a list</a><span>, in §5.3</span>
+   <li><a href="#serialize-as-a-mapping">serialize as a mapping</a><span>, in §5.3</span>
+   <li><a href="#serialize-as-a-remote-value">serialize as a remote value</a><span>, in §5.3</span>
    <li><a href="#modules-session">session</a><span>, in §6.1</span>
    <li><a href="#command-set-of-all-command-names">set of all command names</a><span>, in §3.4</span>
    <li><a href="#start-listening-for-a-websocket-connection">start listening for a WebSocket connection</a><span>, in §4</span>
@@ -2693,10 +3247,166 @@ globally or for a set of browsing contexts</p>
    <li><a href="#websocket-connection">WebSocket connection</a><span>, in §4</span>
    <li><a href="#websocket-listener">WebSocket listener</a><span>, in §4</span>
   </ul>
+  <aside class="dfn-panel" data-for="term-for-concept-attribute">
+   <a href="https://dom.spec.whatwg.org/#concept-attribute">https://dom.spec.whatwg.org/#concept-attribute</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-attribute">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-concept-element-attribute">
+   <a href="https://dom.spec.whatwg.org/#concept-element-attribute">https://dom.spec.whatwg.org/#concept-element-attribute</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-element-attribute">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-concept-tree-child">
+   <a href="https://dom.spec.whatwg.org/#concept-tree-child">https://dom.spec.whatwg.org/#concept-tree-child</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-tree-child">5.3. Remote Value</a> <a href="#ref-for-concept-tree-child①">(2)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-concept-element">
+   <a href="https://dom.spec.whatwg.org/#concept-element">https://dom.spec.whatwg.org/#concept-element</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-element">5.3. Remote Value</a> <a href="#ref-for-concept-element①">(2)</a> <a href="#ref-for-concept-element②">(3)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-boundary-point-node">
+   <a href="https://dom.spec.whatwg.org/#boundary-point-node">https://dom.spec.whatwg.org/#boundary-point-node</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-boundary-point-node">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-concept-node">
+   <a href="https://dom.spec.whatwg.org/#concept-node">https://dom.spec.whatwg.org/#concept-node</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-node">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-concept-attribute-qualified-name">
+   <a href="https://dom.spec.whatwg.org/#concept-attribute-qualified-name">https://dom.spec.whatwg.org/#concept-attribute-qualified-name</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-attribute-qualified-name">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-concept-element-shadow-root">
+   <a href="https://dom.spec.whatwg.org/#concept-element-shadow-root">https://dom.spec.whatwg.org/#concept-element-shadow-root</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-element-shadow-root">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-concept-attribute-value">
+   <a href="https://dom.spec.whatwg.org/#concept-attribute-value">https://dom.spec.whatwg.org/#concept-attribute-value</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-concept-attribute-value">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-createarrayiterator">
+   <a href="https://tc39.es/ecma262/#sec-createarrayiterator">https://tc39.es/ecma262/#sec-createarrayiterator</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-createarrayiterator">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-createlistfromarraylike">
+   <a href="https://tc39.es/ecma262/#sec-createlistfromarraylike">https://tc39.es/ecma262/#sec-createlistfromarraylike</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-createlistfromarraylike">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-createmapiterator">
+   <a href="https://tc39.es/ecma262/#sec-createmapiterator">https://tc39.es/ecma262/#sec-createmapiterator</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-createmapiterator">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-createsetiterator">
+   <a href="https://tc39.es/ecma262/#sec-createsetiterator">https://tc39.es/ecma262/#sec-createsetiterator</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-createsetiterator">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-enumerableownpropertynames">
+   <a href="https://tc39.es/ecma262/#sec-enumerableownpropertynames">https://tc39.es/ecma262/#sec-enumerableownpropertynames</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-enumerableownpropertynames">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-get">
+   <a href="https://tc39.es/ecma262/#sec-get">https://tc39.es/ecma262/#sec-get</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-get">5.3. Remote Value</a> <a href="#ref-for-sec-get①">(2)</a> <a href="#ref-for-sec-get②">(3)</a> <a href="#ref-for-sec-get③">(4)</a> <a href="#ref-for-sec-get④">(5)</a> <a href="#ref-for-sec-get⑤">(6)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-object-internal-methods-and-internal-slots">
+   <a href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots">https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-object-internal-methods-and-internal-slots">5.3. Remote Value</a> <a href="#ref-for-sec-object-internal-methods-and-internal-slots①">(2)</a> <a href="#ref-for-sec-object-internal-methods-and-internal-slots②">(3)</a> <a href="#ref-for-sec-object-internal-methods-and-internal-slots③">(4)</a> <a href="#ref-for-sec-object-internal-methods-and-internal-slots④">(5)</a> <a href="#ref-for-sec-object-internal-methods-and-internal-slots⑤">(6)</a> <a href="#ref-for-sec-object-internal-methods-and-internal-slots⑥">(7)</a> <a href="#ref-for-sec-object-internal-methods-and-internal-slots⑦">(8)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-isarray">
+   <a href="https://tc39.es/ecma262/#sec-isarray">https://tc39.es/ecma262/#sec-isarray</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-isarray">5.3. Remote Value</a> <a href="#ref-for-sec-isarray①">(2)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-iscallable">
+   <a href="https://tc39.es/ecma262/#sec-iscallable">https://tc39.es/ecma262/#sec-iscallable</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-iscallable">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-ispromise">
+   <a href="https://tc39.es/ecma262/#sec-ispromise">https://tc39.es/ecma262/#sec-ispromise</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-ispromise">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-isregexp">
+   <a href="https://tc39.es/ecma262/#sec-isregexp">https://tc39.es/ecma262/#sec-isregexp</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-isregexp">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-code-realms">
+   <a href="https://tc39.es/ecma262/#sec-code-realms">https://tc39.es/ecma262/#sec-code-realms</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-code-realms">5.2. Realm</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-thistimevalue">
+   <a href="https://tc39.es/ecma262/#thistimevalue">https://tc39.es/ecma262/#thistimevalue</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-thistimevalue">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-todatestring">
+   <a href="https://tc39.es/ecma262/#sec-todatestring">https://tc39.es/ecma262/#sec-todatestring</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-todatestring">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-tostring">
+   <a href="https://tc39.es/ecma262/#sec-tostring">https://tc39.es/ecma262/#sec-tostring</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-tostring">5.3. Remote Value</a> <a href="#ref-for-sec-tostring①">(2)</a> <a href="#ref-for-sec-tostring②">(3)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-sec-ecmascript-data-types-and-values">
+   <a href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values">https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-sec-ecmascript-data-types-and-values">5.3. Remote Value</a> <a href="#ref-for-sec-ecmascript-data-types-and-values①">(2)</a> <a href="#ref-for-sec-ecmascript-data-types-and-values②">(3)</a> <a href="#ref-for-sec-ecmascript-data-types-and-values③">(4)</a> <a href="#ref-for-sec-ecmascript-data-types-and-values④">(5)</a> <a href="#ref-for-sec-ecmascript-data-types-and-values⑤">(6)</a> <a href="#ref-for-sec-ecmascript-data-types-and-values⑥">(7)</a> <a href="#ref-for-sec-ecmascript-data-types-and-values⑦">(8)</a> <a href="#ref-for-sec-ecmascript-data-types-and-values⑧">(9)</a>
+   </ul>
+  </aside>
   <aside class="dfn-panel" data-for="term-for-concept-connection">
    <a href="https://fetch.spec.whatwg.org/#concept-connection">https://fetch.spec.whatwg.org/#concept-connection</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-connection">4. Transport</a> <a href="#ref-for-concept-connection①">(2)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-windowproxy">
+   <a href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy">https://html.spec.whatwg.org/multipage/window-object.html#windowproxy</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-windowproxy">5.3. Remote Value</a> <a href="#ref-for-windowproxy①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-browsing-context">
@@ -2723,6 +3433,7 @@ globally or for a set of browsing contexts</p>
    <ul>
     <li><a href="#ref-for-assert">4. Transport</a>
     <li><a href="#ref-for-assert①">4.1. Establishing a Connection</a>
+    <li><a href="#ref-for-assert②">5.3. Remote Value</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-implementation-defined">
@@ -2734,14 +3445,13 @@ globally or for a set of browsing contexts</p>
   <aside class="dfn-panel" data-for="term-for-ordered-map">
    <a href="https://infra.spec.whatwg.org/#ordered-map">https://infra.spec.whatwg.org/#ordered-map</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-ordered-map">4. Transport</a>
-    <li><a href="#ref-for-ordered-map①">6.1.2. Status</a>
+    <li><a href="#ref-for-ordered-map">6.1.2. Status</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="term-for-parse-json-into-infra-values">
-   <a href="https://infra.spec.whatwg.org/#parse-json-into-infra-values">https://infra.spec.whatwg.org/#parse-json-into-infra-values</a><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="term-for-parse-a-json-string-to-an-infra-value">
+   <a href="https://infra.spec.whatwg.org/#parse-a-json-string-to-an-infra-value">https://infra.spec.whatwg.org/#parse-a-json-string-to-an-infra-value</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-parse-json-into-infra-values">4. Transport</a>
+    <li><a href="#ref-for-parse-a-json-string-to-an-infra-value">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-scalar-value-string">
@@ -2750,10 +3460,10 @@ globally or for a set of browsing contexts</p>
     <li><a href="#ref-for-scalar-value-string">4. Transport</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="term-for-serialize-json-to-bytes">
-   <a href="https://infra.spec.whatwg.org/#serialize-json-to-bytes">https://infra.spec.whatwg.org/#serialize-json-to-bytes</a><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="term-for-serialize-an-infra-value-to-json-bytes">
+   <a href="https://infra.spec.whatwg.org/#serialize-an-infra-value-to-json-bytes">https://infra.spec.whatwg.org/#serialize-an-infra-value-to-json-bytes</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-serialize-json-to-bytes">4. Transport</a>
+    <li><a href="#ref-for-serialize-an-infra-value-to-json-bytes">4. Transport</a> <a href="#ref-for-serialize-an-infra-value-to-json-bytes①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-ordered-set">
@@ -2861,8 +3571,9 @@ globally or for a set of browsing contexts</p>
   <aside class="dfn-panel" data-for="term-for-dfn-current-session">
    <a href="https://w3c.github.io/webdriver/#dfn-current-session">https://w3c.github.io/webdriver/#dfn-current-session</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-current-session">6.1.3. Subscribe</a>
-    <li><a href="#ref-for-dfn-current-session①">6.1.4. Unsubscribe</a>
+    <li><a href="#ref-for-dfn-current-session">5.3. Remote Value</a>
+    <li><a href="#ref-for-dfn-current-session①">6.1.3. Subscribe</a>
+    <li><a href="#ref-for-dfn-current-session②">6.1.4. Unsubscribe</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-endpoint-node">
@@ -2875,20 +3586,20 @@ globally or for a set of browsing contexts</p>
    <a href="https://w3c.github.io/webdriver/#dfn-errors">https://w3c.github.io/webdriver/#dfn-errors</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-errors">3.5. Events</a> <a href="#ref-for-dfn-errors①">(2)</a>
-    <li><a href="#ref-for-dfn-errors②">3.6. Processing Model</a> <a href="#ref-for-dfn-errors③">(2)</a> <a href="#ref-for-dfn-errors④">(3)</a>
-    <li><a href="#ref-for-dfn-errors⑤">4. Transport</a>
-    <li><a href="#ref-for-dfn-errors⑥">4.1. Establishing a Connection</a>
-    <li><a href="#ref-for-dfn-errors⑦">6.1.1. Definition</a>
+    <li><a href="#ref-for-dfn-errors②">4. Transport</a>
+    <li><a href="#ref-for-dfn-errors③">4.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-errors④">5.3. Remote Value</a>
+    <li><a href="#ref-for-dfn-errors⑤">6.1.1. Definition</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-error-code">
    <a href="https://w3c.github.io/webdriver/#dfn-error-code">https://w3c.github.io/webdriver/#dfn-error-code</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-error-code">3.5. Events</a> <a href="#ref-for-dfn-error-code①">(2)</a>
-    <li><a href="#ref-for-dfn-error-code②">3.6. Processing Model</a> <a href="#ref-for-dfn-error-code③">(2)</a>
-    <li><a href="#ref-for-dfn-error-code④">4. Transport</a> <a href="#ref-for-dfn-error-code⑤">(2)</a>
-    <li><a href="#ref-for-dfn-error-code⑥">4.1. Establishing a Connection</a>
-    <li><a href="#ref-for-dfn-error-code⑦">6.1.1. Definition</a>
+    <li><a href="#ref-for-dfn-error-code②">4. Transport</a>
+    <li><a href="#ref-for-dfn-error-code③">4.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-error-code④">5.3. Remote Value</a>
+    <li><a href="#ref-for-dfn-error-code⑤">6.1.1. Definition</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-get-a-property">
@@ -2907,10 +3618,9 @@ globally or for a set of browsing contexts</p>
    <a href="https://w3c.github.io/webdriver/#dfn-invalid-argument">https://w3c.github.io/webdriver/#dfn-invalid-argument</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-invalid-argument">3.5. Events</a> <a href="#ref-for-dfn-invalid-argument①">(2)</a>
-    <li><a href="#ref-for-dfn-invalid-argument②">3.6. Processing Model</a> <a href="#ref-for-dfn-invalid-argument③">(2)</a>
-    <li><a href="#ref-for-dfn-invalid-argument④">4. Transport</a>
-    <li><a href="#ref-for-dfn-invalid-argument⑤">4.1. Establishing a Connection</a>
-    <li><a href="#ref-for-dfn-invalid-argument⑥">6.1.1. Definition</a>
+    <li><a href="#ref-for-dfn-invalid-argument②">4. Transport</a>
+    <li><a href="#ref-for-dfn-invalid-argument③">4.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-invalid-argument④">6.1.1. Definition</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-local-ends">
@@ -2928,6 +3638,12 @@ globally or for a set of browsing contexts</p>
     <li><a href="#ref-for-dfn-matched-capability-serialization-algorithm">4.1. Establishing a Connection</a>
    </ul>
   </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-no-such-element">
+   <a href="https://w3c.github.io/webdriver/#dfn-no-such-element">https://w3c.github.io/webdriver/#dfn-no-such-element</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-no-such-element">5.3. Remote Value</a>
+   </ul>
+  </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-remote-ends">
    <a href="https://w3c.github.io/webdriver/#dfn-remote-ends">https://w3c.github.io/webdriver/#dfn-remote-ends</a><b>Referenced in:</b>
    <ul>
@@ -2942,7 +3658,7 @@ globally or for a set of browsing contexts</p>
    <a href="https://w3c.github.io/webdriver/#dfn-remote-end-steps">https://w3c.github.io/webdriver/#dfn-remote-end-steps</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-remote-end-steps">3.4. Commands</a>
-    <li><a href="#ref-for-dfn-remote-end-steps①">3.6. Processing Model</a>
+    <li><a href="#ref-for-dfn-remote-end-steps①">4. Transport</a>
     <li><a href="#ref-for-dfn-remote-end-steps②">6.1.2. Status</a>
     <li><a href="#ref-for-dfn-remote-end-steps③">6.1.3. Subscribe</a>
     <li><a href="#ref-for-dfn-remote-end-steps④">6.1.4. Unsubscribe</a>
@@ -2954,6 +3670,7 @@ globally or for a set of browsing contexts</p>
     <li><a href="#ref-for-dfn-sessions">3.2. Session</a>
     <li><a href="#ref-for-dfn-sessions①">3.5. Events</a> <a href="#ref-for-dfn-sessions②">(2)</a>
     <li><a href="#ref-for-dfn-sessions③">4. Transport</a> <a href="#ref-for-dfn-sessions④">(2)</a> <a href="#ref-for-dfn-sessions⑤">(3)</a> <a href="#ref-for-dfn-sessions⑥">(4)</a> <a href="#ref-for-dfn-sessions⑦">(5)</a> <a href="#ref-for-dfn-sessions⑧">(6)</a> <a href="#ref-for-dfn-sessions⑨">(7)</a> <a href="#ref-for-dfn-sessions①⓪">(8)</a>
+    <li><a href="#ref-for-dfn-sessions①①">5.3. Remote Value</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-session-id">
@@ -2972,8 +3689,8 @@ globally or for a set of browsing contexts</p>
    <a href="https://w3c.github.io/webdriver/#dfn-success">https://w3c.github.io/webdriver/#dfn-success</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-success">3.5. Events</a> <a href="#ref-for-dfn-success①">(2)</a>
-    <li><a href="#ref-for-dfn-success②">3.6. Processing Model</a>
-    <li><a href="#ref-for-dfn-success③">4.1. Establishing a Connection</a> <a href="#ref-for-dfn-success④">(2)</a> <a href="#ref-for-dfn-success⑤">(3)</a>
+    <li><a href="#ref-for-dfn-success②">4.1. Establishing a Connection</a> <a href="#ref-for-dfn-success③">(2)</a> <a href="#ref-for-dfn-success④">(3)</a>
+    <li><a href="#ref-for-dfn-success⑤">5.3. Remote Value</a>
     <li><a href="#ref-for-dfn-success⑥">6.1.1. Definition</a>
     <li><a href="#ref-for-dfn-success⑦">6.1.2. Status</a>
    </ul>
@@ -2987,7 +3704,13 @@ globally or for a set of browsing contexts</p>
   <aside class="dfn-panel" data-for="term-for-dfn-unknown-command">
    <a href="https://w3c.github.io/webdriver/#dfn-unknown-command">https://w3c.github.io/webdriver/#dfn-unknown-command</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-unknown-command">3.6. Processing Model</a>
+    <li><a href="#ref-for-dfn-unknown-command">4. Transport</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-web-element-reference">
+   <a href="https://w3c.github.io/webdriver/#dfn-web-element-reference">https://w3c.github.io/webdriver/#dfn-web-element-reference</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-web-element-reference">5.3. Remote Value</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-webdriver-new-session-algorithm">
@@ -3000,6 +3723,13 @@ globally or for a set of browsing contexts</p>
    <a href="https://w3c.github.io/webdriver/#dfn-window-handle">https://w3c.github.io/webdriver/#dfn-window-handle</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-window-handle">5.1. Browsing Context</a> <a href="#ref-for-dfn-window-handle①">(2)</a>
+    <li><a href="#ref-for-dfn-window-handle②">5.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-dfn-platform-object">
+   <a href="https://heycam.github.io/webidl/#dfn-platform-object">https://heycam.github.io/webidl/#dfn-platform-object</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-platform-object">5.3. Remote Value</a> <a href="#ref-for-dfn-platform-object①">(2)</a> <a href="#ref-for-dfn-platform-object②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-return-type">
@@ -3011,85 +3741,121 @@ globally or for a set of browsing contexts</p>
   <h3 class="no-num no-ref heading settled" id="index-defined-elsewhere"><span class="content">Terms defined by reference</span><a class="self-link" href="#index-defined-elsewhere"></a></h3>
   <ul class="index">
    <li>
-    <a data-link-type="biblio">[ecmascript urlprefix: https://tc39.es/ecma262/]</a> defines the following terms:
+    <a data-link-type="biblio">[DOM]</a> defines the following terms:
     <ul>
-     <li><span style="color:initial">realm</span>
+     <li><span class="dfn-paneled" id="term-for-concept-attribute">attribute</span>
+     <li><span class="dfn-paneled" id="term-for-concept-element-attribute">attribute list</span>
+     <li><span class="dfn-paneled" id="term-for-concept-tree-child">children</span>
+     <li><span class="dfn-paneled" id="term-for-concept-element">element</span>
+     <li><span class="dfn-paneled" id="term-for-boundary-point-node">node</span>
+     <li><span class="dfn-paneled" id="term-for-concept-node">nodes</span>
+     <li><span class="dfn-paneled" id="term-for-concept-attribute-qualified-name">qualified name</span>
+     <li><span class="dfn-paneled" id="term-for-concept-element-shadow-root">shadow root</span>
+     <li><span class="dfn-paneled" id="term-for-concept-attribute-value">value</span>
+    </ul>
+   <li>
+    <a data-link-type="biblio">[ECMASCRIPT]</a> defines the following terms:
+    <ul>
+     <li><span class="dfn-paneled" id="term-for-sec-createarrayiterator">createarrayiterator</span>
+     <li><span class="dfn-paneled" id="term-for-sec-createlistfromarraylike">createlistfromarraylike</span>
+     <li><span class="dfn-paneled" id="term-for-sec-createmapiterator">createmapiterator</span>
+     <li><span class="dfn-paneled" id="term-for-sec-createsetiterator">createsetiterator</span>
+     <li><span class="dfn-paneled" id="term-for-sec-enumerableownpropertynames">enumerableownpropertynames</span>
+     <li><span class="dfn-paneled" id="term-for-sec-get">get</span>
+     <li><span class="dfn-paneled" id="term-for-sec-object-internal-methods-and-internal-slots">internal slot</span>
+     <li><span class="dfn-paneled" id="term-for-sec-isarray">isarray</span>
+     <li><span class="dfn-paneled" id="term-for-sec-iscallable">iscallable</span>
+     <li><span class="dfn-paneled" id="term-for-sec-ispromise">ispromise</span>
+     <li><span class="dfn-paneled" id="term-for-sec-isregexp">isregexp</span>
+     <li><span class="dfn-paneled" id="term-for-sec-code-realms">realm</span>
+     <li><span class="dfn-paneled" id="term-for-thistimevalue">thistimevalue</span>
+     <li><span class="dfn-paneled" id="term-for-sec-todatestring">todatestring</span>
+     <li><span class="dfn-paneled" id="term-for-sec-tostring">tostring</span>
+     <li><span class="dfn-paneled" id="term-for-sec-ecmascript-data-types-and-values">type</span>
     </ul>
    <li>
     <a data-link-type="biblio">[FETCH]</a> defines the following terms:
     <ul>
-     <li><span class="dfn-paneled" id="term-for-concept-connection" style="color:initial">connection</span>
+     <li><span class="dfn-paneled" id="term-for-concept-connection">connection</span>
     </ul>
    <li>
     <a data-link-type="biblio">[HTML]</a> defines the following terms:
     <ul>
-     <li><span class="dfn-paneled" id="term-for-browsing-context" style="color:initial">browsing context</span>
-     <li><span class="dfn-paneled" id="term-for-parent-browsing-context" style="color:initial">parent browsing context</span>
+     <li><span class="dfn-paneled" id="term-for-windowproxy">WindowProxy</span>
+     <li><span class="dfn-paneled" id="term-for-browsing-context">browsing context</span>
+     <li><span class="dfn-paneled" id="term-for-parent-browsing-context">parent browsing context</span>
     </ul>
    <li>
     <a data-link-type="biblio">[INFRA]</a> defines the following terms:
     <ul>
-     <li><span class="dfn-paneled" id="term-for-set-append" style="color:initial">append</span>
-     <li><span class="dfn-paneled" id="term-for-assert" style="color:initial">assert</span>
-     <li><span class="dfn-paneled" id="term-for-implementation-defined" style="color:initial">implementation-defined</span>
-     <li><span class="dfn-paneled" id="term-for-ordered-map" style="color:initial">map</span>
-     <li><span class="dfn-paneled" id="term-for-parse-json-into-infra-values" style="color:initial">parse json into infra values</span>
-     <li><span class="dfn-paneled" id="term-for-scalar-value-string" style="color:initial">scalar value string</span>
-     <li><span class="dfn-paneled" id="term-for-serialize-json-to-bytes" style="color:initial">serialize json to bytes</span>
-     <li><span class="dfn-paneled" id="term-for-ordered-set" style="color:initial">set</span>
+     <li><span class="dfn-paneled" id="term-for-set-append">append</span>
+     <li><span class="dfn-paneled" id="term-for-assert">assert</span>
+     <li><span class="dfn-paneled" id="term-for-implementation-defined">implementation-defined</span>
+     <li><span class="dfn-paneled" id="term-for-ordered-map">map</span>
+     <li><span class="dfn-paneled" id="term-for-parse-a-json-string-to-an-infra-value">parse json into infra values</span>
+     <li><span class="dfn-paneled" id="term-for-scalar-value-string">scalar value string</span>
+     <li><span class="dfn-paneled" id="term-for-serialize-an-infra-value-to-json-bytes">serialize an infra value to json bytes</span>
+     <li><span class="dfn-paneled" id="term-for-ordered-set">set</span>
     </ul>
    <li>
     <a data-link-type="biblio">[RFC6455]</a> defines the following terms:
     <ul>
-     <li><span class="dfn-paneled" id="term-for-section-5.2" style="color:initial">%x1 denotes a text frame</span>
-     <li><span class="dfn-paneled" id="term-for-section-6.2" style="color:initial">a websocket message has been received</span>
-     <li><span class="dfn-paneled" id="term-for-section-4.1" style="color:initial">establishes a websocket connection</span>
-     <li><span class="dfn-paneled" id="term-for-section-7.1.7" style="color:initial">fail the websocket connection</span>
-     <li><span class="dfn-paneled" id="term-for-section-8.1" style="color:initial">handling errors in utf-8-encoded data</span>
-     <li><span class="dfn-paneled" id="term-for-section-4.2.1" style="color:initial">reading the client's opening handshake</span>
-     <li><span class="dfn-paneled" id="term-for-section-6.1" style="color:initial">send a websocket message</span>
-     <li><span class="dfn-paneled" id="term-for-section-4.2" style="color:initial">server-side requirements</span>
-     <li><span class="dfn-paneled" id="term-for-section-7.4" style="color:initial">status codes</span>
-     <li><span class="dfn-paneled" id="term-for-section-7.1.3" style="color:initial">the websocket closing handshake is started</span>
-     <li><span class="dfn-paneled" id="term-for-section-7.1.4" style="color:initial">the websocket connection is closed</span>
-     <li><span class="dfn-paneled" id="term-for-section-3" style="color:initial">websocket uri</span>
+     <li><span class="dfn-paneled" id="term-for-section-5.2">%x1 denotes a text frame</span>
+     <li><span class="dfn-paneled" id="term-for-section-6.2">a websocket message has been received</span>
+     <li><span class="dfn-paneled" id="term-for-section-4.1">establishes a websocket connection</span>
+     <li><span class="dfn-paneled" id="term-for-section-7.1.7">fail the websocket connection</span>
+     <li><span class="dfn-paneled" id="term-for-section-8.1">handling errors in utf-8-encoded data</span>
+     <li><span class="dfn-paneled" id="term-for-section-4.2.1">reading the client's opening handshake</span>
+     <li><span class="dfn-paneled" id="term-for-section-6.1">send a websocket message</span>
+     <li><span class="dfn-paneled" id="term-for-section-4.2">server-side requirements</span>
+     <li><span class="dfn-paneled" id="term-for-section-7.4">status codes</span>
+     <li><span class="dfn-paneled" id="term-for-section-7.1.3">the websocket closing handshake is started</span>
+     <li><span class="dfn-paneled" id="term-for-section-7.1.4">the websocket connection is closed</span>
+     <li><span class="dfn-paneled" id="term-for-section-3">websocket uri</span>
     </ul>
    <li>
     <a data-link-type="biblio">[WEBDRIVER]</a> defines the following terms:
     <ul>
-     <li><span class="dfn-paneled" id="term-for-dfn-active-session" style="color:initial">active sessions</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-additional-capability-deserialization-algorithm" style="color:initial">additional capability deserialization algorithm</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-additional-webdriver-capability" style="color:initial">additional webdriver capability</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-capability-name" style="color:initial">capability name</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-current-session" style="color:initial">current session</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-endpoint-node" style="color:initial">endpoint node</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-errors" style="color:initial">error</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-error-code" style="color:initial">error code</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-get-a-property" style="color:initial">getting a property</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-intermediary-node" style="color:initial">intermediary node</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-invalid-argument" style="color:initial">invalid argument</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-local-ends" style="color:initial">local end</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-matched-capability-serialization-algorithm" style="color:initial">matched capability serialization algorithm</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-remote-ends" style="color:initial">remote end</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-remote-end-steps" style="color:initial">remote end steps</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-sessions" style="color:initial">session</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-session-id" style="color:initial">session id</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-set-a-property" style="color:initial">set a property</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-success" style="color:initial">success</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-try" style="color:initial">try</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-unknown-command" style="color:initial">unknown command</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-webdriver-new-session-algorithm" style="color:initial">webdriver new session algorithm</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-window-handle" style="color:initial">window handle</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-active-session">active sessions</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-additional-capability-deserialization-algorithm">additional capability deserialization algorithm</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-additional-webdriver-capability">additional webdriver capability</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-capability-name">capability name</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-current-session">current session</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-endpoint-node">endpoint node</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-errors">error</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-error-code">error code</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-get-a-property">getting a property</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-intermediary-node">intermediary node</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-invalid-argument">invalid argument</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-local-ends">local end</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-matched-capability-serialization-algorithm">matched capability serialization algorithm</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-no-such-element">no such element</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-remote-ends">remote end</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-remote-end-steps">remote end steps</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-sessions">session</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-session-id">session id</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-set-a-property">set a property</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-success">success</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-try">try</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-unknown-command">unknown command</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-web-element-reference">web element reference</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-webdriver-new-session-algorithm">webdriver new session algorithm</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-window-handle">window handle</span>
     </ul>
    <li>
     <a data-link-type="biblio">[WebIDL]</a> defines the following terms:
     <ul>
-     <li><span class="dfn-paneled" id="term-for-dfn-return-type" style="color:initial">return type</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-platform-object">platform object</span>
+     <li><span class="dfn-paneled" id="term-for-dfn-return-type">return type</span>
     </ul>
   </ul>
   <h2 class="no-num no-ref heading settled" id="references"><span class="content">References</span><a class="self-link" href="#references"></a></h2>
   <h3 class="no-num no-ref heading settled" id="normative"><span class="content">Normative References</span><a class="self-link" href="#normative"></a></h3>
   <dl>
+   <dt id="biblio-dom">[DOM]
+   <dd>Anne van Kesteren. <a href="https://dom.spec.whatwg.org/">DOM Standard</a>. Living Standard. URL: <a href="https://dom.spec.whatwg.org/">https://dom.spec.whatwg.org/</a>
+   <dt id="biblio-ecmascript">[ECMASCRIPT]
+   <dd><a href="https://tc39.es/ecma262/">ECMAScript Language Specification</a>. URL: <a href="https://tc39.es/ecma262/">https://tc39.es/ecma262/</a>
    <dt id="biblio-fetch">[FETCH]
    <dd>Anne van Kesteren. <a href="https://fetch.spec.whatwg.org/">Fetch Standard</a>. Living Standard. URL: <a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>
    <dt id="biblio-html">[HTML]
@@ -3118,10 +3884,18 @@ globally or for a set of browsing contexts</p>
    <div class="issue"> Do we support > 1 connection for a single session?<a href="#issue-0dc5e7b6"> ↵ </a></div>
    <div class="issue"> Should we instead close <var>connection</var> with <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4">status code</a> 1003, or <a data-link-type="dfn" href="#respond-with-an-error">respond with an error</a>?<a href="#issue-06ad62f1"> ↵ </a></div>
    <div class="issue"> Nothing seems to define what <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4">status code</a> is used for UTF-8 errors.<a href="#issue-449f8f30"> ↵ </a></div>
-   <div class="issue"> Form a valid JSON <var>errorObject</var> given <var>code</var>.<a href="#issue-aee4ea98"> ↵ </a></div>
    <div class="issue"> This should also reset any internal state<a href="#issue-02ccb156"> ↵ </a></div>
    <div class="issue"> Need to hook in to the session ending to allow the UA to close
 the listener if it wants.<a href="#issue-9f7aff26"> ↵ </a></div>
+   <div class="issue"> Should this be explicitly per realm?<a href="#issue-992788ee"> ↵ </a></div>
+   <div class="issue"> This error code isn’t right.<a href="#issue-824932d2"> ↵ </a></div>
+   <div class="issue"> Add WASM types?<a href="#issue-14921645"> ↵ </a></div>
+   <div class="issue"> Should WindowProxy get attributes in a similar style to Node?<a href="#issue-ace5d7fc"> ↵ </a></div>
+   <div class="issue"> handle String / Number / etc. wrapper objects specially?<a href="#issue-daee5863"> ↵ </a></div>
+   <div class="issue"> This doesn’t handle lone surrogates<a href="#issue-d33a79cf"> ↵ </a></div>
+   <div class="issue"> Does it make sense to use the same depth parameter for nodes and objects
+in general?<a href="#issue-66909ae2"> ↵ </a></div>
+   <div class="issue"> this assumes for-in works on iterators<a href="#issue-c12b3c7f"> ↵ </a></div>
    <div class="issue"> This needs to be generalized to work with realms too<a href="#issue-77ae0f57"> ↵ </a></div>
    <div class="issue"> This needs to be generalised to work with realms too<a href="#issue-851a021c"> ↵ </a></div>
   </div>
@@ -3131,8 +3905,11 @@ the listener if it wants.<a href="#issue-9f7aff26"> ↵ </a></div>
     <li><a href="#ref-for-remote-end-definition">3.1. Definition</a> <a href="#ref-for-remote-end-definition①">(2)</a>
     <li><a href="#ref-for-remote-end-definition②">3.3. Modules</a> <a href="#ref-for-remote-end-definition③">(2)</a>
     <li><a href="#ref-for-remote-end-definition④">3.4. Commands</a>
-    <li><a href="#ref-for-remote-end-definition⑤">3.6. Processing Model</a>
-    <li><a href="#ref-for-remote-end-definition⑥">6.1.1. Definition</a>
+    <li><a href="#ref-for-remote-end-definition⑤">4. Transport</a>
+    <li><a href="#ref-for-remote-end-definition⑥">5.1. Browsing Context</a>
+    <li><a href="#ref-for-remote-end-definition⑦">5.2. Realm</a>
+    <li><a href="#ref-for-remote-end-definition⑧">5.3. Remote Value</a>
+    <li><a href="#ref-for-remote-end-definition⑨">6.1.1. Definition</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="local-end-definition">
@@ -3142,7 +3919,11 @@ the listener if it wants.<a href="#issue-9f7aff26"> ↵ </a></div>
     <li><a href="#ref-for-local-end-definition②">3.3. Modules</a> <a href="#ref-for-local-end-definition③">(2)</a> <a href="#ref-for-local-end-definition④">(3)</a>
     <li><a href="#ref-for-local-end-definition⑤">3.4. Commands</a>
     <li><a href="#ref-for-local-end-definition⑥">3.5. Events</a>
-    <li><a href="#ref-for-local-end-definition⑦">6.1.1. Definition</a>
+    <li><a href="#ref-for-local-end-definition⑦">4. Transport</a> <a href="#ref-for-local-end-definition⑧">(2)</a>
+    <li><a href="#ref-for-local-end-definition⑨">5.1. Browsing Context</a>
+    <li><a href="#ref-for-local-end-definition①⓪">5.2. Realm</a>
+    <li><a href="#ref-for-local-end-definition①①">5.3. Remote Value</a> <a href="#ref-for-local-end-definition①②">(2)</a> <a href="#ref-for-local-end-definition①③">(3)</a> <a href="#ref-for-local-end-definition①④">(4)</a> <a href="#ref-for-local-end-definition①⑤">(5)</a> <a href="#ref-for-local-end-definition①⑥">(6)</a> <a href="#ref-for-local-end-definition①⑦">(7)</a> <a href="#ref-for-local-end-definition①⑧">(8)</a> <a href="#ref-for-local-end-definition①⑨">(9)</a> <a href="#ref-for-local-end-definition②⓪">(10)</a> <a href="#ref-for-local-end-definition②①">(11)</a> <a href="#ref-for-local-end-definition②②">(12)</a> <a href="#ref-for-local-end-definition②③">(13)</a> <a href="#ref-for-local-end-definition②④">(14)</a> <a href="#ref-for-local-end-definition②⑤">(15)</a> <a href="#ref-for-local-end-definition②⑥">(16)</a> <a href="#ref-for-local-end-definition②⑦">(17)</a> <a href="#ref-for-local-end-definition②⑧">(18)</a> <a href="#ref-for-local-end-definition②⑨">(19)</a> <a href="#ref-for-local-end-definition③⓪">(20)</a> <a href="#ref-for-local-end-definition③①">(21)</a> <a href="#ref-for-local-end-definition③②">(22)</a> <a href="#ref-for-local-end-definition③③">(23)</a> <a href="#ref-for-local-end-definition③④">(24)</a>
+    <li><a href="#ref-for-local-end-definition③⑤">6.1.1. Definition</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="module-name">
@@ -3172,26 +3953,26 @@ the listener if it wants.<a href="#issue-9f7aff26"> ↵ </a></div>
    <ul>
     <li><a href="#ref-for-command-command-name">3.3. Modules</a>
     <li><a href="#ref-for-command-command-name①">3.4. Commands</a>
-    <li><a href="#ref-for-command-command-name②">3.6. Processing Model</a> <a href="#ref-for-command-command-name③">(2)</a>
+    <li><a href="#ref-for-command-command-name②">4. Transport</a> <a href="#ref-for-command-command-name③">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="command-command-parameters">
    <b><a href="#command-command-parameters">#command-command-parameters</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-command-command-parameters">3.4. Commands</a>
-    <li><a href="#ref-for-command-command-parameters①">3.6. Processing Model</a>
+    <li><a href="#ref-for-command-command-parameters①">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="command-result-type">
    <b><a href="#command-result-type">#command-result-type</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-command-result-type">3.6. Processing Model</a>
+    <li><a href="#ref-for-command-result-type">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="command-set-of-all-command-names">
    <b><a href="#command-set-of-all-command-names">#command-set-of-all-command-names</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-command-set-of-all-command-names">3.6. Processing Model</a>
+    <li><a href="#ref-for-command-set-of-all-command-names">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="event">
@@ -3233,12 +4014,6 @@ the listener if it wants.<a href="#issue-9f7aff26"> ↵ </a></div>
    <b><a href="#obtain-a-set-of-event-names">#obtain-a-set-of-event-names</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-obtain-a-set-of-event-names">6.1.1. Definition</a>
-   </ul>
-  </aside>
-  <aside class="dfn-panel" data-for="process-a-command">
-   <b><a href="#process-a-command">#process-a-command</a></b><b>Referenced in:</b>
-   <ul>
-    <li><a href="#ref-for-process-a-command">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="websocket-listener">
@@ -3330,6 +4105,36 @@ the listener if it wants.<a href="#issue-9f7aff26"> ↵ </a></div>
    <ul>
     <li><a href="#ref-for-browsing-context-id">5.1. Browsing Context</a>
     <li><a href="#ref-for-browsing-context-id①">6.1.1. Definition</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="object-id-map">
+   <b><a href="#object-id-map">#object-id-map</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-object-id-map">5.3. Remote Value</a> <a href="#ref-for-object-id-map①">(2)</a> <a href="#ref-for-object-id-map②">(3)</a> <a href="#ref-for-object-id-map③">(4)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="object-id-for-an-object">
+   <b><a href="#object-id-for-an-object">#object-id-for-an-object</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-object-id-for-an-object">5.3. Remote Value</a> <a href="#ref-for-object-id-for-an-object①">(2)</a> <a href="#ref-for-object-id-for-an-object②">(3)</a> <a href="#ref-for-object-id-for-an-object③">(4)</a> <a href="#ref-for-object-id-for-an-object④">(5)</a> <a href="#ref-for-object-id-for-an-object⑤">(6)</a> <a href="#ref-for-object-id-for-an-object⑥">(7)</a> <a href="#ref-for-object-id-for-an-object⑦">(8)</a> <a href="#ref-for-object-id-for-an-object⑧">(9)</a> <a href="#ref-for-object-id-for-an-object⑨">(10)</a> <a href="#ref-for-object-id-for-an-object①⓪">(11)</a> <a href="#ref-for-object-id-for-an-object①①">(12)</a> <a href="#ref-for-object-id-for-an-object①②">(13)</a> <a href="#ref-for-object-id-for-an-object①③">(14)</a> <a href="#ref-for-object-id-for-an-object①④">(15)</a> <a href="#ref-for-object-id-for-an-object①⑤">(16)</a> <a href="#ref-for-object-id-for-an-object①⑥">(17)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="serialize-as-a-remote-value">
+   <b><a href="#serialize-as-a-remote-value">#serialize-as-a-remote-value</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-serialize-as-a-remote-value">5.3. Remote Value</a> <a href="#ref-for-serialize-as-a-remote-value①">(2)</a> <a href="#ref-for-serialize-as-a-remote-value②">(3)</a> <a href="#ref-for-serialize-as-a-remote-value③">(4)</a> <a href="#ref-for-serialize-as-a-remote-value④">(5)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="serialize-as-a-list">
+   <b><a href="#serialize-as-a-list">#serialize-as-a-list</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-serialize-as-a-list">5.3. Remote Value</a> <a href="#ref-for-serialize-as-a-list①">(2)</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="serialize-as-a-mapping">
+   <b><a href="#serialize-as-a-mapping">#serialize-as-a-mapping</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-serialize-as-a-mapping">5.3. Remote Value</a> <a href="#ref-for-serialize-as-a-mapping①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="updating-the-event-map">
