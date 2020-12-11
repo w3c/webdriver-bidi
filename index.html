@@ -1487,7 +1487,7 @@ Possible extra rowspan handling
   <link href="https://www.w3.org/StyleSheets/TR/2016/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version c5172e83, updated Fri Nov 20 15:35:20 2020 -0800" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="fe545194132c700c4ccb175dbc8741c274ab9090" name="document-revision">
+  <meta content="cc638d0a130ec069f452d42392d1d3e20e12ef16" name="document-revision">
 <style>/* style-autolinks */
 
 .css.css, .property.property, .descriptor.descriptor {
@@ -1933,7 +1933,7 @@ dfn > a.self-link::before      { content: "#"; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2016/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-12-04">4 December 2020</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="subtitle"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2020-12-11">11 December 2020</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2345,35 +2345,42 @@ typically be "<code>localhost</code>".</p>
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="handle-an-incoming-message">handle an incoming message</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection③">WebSocket connection</a> <var>connection</var>, type <var>type</var> and data <var>data</var>: 
     <ol>
      <li data-md>
-      <p>If <var>type</var> is not <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-5.2" id="ref-for-section-5.2">text</a>, return.</p>
-      <p class="issue" id="issue-06ad62f1"><a class="self-link" href="#issue-06ad62f1"></a> Should we instead close <var>connection</var> with <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4" id="ref-for-section-7.4">status code</a> 1003, or <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error">respond with an error</a>?</p>
+      <p>If <var>type</var> is not <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-5.2" id="ref-for-section-5.2">text</a>, <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error">respond with an
+  error</a> given <var>connection</var>, null, and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②">invalid argument</a>, and finally
+  return.</p>
      <li data-md>
       <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert">Assert</a>: <var>data</var> is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#scalar-value-string" id="ref-for-scalar-value-string">scalar value string</a>, because the
    WebSocket <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-8.1" id="ref-for-section-8.1">handling errors in UTF-8-encoded data</a> would already
    have <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.1.7" id="ref-for-section-7.1.7">failed the WebSocket
    connection</a> otherwise.</p>
-      <p class="issue" id="issue-449f8f30"><a class="self-link" href="#issue-449f8f30"></a> Nothing seems to define what <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4" id="ref-for-section-7.4①">status code</a> is used for UTF-8 errors.</p>
+      <p class="issue" id="issue-449f8f30"><a class="self-link" href="#issue-449f8f30"></a> Nothing seems to define what <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4" id="ref-for-section-7.4">status code</a> is used for UTF-8 errors.</p>
      <li data-md>
-      <p>Match <var>data</var> against the <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑤">remote end definition</a>. If this results in a
+      <p>Let <var>parsed</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#parse-a-json-string-to-an-infra-value" id="ref-for-parse-a-json-string-to-an-infra-value">parsing JSON
+ into Infra values</a> given <var>data</var>. If this throws an exception, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error①">respond
+ with an error</a> given <var>connection</var>, null, and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③">invalid argument</a>, and
+ finally return.</p>
+     <li data-md>
+      <p>Match <var>parsed</var> against the <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑤">remote end definition</a>. If this results in a
   match:</p>
       <ol>
        <li data-md>
-        <p>Let <var>parsed</var> be the map representing the matched data.</p>
+        <p>Let <var>matched</var> be the map representing the matched data.</p>
        <li data-md>
-        <p class="assertion">Assert: <var>parsed</var> contains "<code>id</code>", "method", and
- "<code>params</code>"</p>
+        <p class="assertion">Assert: <var>matched</var> contains "<code>id</code>", "<code>method</code>", and
+ "<code>params</code>".</p>
        <li data-md>
-        <p>Let <var>command id</var> be <var>parsed</var>["<code>id</code>"].</p>
+        <p>Let <var>command id</var> be <var>matched</var>["<code>id</code>"].</p>
        <li data-md>
-        <p>Let <var>method</var> be <var>parsed</var>["<code>method</code>"]</p>
+        <p>Let <var>method</var> be <var>matched</var>["<code>method</code>"]</p>
        <li data-md>
         <p>Run the following steps in parallel:</p>
         <ol>
          <li data-md>
           <p>Let <var>result</var> be the result of running the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①">remote end steps</a> for the
- command with <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name②">command name</a> <var>method</var> given <a data-link-type="dfn" href="#command-command-parameters" id="ref-for-command-command-parameters①">command parameters</a> <var>parsed</var>["<code>params</code>"]</p>
+ command with <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name②">command name</a> <var>method</var> given <a data-link-type="dfn" href="#command-command-parameters" id="ref-for-command-command-parameters①">command parameters</a> <var>matched</var>["<code>params</code>"]</p>
          <li data-md>
-          <p>If <var>result</var> is an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②">error</a>, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error①">respond with an error</a> given <var>connection</var>, <var>data</var>, and <var>result</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②">error code</a>, and finally return.</p>
+          <p>If <var>result</var> is an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②">error</a>, then <a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error②">respond with an error</a> given <var>connection</var>, <var>command id</var>, and <var>result</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②">error code</a>, and finally
+ return.</p>
          <li data-md>
           <p>Let <var>value</var> be <var>result</var>’s data.</p>
          <li data-md>
@@ -2388,35 +2395,37 @@ typically be "<code>localhost</code>".</p>
         </ol>
       </ol>
      <li data-md>
-      <p>Otherwise there is no match.</p>
-      <p>Let <var>error code</var> be <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②">invalid argument</a>.</p>
-     <li data-md>
-      <p>If <var>data</var> is a map and <var>data</var>["<code>method</code>"] exists and is a
-  string, but <var>data</var>["<code>method</code>"] is not in the <a data-link-type="dfn" href="#command-set-of-all-command-names" id="ref-for-command-set-of-all-command-names">set of all
-  command names</a>, let <var>error code</var> be <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-command" id="ref-for-dfn-unknown-command">unknown command</a>.</p>
-     <li data-md>
-      <p><a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error②">Respond with an error</a> given <var>connection</var>, <var>data</var>, and <var>error code</var>.</p>
+      <p>Otherwise:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>command id</var> be null.</p>
+       <li data-md>
+        <p>If <var>parsed</var> is a map and <var>parsed</var>["<code>id</code>"] exists and is an
+ integer greater than or equal to zero, set <var>command id</var> to that integer.</p>
+       <li data-md>
+        <p>Let <var>error code</var> be <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument④">invalid argument</a>.</p>
+       <li data-md>
+        <p>If <var>parsed</var> is a map and <var>parsed</var>["<code>method</code>"] exists and is a
+ string, but <var>parsed</var>["<code>method</code>"] is not in the <a data-link-type="dfn" href="#command-set-of-all-command-names" id="ref-for-command-set-of-all-command-names">set of all
+ command names</a>, set <var>error code</var> to <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-command" id="ref-for-dfn-unknown-command">unknown command</a>.</p>
+       <li data-md>
+        <p><a data-link-type="dfn" href="#respond-with-an-error" id="ref-for-respond-with-an-error③">Respond with an error</a> given <var>connection</var>, <var>command id</var>, and <var>error code</var>.</p>
+      </ol>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="respond with an error">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="respond-with-an-error">respond with an error</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection④">WebSocket connection</a> <var>connection</var>, <var>data</var> and <var>error code</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="respond-with-an-error">respond with an error</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection④">WebSocket connection</a> <var>connection</var>, <var>command id</var>, and <var>error code</var>: 
     <ol>
-     <li data-md>
-      <p>Let <var>command id</var> be null.</p>
-     <li data-md>
-      <p>Let <var>parsed</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#parse-a-json-string-to-an-infra-value" id="ref-for-parse-a-json-string-to-an-infra-value">parsing JSON
-   into Infra values</a> given <var>data</var>. If this does not throw an exception, and
-   results in a map that contains "<code>id</code>", then let <var>command id</var> be <var>parsed</var>["<code>id</code>"].</p>
-     <li data-md>
-      <p>If <var>command id</var> is not an integer greater than or equal to zero, let <var>command id</var> be null.</p>
      <li data-md>
       <p>Let <var>error data</var> be a new map matching the <code>ErrorResponse</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑧">local end definition</a>, with the <code>id</code> field
   set to <var>command id</var>, the <code>error</code> field set to <var>error code</var>, the <code>message</code> field set to an implementation-defined string
-  containing a human-readable definition of the error that occured and the <code>stacktrace</code> field optionally set to an implementation-defined
+  containing a human-readable definition of the error that occurred and the <code>stacktrace</code> field optionally set to an implementation-defined
   string containing a stack trace report of the active stack frames at the
   time when the error occurred.</p>
      <li data-md>
       <p>Let <var>response</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#serialize-an-infra-value-to-json-bytes" id="ref-for-serialize-an-infra-value-to-json-bytes①">serialize an infra value to JSON bytes</a> given <var>error data</var>.</p>
+      <p class="note" role="note"><span>Note:</span> <var>command id</var> can be null, in which case the <code>id</code> field will
+  also be set to null, not omitted from <var>response</var>.</p>
      <li data-md>
       <p><a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-6.1" id="ref-for-section-6.1①">Send a WebSocket message</a> comprised of <var>response</var> over <var>connection</var>.</p>
     </ol>
@@ -2443,7 +2452,7 @@ true.</p>
 "<code>webSocketUrl</code>" capability, with parameter <var>value</var> is: 
     <ol>
      <li data-md>
-      <p>If <var>value</var> is not a boolean, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③">code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③">invalid argument</a>.</p>
+      <p>If <var>value</var> is not a boolean, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③">code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑤">invalid argument</a>.</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②">success</a> with data <var>value</var>.</p>
     </ol>
@@ -3031,7 +3040,7 @@ events for monitoring the status of the remote end.</p>
         <p>For each entry <var>context id</var> in the <var>list of contexts</var>:</p>
         <ol>
          <li data-md>
-          <p>If there is no browsing context with <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①">browsing context id</a> <var>context id</var> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument④">invalid argument</a></p>
+          <p>If there is no browsing context with <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①">browsing context id</a> <var>context id</var> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑥">invalid argument</a></p>
          <li data-md>
           <p>Let <var>context</var> be the browsing context with id <var>context id</var>. If the <var>event map</var> does not contain an entry for <var>context</var>,
  set the value of the entry for <var>context</var> to a new empty map.</p>
@@ -3485,7 +3494,7 @@ globally or for a set of browsing contexts</p>
   <aside class="dfn-panel" data-for="term-for-section-7.4">
    <a href="https://tools.ietf.org/html/rfc6455#section-7.4">https://tools.ietf.org/html/rfc6455#section-7.4</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-section-7.4">4. Transport</a> <a href="#ref-for-section-7.4①">(2)</a>
+    <li><a href="#ref-for-section-7.4">4. Transport</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-section-7.1.3">
@@ -3578,9 +3587,9 @@ globally or for a set of browsing contexts</p>
    <a href="https://w3c.github.io/webdriver/#dfn-invalid-argument">https://w3c.github.io/webdriver/#dfn-invalid-argument</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-invalid-argument">3.5. Events</a> <a href="#ref-for-dfn-invalid-argument①">(2)</a>
-    <li><a href="#ref-for-dfn-invalid-argument②">4. Transport</a>
-    <li><a href="#ref-for-dfn-invalid-argument③">4.1. Establishing a Connection</a>
-    <li><a href="#ref-for-dfn-invalid-argument④">6.1.1. Definition</a>
+    <li><a href="#ref-for-dfn-invalid-argument②">4. Transport</a> <a href="#ref-for-dfn-invalid-argument③">(2)</a> <a href="#ref-for-dfn-invalid-argument④">(3)</a>
+    <li><a href="#ref-for-dfn-invalid-argument⑤">4.1. Establishing a Connection</a>
+    <li><a href="#ref-for-dfn-invalid-argument⑥">6.1.1. Definition</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-local-ends">
@@ -3834,7 +3843,6 @@ globally or for a set of browsing contexts</p>
   <div style="counter-reset:issue">
    <div class="issue"> Should this be an appendix?<a href="#issue-40ad1db0"> ↵ </a></div>
    <div class="issue"> Do we support > 1 connection for a single session?<a href="#issue-0dc5e7b6"> ↵ </a></div>
-   <div class="issue"> Should we instead close <var>connection</var> with <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4">status code</a> 1003, or <a data-link-type="dfn" href="#respond-with-an-error">respond with an error</a>?<a href="#issue-06ad62f1"> ↵ </a></div>
    <div class="issue"> Nothing seems to define what <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4">status code</a> is used for UTF-8 errors.<a href="#issue-449f8f30"> ↵ </a></div>
    <div class="issue"> This should also reset any internal state<a href="#issue-02ccb156"> ↵ </a></div>
    <div class="issue"> Need to hook in to the session ending to allow the UA to close
@@ -4041,7 +4049,7 @@ in general?<a href="#issue-66909ae2"> ↵ </a></div>
   <aside class="dfn-panel" data-for="respond-with-an-error">
    <b><a href="#respond-with-an-error">#respond-with-an-error</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-respond-with-an-error">4. Transport</a> <a href="#ref-for-respond-with-an-error①">(2)</a> <a href="#ref-for-respond-with-an-error②">(3)</a>
+    <li><a href="#ref-for-respond-with-an-error">4. Transport</a> <a href="#ref-for-respond-with-an-error①">(2)</a> <a href="#ref-for-respond-with-an-error②">(3)</a> <a href="#ref-for-respond-with-an-error③">(4)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="handle-a-connection-closing">
