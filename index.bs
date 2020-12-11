@@ -74,7 +74,6 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: EnumerableOwnPropertyNames; url: sec-enumerableownpropertynames
     text: Get; url: sec-get
     text: HasProperty; url: sec-hasproperty
-    text: internal slot; url: sec-object-internal-methods-and-internal-slots
     text: IsArray; url: sec-isarray
     text: IsCallable; url: sec-iscallable
     text: IsPromise; url: sec-ispromise
@@ -87,6 +86,8 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: ToString; url: sec-tostring
     text: Type; url: sec-ecmascript-data-types-and-values
     text: current realm record; url: current-realm
+    text: internal slot; url: sec-object-internal-methods-and-internal-slots
+    text: primitive value; url: sec-primitive-value
     text: realm; url: sec-code-realms
     text: time value; url: sec-time-values-and-time-range
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/
@@ -1159,8 +1160,10 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
                Otherwise, let |children| be an empty list and, for each node
                |child| in the [=children=] of |value|:
 
+              1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null otherwise.
+
               1. Let |serialized| be the result of [=serialize as a remote value=]
-                 with |child|, |max depth| - 1, |node details| and
+                 with |child|, |child depth|, |node details| and
                  |set of known objects|.
 
               1. Append |serialized| to |children|.
@@ -1184,9 +1187,14 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
                1. Let |shadow root| be |value|'s [=Element/shadow root=].
 
                1. If |shadow root| is null, let |serialized shadow| be null.
-                  Otherwise let |serialized shadow| be the result of
-                  [=serialize as a remote value=] with |shadow root|, |max depth| - 1,
-                  false and |set of known objects|.
+                  Otherwise run the following substeps:
+
+                 1.  Let |child depth| be |max depth| - 1 if |max depth| is not
+                    null, or null otherwise.
+
+                 1. Let |serialized shadow| be the result of
+                    [=serialize as a remote value=] with |shadow root|, |child depth|,
+                    false and |set of known objects|.
 
                   Note: this means the <code>objectId</code> for the shadow root
                   will be serialized irrespective of whether the shadow is open or closed,
@@ -1249,9 +1257,12 @@ To <dfn>serialize as a list</dfn> given |iterable|, |max depth|,
 
   1. For each |child value| in |iterable|:
 
-    1. Let |serialized child| be the result of [=serialize as a
-       remote value=] with arguments |child value|, |max
-       depth| - 1, |node details| and |set of known objects|.
+    1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null
+       otherwise.
+
+    1. Let |serialized child| be the result of [=serialize as a remote value=]
+       with arguments |child value|, |child depth|, |node details| and |set of
+       known objects|.
 
     1. Append |serialized child| to |serialized|.
 
@@ -1275,14 +1286,17 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
 
     1. Let |key| be |property|[0] and let |value| be |property|[1]
 
+    1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null
+       otherwise.
+
     1. If [=Type=](|key|) is String, let |serialized key| be |child key|,
        otherwise let |serialized key| be the result of [=serialize as a remote
-       value=] with arguments |child key|, |max depth| - 1, |node details| and
+       value=] with arguments |child key|, |child depth|, |node details| and
        |set of known objects|.
 
-    1. Let |serialized value| be the result of [=serialize as a
-       remote value=] with arguments |value|, |max
-       depth| - 1, |node details| and |set of known objects|.
+    1. Let |serialized value| be the result of [=serialize as a remote value=]
+       with arguments |value|, |child depth|, |node details| and |set of known
+       objects|.
 
     1. Let |serialized child| be («|serialized key|, |serialized value|»).
 
@@ -2189,13 +2203,17 @@ optionally, <var ignore>options</var>:
 
 1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
 
-1. Let |text| be an implementation-defined string representing the arguments
-   passed as |args|, or null if there is no appropriate string representation.
+1. Let |text| be an empty string.
+
+1. For each |arg| in |args|:
+
+  1. If |arg| is a [=primitive value=], append [=ToString=](|arg|) to
+     |text|. Otherwise append an implementation-defined string to |text|.
 
 1. Let |serialized args| be a new list.
 
 1. For each |arg| of |args|, append the result of [=serialize as a remote
-   value=] given |arg| to |serialized args|.
+   value=] given |arg|, null, true, and an empty [=set=] to |serialized args|.
 
 1. Let |realm| be the [=realm id=] of the [=current Realm Record=].
 
@@ -2221,7 +2239,7 @@ optionally, <var ignore>options</var>:
 
 1. [=Emit an event=] with |body| and |related contexts|.
 
-After an implementation is required to [=report an exception=] from |script|,
+Immediately after an implementation is required to [=report an exception=] from |script|,
 and the error is [=not handled=]:
 
 1. Let |settings| be |script|'s [=script/settings object=].
@@ -2253,7 +2271,10 @@ and the error is [=not handled=]:
 
 Issue: Add support for stacktraces
 
-Issue: Lots more things require logging
+Issue: Lots more things require logging. CDP has LogEntryAdded types xml,
+javascript, network, storage, appcache, rendering, security, deprecation,
+worker, violation, intervention, recommendation, other. These are in addition to
+the js exception and console API types that are represented by different methods.
 
 Issue: Allow implementation-defined log types
 
