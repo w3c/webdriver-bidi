@@ -89,6 +89,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: internal slot; url: sec-object-internal-methods-and-internal-slots
     text: primitive value; url: sec-primitive-value
     text: realm; url: sec-code-realms
+    text: running execution context; url: running-execution-context
     text: time value; url: sec-time-values-and-time-range
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/
   type: dfn
@@ -96,7 +97,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/
     text: a browsing context is discarded; url: a-browsing-context-is-discarded
     text: create a new browsing context; url: creating-a-new-browsing-context
     text: environment settings object's Realm; url: environment-settings-object's-realm
-    text: not handled; url: concept-error-nothandled
+    text: handled; url: concept-error-handled
     text: report an error; url: report-the-error
     text: remove a browsing context; url: bcg-remove
     text: session history; url: session-history
@@ -2149,7 +2150,7 @@ LogEvent = (
 
 ### Types ### {#module-log-types}
 
-#### Log Entry #### {#types-log-log-entry}
+#### log.LogEntry #### {#types-log-logentry}
 
 <pre class="cddl local-cddl">
 
@@ -2160,6 +2161,7 @@ LogEntry = {
   level: LogLevel,
   text: text / null,
   timestamp: int,
+  ?stackTrace: [*StackFrame],
   extra: { *text => any }
 }
 
@@ -2180,9 +2182,58 @@ JavascriptLogExtra = {
 Each log event is represented by a <code>LogEntry</code> object. This has a
 <code>type</code> property which represents the type of log entry added, a
 <code>level</code> property representing severity, a <code>text</code> property
-with the log message string itself, and a <code>timesteamp</code> property
+with the log message string itself, and a <code>timestamp</code> property
 corresponding to the time the log entry was generated. The <code>extra</code>
 property contains additional data specific to the given type.
+
+#### log.StackFrame #### {#types-log-stackframe}
+
+<pre class="cddl local-cddl">
+
+StackFrame = {
+  url: text,
+  functionName: text,
+  lineNumber: int,
+  columnNumber: int,
+}
+
+</pre>
+
+A frame in a stacktrace is represented by a <code>StackFrame</code> object. This
+has a <code>url</code> property, which represents the URL of the script, a
+<code>functionName</code> property which represents the name of the executing
+function, an <code>lineNumber</code> and <code>columnNumber</code> properties,
+which represent the line and column number of the executed code.
+
+The <dfn>current stack trace</dfn> is a representation of the stack of the
+[=running execution context=]. The details of this are unspecified, and so the
+bheaviour here is implementation defined, but the general process is as follows:
+
+ 1. Let |stack trace| be a new list.
+
+ 1. For each stack frame |frame| in the stack of the running execution context,
+    starting from the most recently executed frame, run the following steps:
+
+    1. Let |url| be the result of running the [=URL serializer=], given
+       the <a spec=url for=/>URL</a> of |frame|'s associated script resource.
+
+    1. Let |functionName| be the name of |frame|'s associated function.
+
+    1. Let |lineNumber| and |columnNumber| be the on-based line and zero-based
+       column numbers, respectively, of the location in |frame|'s associated
+       script resource corresponding to |frame|.
+
+    1. Let |frame info| be a new map matching the <code>StackFrame</code>
+       production, with the <code>url</code> field set to |url|, the
+       <code>functionName</code> field set to |functionName|, the
+       <code>lineNumber</code> field set to |lineNumber| and the
+       <code>columnNumber</code> field set to |columnNumber|.
+
+ 1. Append |frame info| to |stack trace|.
+
+ 1. Return |stack trace|
+
+### Events ### {#module-log-events}
 
 #### entryAdded #### {#event-log-entryAdded}
 
@@ -2192,8 +2243,8 @@ LogEntryAddedEvent = {
 
 <div algorithm="remote end event trigger for log.entryAdded">
 
-When the [=Printer=] operation is invoked with arguments |logLevel|, |args| and,
-optionally, <var ignore>options</var>:
+Define the following [=console Printer steps=] with |logLevel|, |args|, and <var
+ignore>options</var>:
 
 1. If |logLevel| is "<code>error</code>" or "<code>assert</code>", let |level|
    be "<code>error</code>". If |logLevel| is "<code>debug</code>" or
@@ -2217,6 +2268,8 @@ optionally, <var ignore>options</var>:
 
 1. Let |realm| be the [=realm id=] of the [=current Realm Record=].
 
+1. Let |stack| be the [=current stack trace=].
+
 1. Let |extra| be a map matching the <code>ConsoleLogExtra</code> production,
    with the <code>type</code> field set to |logLevel|, the <code>realm</code>
    field set to |realm| and the <code>args</code> field set to |serialized
@@ -2225,8 +2278,9 @@ optionally, <var ignore>options</var>:
 1. Let |entry| be a map matching the <code>LogEntry</code> production, with the
    <code>type</code> field set to "<code>console</code>", the <code>level</code>
    field set to |level|, the <code>text</code> field set to |text|, the
-   <code>timestap</code> field set to |timestamp| and the <code>extra</code>
-   field set to |extra|.
+   <code>timestap</code> field set to |timestamp|, the <code>stackTrace</code>
+   field set to |stack| if |stack| is not null, or omitted otherwise, and the
+   <code>extra</code> field set to |extra|.
 
 1. Let |body| be a map matching the <code>LogEntryAdded</code> production, with
    the <code>params</code> field set to |entry|.
@@ -2239,20 +2293,17 @@ optionally, <var ignore>options</var>:
 
 1. [=Emit an event=] with |body| and |related contexts|.
 
-Immediately after an implementation is required to [=report an exception=] from |script|,
-and the error is [=not handled=]:
+Define the following [=error reporting steps=] with arguments |script|,
+|line number|, |column number|, |message| and |handled|:
+
+1. If |handled| is true return.
 
 1. Let |settings| be |script|'s [=script/settings object=].
 
-1. Let |message| be the implementation-defined string that was
-   used as the message in [=report an error=].
-
-1. Let |line number| and |column number| be the one-based line number and
-   zero-based column number, respectively, in the resource containing |script|,
-   at the line where the error originated.
-
 1. Let |url| be the result of running the [=URL serializer=], given
    |settings|'s [=creation URL=].
+
+1. Let |stack| be the [=current stack trace=] for the exception.
 
 1. Let |extra| a map matching the <code>JavascriptLogExtra</code> production,
    with the <code>lineNumber</code> field set to |line number|, the
@@ -2268,8 +2319,6 @@ and the error is [=not handled=]:
 1. Let |related contexts| be the result of [=get related contexts=] given |settings|.
 
 1. [=Emit an event=] with |body| and |related contexts|.
-
-Issue: Add support for stacktraces
 
 Issue: Lots more things require logging. CDP has LogEntryAdded types xml,
 javascript, network, storage, appcache, rendering, security, deprecation,
@@ -2307,3 +2356,24 @@ To discard a browsing context |browsingContext|, run these steps:
 Issue: The actual patch might be better to split the algorithm into an outer algorithm that is
 called by external callers and an inner algorithm that's used for recursive calls. That's quite hard
 to express as a patch to the specification since it requires changing multiple parts.
+
+
+The [=report an error=] algorithm is modified with an additional step at the
+end:
+
+<div algorithm>
+11. Call any <dfn>error reporting steps</dfn> decined in external specifications
+     with <var ignore>script</var>, <var ignore>line</var>, <var
+     ignore>col</var>, <var ignore>message</var>, and true if the error is
+     [=handled=], or false otherwise.
+
+</div>
+## Console ##  {#patches-console}
+
+The [=Printer=] operation is modified with a single required step before the
+implementation defined behaviour:
+
+1. Call any <dfn>console Printer steps</dfn> defined in external specification
+   with arguments <var ignore>logLevel</var>, <var ignore>args</var> and,
+   <var ignore>options</var> if the <var ignore>options</var> object was
+   passed, or undefined otherwise.
