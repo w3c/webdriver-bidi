@@ -88,16 +88,20 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/
   type: dfn
     text: a browsing context is discarded; url: a-browsing-context-is-discarded
     text: create a new browsing context; url: creating-a-new-browsing-context
+    text: environment settings object's Realm; url: environment-settings-object's-realm
     text: remove a browsing context; url: bcg-remove
     text: session history; url: session-history
+    text: set up a window environment settings object; url: set-up-a-window-environment-settings-object
+    text: set up a worker environment settings object; url: set-up-a-worker-environment-settings-object
+    text: worker event loop; url: worker-event-loop-2
+    text: worklet global scopes; url: concept-document-worklet-global-scopes
 </pre>
 
 <pre class="link-defaults">
 spec:infra; type:dfn; for:/; text:set
 </pre>
 
-Introduction {#intro}
-=====================
+# Introduction {#intro}
 
 <em>This section is non-normative.</em>
 
@@ -108,15 +112,13 @@ command/response format of WebDriver, this permits events to stream
 from the user agent to the controlling software, better matching the
 evented nature of the browser DOM.
 
-Infrastructure {#infrastructure}
-==========================
+# Infrastructure {#infrastructure}
 
 This specification depends on the Infra Standard. [[!INFRA]]
 
 Network protocol messages are defined using CDDL. [[!RFC8610]]
 
-Protocol {#protocol}
-==============
+# Protocol # {#protocol}
 
 This section defines the basic concepts of the WebDriver BiDi
 protocol. These terms are distinct from their representation at the
@@ -174,12 +176,14 @@ ErrorResponse = {
   error: "unknown error" / "unknown method" / "invalid argument",
   message: text,
   ?stacktrace: text,
+  *text => any
 }
 
 ResultData = (
   EmptyResult //
   SessionResult //
-  BrowsingContextResult
+  BrowsingContextResult //
+  ScriptResult
 )
 
 EmptyResult = {}
@@ -190,7 +194,8 @@ Event = {
 }
 
 EventData = (
-  BrowsingContextEvent
+  BrowsingContextEvent //
+  ScriptEvent
 )
 </pre>
 
@@ -348,8 +353,7 @@ To <dfn>obtain a set of event names</dfn> given an |name|:
   1. Return [=success=] with data |events|.
 </div>
 
-Transport {#transport}
-======================
+# Transport # {#transport}
 
 Message transport is provided using the WebSocket protocol.
 [[!RFC6455]]
@@ -700,22 +704,9 @@ with parameters |session| and |capabilities| is:
 
 </div>
 
-Common Data Types {#data-types}
-===============================
+# Common Data Types # {#data-types}
 
-This section defines data types which are common to many modules.
-
-## Realm ## {#data-types-realm}
-
-[=remote end definition=] and [=local end definition=]
-```
-Realm = text;
-```
-
-Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
-uniquely identifying that realm.
-
-## Remote Value ## {#data-types-remote-value}
+## Remote Value ## {#type-common-RemoteValue}
 
 Values accessible from the ECMAScript runtime are represented by a mirror
 object, specified as <code>RemoteValue</code>. The value's type is specified in
@@ -1272,10 +1263,7 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
   1. Return |serialized|
 </div>
 
-
-
-Modules {#modules}
-==================
+# Modules # {#modules}
 
 ## The session Module ## {#module-session}
 
@@ -1503,7 +1491,7 @@ BrowsingContextEvent = (
 
 ### Types ### {#module-browsingcontext-types}
 
-#### The browsingContext.BrowsingContext Type #### {#types-browsingcontext}
+#### The browsingContext.BrowsingContext Type #### {#type-browsingContext-Browsingcontext}
 
 [=remote end definition=] and [=local end definition=]
 
@@ -1531,7 +1519,7 @@ To <dfn>get a browsing context</dfn> given |context id|:
 
 </div>
 
-#### The browsingContext.BrowsingContextInfo Type #### {#types-browsingcontextinfo}
+#### The browsingContext.BrowsingContextInfo Type #### {#type-browsingContext-BrowsingContextInfo}
 
 [=local end definition=]
 
@@ -1633,7 +1621,7 @@ top-level contexts when no parent is provided.
    <dd>
     <pre class="cddl local-cddl">
         BrowsingContextGetTreeResult = {
-          contexts: [*BrowsingContextInfo]
+          contexts: BrowsingContextInfoList
         }
     </pre>
    </dd>
@@ -1737,6 +1725,367 @@ Issue: the way this hooks into HTML feels very fragile. See https://github.com/w
 Issue: It's unclear if we ought to only fire this event for browsing
 contexts that have active documents; navigation can also cause contexts to
 become inaccessible but not yet get discarded because bfcache.
+</div>
+
+## The script Module ## {#module-script}
+
+The <dfn export for=modules>script</dfn> module contains commands and events
+relating to script realms and execution.
+
+### Definition ### {#module-script-definition}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl">
+
+ScriptCommand = (ScriptGetRealmsCommand)
+</pre>
+
+[=local end definition=]
+
+<pre class="cddl local-cddl">
+
+ScriptResult = (ScriptGetRealmsResult)
+
+ScriptEvent = (
+    ScriptRealmCreatedEvent //
+    ScriptRealmDestroyedEvent
+)
+
+</pre>
+
+
+### Types ### {#module-script-types}
+
+#### The script.Realm type #### {#type-script-Realm}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl remote-cddl">
+Realm = text;
+</pre>
+
+Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
+uniquely identifying that realm. This is implicitly set when the realm is
+created.
+
+<!-- TEMPORARILY UNUSED
+<div algorithm>
+To <dfn>get a realm</dfn> given |realm id|:
+
+ 1. If |realm id| is null, return [=success=] with data null.
+
+ 1. If there is no [=realm=] with [=realm id|id=] |realm id| return
+    [=error=] with [=error code=] [=no such frame=]
+
+ 1. Let |realm| be the [=realm=] with [=realm id|id=] |realm id|.
+
+ 1. Return [=success=] with data |realm|
+
+Issue: This has the wrong error code
+</div>
+-->
+
+#### The script.RealmInfo type ####  {#type-script-RealmInfo}
+
+[=Local end definition=]
+
+<pre class="cddl local-cddl">
+RealmInfo = {
+  realm: Realm,
+  type: RealmType,
+  origin: text
+}
+
+RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" / "worker" / "paint-worklet" / "audio-worklet" / "worklet" / text
+</pre>
+
+The <code>RealmInfo</code> type represents the properties of a realm.
+
+<div algorithm>
+To <dfn>get the realm info</dfn> given |environment settings|:
+
+ 1. Let |realm| be |environment settings|' [=realm execution context=]'s Realm component.
+
+ 1. Let |realm id| be the [=realm id=] for |realm|.
+
+ 1. Run the steps under the first matching condition:
+
+   <dl>
+     <dt>The [=Realm/global object=] specified by |environment settings| is a [=Window=] object
+     <dd>
+      1. Let |type| be "<code>window</code>".
+
+     <dt>The [=Realm/global object=] specified by |environment settings| is a {{DedicatedWorkerGlobalScope}} object
+     <dd>
+       1. Let |type| be "<code>dedicated-worker</code>".
+     <dt>The [=Realm/global object=] specified by |environment settings| is a {{SharedWorkerGlobalScope}} object
+
+    <dd>
+       1. Let |type| be "<code>shared-worker</code>".
+     <dt>The [=Realm/global object=] specified by |environment settings| is a {{ServiceWorkerGlobalScope}} object
+
+    <dd>
+       1. Let |type| be "<code>service-worker</code>".
+
+    <dt>The [=Realm/global object=] specified by |environment settings| is a {{WorkerGlobalScope}} object
+    <dd>
+       1. Let |type| be "<code>worker</code>".
+
+    <dt>The [=Realm/global object=] specified by |environment settings| is a {{PaintWorkletGlobalScope}} object
+    <dd>
+       1. Let |type| be "<code>paint-worklet</code>".
+
+    <dt>The [=Realm/global object=] specified by |environment settings| is a {{AudioWorkletGlobalScope}} object
+    <dd>
+       1. Let |type| be "<code>audio-worklet</code>".
+
+    <dt>The [=Realm/global object=] specified by |environment settings| is a {{WorkletGlobalScope}} object
+    <dd>
+       1. Let |type| be "<code>worklet</code>".
+
+    <dt>Otherwise:
+    <dd>
+       1. Return null.
+   </dl>
+
+ 1. Let |origin| be the [=serialization of an origin=] given |environment settings|'s |origin|.
+
+ 1. Let |realm info| be a map matching the <code>RealmInfo</code> production,
+    with the <code>realm</code> field set to |realm id|, the <code>type</code>
+    field set to |type| and the <code>origin</code> field set to |origin|.
+
+ 1. Return |realm info|
+
+Issue: We currently don't provide information about realms of unknown
+       types. That might be a problem for e.g. extension-related realms.
+
+
+Note: Future variations of this specification will retain the invariant that
+         the last component of the type name after splitting on "<code>-</code>"
+         will always be "<code>worker</code>" for globals implementing
+         {{WorkerGlobalScope}}, and "<code>worklet</code>" for globals
+         implementing {{WorkletGlobalScope}}.
+
+</div>
+
+### Commands ### {#module-script-commands}
+
+#### The script.getRealms Command ####  {#command-script-getRealms}
+
+The <dfn export for=commands>script.getRealms</dfn> command returns a list of
+all realms, optionally filtered to [=realms=] of a specific type, or to the
+realm associated with the [=document=] currently loaded in a specified
+[=/browsing context=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      ScriptGetRealmsCommand = {
+        method: "script.getRealms",
+        params: GetRealmsParameters
+      }
+
+      GetRealmsParameters = {
+        ?context: BrowsingContext,
+        ?type: RealmType,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      RealmInfoList = [* RealmInfo]
+
+      ScriptGetRealmsResult = {
+        realms: RealmInfoList
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for script.getRealms">
+The [=remote end steps=] with |command parameters| are:
+
+  1. Let |environment settings| be a list of all the [=environment settings objects=]
+     that have their [=execution ready flag=] set.
+
+  1. If |command parameters| contains <code>context</code>:
+
+    1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+       with |command parameters|["<code>context</code>"].
+
+    1. Let |document| be |context|'s [=active document=].
+
+    1. Let |context environment settings| be a list.
+
+    1. For each |settings| of |environment settings|:
+
+      1. If any of the following conditions hold:
+
+        * The [=responsible document=] of |settings| is |document|
+
+        * The [=Realm/global object=] specified by |settings| is a
+          {{WorkerGlobalScope}} with |document| in its [=owner set=]
+
+        Append |settings| to |context environment settings|.
+
+    1. Set |environment settings| to |context environment settings|.
+
+  1. Let |realms| be a list.
+
+  1. For each |settings| of |environment settings|:
+
+    1. Let |realm info| be the result of [=get the realm info=] given |settings|
+
+    1. If |command parameters| contains <code>type</code> and |realm
+       info|["<code>type</code>"] is not equal to |command
+       parameters|["<code>type</code>"] then [=continue=].
+
+    1. If |realm info| is not null, append |realm info| to |realms|.
+
+  1. Let |body| be a map matching the <code>GetRealmsResult</code> production,
+     with the <code>realms</code> field set to |realms|.
+
+  1. Return [=success=] with data |body|.
+
+
+Issue: Extend this to also allow realm parents e.g. for nested workers? Or get all ancestor workers.
+
+Issue: We might want to have a more sophisticated filter system than just a
+       literal match.
+
+</div>
+
+### Events ### {#module-script-events}
+
+#### The script.realmCreated Event #### {#event-script-realmCreated}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        ScriptRealmCreatedEvent = {
+         method: "script.realmCreated",
+         params: RealmInfo
+       }
+      </pre>
+   </dd>
+</dl>
+The [=remote end event trigger=] is:
+
+<div algorithm="remote end event trigger for script.realmCreated">
+
+When any of the [=set up a window environment settings object=], [=set up a
+worker environment settings object=] or [=set up a worklet environment settings
+object=] algorithms are invoked, immediately prior to returning the settings
+object:
+
+ 1. Let |environment settings| be the newly created [=environment settings
+    object=].
+
+ 1. Let |realm info| be be the result of [=get the realm info=] given
+    |environment settings|.
+
+ 1. If |realm info| is null, return.
+
+ 1. Let |related contexts| be an empty set.
+
+ 1. If the [=responsible document=] of |settings| is a [=Document=], append the
+    [=responsible document=]'s [=Document/browsing context=] to |related contexts|.
+
+    Otherwise if the [=Realm/global object=] specified by |settings| is a
+    {{WorkerGlobalScope}}, for each |owner| in the [=Realm/global object=]'s
+    [=owner set=], if |owner| is a [=Document=], append |owner|'s
+    [=Document/browsing context=] to |related contexts|.
+
+ 1. Let |body| be a map matching the <code>RealmCreatedEvent</code>
+    production, with the <code>params</code> field set to |realm info|.
+
+ 1. [=Emit an event=] with |body| and |related contexts|.
+
+</div>
+
+#### The script.realmDestroyed Event #### {#event-script-realmDestroyed}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+       RealmDestroyedParameters = {
+         realm: Realm
+       }
+
+       ScriptRealmDestroyedEvent = {
+         method: "script.realmDestoyed",
+         params: RealmDestroyedParameters
+       }
+      </pre>
+   </dd>
+</dl>
+The [=remote end event trigger=] is:
+
+<div algorithm="remote end event trigger for script.realmDestroyed">
+Define the following [=unloading document cleanup steps=] with |document|:
+
+ 1. Let |related contexts| be an empty set.
+
+ 1. Append |document|'s [=Document/browsing context=] to |related contexts|.
+
+ 1. For each |worklet global scope| in |document|'s [=worklet global scopes=]:
+
+   1. Let |realm| be |worklet global scope|'s [=relevant Realm=].
+
+   1. Let |realm id| be the [=realm id=] for |realm|.
+
+   1. Let |params| be a map mathcing the <code>RealmDestroyedParameters</code>
+      production, with the <code>realm</code> field set of |realm id|.
+
+   1. Let |body| be a map matching the <code>RealmDestroyedEvent</code>
+      production, with the <code>params</code> field set to |params|.
+
+   1. [=Emit an event=] with |body| and |related contexts|.
+
+ 1. Let |environment settings| be the [=environment settings object=] whose
+    [=responsible document=] is |document|.
+
+ 1. Let |realm| be |environment settings|' [=realm execution context=]'s Realm component.
+
+ 1. Let |realm id| be the [=realm id=] for |realm|.
+
+ 1. Let |params| be a map mathcing the <code>RealmDestroyedParameters</code>
+    production, with the <code>realm</code> field set to |realm id|.
+
+ 1. Let |body| be a map matching the <code>RealmDestroyedEvent</code>
+    production, with the <code>params</code> field set to |params|.
+
+ 1. [=Emit an event=] with |body| and |related contexts|.
+
+Whenever a [=worker event loop=] |event loop| is destroyed, either because the
+worker comes to the end of its lifecycle, or prematurely via the [=terminate a
+worker=] algorithm:
+
+ 1. Let |related contexts| be an empty set.
+
+ 1. Let |environment settings| be the [=environment settings object=] for which
+    |event loop| is the [=responsible event loop=].
+
+ 1. If the [=Realm/global object=] specified by |environment settings| is a
+    {{WorkerGlobalScope}}, for each |owner| in the [=Realm/global object=]'s
+    [=owner set=], if |owner| is a [=Document=], append |owner|'s
+    [=Document/browsing context=] to |related contexts|.
+
+ 1. Let |realm| be |environment settings|'s [=environment settings object's Realm=].
+
+ 1. Let |realm id| be the [=realm id=] for |realm|.
+
+ 1. Let |params| be a map mathcing the <code>RealmDestroyedParameters</code>
+    production, with the <code>realm</code> field set of |realm id|.
+
+ 1. Let |body| be a map matching the <code>RealmDestroyedEvent</code>
+    production, with the <code>params</code> field set to |params|.
+
 </div>
 
 # Patches to Other Specifications # {#patches}
