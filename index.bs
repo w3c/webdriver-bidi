@@ -2156,19 +2156,29 @@ LogEvent = (
 
 LogLevel = "debug" / "info" / "warning" / "error"
 
-LogEntry = {
-  type: text,
+BaseLogEntry = {
   level: LogLevel,
   text: text / null,
   timestamp: int,
   ?stackTrace: [*StackFrame],
-  extra: { *text => any }
 }
 
-ConsoleLogExtra = {
+GenericLogEntry = {
+  BaseLogEntry,
   type: text,
+}
+
+ConsoleLogEntry = {
+  BaseLogEntry,
+  type: "console",
+  method: text,
   realm: Realm,
   args: [*RemoteValue],
+}
+
+JavascriptLogEntry = {
+  BaseLogEntry,
+  type: "javascript",
 }
 
 </pre>
@@ -2231,19 +2241,34 @@ behaviour here is implementation defined, but the general process is as follows:
 
 #### entryAdded #### {#event-log-entryAdded}
 
-LogEntryAddedEvent = {
-  method: "log.entryAdded",
-  params: LogEntry
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        LogEntryAddedEvent = {
+         method: "log.entryAdded",
+         params: (
+             GenericLogEntry //
+             ConsoleLogEntry //
+             JavascriptLogEntry
+         )
+       }
+      </pre>
+   </dd>
+</dl>
+
+The [=remote end event trigger=] is:
 
 <div algorithm="remote end event trigger for log.entryAdded">
 
-Define the following [=console Printer steps=] with |logLevel|, |args|, and <var
+Define the following [=console steps=] with |method|, |args|, and <var
 ignore>options</var>:
 
-1. If |logLevel| is "<code>error</code>" or "<code>assert</code>", let |level|
-   be "<code>error</code>". If |logLevel| is "<code>debug</code>" or
-   "<code>trace</code>" let |level| be "<code>debug</code>". If |logLevel| is
-   "<code>warn</code>" or "<code>warning</code>", let |level| be "<code>warning</code>". Otherwise let
+1. If |method| is "<code>error</code>" or "<code>assert</code>", let |level| be
+   "<code>error</code>". If |method| is "<code>debug</code>" or
+   "<code>trace</code>" let |level| be "<code>debug</code>". If |method| is
+   "<code>warn</code>" or <code>warning</code>, let |level| be
+   "<code>warning</code>". Otherwise let
    |level| be "<code>info</code>".
 
 1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
@@ -2266,17 +2291,13 @@ ignore>options</var>:
 
 1. Let |stack| be the [=current stack trace=].
 
-1. Let |extra| be a map matching the <code>ConsoleLogExtra</code> production,
-   with the <code>type</code> field set to |logLevel|, the <code>realm</code>
+1. Let |entry| be a map matching the <code>ConsoleLogEntry</code> production,
+   with the the <code>level</code> field set to |level|, the <code>text</code>
+   field set to |text|, the <code>timestap</code> field set to |timestamp|, the
+   <code>stackTrace</code> field set to |stack| if |stack| is not null, or
+   omitted otherwise, the |method| field set to |method|, the <code>realm</code>
    field set to |realm| and the <code>args</code> field set to |serialized
    args|.
-
-1. Let |entry| be a map matching the <code>LogEntry</code> production, with the
-   <code>type</code> field set to "<code>console</code>", the <code>level</code>
-   field set to |level|, the <code>text</code> field set to |text|, the
-   <code>timestap</code> field set to |timestamp|, the <code>stackTrace</code>
-   field set to |stack| if |stack| is not null, or omitted otherwise, and the
-   <code>extra</code> field set to |extra|.
 
 1. Let |body| be a map matching the <code>LogEntryAddedEvent</code> production, with
    the <code>params</code> field set to |entry|.
@@ -2289,25 +2310,19 @@ ignore>options</var>:
 
 1. [=Emit an event=] with |body| and |related contexts|.
 
-Define the following [=error reporting steps=] with arguments |script|,
-|line number|, |column number|, |message| and |handled|:
+Define the following [=error reporting steps=] with arguments |script|, <var
+ignore>line number</var>, <var ignore>column number</var>, |message| and
+|handled|:
 
 1. If |handled| is true return.
 
 1. Let |settings| be |script|'s [=script/settings object=].
 
-1. Let |url| be the result of running the [=URL serializer=], given
-   |settings|'s [=creation URL=].
-
 1. Let |stack| be the [=current stack trace=] for the exception.
 
-1. Let |extra| an empty map.
-
-1. Let |entry| be a map matching the <code>LogEntry</code> production, with the
-   <code>type</code> field set to "<code>javascript</code>", <code>level</code>
-   set to "<code>error</code>", <code>text</code> set to |message|, the
-   <code>timestap</code> field set to |timestamp| and the <code>extra</code>
-   field set to |extra|.
+1. Let |entry| be a map matching the <code>JavascriptLogEntry</code> production,
+   with <code>level</code> set to "<code>error</code>", <code>text</code> set to
+   |message|, and the <code>timestap</code> field set to |timestamp|.
 
 1. Let |related contexts| be the result of [=get related contexts=] given |settings|.
 
@@ -2363,10 +2378,15 @@ end:
 </div>
 ## Console ##  {#patches-console}
 
-The [=Printer=] operation is modified with a single required step before the
-implementation defined behaviour:
+Other specifications can define <dfn>console steps</dfn>. When any method of the
+{{console}} interface is called, with method name
+|method| and argument |args|:
 
-1. Call any <dfn>console Printer steps</dfn> defined in external specification
-   with arguments <var ignore>logLevel</var>, <var ignore>args</var> and,
-   <var ignore>options</var> if the <var ignore>options</var> object was
-   passed, or undefined otherwise.
+1. If that method does not call the [=Printer=] operation, call any [=console
+   steps=] defined in external specification with arguments |method|, |args|
+   and, undefined.
+
+   Otherwise, at the point when the [=Printer=] operation is called with
+   arguments |name|, |printerArgs| and |options| (which is undefined if the
+   argument is not provided), call any [=console steps=] defined in
+   external specification with arguments |name|, |printerArgs|, and |options|.
