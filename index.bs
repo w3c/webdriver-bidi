@@ -1363,9 +1363,11 @@ enabled for specific contexts, the contexts in the return value are those for
 which the event are now enabled but were not previously. When events are
 disabled, the return value is always empty.
 
-  1. Let |global event set| be the [=global event set=] for |session|.
+  1. Let |global event set| be a [=set/clone=] of the [=global event set=] for
+     |session|.
 
-  1. Let |event map| be the [=browsing context event map=] for |session|.
+  1. Let |event map| be a [=map/clone=] the [=browsing context event map=] for
+     |session|.
 
   1. Let |enabled events| be a new map.
 
@@ -1398,43 +1400,49 @@ disabled, the return value is always empty.
         1. For each |event name| in |event names|:
 
           1. If the |global event set| [=contains=] |event name|, remove |event
-             name| from the |global event set|.
+             name| from the |global event set|. Otherwise return [=error=] with
+             [=error code=] [=invalid argument=].
 
-      1. Return [=success=] with data |enabled events|.
+  1. Otherwise, if |browsing contexts| is not null:
 
-  1. Assert: |browsing contexts| is not null.
+    1. Let |targets| be an empty map.
 
-  1. Let |targets| be an empty map.
+    1. For each |context id| in |browsing contexts|:
 
-  1. For each |context id| in |browsing contexts|:
+      1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+         with |context id|.
 
-    1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-       with |context id|.
+      1. Let |top-level context| be the [=top-level browsing context=] for |context|.
 
-    1. Let |top-level context| be the [=top-level browsing context=] for |context|.
+      1. If |event map| does not contain |top-level context|, set |event
+         map|[|top-level context|] to a new set.
 
-    1. If |event map| does not contain |top-level context|, set |event
-       map|[|top-level context|] to a new set.
+      1. Set |targets|[|top-level context|] to |event map|[|top-level context|].
 
-    1. Set |targets|[|top-level context|] to |event map|[|top-level context|].
+    1. For each |event name| in |event names|:
 
-  1. For each |event name| in |event names|:
+      1. If |enabled| is true and |global event set| contains |event name|, continue.
 
-    1. If |enabled| is true and |global event set| contains |event name|, continue.
+      1. For each |context| → |target| in |targets|:
 
-    1. For each |context| → |target| in |targets|:
+        1. If |enabled| is true and |target| does not contain |event name|:
 
-      1. If |enabled| is true and |target| does not contain |event name|:
+          1. |event name| to |target|.
 
-         1. |event name| to |target|.
+          1. If |enabled events| does not contain |event name|, set |enabled
+             events|[|event name|] to a new set.
 
-         1. If |enabled events| does not contain |event name|, set |enabled
-            events|[|event name|] to a new set.
+          1. Append |context| to |enabled events|[|event name|].
 
-         1. Append |context| to |enabled events|[|event name|].
+        1. If |enabled| is false:
 
-      1. If |enabled| is false and |target| contains |event name|, remove |event
-         name| from |target|.
+          1. If |target| contains |event name|, remove |event name| from
+             |target|. Otherwise return [=error=] with [=error code=] [=invalid
+             argument=].
+
+  1. Set the [=global event set=] for |session| to |global event set|.
+
+  1. Set the [=browsing context event map=] for |session| to |event map|.
 
   1. Return [=success=] with data |enabled events|.
 
@@ -1443,9 +1451,6 @@ e.g. subscribing to the relevant engine-internal events, will likely perform
 those additional steps when updating the event map. This specification uses
 a model where hooks are always called and then the event map is used to
 filter only those that ought to be returned to the local end.
-
-Issue: Currently if an event is enabled globally and then disabled for a
-specific context that's a no-op. Is that what we want? Should it be an error?
 
 </div>
 
