@@ -2141,8 +2141,6 @@ related to logging.
 
 <pre class="cddl remote-cddl">
 
-Command = (GetCommand)
-
 LogEvent = (
   LogEntryAddedEvent
 )
@@ -2155,6 +2153,12 @@ LogEvent = (
 <pre class="cddl local-cddl">
 
 LogLevel = "debug" / "info" / "warning" / "error"
+
+LogEntry = (
+  GenericLogEntry //
+  ConsoleLogEntry //
+  JavascriptLogEntry
+)
 
 BaseLogEntry = {
   level: LogLevel,
@@ -2187,8 +2191,9 @@ Each log event is represented by a <code>LogEntry</code> object. This has a
 <code>type</code> property which represents the type of log entry added, a
 <code>level</code> property representing severity, a <code>text</code> property
 with the log message string itself, and a <code>timestamp</code> property
-corresponding to the time the log entry was generated. The <code>extra</code>
-property contains additional data specific to the given type.
+corresponding to the time the log entry was generated. Specific variants of the
+<code>LogEntry</code> are used to represent logs from different sources, and
+provide additional fields specific to the entry type.
 
 #### log.StackFrame #### {#types-log-stackframe}
 
@@ -2206,7 +2211,7 @@ StackFrame = {
 A frame in a stacktrace is represented by a <code>StackFrame</code> object. This
 has a <code>url</code> property, which represents the URL of the script, a
 <code>functionName</code> property which represents the name of the executing
-function, an <code>lineNumber</code> and <code>columnNumber</code> properties,
+function, and <code>lineNumber</code> and <code>columnNumber</code> properties,
 which represent the line and column number of the executed code.
 
 The <dfn>current stack trace</dfn> is a representation of the stack of the
@@ -2223,7 +2228,7 @@ behaviour here is implementation defined, but the general process is as follows:
 
     1. Let |functionName| be the name of |frame|'s associated function.
 
-    1. Let |lineNumber| and |columnNumber| be the on-based line and zero-based
+    1. Let |lineNumber| and |columnNumber| be the one-based line and zero-based
        column numbers, respectively, of the location in |frame|'s associated
        script resource corresponding to |frame|.
 
@@ -2247,11 +2252,7 @@ behaviour here is implementation defined, but the general process is as follows:
       <pre class="cddl local-cddl">
         LogEntryAddedEvent = {
          method: "log.entryAdded",
-         params: (
-             GenericLogEntry //
-             ConsoleLogEntry //
-             JavascriptLogEntry
-         )
+         params: LogEntry,
        }
       </pre>
    </dd>
@@ -2293,7 +2294,7 @@ ignore>options</var>:
 
 1. Let |entry| be a map matching the <code>ConsoleLogEntry</code> production,
    with the the <code>level</code> field set to |level|, the <code>text</code>
-   field set to |text|, the <code>timestap</code> field set to |timestamp|, the
+   field set to |text|, the <code>timestamp</code> field set to |timestamp|, the
    <code>stackTrace</code> field set to |stack| if |stack| is not null, or
    omitted otherwise, the |method| field set to |method|, the <code>realm</code>
    field set to |realm| and the <code>args</code> field set to |serialized
@@ -2301,8 +2302,6 @@ ignore>options</var>:
 
 1. Let |body| be a map matching the <code>LogEntryAddedEvent</code> production, with
    the <code>params</code> field set to |entry|.
-
-1. Let |related contexts| be an empty set.
 
 1. Let |settings| be the [=current settings object=]
 
@@ -2322,7 +2321,7 @@ ignore>line number</var>, <var ignore>column number</var>, |message| and
 
 1. Let |entry| be a map matching the <code>JavascriptLogEntry</code> production,
    with <code>level</code> set to "<code>error</code>", <code>text</code> set to
-   |message|, and the <code>timestap</code> field set to |timestamp|.
+   |message|, and the <code>timestamp</code> field set to |timestamp|.
 
 1. Let |related contexts| be the result of [=get related contexts=] given |settings|.
 
