@@ -130,6 +130,40 @@ This specification depends on the Infra Standard. [[!INFRA]]
 
 Network protocol messages are defined using CDDL. [[!RFC8610]]
 
+This specification defines a <dfn>wait queue</dfn> which is a list.
+
+Issue: Surely there's a better mechanism for doing this "wait for an event" thing.
+
+<div algorithm>
+
+When an algorithm |algorithm| running [=in parallel=] <dfn>awaits</dfn> a set of
+events |events|, each consisting of a tuple (<code>name</code>, <code>resume
+id</code>):
+
+1. Pause the execution of |algorithm|.
+
+1. Append (|events|, |algorithm|) to [=wait queue=].
+
+</div>
+
+<div algorithm>
+To <dfn>resume</dfn> given |name|, |id| and |parameters|:
+
+1. For each |paused| in |wait queue|:
+
+  1. Let |events| and |algorithm| be the two items in |paused|
+
+  1. For each |event| in |events|:
+
+    1. If the two items in |event| are equal to |name| and |id|:
+
+      1. Remove |paused| from |wait queue|.
+
+      1. Resume running the steps in |algorithm| from the point at which they were
+         paused, passing |name| and |parameters| as the result of the [=await=].
+
+</div>
+
 # Protocol # {#protocol}
 
 This section defines the basic concepts of the WebDriver BiDi
