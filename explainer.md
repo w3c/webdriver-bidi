@@ -1,14 +1,26 @@
-# Bidirectional WebDriver Protocol
+# Bidirectional WebDriver Protocol Explainer
 
-## Overview
+WebDriver BiDi (Bi-Directional) is being developed to allow web developers to migrate from
+Chromium-only [CDP](https://chromedevtools.github.io/devtools-protocol/)-based (Chrome DevTools
+Protocol) developer tooling to cross-browser tooling.
 
-This document presents a possible design for a bidirectional WebDriver protocol, incorporating scenarios and resolutions discussed at the TPAC 2019 working group meeting. The protocol uses JSON-RPC messaging over WebSockets as the transport mechanism. WebDriver's current model of the browser is extended to include service workers and other non-page targets and make it possible for clients to target these additional contexts. We also discuss how the new protocol can interoperate with the existing protocol. Sample protocol messages illustrating how the protocol would work are included, and an JSON API specification is included alongside the document.
+## Motivation
+
+Many developer tools are exclusively targetting Chrome, relying on CDP, resulting in websites being
+better tested against Chrome and leading to site compatibility bugs for other browsers.
+
+WebDriver BiDi introduces a new protocol, designed to be used in conjunction with the existing
+WebDriver protocol, allowing new functionality to be introduced to reduce the gap in functionality
+to CDP and allowing developer tooling to target a wider variety of browsers.
+
+WebDriver BiDi should help ensure a better end-user experience across all browsers by allowing
+developers to use the same tooling across all browsers.
 
 ## Goals
 
-The protocol is designed with the following goals in mind:
-
-- **Support for the top customer scenarios identified at TPAC 2019:**
+- **Support for the top customer scenarios
+  [identified](https://www.w3.org/2019/09/19-webdriver-minutes.html#item03) at
+  [TPAC 2019](https://www.w3.org/2019/09/TPAC/):**
     - Listen for DOM events
     - Log what's going on in the browser including console and JS errors
     - Fail fast on any JS error
@@ -31,19 +43,50 @@ The protocol is designed with the following goals in mind:
     - Simple for browser vendors to implement and maintain.
     - Possible for clients to enhance their WebDriver automation with browser-specific devtools protocol features.
 
-This document doesn't attempt to dive into the any of the new feature scenarios identified above, but rather tries to provide a solid foundation and the necessary primitives to build these features on. The document does walk through an example of an existing WebDriver feature (unhandled prompts) being updated for a bidirectional world.
+## Non-goals
 
-## Proposals
+Feature parity with CDP is a non-goal at this time; many features of CDP are rarely used by
+existing developer tooling, and being able to entirely supplant CDP is not a goal at this time.
 
-- [Core Functionality](./proposals/core.md)
-- [Bootstrap Scripts](./proposals/bootstrap-scripts.md)
+## Prior Art
 
-[openrpc.json](./proposals/openrpc.json) contains an OpenRPC specification with an initial set of proposed commands and events.
+\[FIXME: [CDP](https://chromedevtools.github.io/devtools-protocol/),
+         [Firefox Remote Debug Protocol](https://firefox-source-docs.mozilla.org/devtools/backend/protocol.html),
+         [Firefox Remote Protoco](https://wiki.mozilla.org/WebDriver/RemoteProtocol)l,
+         WebKit Inspector Protocol\]
 
-## References
+## Design
 
-1. [WebDriver](https://w3c.github.io/webdriver/)
-2. [JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification)
-3. [OpenRPC Specification](https://spec.open-rpc.org/)
-4. [Browser Tools- and Testing WG, Day 1, TPAC 2019, Fukuoka](https://www.w3.org/2019/09/19-webdriver-minutes.html)
-5. [Browser Tools- and Testing WG, Day 2, TPAC 2019, Fukuoka](https://www.w3.org/2019/09/20-webdriver-minutes.html)
+WebDriver BiDi defines a transport layer (built on top of WebSockets) and a protocol on top of that
+(using JSON, where the messages are described in the standard using
+[CDDL](https://tools.ietf.org/html/rfc8610)).
+
+### Choice of Transport Layer
+
+\[FIXME\]
+
+### Choice of Protocol Layer
+
+\[FIXME. Why JSON?\]
+
+CDDL is used to describe the protocol layer because it provides formal semantics, accomplishing the
+"machine-readable API specification" goal while being similar to JSON-RPC used in the prior art.
+
+### Considered alternatives
+
+\[FIXME: Adopting CDP wholesale\]
+
+## Privacy and Security Concerns
+
+Any protocol that can be used for web testing automation can also open browsers up to malicious
+actors. It is vital that any functionality cannot be accessed from web platform content; browsers
+with multi-process architectures may want to minimise the amount of functionality within the web
+content process to avoid the use of that functionality with any remote-code execution exploit
+within the process.
+
+Other threats include:
+
+- Malware connecting to a user's browser and intercepting private data (through observing network
+  requests) or maliciously controlling it (e.g. sending a payment when logged in to a bank).
+
+- \[FIXME: ...\]
