@@ -46,13 +46,17 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: getting a property; url: dfn-get-a-property
     text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
+    text: invalid session id; url: dfn-invalid-session-id
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
+    text: maximum active sessions; url: dfn-maximum-active-sessions
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
+    text: process capabilities; url: dfn-processing-capabilities
     text: remote end steps; url: dfn-remote-end-steps
     text: remote end; url: dfn-remote-ends
     text: session ID; url: dfn-session-id
+    text: session not created; url: dfn-session-not-created
     text: session; url: dfn-sessions
     text: set a property; url: dfn-set-a-property
     text: success; url: dfn-success
@@ -60,6 +64,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: unknown command; url: dfn-unknown-command
     text: unknown error; url: dfn-unknown-error
     text: web element reference; url: dfn-web-element-reference
+    text: webdriver-active flag; url: dfn-webdriver-active-flag
     text: window handle; url: dfn-window-handle
 spec: CONSOLE; urlPrefix: https://console.spec.whatwg.org
   type: dfn
@@ -315,8 +320,12 @@ Each [=command=] is defined by:
 - A <dfn export for=command>result type</dfn>, which is defined by a [=local
   end definition=] fragment.
 - A set of [=remote end steps=] which define the actions to take for a command
-  given [=command parameters=] and return an instance of the command [=return
-  type=].
+  given a [= BiDi session=] and [=command parameters=] and return an
+  instance of the command [=return type=].
+
+A command that can run without an active session is a <dfn>static
+command</dfn>. Commands are not static commands unless stated in their
+definition.
 
 When commands are send from the [=local end=] they have a command id. This is an
 identifier used by the [=local end=] to identify the response from a particular
@@ -463,6 +472,9 @@ established from |listener| must be TLS encrypted.
 A [=remote end=] has a [=set=] of [=WebSocket listeners=] <dfn>active
 listeners</dfn>, which is initially empty.
 
+A [=remote end=] has a [=set=] of <dfn>WebSocket connections not associated with a
+session</dfn>, which is initially empty.
+
 A WebDriver [=/session=] has a <dfn>WebSocket connection</dfn> which is
 a network connection that follows the requirements of the
 [[!RFC6455|WebSocket protocol]]. This is initially null.
@@ -481,21 +493,33 @@ accept the incoming connection:
    running these steps and act as if the requested service is not
    available.
 
-2. [=Get a session ID for a WebSocket resource=] with |resource name|
+1. If |resource name| is the byte string "<code>/session</code>",
+   and the implementation [=supports BiDi-only sessions=]:
+
+    1. Run any other implementation-defined steps to decide if the
+       connection should be accepted, and if it is not stop running these
+       steps and act as if the requested service is not available.
+
+    1. Add the connection to the set of [=WebSocket connections not associated
+       with a session=].
+
+    1. Return.
+
+1. [=Get a session ID for a WebSocket resource=] with |resource name|
    and let |session id| be that value. If |session id| is null then
    stop running these steps and act as if the requested service is not
    available.
 
-3. If there is a [=/session=] in the list of [=active sessions=] with
+1. If there is a [=/session=] in the list of [=active sessions=] with
    |session id| as its [=session ID=] then let |session| be that
    session. Otherwise stop running these steps and act as if the
    requested service is not available.
 
-4. Run any other implementation-defined steps to decide if the
+1. Run any other implementation-defined steps to decide if the
    connection should be accepted, and if it is not stop running these
    steps and act as if the requested service is not available.
 
-5. Otherwise set |session|'s [=WebSocket connection=] to
+1. Otherwise set |session|'s [=WebSocket connection=] to
    |connection|, and proceed with the WebSocket [=server-side
    requirements=] when a server chooses to accept an incoming connection.
 
@@ -521,6 +545,8 @@ WebSocket connection to be closed without a closing handshake.
 To <dfn lt="construct a WebSocket resource name|constructing a
 WebSocket resource name">construct a WebSocket resource name</dfn>
 given a [=/session=] |session|:
+
+1. If |session| is null, return "<code>/session</code>"
 
 1. Return the result of concatenating the string "<code>/session/</code>"
    with |session|'s [=session ID=].
@@ -610,6 +636,11 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
     Issue: Nothing seems to define what [=status codes|status code=]
     is used for UTF-8 errors.
 
+1. If there is a WebDriver [=/session=] with |connection| as its [=connection=],
+   let |session| be that session. Otherwise if |connection| is in the set of
+   [=WebSocket connections not associated with a session=], let |session| be
+   null. Otherwise, return.
+
 1. Let |parsed| be the result of [=parse JSON into Infra values|parsing JSON
    into Infra values=] given |data|. If this throws an exception, then [=respond
    with an error=] given |connection|, null, and [=invalid argument=], and
@@ -627,10 +658,16 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 
     1. Let |method| be |matched|["<code>method</code>"]
 
+    1. Let |command| be the command with [=command name=] |method|.
+
+    1. If |session| is null and |command| is not a [=static command=], then
+       [=respond with an error=] given |connection|, |command id|, and [=invalid
+       session id=], and return.
+
     1. Run the following steps in parallel:
 
-      1. Let |result| be the result of running the [=remote end steps=] for the
-         command with [=command name=] |method| given [=command parameters=]
+      1. Let |result| be the result of running the [=remote end steps=] for
+         |command| given |session| and [=command parameters=]
          |matched|["<code>params</code>"]
 
       1. If |result| is an [=error=], then [=respond with an error=] given
@@ -641,6 +678,10 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 
       1. Assert: |value| matches the definition for the [=result type=]
          corresponding to the command with [=command name=] |method|.
+
+      1. If |method| is "<code>session.new</code>, let the [=current session=]'s
+         [=WebSocket connection=] be |connection| and remove |connection| from
+         the set of [=WebSocket connections not associated with a session=].
 
       1. Let |response| be a new map matching the <code>CommandResponse</code>
          production in the [=local end definition=] with the <code>id</code>
@@ -748,6 +789,9 @@ To <dfn>handle a connection closing</dfn> given a [=WebSocket connection=]
  1. If there is a WebDriver [=/session=] with |connection| as its [=connection=],
     set the [=connection=] on that [=/session=] to null.
 
+ 1. If the set of [=WebSocket connections not associated with a session=]
+    contains |connection|, remove |connection| from that set.
+
 Issue: This should also reset any internal state
 
 </div>
@@ -806,6 +850,18 @@ with parameters |session| and |capabilities| is:
 
  6. [=Set a property=] on |capabilities| named
     "<code>webSocketUrl</code>" to |webSocketUrl|.
+
+</div>
+
+<div algorithm="no HTTP new session">
+
+Implementations should also allow clients to establish a connection without
+going via a HTTP WebDriver session. In this case the URL to the WebSocket server
+is communicated out-of-band. Implementations that allow this <dfn>supports
+BiDi-only sessions</dfn>. At the time such an implementation is ready to accept
+requests to start a WebDriver session, it must:
+
+1. [=Start listening for a WebSocket connection=] given null.
 
 </div>
 
@@ -1512,6 +1568,45 @@ filter only those that ought to be returned to the local end.
 
 </div>
 
+### Types ### {#module-session-types}
+
+#### The session.CapabilitiesRequest Type #### {#type-session-capabilitiesRequest}
+
+[=remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+Capabilities = {
+    ?acceptInsecureCertificates: bool,
+    ?browserName: text,
+    ?browserVersion: text,
+    ?platformName: text,
+    ?pageLoadStrategy: "none" / "eager" / "normal",
+    ?proxy: {
+        ?proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
+        ?proxyAutoconfigUrl: text,
+        ?ftpProxy: text,
+        ?httpProxy: text,
+        ?noProxy: [*text],
+        ?sslProxy: text,
+        ?socksProxy: text,
+        ?socksVersion: int,
+    }
+    ?strictFileInteractability: bool,
+    ?timeouts: {
+        ?script: int / null,
+        ?pageLoad: int,
+        ?implicit: int
+    },
+    ?unhandledPromptBehaviour: "dismiss" / "accept" / "dismiss and notify" / "accept and notify" / "ignore",
+    ?webSocketUrl: bool,
+    *text => any
+};
+</pre>
+
+The <code>CapabilitiesRequest</code> type represents the capabilities requested
+for a session.
+
+
 ### Commands ### {#module-session-commands}
 
 #### The session.status Command #### {#command-session-status}
@@ -1520,6 +1615,8 @@ The <dfn export for=commands>session.status</dfn> command returns information ab
 whether a remote end is in a state in which it can create new sessions,
 but may additionally include arbitrary meta information that is specific
 to the implementation.
+
+This is a [=static command=].
 
 <dl>
    <dt>Command Type</dt>
@@ -1542,7 +1639,10 @@ to the implementation.
    </dd>
 </dl>
 
-The [=remote end steps=] are:
+<div algorithm="remote end steps for session.status">
+
+The [=remote end steps=] given <var ignore>session</var>, and <var
+ignore>command parameters</var> are:
 
 1. Let |body| be a new [=map=] with the following properties:
 
@@ -1556,6 +1656,110 @@ The [=remote end steps=] are:
    </dl>
 
 2. Return [=success=] with data |body|
+
+#### The session.new Command #### {#command-session-new}
+
+The <dfn export for=commands>session.new</dfn> command allows creating a new
+WebDriver [=/session=].
+
+This is a [=static command=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      SessionNewCommand = {
+        method: "session.new",
+        params: {capabilities: CapabilitiesRequestParameters},
+      }
+
+      CapabilitiesRequestParameters = {
+        ?alwaysMatch: CapabilitiesRequest,
+        ?firstMatch: [*CapabilitiesRequest]
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+      SessionNewResult = {
+        sessionId: text,
+        capabilities: {
+          acceptInsecureCertificates: bool,
+          browserName: text,
+          browserVersion: text,
+          platformName: text,
+          pageLoadStrategy: "none" / "eager" / "normal",
+          proxy: {
+            ?proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
+            ?proxyAutoconfigUrl: text,
+            ?ftpProxy: text,
+            ?httpProxy: text,
+            ?noProxy: [*text],
+            ?sslProxy: text,
+            ?socksProxy: text,
+            ?socksVersion: int,
+          },
+          setWindowRect: bool,
+          strictFileInteractability: bool,
+          timeouts: {
+            script: int / null,
+            pageLoad: int,
+            implicit: int
+          },
+          ?unhandledPromptBehaviour: "dismiss" / "accept" / "dismiss and notify" / "accept and notify" / "ignore",
+          ?webSocketUrl: text,
+          *text => any
+        }
+      }
+      </pre>
+   </dd>
+</dl>
+
+Issue: This currently assumes we accept all the classic WebDriver capabilites
+But it's unclear if that's what we want to do. Some of them control legacy
+behaviour like `strictFileInteractability`. Others repersent global state that we
+might hope to do without in the case of BiDi e.g. global timeouts, global
+pageLoadStrategy. Probably we need at least `acceptInsecureCerts`, the various
+browser selection bits, and `proxy`. We just ignore additional properties, so if
+there are some that don't make sense we could just omit them and clients could
+still send them if that's easier than having seperate codepaths.
+
+<div algorithm="remote end steps for session.new">
+
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. If |session| is not null, or the [=maximum active sessions=] is equal to the
+   length of the list of [=active sessions=], return [=error=] with [=error
+   code=] [=session not created=].
+
+1. Let |capabilities| be the result of [=trying=] to [=process capabilities=]
+   with |command parameters|.
+
+1. If |capabilities| is null, return an [=error=] with [=error code=] [=session
+   not created=].
+
+1. If |capabilities| contains "<code>webSocketUrl</code>", remove
+   capabilities["<code>webSocketUrl</code>"].
+
+   Note: this ensures we don't try to restart the server; presumably the local
+   end already knows that BiDi is enabled since it's using it already.
+
+1. Run any [=WebDriver new session algorithm=] defined in external
+   specifications, with arguments |session| and |capabilities|.
+
+1. Let |session id| be a new [[!RFC4122|UUID]].
+
+1. Let |session| be a new [=/session=] with [=session ID=] |session id|.
+
+   Note: the connection for this session will be set to the current connection
+   by the caller.
+
+1. Let |body| be a new map matching the <code>SessionNewResult</code> production,
+   with the <code>sessionId</code> field set to |session|'s [=session ID=], and
+   the <code>capabilities</code> field set to |capabilities|.
+
+1. Return [=success=] with data |body|.
 
 #### The session.subscribe Command #### {#command-session-subscribe}
 
@@ -1587,8 +1791,8 @@ Issue: This needs to be generalized to work with realms too
    </dd>
 </dl>
 
-The [=remote end steps=] with |command parameters| are:
 <div algorithm="remote end steps for session.subscribe">
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let the |list of event names| be the value of the <code>events</code> field of
    |command parameters|
@@ -1597,7 +1801,7 @@ The [=remote end steps=] with |command parameters| are:
    field of |command parameters| if it is present or null if it isn't.
 
 1. Let |enabled events| be the result of [=trying=] to [=update the event map=]
-   with [=current session=], |list of event names| , |list of contexts| and
+   with |session|, |list of event names| , |list of contexts| and
    enabled true.
 
 1. Let |subscribe step events| be a new map.
@@ -1655,8 +1859,8 @@ Issue: This needs to be generalised to work with realms too
    </dd>
 </dl>
 
-The [=remote end steps=] with |command parameters| are:
 <div algorithm="remote end steps for session.unsubscribe">
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let the |list of event names| be the value of the <code>events</code> field of
    |command parameters|.
@@ -1664,7 +1868,7 @@ The [=remote end steps=] with |command parameters| are:
 1. Let the |list of contexts| be the value of the <code>contexts</code>
    field of |command parameters| if it is present or null if it isn't.
 
-1. [=Try=] to [=update the event map=] with [=current session=],
+1. [=Try=] to [=update the event map=] with |session|,
    |list of event names|, |list of contexts| and enabled false.
 
 1. Return [=success=] with data null.
@@ -1999,7 +2203,7 @@ top-level contexts when no parent is provided.
 </dl>
 
 <div algorithm="remote end steps for browsingContext.getTree">
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
   1. Let the |parent id| be the value of the <code>parent</code> field of
      |command parameters| if present, or null otherwise.
@@ -2695,7 +2899,7 @@ realm associated with the [=document=] currently loaded in a specified
 </dl>
 
 <div algorithm="remote end steps for script.getRealms">
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
   1. Let |environment settings| be a list of all the [=environment settings objects=]
      that have their [=execution ready flag=] set.
