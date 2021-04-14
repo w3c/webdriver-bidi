@@ -131,37 +131,38 @@ This specification depends on the Infra Standard. [[!INFRA]]
 
 Network protocol messages are defined using CDDL. [[!RFC8610]]
 
-This specification defines a <dfn>wait queue</dfn> which is a list.
+This specification defines a <dfn>wait queue</dfn> which is a map.
 
 Issue: Surely there's a better mechanism for doing this "wait for an event" thing.
 
 <div algorithm>
 
 When an algorithm |algorithm| running [=in parallel=] <dfn>awaits</dfn> a set of
-events |events|, each consisting of a tuple (<code>name</code>, <code>resume
-id</code>):
+events |events|, and |resume id|:
 
 1. Pause the execution of |algorithm|.
 
-1. Append (|events|, |algorithm|) to [=wait queue=].
+1. Assert: [=wait queue=] does not contain |resume id|.
+
+1. Set [=wait queue=][|resume id|] to (|events|, |algorithm|).
 
 </div>
 
 <div algorithm>
 To <dfn>resume</dfn> given |name|, |id| and |parameters|:
 
-1. For each |paused| in |wait queue|:
+1. If [=wait queue=] does not contain |id|, return.
 
-  1. Let |events| and |algorithm| be the two items in |paused|
+1. Let |events|, |algorithm| be [=wait queue=][|id|]
 
-  1. For each |event| in |events|:
+1. For each |event| in |events|:
 
-    1. If the two items in |event| are equal to |name| and |id|:
+  1. If |event| equals |name|:
 
-      1. Remove |paused| from |wait queue|.
+    1. Remove |id| from [=wait queue=].
 
-      1. Resume running the steps in |algorithm| from the point at which they were
-         paused, passing |name| and |parameters| as the result of the [=await=].
+    1. Resume running the steps in |algorithm| from the point at which they were
+       paused, passing |name| and |parameters| as the result of the [=await=].
 
 </div>
 
@@ -1861,9 +1862,9 @@ The [=remote end steps=] with |command parameters| are:
   1. If |wait condition| is interactive, let |event name| be
      "<code>DOMContentLoaded</code>", otherwise let |event name| be "<code>load</code>".
 
-  1. Let (|event received|, |status|) be [=await=] [(|event name|, |navigation
-     id|), ("<code>download started</code>", |navigation id|),
-     ("<code>navigation failed</code>", |navigation id|)].
+  1. Let (|event received|, |status|) be [=await=] given «|event name|,
+      "<code>download started</code>", "<code>navigation failed</code>"» and
+     |navigation id|.
 
   1. If |event received| is "<code>navigate failed</code>"
      return [=error=] with [=error code=] [=unknown error=].
