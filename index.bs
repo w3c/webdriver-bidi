@@ -153,7 +153,7 @@ To <dfn>resume</dfn> given |name|, |id| and |parameters|:
 
 1. If [=wait queue=] does not contain |id|, return.
 
-1. Let |events|, |algorithm| be [=wait queue=][|id|]
+1. Let (|events|, |algorithm|) be [=wait queue=][|id|]
 
 1. For each |event| in |events|:
 
@@ -1576,6 +1576,7 @@ BrowsingContextEvent = (
     BrowsingContextFragmentNavigatedEvent //
     BrowsingContextDomContentLoadedEvent //
     BrowsingContextLoadEvent //
+    BrowsingContextDownloadWillBegin //
     BrowsingContextNavigationFailedEvent
 )
 
@@ -1705,7 +1706,7 @@ TODO: Link to the definition in the HTML spec.
 [=local end definition=]:
 
 <pre class="cddl local-cddl">
-BrowsingContextNavigationInfo = {
+NavigationInfo = {
   context: BrowsingContext,
   navigation: Navigation / null,
   url: text,
@@ -1834,11 +1835,13 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |navigate status| be the result of [=navigate|navigating=] |context| with resource
      |request|, and using |context| as the [=source browsing context=].
 
-  1. If |navigate status|'s status is complete and |navigate status|'s
-     navigation id is null:
+  1. Let |navigation id| be |navigate status|'s id
+
+  1. If |navigate status|'s status is "<code>complete</code>" |navigation id| is
+     null:
 
     1. Let |body| be a [=map=] matching the
-       <code>BrowsingContextNavigationResult</code> production, with the
+       <code>BrowsingContextNavigatenResult</code> production, with the
        <code>navigation</code> field set to null, and the <code>url</code> field
        set to the result of the [=URL serializer=] given |navigate status|'s url.
 
@@ -1846,36 +1849,42 @@ The [=remote end steps=] with |command parameters| are:
 
      Note: this is the case if the navigation only caused the fragment to change.
 
-  1. If |navigate status|'s status is cancelled return [=error=] with [=error code=]
-     [=unknown error=].
+  1. If |navigate status|'s status is "<code>cancelled</code>" return [=error=]
+     with [=error code=] [=unknown error=].
 
      TODO: is this the right way to handle errors here?
 
-  1. Assert: |navigate status|'s status is pending and |navigate status|'s id is
-     not null.
+  1. Assert: |navigate status|'s status is "<code>pending</code>" and
+     |navigation id| is not null.
 
-  1. Let |navigation id| be |navigate status|'s id
+  1. If |wait condition| is "<code>none</code>":
 
-  1. If |wait condition| is "<code>none</code>", return [=success=] with data
-     |body|.
+   1. Let |body| be a [=map=] matching the
+     <code>BrowsingContextNavigateResult</code> production, with the
+     <code>navigation</code> field set to |navigation id|, and the
+     <code>url</code> field set to the result of the [=URL serializer=] given
+     |navigate status|'s url.
 
-  1. If |wait condition| is interactive, let |event name| be
-     "<code>DOMContentLoaded</code>", otherwise let |event name| be "<code>load</code>".
+   1. Return [=success=] with data |body|.
+
+  1. If |wait condition| is "<code>interactive</code>", let |event name| be
+     "<code>domContentLoaded</code>", otherwise let |event name| be
+     "<code>load</code>".
 
   1. Let (|event received|, |status|) be [=await=] given «|event name|,
       "<code>download started</code>", "<code>navigation failed</code>"» and
      |navigation id|.
 
-  1. If |event received| is "<code>navigate failed</code>"
+  1. If |event received| is "<code>navigation failed</code>"
      return [=error=] with [=error code=] [=unknown error=].
 
-     Issue: Are we surfacting enough information about what failed and why with
+     Issue: Are we surfacing enough information about what failed and why with
      an error here? What error code do we want? Is there going to be a problem
      where local ends parse the implementation-defined strings to figure out
      what actually went wrong?
 
   1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextNavigationResult</code> production, with the
+     <code>BrowsingContextNavigateResult</code> production, with the
      <code>navigation</code> field set to |status|'s id, and the
      <code>url</code> field set to the result of the [=URL serializer=] given
      |status|'s url.
@@ -1971,7 +1980,7 @@ become inaccessible but not yet get discarded because bfcache.
       <pre class="cddl local-cddl">
         BrowsingContextNavigationStartedEvent = {
          method: "browsingContext.navigationStarted",
-         params: BrowsingContextNavigationInfo
+         params: NavigationInfo
        }
       </pre>
    </dd>
@@ -1991,7 +2000,7 @@ Define the following [=navigation started steps=] with |context| and |navigation
  1. Let |url| be |navigation status|'s url.
 
  1. Let |params| be a [=map=] matching the
-    <code>BrowsingContextNavigationInfo</code> production, with the
+    <code>NavigationInfo</code> production, with the
     <code>context</code> field set to |context id|, the <code>navigation</code>
     field set to |navigation id| and the <code>url</code> field set to the
     result of the [=URL serializer=] given |url|.
@@ -2024,6 +2033,7 @@ Define the following [=navigation started steps=] with |context| and |navigation
       </pre>
    </dd>
 </dl>
+
 The [=remote end event trigger=] is:
 
 <div algorithm="remote end event trigger for browsingContext.fragmentNavigated">
@@ -2059,13 +2069,13 @@ Define the following [=fragment navigated steps=] with |context| and |navigation
       <pre class="cddl local-cddl">
         BrowsingContextDomContentLoadedEvent = {
          method: "browsingContext.domContentLoaded",
-         params: BrowsingContextNavigationInfo
+         params: NavigationInfo
        }
       </pre>
    </dd>
 </dl>
-The [=remote end event trigger=] is:
 
+The [=remote end event trigger=] is:
 
 <div algorithm="remote end event trigger for browsingContext.domContentLoaded">
 
@@ -2080,7 +2090,7 @@ Define the following [=dom load complete steps=] with |context| and |navigation 
  1. Let |url| be |navigation status|'s url.
 
  1. Let |params| be a [=map=] matching the
-    <code>BrowsingContextNavigationInfo</code> production, with the
+    <code>NavigationInfo</code> production, with the
     <code>context</code> field set to |context id|, the <code>navigation</code>
     field set to |navigation id|, and the <code>url</code> field set to the
     result of the [=URL serializer=] given |url|.
@@ -2093,7 +2103,7 @@ Define the following [=dom load complete steps=] with |context| and |navigation 
 
  1. [=Emit an event=] with |body| and |related browsing contexts|.
 
- 1. [=Resume=] with "<code>DOMContentLoaded</code>", |navigation id|, and
+ 1. [=Resume=] with "<code>domContentLoaded</code>", |navigation id|, and
     |navigation status|.  </div>
 
 #### The browsingContext.load Event #### {#event-browsingContext-load}
@@ -2104,7 +2114,7 @@ Define the following [=dom load complete steps=] with |context| and |navigation 
       <pre class="cddl local-cddl">
         BrowsingContextLoadEvent = {
          method: "browsingContext.load",
-         params: BrowsingContextNavigationInfo
+         params: NavigationInfo
        }
       </pre>
    </dd>
@@ -2125,7 +2135,7 @@ Define the following [=load complete steps=] with |context| and |navigation stat
  1. Let |url| be |navigation status|'s url.
 
  1. Let |params| be a [=map=] matching the
-    <code>BrowsingContextNavigationInfo</code> production, with the
+    <code>NavigationInfo</code> production, with the
     <code>context</code> field set to |context id|, the <code>navigation</code>
     field set to |navigation id|, and the <code>url</code> field set to the
     result of the [=URL serializer=] given |url|.
@@ -2150,7 +2160,7 @@ Define the following [=load complete steps=] with |context| and |navigation stat
       <pre class="cddl local-cddl">
         BrowsingContextDownloadWillBegin = {
          method: "browsingContext.downloadWillBegin",
-         params: BrowsingContextNavigationInfo
+         params: NavigationInfo
        }
       </pre>
    </dd>
@@ -2171,7 +2181,7 @@ Define the following [=download started steps=] with |context| and |navigation s
  1. Let |url| be |navigation status|'s url.
 
  1. Let |params| be a [=map=] matching the
-    <code>BrowsingContextNavigationInfo</code> production, with the
+    <code>NavigationInfo</code> production, with the
     <code>context</code> field set to |context id|, the <code>navigation</code>
     field set to |navigation id|, and the <code>url</code> field set to the
     result of the [=URL serializer=] given |url|.
@@ -2196,7 +2206,7 @@ Define the following [=download started steps=] with |context| and |navigation s
       <pre class="cddl local-cddl">
         BrowsingContextNavigationFailed = {
          method: "browsingContext.navigationFailed",
-         params: BrowsingContextNavigationInfo
+         params: NavigationInfo
        }
       </pre>
    </dd>
@@ -2217,7 +2227,7 @@ Define the following [=navigation failed steps=] with |context| and |navigation 
  1. Let |url| be |navigation status|'s url.
 
  1. Let |params| be a [=map=] matching the
-    <code>BrowsingContextNavigationInfo</code> production, with the
+    <code>NavigationInfo</code> production, with the
     <code>context</code> field set to |context id|, the <code>navigation</code>
     field set to |navigation id|, and the <code>url</code> field set to the
     result of the [=URL serializer=] given |url|.
