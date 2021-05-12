@@ -1632,7 +1632,8 @@ BrowsingContextInfo = {
 The <code>BrowsingContextInfo</code> type represents the properties of a
 browsing context.
 
-<div algorithm> To <dfn>get the browsing context info</dfn> given |context|,
+<div algorithm>
+To <dfn>get the browsing context info</dfn> given |context|,
 |depth| and |max depth|:
 
  1. Let |context id| be the [=browsing context id=] for |context|.
@@ -1714,6 +1715,23 @@ NavigationInfo = {
 </pre>
 
 The <code>NavigationInfo</code> type provides details of an ongoing navigation.
+
+<div algorithm>
+To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
+
+1. Let |context id| be the [=browsing context id=] for |context|.
+
+1. Let |navigation id| be |navigation status|'s id.
+
+1. Let |url| be |navigation status|'s url.
+
+1. Return a [=map=] matching the
+   <code>NavigationInfo</code> production, with the
+   <code>context</code> field set to |context id|, the <code>navigation</code>
+   field set to |navigation id|, and the <code>url</code> field set to the
+   result of the [=URL serializer=] given |url|.
+
+</div>
 
 ### Commands ### {#module-browsingContext-commands}
 
@@ -1993,21 +2011,12 @@ Define the following [=navigation started steps=] with |context| and |navigation
 
  1. If the [=current session=] is null, return.
 
- 1. Let |context id| be the [=browsing context id=] for |context|.
-
- 1. Let |navigation id| be |navigation status|'s navigation id.
-
- 1. Let |url| be |navigation status|'s url.
-
- 1. Let |params| be a [=map=] matching the
-    <code>NavigationInfo</code> production, with the
-    <code>context</code> field set to |context id|, the <code>navigation</code>
-    field set to |navigation id| and the <code>url</code> field set to the
-    result of the [=URL serializer=] given |url|.
+ 1. Let |params| be the result of [=get the navigation info=] given |context|
+    and |navigation status|.
 
  1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextNavigationStarted</code> production, with the
-     <code>params</code> field set to |params|.
+    <code>BrowsingContextNavigationStarted</code> production, with the
+    <code>params</code> field set to |params|.
 
  1. Let |related browsing contexts| be a set containing |context|.
 
@@ -2083,25 +2092,18 @@ Define the following [=dom load complete steps=] with |context| and |navigation 
 
  1. If the [=current session=] is null, return.
 
- 1. Let |context id| be the [=browsing context id=] for |context|.
-
- 1. Let |navigation id| be |navigation status|'s id.
-
- 1. Let |url| be |navigation status|'s url.
-
- 1. Let |params| be a [=map=] matching the
-    <code>NavigationInfo</code> production, with the
-    <code>context</code> field set to |context id|, the <code>navigation</code>
-    field set to |navigation id|, and the <code>url</code> field set to the
-    result of the [=URL serializer=] given |url|.
+ 1. Let |params| be the result of [=get the navigation info=] given |context|
+    and |navigation status|.
 
  1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextDomContentLoadedEvent</code> production, with the
-     <code>params</code> field set to |params|.
+    <code>BrowsingContextDomContentLoadedEvent</code> production, with the
+    <code>params</code> field set to |params|.
 
  1. Let |related browsing contexts| be a set containing |context|.
 
  1. [=Emit an event=] with |body| and |related browsing contexts|.
+
+ 1. Let |navigation id| be |navigation status|'s id.
 
  1. [=Resume=] with "<code>domContentLoaded</code>", |navigation id|, and
     |navigation status|.  </div>
@@ -2128,24 +2130,17 @@ Define the following [=load complete steps=] with |context| and |navigation stat
 
  1. If the [=current session=] is null, return.
 
- 1. Let |context id| be the [=browsing context id=] for |context|.
+ 1. Let |params| be the result of [=get the navigation info=] given |context|
+    and |navigation status|.
 
- 1. Let |navigation id| be |navigation status|'s id.
-
- 1. Let |url| be |navigation status|'s url.
-
- 1. Let |params| be a [=map=] matching the
-    <code>NavigationInfo</code> production, with the
-    <code>context</code> field set to |context id|, the <code>navigation</code>
-    field set to |navigation id|, and the <code>url</code> field set to the
-    result of the [=URL serializer=] given |url|.
-
-1. Let |body| be a [=map=] matching the <code>BrowsingContextLoadEvent</code>
-     production, with the <code>params</code> field set to |params|.
+ 1. Let |body| be a [=map=] matching the <code>BrowsingContextLoadEvent</code>
+    production, with the <code>params</code> field set to |params|.
 
  1. Let |related browsing contexts| be a set containing |context|.
 
  1. [=Emit an event=] with |body| and |related browsing contexts|.
+
+ 1. Let |navigation id| be |navigation status|'s id.
 
  1. [=Resume=] with "<code>load</code>", |navigation id| and
     |navigation status|.
@@ -2174,17 +2169,8 @@ Define the following [=download started steps=] with |context| and |navigation s
 
  1. If the [=current session=] is null, return.
 
- 1. Let |context id| be the [=browsing context id=] for |context|.
-
- 1. Let |navigation id| be |navigation status|'s id.
-
- 1. Let |url| be |navigation status|'s url.
-
- 1. Let |params| be a [=map=] matching the
-    <code>NavigationInfo</code> production, with the
-    <code>context</code> field set to |context id|, the <code>navigation</code>
-    field set to |navigation id|, and the <code>url</code> field set to the
-    result of the [=URL serializer=] given |url|.
+ 1. Let |params| be the result of [=get the navigation info=] given |context|
+    and |navigation status|.
 
  1. Let |body| be a [=map=] matching the
      <code>BrowsingContextDownloadWillBegin</code> production, with the
@@ -2193,6 +2179,8 @@ Define the following [=download started steps=] with |context| and |navigation s
  1. Let |related browsing contexts| be a set containing |context|.
 
  1. [=Emit an event=] with |body| and |related browsing contexts|.
+
+ 1. Let |navigation id| be |navigation status|'s id.
 
  1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
 
@@ -2220,17 +2208,8 @@ Define the following [=navigation failed steps=] with |context| and |navigation 
 
  1. If the [=current session=] is null, return.
 
- 1. Let |context id| be the [=browsing context id=] for |context|.
-
- 1. Let |navigation id| be |navigation status|'s id.
-
- 1. Let |url| be |navigation status|'s url.
-
- 1. Let |params| be a [=map=] matching the
-    <code>NavigationInfo</code> production, with the
-    <code>context</code> field set to |context id|, the <code>navigation</code>
-    field set to |navigation id|, and the <code>url</code> field set to the
-    result of the [=URL serializer=] given |url|.
+ 1. Let |params| be the result of [=get the navigation info=] given |context|
+    and |navigation status|.
 
  1. Let |body| be a [=map=] matching the
      <code>BrowsingContextNavigationFailed</code> production, with the
@@ -2239,6 +2218,8 @@ Define the following [=navigation failed steps=] with |context| and |navigation 
  1. Let |related browsing contexts| be a set containing |context|.
 
  1. [=Emit an event=] with |body| and |related browsing contexts|.
+
+ 1. Let |navigation id| be |navigation status|'s id.
 
  1. [=Resume=] with "<code>navigation failed</code>", |navigation id|, and |navigation status|.
 
