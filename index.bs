@@ -101,12 +101,14 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/
     text: create a new browsing context; url: creating-a-new-browsing-context
     text: environment settings object's Realm; url: environment-settings-object's-realm
     text: handled; url: concept-error-handled
+    text: history handling behavior; url: history-handling-behavior
     text: navigation id; url: concept-navigation-id
     text: report an error; url: report-the-error
     text: remove a browsing context; url: bcg-remove
     text: session history; url: session-history
     text: set up a window environment settings object; url: set-up-a-window-environment-settings-object
     text: set up a worker environment settings object; url: set-up-a-worker-environment-settings-object
+    text: set up a worklet environment settings object; url: set-up-a-worklet-environment-settings-object
     text: worker event loop; url: worker-event-loop-2
     text: worklet global scopes; url: concept-document-worklet-global-scopes
 </pre>
@@ -1702,7 +1704,8 @@ navigation status</dfn> struct, which has the following items:
 
 BrowsingContextCommand = (
     BrowsingContextGetTreeCommand //
-    BrowsingContextNavigateCommand
+    BrowsingContextNavigateCommand //
+    BrowsingContextReloadCommand
 )
 </pre>
 
@@ -1832,6 +1835,88 @@ To <dfn>get the browsing context info</dfn> given |context|,
     1. Append |info| to |contexts info|
 
   1. Return |contexts info|
+
+</div>
+
+<div algorithm>
+To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, and optionally
+|history handling| (default: "<code>default</code>") and |ignore cache| (default: false):
+
+1. Let |navigation id| be the string representation of a
+   [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
+
+1. [=Navigate=] |context| with resource |request|, and using |context| as the
+   [=source browsing context=], with [=navigation id=] |navigation id|, and
+   [=history handling behavior=] |history handling|. If |ignore cache| is true, the
+   navigation must not load resources from the HTTP cache.
+
+   Issue: property specify how the |ignore cache| flag works. This needs to
+   consider whether only the first load of a resource bypasses the cache
+   (i.e. whether this is like initially clearing the cache and proceeding like
+   normal), or whether resources not directly loaded by the HTML parser
+   (e.g. loads initiated by scripts or stylesheets) also bypass the cache.
+
+1.  Let (|event received|, |navigate status|) be [=await=] given
+    «"<code>navigation started</code>", "<code>navigation failed</code>",
+    "<code>fragment navigated</code>"», and |navigation id|.
+
+1. Assert: |navigate status|'s id is |navigation id|.
+
+1. If |navigate status|'s status is "<code>complete</code>":
+
+  1. Let |body| be a [=map=] matching the
+     <code>BrowsingContextNavigateResult</code> production, with the
+     <code>navigation</code> field set to |navigation id|, and the
+     <code>url</code> field set to the result of the [=URL serializer=] given
+     |navigate status|'s url.
+
+  1. Return [=success=] with data |body|.
+
+   Note: this is the case if the navigation only caused the fragment to
+   change.
+
+1. If |navigate status|'s status is "<code>canceled</code>" return [=error=]
+   with [=error code=] [=unknown error=].
+
+   TODO: is this the right way to handle errors here?
+
+1. Assert: |navigate status|'s status is "<code>pending</code>" and
+   |navigation id| is not null.
+
+1. If |wait condition| is "<code>none</code>":
+
+  1. Let |body| be a [=map=] matching the
+     <code>BrowsingContextNavigateResult</code> production, with the
+     <code>navigation</code> field set to |navigation id|, and the
+     <code>url</code> field set to the result of the [=URL serializer=] given
+     |navigate status|'s url.
+
+  1. Return [=success=] with data |body|.
+
+1. If |wait condition| is "<code>interactive</code>", let |event name| be
+   "<code>domContentLoaded</code>", otherwise let |event name| be
+   "<code>load</code>".
+
+1. Let (|event received|, |status|) be [=await=] given «|event name|,
+    "<code>download started</code>", "<code>navigation aborted</code>",
+    "<code>navigation failed</code>"» and |navigation id|.
+
+1. If |event received| is "<code>navigation failed</code>"
+   return [=error=] with [=error code=] [=unknown error=].
+
+   Issue: Are we surfacing enough information about what failed and why with
+   an error here? What error code do we want? Is there going to be a problem
+   where local ends parse the implementation-defined strings to figure out
+   what actually went wrong?
+
+1. Let |body| be a [=map=] matching the
+   <code>BrowsingContextNavigateResult</code> production, with the
+   <code>navigation</code> field set to |status|'s id, and the
+   <code>url</code> field set to the result of the [=URL serializer=] given
+   |status|'s url.
+
+1. Return [=success=] with data |body|.
+
 
 </div>
 
@@ -1997,92 +2082,63 @@ The [=remote end steps=] with |command parameters| are:
 
   1. Let |request| be a new [=/request=] whose URL is |url record|.
 
-  1. Let |navigation id| be the string representation of a
-     [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
-
-  1. [=Navigate=] |context| with resource |request|, and using |context| as the
-     [=source browsing context=], and with navigation id |navigation id|.
-
-  1.  Let (|event received|, |navigate status|) be [=await=] given
-      «"<code>navigation started</code>", "<code>navigation failed</code>",
-      and "<code>fragment navigated</code>"» and |navigation id|.
-
-  1. Assert: |navigate status|'s id is |navigation id|.
-
-  1. If |navigate status|'s status is "<code>complete</code>":
-
-    1. Let |body| be a [=map=] matching the
-       <code>BrowsingContextNavigateResult</code> production, with the
-       <code>navigation</code> field set to |navigation id|, and the
-       <code>url</code> field set to the result of the [=URL serializer=] given
-       |navigate status|'s url.
-
-    1. Return [=success=] with data |body|, and then run the following steps [=in
-       parallel=]:
-
-       1. Run the [=WebDriver-BiDi fragment navigated=] steps given |context|
-          and |navigate status|
-
-     Note: this is the case if the navigation only caused the fragment to
-     change. The parallel steps here ensure that we return the command result
-     before emitting the event, so the navigation id is known.
-
-  1. If |navigate status|'s status is "<code>canceled</code>" return [=error=]
-     with [=error code=] [=unknown error=].
-
-     TODO: is this the right way to handle errors here?
-
-  1. Assert: |navigate status|'s status is "<code>pending</code>" and
-     |navigation id| is not null.
-
-  1. If |wait condition| is "<code>none</code>":
-
-    1. Let |body| be a [=map=] matching the
-       <code>BrowsingContextNavigateResult</code> production, with the
-       <code>navigation</code> field set to |navigation id|, and the
-       <code>url</code> field set to the result of the [=URL serializer=] given
-       |navigate status|'s url.
-
-    1. Return [=success=] with data |body|, and then run the following steps [=in
-       parallel=]:
-
-       1. Run the [=WebDriver-BiDi navigation started=] steps given |context|
-          and |navigate status|
-
-  1. Run the [=WebDriver-BiDi navigation started=] steps given |context|
-     and |navigate status|
-
-     Note: this event was previously suppressed to ensure that it would come
-     after the command response in the case that |wait condition| is
-     "<code>none</code>".
-
-     Issue: Replace this suppression mechanism with an event queue.
-
-  1. If |wait condition| is "<code>interactive</code>", let |event name| be
-     "<code>domContentLoaded</code>", otherwise let |event name| be
-     "<code>load</code>".
-
-  1. Let (|event received|, |status|) be [=await=] given «|event name|,
-      "<code>download started</code>", "<code>navigation aborted</code>",
-      "<code>navigation failed</code>"» and |navigation id|.
-
-  1. If |event received| is "<code>navigation failed</code>"
-     return [=error=] with [=error code=] [=unknown error=].
-
-     Issue: Are we surfacing enough information about what failed and why with
-     an error here? What error code do we want? Is there going to be a problem
-     where local ends parse the implementation-defined strings to figure out
-     what actually went wrong?
-
-  1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextNavigateResult</code> production, with the
-     <code>navigation</code> field set to |status|'s id, and the
-     <code>url</code> field set to the result of the [=URL serializer=] given
-     |status|'s url.
-
-  1. Return [=success=] with data |body|.
+  1. Return the result of [=await a navigation=] with |context|, |request| and
+     |wait condition|.
 
 </div>
+
+#### The browsingContext.reload Command ####  {#command-browsingContext-reload}
+
+The <dfn export for=commands>browsingContext.reload</dfn> command reloads a
+browsing context.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      BrowsingContextReloadCommand = {
+        method: "browsingContext.reload",
+        params: BrowsingContextReloadParameters
+      }
+
+      BrowsingContextReloadParameters = {
+        context: BrowsingContext,
+        ?ignoreCache: boolean,
+        ?wait: ReadinessState,
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.reload">
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Assert: |context| is not null.
+
+1. Let |ignore cache| be the the value of the <code>ignoreCache</code> field of |command
+   parameters| if present, or false otherwise.
+
+1. Let |wait condition| be the value of the <code>wait</code> field of |command
+   parameters| if present, or "<code>none</code>" otherwise.
+
+1. Let |document| be |context|'s [=active document=].
+
+1. Let |url| be |document|'s <a spec=DOM>URL</a>.
+
+1. Let |request| be a new [=/request=] whose URL is |url|.
+
+1. Return the result of [=await a navigation=] with |context|, |request|, |wait
+   condition|, history handling "<code>reload</code>", and ignore
+   cache |ignore cache|.
+
+</div>
+
 
 ### Events ### {#module-contexts-events}
 
