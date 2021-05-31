@@ -1548,6 +1548,9 @@ The [=remote end steps=] with |command parameters| are:
 The <dfn export for=modules>browsingContext</dfn> module contains commands and
 events relating to browsing contexts.
 
+A [=/session=] has an <dfn>set of contexts with an ongoing navigate</dfn>. This
+is a set that is initially empty.
+
 ### Definition ### {#module-browsingContext-definition}
 
 [=remote end definition=]
@@ -1850,8 +1853,12 @@ The [=remote end steps=] with |command parameters| are:
 
   1. Let |request| be a new [=/request=] whose URL is |url record|.
 
+  1. Append |context id| to the [=set of contexts with an ongoing navigate=].
+
   1. Let |navigate status| be the result of [=navigate|navigating=] |context| with resource
      |request|, and using |context| as the [=source browsing context=].
+
+  1. Remove |context id| from the [=set of contexts with an ongoing navigate=].
 
   1. Let |navigation id| be |navigate status|'s id
 
@@ -1863,9 +1870,15 @@ The [=remote end steps=] with |command parameters| are:
        <code>navigation</code> field set to null, and the <code>url</code> field
        set to the result of the [=URL serializer=] given |navigate status|'s url.
 
-    1. Return [=success=] with data |body|
+    1. Return [=success=] with data |body|, and then run the following steps [=in
+       parallel=]:
 
-     Note: this is the case if the navigation only caused the fragment to change.
+       1. Run the [=WebDriver-BiDi fragment navigated=] steps given |context|
+          and |navigate status|
+
+     Note: this is the case if the navigation only caused the fragment to
+     change. The parallel steps here ensure that we return the command result
+     before emitting the event, so the navigation id is known.
 
   1. If |navigate status|'s status is "<code>cancelled</code>" return [=error=]
      with [=error code=] [=unknown error=].
@@ -2052,6 +2065,9 @@ Define the following [=fragment navigated steps=] with |context| and |navigation
  1. If the [=current session=] is null, return.
 
  1. Let |context id| be the [=browsing context id=] for |context|.
+
+ 1. If |context id| is in the [=set of contexts with an ongoing navigate=],
+    then return.
 
  1. Let |url| be |navigation status|'s url.
 
