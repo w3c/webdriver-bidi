@@ -1852,6 +1852,7 @@ BrowsingContextCommand = (
   browsingContext.Print //
   browsingContext.Reload //
   browsingContext.SetViewport
+  browsingContext.TraverseHistory
 )
 </pre>
 
@@ -1864,6 +1865,7 @@ BrowsingContextResult = (
   browsingContext.GetTreeResult //
   browsingContext.NavigateResult //
   browsingContext.PrintResult
+  browsingContext.TraverseHistoryResult
 )
 
 BrowsingContextEvent = (
@@ -3059,6 +3061,150 @@ The [=remote end steps=] with |command parameters| are:
     1. Set the layout [[css2#viewport]] of |context| to the implementation-defined default layout viewport for |context|.
 1. Run the [[cssom-view-1#resizing-viewports]] steps.
 1. Return [=success=] with data null.
+
+</div>
+
+#### The browsingContext.traverseHistory Command ####  {#command-browsingContext-traverseHistory}
+
+The <dfn export for=commands>browsingContext.traverseHistory</dfn> command
+traverses the history of a given context by a delta.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      BrowsingContext.TraverseHistory = {
+        method: "browsingContext.traverseHistory",
+        params: browsingContext.TraverseHistoryParameters
+      }
+
+      browsingContext.TraverseHistoryParameters = {
+        context: browsingContext.BrowsingContext,
+        delta: int,
+        ? wait: browsingContext.ReadinessState,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        browsingContext.TraverseHistoryResult = {
+            navigation: browsingContext.Navigation / null,
+            ?persisted: bool
+            url: text,
+        }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.traverseHistory">
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Assert: |context| is not null.
+
+1. Let |delta| be the value of the <code>delta</code> field of |command
+   parameters|.
+
+1. Let |wait condition| be the value of the <code>wait</code> field of |command
+   parameters| if present, or "<code>none</code>" otherwise.
+
+1. Let |navigation id| be the string representation of a
+   [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
+
+1. [=Traverse the history by a delta=] given |delta|, |context|, and
+   |navigation id|.
+
+1.  Let (|event received|, |navigate status|) be [=await=] given
+    «"<code>navigation started</code>", "<code>navigation failed</code>",
+    "<code>fragment navigated</code>", "<code>pop state</code>"», and
+    |navigation id|.
+
+1. Assert: |navigate status|'s id is |navigation id|.
+
+1. If |navigate status|'s status is "<code>complete</code>":
+
+  1. Let |body| be a [=map=] matching the
+     <code>BrowsingContextTraverseHistoryResult</code> production, with the
+     <code>navigation</code> field set to |navigation id|, and the
+     <code>url</code> field set to the result of the [=URL serializer=] given
+     |navigate status|'s url.
+
+  1. Return [=success=] with data |body|.
+
+1. If |navigate status|'s status is "<code>canceled</code>" return [=error=]
+   with [=error code=] [=unknown error=].
+
+1. Assert: |navigate status|'s status is "<code>pending</code>" and
+   |navigation id| is not null.
+
+1. If |wait condition| is "<code>none</code>":
+
+  1. Let |body| be a [=map=] matching the
+     <code>BrowsingContextTraverseHistoryResult</code> production, with the
+     <code>navigation</code> field set to |navigation id|, and the
+     <code>url</code> field set to the result of the [=URL serializer=] given
+     |navigate status|'s url.
+
+1. If |wait condition| is "<code>interactive</code>", let |event name| be
+   "<code>domContentLoaded</code>", otherwise let |event name| be
+   "<code>load</code>".
+
+1. Let (|event received|, |status|) be [=await=] given «|event name|,
+    "<code>download started</code>", "<code>navigation aborted</code>",
+    "<code>navigation failed</code>", "<code>page show</code>"», and |navigation
+    id|.
+
+1. If |event received| is "<code>navigation failed</code>"
+   return [=error=] with [=error code=] [=unknown error=].
+
+1. If event received is "<code>page show</code>", let |persisted| be true,
+   otherwise let |persisted| be false.
+
+1. Let |body| be a [=map=] matching the
+   <code>BrowsingContextTraverseHistoryResult</code> production, with the
+   <code>navigation</code> field set to |status|'s id, the
+   <code>persisted</code> field set to |persisted|, and the <code>url</code>
+   field set to the result of the [=URL serializer=] given |status|'s url.
+
+1. Return [=success=] with data |body|.
+
+</div>
+
+<div algorithm>
+
+The <dfn export>WebDriver-BiDi page show</dfn> steps given <var
+ignore>context</var> and |navigation status| are:
+
+Issue: Do we want to expose a `browsingContext.pageShow event? In that case we'd
+need to call this whenever `pageshow` is going to be emitted, not just on
+bfcache restore, and also add the persisted status to the data.
+
+ 1. If the [=current session=] is null, return.
+
+ 1. Let |navigation id| be |navigation status|'s id.
+
+ 1. [=Resume=] with "<code>page show</code>", |navigation id|, and
+    |navigation status|.
+
+</div>
+
+<div algorithm>
+
+The <dfn export>WebDriver-BiDi pop state</dfn> steps given <var
+ignore>context</var> and |navigation status| are:
+
+ 1. If the [=current session=] is null, return.
+
+ 1. Let |navigation id| be |navigation status|'s id.
+
+ 1. [=Resume=] with "<code>pop state</code>", |navigation id|, and
+    |navigation status|.
 
 </div>
 
