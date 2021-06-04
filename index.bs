@@ -174,6 +174,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: default view; url: nav-history-apis.html#dom-document-defaultview
     text: environment settings object's Realm; url: webappapis.html#environment-settings-object's-realm
     text: focused area of the document; url: document-sequences.html#focused-area-of-the-document
+    text: getting all used history steps; url:browsing-the-web.html#getting-all-used-history-steps
     text: handled; url: webappapis.html#concept-error-handled
     text: hidden; url: document-sequences.html#system-visibility-state
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
@@ -188,6 +189,8 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
     text: session history; url: history.html#session-history
+    text: session history entry; url: browsing-the-web.html#session-history-entry
+    text: session history traversal queue; url: document-sequences.html#tn-session-history-traversal-queue
     text: set up a window environment settings object; url: window-object.html#set-up-a-window-environment-settings-object
     text: set up a worker environment settings object; url: workers.html#set-up-a-worker-environment-settings-object
     text: set up a worklet environment settings object; url: worklets.html#set-up-a-worklet-environment-settings-object
@@ -195,6 +198,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: system visibility state; url: document-sequences.html#system-visibility-state
     text: traversable navigable; url:document-sequences.html#traversable-navigable
     text: visible; url: document-sequences.html#system-visibility-state
+    text: traverse the history by a delta; url: browsing-the-web.html#traverse-the-history-by-a-delta
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
@@ -503,6 +507,9 @@ with the following additional codes:
   <dt><dfn>no such handle</dfn>
   <dd>Tried to deserialize an unknown <code>RemoteObjectReference</code>.
 
+  <dt><dfn>no such history entry</dfn>
+  <dd>Tried to havigate to an unknown [=session history entry=].
+
   <dt><dfn>no such intercept</dfn>
   <dd>Tried to remove an unknown [=network intercept=].
 
@@ -527,6 +534,7 @@ ErrorCode = "invalid argument" /
             "no such element" /
             "no such frame" /
             "no such handle" /
+            "no such history entry" /
             "no such intercept" /
             "no such node" /
             "no such request" /
@@ -1851,7 +1859,8 @@ BrowsingContextCommand = (
   browsingContext.Navigate //
   browsingContext.Print //
   browsingContext.Reload //
-  browsingContext.SetViewport
+  browsingContext.SetViewport //
+  browsingContext.TraverseHistory
 )
 </pre>
 
@@ -1863,7 +1872,8 @@ BrowsingContextResult = (
   browsingContext.CreateResult /
   browsingContext.GetTreeResult /
   browsingContext.NavigateResult /
-  browsingContext.PrintResult
+  browsingContext.PrintResult /
+  browsingContext.TraverseHistoryResult
 )
 
 BrowsingContextEvent = (
@@ -3130,6 +3140,116 @@ The [=remote end steps=] with |command parameters| are:
 1. Run the [[cssom-view-1#resizing-viewports]] steps.
 
 1. Return [=success=] with data null.
+
+</div>
+
+#### The browsingContext.traverseHistory Command ####  {#command-browsingContext-traverseHistory}
+
+The <dfn export for=commands>browsingContext.traverseHistory</dfn> command
+traverses the history of a given navigable by a delta.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      BrowsingContext.TraverseHistory = {
+        method: "browsingContext.traverseHistory",
+        params: browsingContext.TraverseHistoryParameters
+      }
+
+      browsingContext.TraverseHistoryParameters = {
+        context: browsingContext.BrowsingContext,
+        delta: js-int,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        browsingContext.TraverseHistoryResult = {
+        }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.traverseHistory">
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |browsing context| be the result of [=trying=] to [=get a browsing context=]
+   with |command parameters|["<code>context</code>"].
+
+1. Assert: |browsing context| is not null.
+
+1. Let |navigable| be the [=/navigable=] whose [=navigable/active
+   document=] is |browsing context|'s [=browsing context/active document=].
+
+1. Let |delta| be |command parameters|["<code>delta</code>"].
+
+1. Let |resume id| be a unique string.
+
+1. [=Queue a task=] on |navigable|'s [=session history traversal queue=] to run
+   the following steps:
+
+    1. Let |all steps| be the result of [=getting all used history steps=] for |navigable|.
+
+    1. Let |current index| be the index of |navigable|'s [=current session history
+       step=] within |all steps|.
+
+    1. Let |target index| be |current index| plus |delta|.
+
+    1. Let |valid entry| be false if |all steps|[|target index|] does not exist,
+       or false otherwise.
+
+    1. [=Resume=] with "<code>check history</code>", |resume id|, and
+       |valid entry|.
+
+1. Let |is valid entry| be [=await=] with «"<code>check history</code>"», and
+   |resume id|.
+
+1. If |is valid entry| is false, return [=error=] with error code [=no such
+   history entry=].
+
+1. [=Traverse the history by a delta=] given |delta| and |navigable|.
+
+   ISSUE: There is a race condition in the algorithm as written because by the
+   time we try to navigate the target session history entry might not
+   exist. Once we support waiting for history to navigate we can handle this
+   more robustly.
+
+1. TODO: Support waiting for the history traversal to complete.
+
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.TraverseHistoryResult</code> production.
+
+1. Return [=success=] with data |body|.
+
+</div>
+
+<div algorithm>
+
+The <dfn export>WebDriver BiDi page show</dfn> steps given <var
+ignore>context</var> and |navigation status| are:
+
+Issue: Do we want to expose a `browsingContext.pageShow event? In that case we'd
+need to call this whenever `pageshow` is going to be emitted, not just on
+bfcache restore, and also add the persisted status to the data.
+
+ 1. Let |navigation id| be |navigation status|'s id.
+
+ 1. [=Resume=] with "<code>page show</code>", |navigation id|, and
+    |navigation status|.
+
+</div>
+
+<div algorithm>
+
+The <dfn export>WebDriver BiDi pop state</dfn> steps given <var
+ignore>context</var> and |navigation status| are:
+
+ 1. Let |navigation id| be |navigation status|'s id.
+
+ 1. [=Resume=] with "<code>pop state</code>", |navigation id|, and
+    |navigation status|.
 
 </div>
 
@@ -9089,8 +9209,8 @@ To discard a browsing context |browsingContext|, run these steps:
 1. If this is not a recursive invocation of this algorithm, call any <dfn export>browsing context
    tree discarded</dfn> steps defined in other applicable specifications with |browsingContext|.
 
-1. Discard all {{Document}} objects for all the entries in |browsingContext|'s [=session
-   history=].
+1. Discard all {{Document}} objects for all the entries in |browsingContext|'s
+   [=session history=].
 
 1. If |browsingContext| is a [=top-level browsing context=], then [=remove a browsing context=]
    |browsingContext|.
