@@ -161,8 +161,12 @@ To <dfn>resume</dfn> given |name|, |id| and |parameters|:
 
     1. Remove |id| from [=wait queue=].
 
-    1. Resume running the steps in |algorithm| from the point at which they were
-       paused, passing |name| and |parameters| as the result of the [=await=].
+    1. [=Queue a WebDriver task=] to resume running the steps in |algorithm| from the
+       point at which they were paused, passing |name| and |parameters| as the
+       result of the [=await=].
+
+       Issue: Should we have something like microtasks to ensure this runs
+       before any other tasks on the event loop?
 
 </div>
 
@@ -1890,13 +1894,26 @@ The [=remote end steps=] with |command parameters| are:
 
   1. If |wait condition| is "<code>none</code>":
 
-   1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextNavigateResult</code> production, with the
-     <code>navigation</code> field set to |navigation id|, and the
-     <code>url</code> field set to the result of the [=URL serializer=] given
-     |navigate status|'s url.
+    1. Let |body| be a [=map=] matching the
+       <code>BrowsingContextNavigateResult</code> production, with the
+       <code>navigation</code> field set to |navigation id|, and the
+       <code>url</code> field set to the result of the [=URL serializer=] given
+       |navigate status|'s url.
 
-   1. Return [=success=] with data |body|.
+    1. Return [=success=] with data |body|, and then run the following steps [=in
+       parallel=]:
+
+       1. Run the [=WebDriver-BiDi navigation started=] steps given |context|
+          and |navigate status|
+
+  1. Run the [=WebDriver-BiDi navigation started=] steps given |context|
+     and |navigate status|
+
+     Note: this event was previously suppressed to ensure that it would come
+     after the command response in the case that |wait condition| is
+     "<code>none</code>".
+
+     Issue: Replace this suppression mechanism with an event queue.
 
   1. If |wait condition| is "<code>interactive</code>", let |event name| be
      "<code>domContentLoaded</code>", otherwise let |event name| be
@@ -2022,6 +2039,11 @@ The [=remote end event trigger=] is the <dfn export>WebDriver-BiDi navigation
 started</dfn> steps given |context| and |navigation status|:
 
  1. If the [=current session=] is null, return.
+
+ 1. Let |context id| be the [=browsing context id=] for |context|.
+
+ 1. If |context id| is in the [=set of contexts with an ongoing navigate=],
+    then return.
 
  1. Let |params| be the result of [=get the navigation info=] given |context|
     and |navigation status|.
