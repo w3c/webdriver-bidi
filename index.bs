@@ -1862,13 +1862,13 @@ The [=remote end steps=] with |command parameters| are:
 
   1. Let |navigation id| be |navigate status|'s id
 
-  1. If |navigate status|'s status is "<code>complete</code>" |navigation id| is
-     null:
+  1. If |navigate status|'s status is "<code>complete</code>":
 
     1. Let |body| be a [=map=] matching the
        <code>BrowsingContextNavigateResult</code> production, with the
-       <code>navigation</code> field set to null, and the <code>url</code> field
-       set to the result of the [=URL serializer=] given |navigate status|'s url.
+       <code>navigation</code> field set to |navigation id|, and the
+       <code>url</code> field set to the result of the [=URL serializer=] given
+       |navigate status|'s url.
 
     1. Return [=success=] with data |body|, and then run the following steps [=in
        parallel=]:
@@ -2044,12 +2044,7 @@ started</dfn> steps given |context| and |navigation status|:
       <pre class="cddl local-cddl">
         BrowsingContextFragmentNavigatedEvent = {
          method: "browsingContext.fragmentNavigated",
-         params: BrowsingContextFragmentNavigatedParameters
-       }
-
-       BrowsingContextFragmentNavigatedParameters = {
-        context: BrowsingContext,
-        url: text,
+         params: NavigationInfo
        }
       </pre>
    </dd>
@@ -2066,12 +2061,8 @@ navigated</dfn> steps given |context| and |navigation status|:
  1. If |context id| is in the [=set of contexts with an ongoing navigate=],
     then return.
 
- 1. Let |url| be |navigation status|'s url.
-
- 1. Let |params| be a [=map=] matching the
-    <code>BrowsingContextFragmentNavigatedParameters</code> production, with the
-    <code>context</code> field set to |context id| and the <code>url</code>
-    field set to the result of the [=URL serializer=] given |url|.
+ 1. Let |params| be the result of [=get the navigation info=] given |context|
+    and |navigation status|.
 
  1. Let |body| be a [=map=] matching the
      <code>BrowsingContextFragmentNavigatedEvent</code> production, with the
