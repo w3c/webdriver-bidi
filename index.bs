@@ -101,6 +101,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/
     text: create a new browsing context; url: creating-a-new-browsing-context
     text: environment settings object's Realm; url: environment-settings-object's-realm
     text: handled; url: concept-error-handled
+    text: navigation id; url: concept-navigation-id
     text: report an error; url: report-the-error
     text: remove a browsing context; url: bcg-remove
     text: session history; url: session-history
@@ -161,7 +162,7 @@ To <dfn>resume</dfn> given |name|, |id| and |parameters|:
 
     1. Remove |id| from [=wait queue=].
 
-    1. [=Queue a WebDriver task=] to resume running the steps in |algorithm| from the
+    1. Resume running the steps in |algorithm| from the
        point at which they were paused, passing |name| and |parameters| as the
        result of the [=await=].
 
@@ -1552,8 +1553,24 @@ The [=remote end steps=] with |command parameters| are:
 The <dfn export for=modules>browsingContext</dfn> module contains commands and
 events relating to browsing contexts.
 
-A [=/session=] has an <dfn>set of contexts with an ongoing navigate</dfn>. This
-is a set that is initially empty.
+The progress of navigation is communicated using an immutable <dfn export>WebDriver
+navigation status</dfn> struct, which has the following items:
+
+<dl>
+  <dt><dfn export id="navigation-status-id">id</dfn></dt>
+  <dd>The [=navigation id=] for the navigation, or null when the navigation is
+  canceled before making progress.</dd>
+
+  <dt><dfn export id="navigation-status-status">status</dfn></dt>
+    <dd>A status code that is either
+      "<dfn export id="navigation-status-canceled"><code>canceled</code></dfn>",
+      "<dfn export id="navigation-status-pending"><code>pending</code></dfn>", or
+      "<dfn export id="navigation-status-complete"><code>complete</code></dfn>".
+    </dd>
+
+  <dt><dfn export id="navigation-status-url">url</dfn></dt>
+  <dd>The URL which is being loaded in the navigation</dd>
+</dl>
 
 ### Definition ### {#module-browsingContext-definition}
 
@@ -1858,14 +1875,17 @@ The [=remote end steps=] with |command parameters| are:
 
   1. Let |request| be a new [=/request=] whose URL is |url record|.
 
-  1. Append |context id| to the [=set of contexts with an ongoing navigate=].
+  1. Let |navigation id| be the string representation of a
+     [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
 
-  1. Let |navigate status| be the result of [=navigate|navigating=] |context| with resource
-     |request|, and using |context| as the [=source browsing context=].
+  1. [=Navigate=] |context| with resource |request|, and using |context| as the
+     [=source browsing context=], and with navigation id |navigation id|.
 
-  1. Remove |context id| from the [=set of contexts with an ongoing navigate=].
+  1.  Let (|event received|, |navigate status|) be [=await=] given
+      «"<code>navigation started</code>", "<code>navigation failed</code>",
+      and "<code>fragment navigated</code>"» and |navigation id|.
 
-  1. Let |navigation id| be |navigate status|'s id
+  1. Assert: |navigate status|'s id is |navigation id|.
 
   1. If |navigate status|'s status is "<code>complete</code>":
 
@@ -1922,8 +1942,7 @@ The [=remote end steps=] with |command parameters| are:
 
   1. Let (|event received|, |status|) be [=await=] given «|event name|,
       "<code>download started</code>", "<code>navigation aborted</code>",
-      "<code>navigation failed</code>"» and
-     |navigation id|.
+      "<code>navigation failed</code>"» and |navigation id|.
 
   1. If |event received| is "<code>navigation failed</code>"
      return [=error=] with [=error code=] [=unknown error=].
@@ -2042,11 +2061,6 @@ started</dfn> steps given |context| and |navigation status|:
 
  1. If the [=current session=] is null, return.
 
- 1. Let |context id| be the [=browsing context id=] for |context|.
-
- 1. If |context id| is in the [=set of contexts with an ongoing navigate=],
-    then return.
-
  1. Let |params| be the result of [=get the navigation info=] given |context|
     and |navigation status|.
 
@@ -2054,7 +2068,12 @@ started</dfn> steps given |context| and |navigation status|:
     <code>BrowsingContextNavigationStarted</code> production, with the
     <code>params</code> field set to |params|.
 
+ 1. Let |navigation id| be |navigation status|'s id.
+
  1. Let |related browsing contexts| be a set containing |context|.
+
+ 1. [=Resume=] with "<code>navigation started</code>", |navigation id|, and
+    |navigation status|.
 
  1. [=Emit an event=] with |body| and |related browsing contexts|.
 
@@ -2080,11 +2099,6 @@ navigated</dfn> steps given |context| and |navigation status|:
 
  1. If the [=current session=] is null, return.
 
- 1. Let |context id| be the [=browsing context id=] for |context|.
-
- 1. If |context id| is in the [=set of contexts with an ongoing navigate=],
-    then return.
-
  1. Let |params| be the result of [=get the navigation info=] given |context|
     and |navigation status|.
 
@@ -2092,7 +2106,12 @@ navigated</dfn> steps given |context| and |navigation status|:
      <code>BrowsingContextFragmentNavigatedEvent</code> production, with the
      <code>params</code> field set to |params|.
 
+ 1. Let |navigation id| be |navigation status|'s id.
+
  1. Let |related browsing contexts| be a set containing |context|.
+
+ 1. [=Resume=] with "<code>fragment navigated</code>", |navigation id|, and
+    |navigation status|.
 
  1. [=Emit an event=] with |body| and |related browsing contexts|.
 
@@ -2127,12 +2146,14 @@ loaded</dfn> steps given |context| and |navigation status|:
 
  1. Let |related browsing contexts| be a set containing |context|.
 
- 1. [=Emit an event=] with |body| and |related browsing contexts|.
-
  1. Let |navigation id| be |navigation status|'s id.
 
  1. [=Resume=] with "<code>domContentLoaded</code>", |navigation id|, and
-    |navigation status|.  </div>
+    |navigation status|.
+
+ 1. [=Emit an event=] with |body| and |related browsing contexts|.
+
+</div>
 
 #### The browsingContext.load Event #### {#event-browsingContext-load}
 
@@ -2162,12 +2183,12 @@ complete</dfn> steps given |context| and |navigation status|:
 
  1. Let |related browsing contexts| be a set containing |context|.
 
- 1. [=Emit an event=] with |body| and |related browsing contexts|.
-
  1. Let |navigation id| be |navigation status|'s id.
 
  1. [=Resume=] with "<code>load</code>", |navigation id| and
     |navigation status|.
+
+ 1. [=Emit an event=] with |body| and |related browsing contexts|.
 
 </div>
 
@@ -2198,13 +2219,13 @@ started</dfn> steps given |context| and |navigation status|:
      <code>BrowsingContextDownloadWillBegin</code> production, with the
      <code>params</code> field set to |params|.
 
- 1. Let |related browsing contexts| be a set containing |context|.
-
- 1. [=Emit an event=] with |body| and |related browsing contexts|.
-
  1. Let |navigation id| be |navigation status|'s id.
 
+ 1. Let |related browsing contexts| be a set containing |context|.
+
  1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
+
+ 1. [=Emit an event=] with |body| and |related browsing contexts|.
 
 </div>
 
@@ -2235,13 +2256,13 @@ aborted</dfn> steps given |context| and |navigation status|:
      <code>BrowsingContextNavigationAborted</code> production, with the
      <code>params</code> field set to |params|.
 
- 1. Let |related browsing contexts| be a set containing |context|.
-
- 1. [=Emit an event=] with |body| and |related browsing contexts|.
-
  1. Let |navigation id| be |navigation status|'s id.
 
+ 1. Let |related browsing contexts| be a set containing |context|.
+
  1. [=Resume=] with "<code>navigation aborted</code>", |navigation id|, and |navigation status|.
+
+ 1. [=Emit an event=] with |body| and |related browsing contexts|.
 
 </div>
 
@@ -2273,13 +2294,13 @@ failed</dfn> steps given |context| and |navigation status|:
      <code>BrowsingContextNavigationFailed</code> production, with the
      <code>params</code> field set to |params|.
 
- 1. Let |related browsing contexts| be a set containing |context|.
-
- 1. [=Emit an event=] with |body| and |related browsing contexts|.
-
  1. Let |navigation id| be |navigation status|'s id.
 
+ 1. Let |related browsing contexts| be a set containing |context|.
+
  1. [=Resume=] with "<code>navigation failed</code>", |navigation id|, and |navigation status|.
+
+ 1. [=Emit an event=] with |body| and |related browsing contexts|.
 
 </div>
 
