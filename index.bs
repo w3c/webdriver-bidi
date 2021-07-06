@@ -1584,6 +1584,7 @@ BrowsingContextEvent = (
     BrowsingContextDomContentLoadedEvent //
     BrowsingContextLoadEvent //
     BrowsingContextDownloadWillBegin //
+    BrowsingContextNavigationAbortedEvent //
     BrowsingContextNavigationFailedEvent
 )
 
@@ -1920,7 +1921,8 @@ The [=remote end steps=] with |command parameters| are:
      "<code>load</code>".
 
   1. Let (|event received|, |status|) be [=await=] given «|event name|,
-      "<code>download started</code>", "<code>navigation failed</code>"» and
+      "<code>download started</code>", "<code>navigation aborted</code>",
+      "<code>navigation failed</code>"» and
      |navigation id|.
 
   1. If |event received| is "<code>navigation failed</code>"
@@ -2205,6 +2207,44 @@ started</dfn> steps given |context| and |navigation status|:
  1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
 
 </div>
+
+#### The browsingContext.navigationAborted Event #### {#event-browsingContext-navigationAborted}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        BrowsingContextNavigationAborted = {
+         method: "browsingContext.navigationAborted",
+         params: NavigationInfo
+       }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver-BiDi navigation
+aborted</dfn> steps given |context| and |navigation status|:
+
+ 1. If the [=current session=] is null, return.
+
+ 1. Let |params| be the result of [=get the navigation info=] given |context|
+    and |navigation status|.
+
+ 1. Let |body| be a [=map=] matching the
+     <code>BrowsingContextNavigationAborted</code> production, with the
+     <code>params</code> field set to |params|.
+
+ 1. Let |related browsing contexts| be a set containing |context|.
+
+ 1. [=Emit an event=] with |body| and |related browsing contexts|.
+
+ 1. Let |navigation id| be |navigation status|'s id.
+
+ 1. [=Resume=] with "<code>navigation aborted</code>", |navigation id|, and |navigation status|.
+
+</div>
+
 
 #### The browsingContext.navigationFailed Event #### {#event-browsingContext-navigationFailed}
 
