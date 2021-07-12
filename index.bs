@@ -267,7 +267,26 @@ EventData = (
 
 ## Session ## {#session}
 
-WebDriver BiDi uses the same [=/session=] concept as WebDriver.
+WebDriver BiDi extends the [=/session=] concept from [[WEBDRIVER|WebDriver]].
+
+A [=/session=] has a <dfn>BiDi flag</dfn>, which is false unless otherwise
+stated.
+
+A <dfn>BiDi session</dfn> is a [=/session=] which has the [=BiDi flag=]
+set to true.
+
+<div algorithm>
+The set of <dfn>active BiDi sessions</dfn> is given by:
+
+1. Let |BiDi sessions| be a new set.
+
+1. For each |session| in [=active sessions=]:
+
+  1. If |session| is a [=BiDi session=] append |session| to |BiDi sessions|.
+
+1. Return |BiDi sessions|
+
+</div>
 
 ## Modules ## {#protocol-modules}
 
@@ -363,15 +382,15 @@ occurred on the [=remote end=].
    controlling the order in which the steps are run when multiple events are
    enabled at once, with lower integers indicating steps that run earlier.
 
-A [=/session=] has a <dfn export for=event>global event set</dfn> which is a set
-containing the event names for events that are enabled for all
+A [=BiDi session=] has a <dfn export for=event>global event set</dfn>
+which is a set containing the event names for events that are enabled for all
 browsing contexts. This initially contains the [=event name=] for events that
 are <dfn export for=event>in the default event set</dfn>.
 
-A [=/session=] has a <dfn export for=event>browsing context event map</dfn>,
-which is a map with [=/top-level browsing context=] keys and values that are a
-set of [=event name=]s for events that are enabled in the given browsing
-context.
+A [=BiDi session=] has a <dfn export for=event>browsing context event
+map</dfn>, which is a map with [=/top-level browsing context=] keys and values
+that are a set of [=event name=]s for events that are enabled in the given
+browsing context.
 
 <div algorithm>
 
@@ -833,23 +852,29 @@ with parameter |value| is:
 
 <div algorithm="webSocketUrl new session algorithm">
 The [=WebDriver new session algorithm=] defined by this specification,
-with parameters |session| and |capabilities| is:
+with parameters |session|, |capabilities|, and |flags| is:
 
- 1. Let |webSocketUrl| be the result of [=getting a property=] named
-    "<code>webSocketUrl</code>" from |capabilities|.
+1. If |flags| contains "<code>bidi</code>", return.
 
- 2. If |webSocketUrl| is undefined, return.
+1. Let |webSocketUrl| be the result of [=getting a property=] named
+   "<code>webSocketUrl</code>" from |capabilities|.
 
- 3. [=Assert=]: |webSocketUrl| is true.
+1. If |webSocketUrl| is undefined or false, return.
 
- 4. Let |listener| be the result of [=start listening for a WebSocket
-    connection=] given |session|.
+1. [=Assert=]: |webSocketUrl| is true.
 
- 5. Set |webSocketUrl| to the result of [=constructing a WebSocket
-    URL=] given |listener| and |session|.
+1. Let |listener| be the result of [=start listening for a WebSocket
+   connection=] given |session|.
 
- 6. [=Set a property=] on |capabilities| named
-    "<code>webSocketUrl</code>" to |webSocketUrl|.
+1. Set |webSocketUrl| to the result of [=constructing a WebSocket
+   URL=] given |listener| and |session|.
+
+1. [=Set a property=] on |capabilities| named
+   "<code>webSocketUrl</code>" to |webSocketUrl|.
+
+1. Set |session|'s [=BiDi flag=] to true.
+
+1. Append "<code>bidi</code>" to flags.
 
 </div>
 
@@ -891,8 +916,8 @@ Note: mirror objects do not keep the original object alive in the runtime. If an
 object is discarded in the runtime, subsequent attempts to access it via the
 protocol will result in an error.
 
-A [=/session=] has an <dfn>object id map</dfn>. This is a weak map from objects to
-their corresponding id.
+A [=BiDi session=] has an <dfn>object id map</dfn>. This is a weak map
+from objects to their corresponding id.
 
 Issue: Should this be explicitly per realm?
 
@@ -1660,7 +1685,9 @@ ignore>command parameters</var> are:
 #### The session.new Command #### {#command-session-new}
 
 The <dfn export for=commands>session.new</dfn> command allows creating a new
-WebDriver [=/session=].
+[=BiDi session=].
+
+Note: A session created this way will not be accessible via HTTP.
 
 This is a [=static command=].
 
@@ -1716,41 +1743,24 @@ This is a [=static command=].
    </dd>
 </dl>
 
-Issue: This currently assumes we accept all the classic WebDriver capabilites
-But it's unclear if that's what we want to do. Some of them control legacy
-behaviour like `strictFileInteractability`. Others repersent global state that we
-might hope to do without in the case of BiDi e.g. global timeouts, global
-pageLoadStrategy. Probably we need at least `acceptInsecureCerts`, the various
-browser selection bits, and `proxy`. We just ignore additional properties, so if
-there are some that don't make sense we could just omit them and clients could
-still send them if that's easier than having seperate codepaths.
-
 <div algorithm="remote end steps for session.new">
 
 The [=remote end steps=] given |session| and |command parameters| are:
 
-1. If |session| is not null, or the [=maximum active sessions=] is equal to the
-   length of the list of [=active sessions=], return [=error=] with [=error
-   code=] [=session not created=].
+1. If |session| is not null, return an [=error=] with error code [=session not created=].
+
+1. If the implementation is unable to start a new session for any reason, return
+   an [=error=] with error code [=session not created=].
+
+1. Let |flags| be a set containing "<code>bidi</code>".
 
 1. Let |capabilities| be the result of [=trying=] to [=process capabilities=]
-   with |command parameters|.
+   with |command parameters| and |flags|.
 
-1. If |capabilities| is null, return an [=error=] with [=error code=] [=session
-   not created=].
+1. Let |session| be the result of [=trying=] to [=create a session=] with
+   |capabilities| and |flags|.
 
-1. If |capabilities| contains "<code>webSocketUrl</code>", remove
-   capabilities["<code>webSocketUrl</code>"].
-
-   Note: this ensures we don't try to restart the server; presumably the local
-   end already knows that BiDi is enabled since it's using it already.
-
-1. Run any [=WebDriver new session algorithm=] defined in external
-   specifications, with arguments |session| and |capabilities|.
-
-1. Let |session id| be a new [[!RFC4122|UUID]].
-
-1. Let |session| be a new [=/session=] with [=session ID=] |session id|.
+1. Set |session|'s [=BiDi flag=] to true.
 
    Note: the connection for this session will be set to the current connection
    by the caller.
@@ -3108,7 +3118,7 @@ worker=] algorithm:
 The <dfn export for=modules>log</dfn> module contains functionality and events
 related to logging.
 
-A [=/session=] has a <dfn>log event buffer</dfn> which is a [=map=] from
+A [=BiDi Session=] has a <dfn>log event buffer</dfn> which is a [=map=] from
 [=browsing context id=] to a list of log events for that context that have not
 been emitted. User agents may impose a maximum size on this buffer, subject to
 the condition that if events A and B happen in the same context with A occuring
