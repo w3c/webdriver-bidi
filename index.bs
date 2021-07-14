@@ -39,7 +39,6 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: additional WebDriver capability; url: dfn-additional-webdriver-capability
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
     text: capability name; url: dfn-capability-name
-    text: current session; url: dfn-current-session
     text: endpoint node; url: dfn-endpoint-node
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
@@ -510,9 +509,9 @@ listeners</dfn>, which is initially empty.
 A [=remote end=] has a [=set=] of <dfn>WebSocket connections not associated with a
 session</dfn>, which is initially empty.
 
-A WebDriver [=/session=] has a <dfn>WebSocket connection</dfn> which is
-a network connection that follows the requirements of the
-[[!RFC6455|WebSocket protocol]]. This is initially null.
+A [=WebDriver BiDi session=] has a <dfn>WebSocket connection</dfn> which is a
+network connection that follows the requirements of the [[!RFC6455|WebSocket
+protocol]]. This is initially null.
 
 <div>
 
@@ -714,8 +713,10 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
       1. Assert: |value| matches the definition for the [=result type=]
          corresponding to the command with [=command name=] |method|.
 
-      1. If |method| is "<code>session.new</code>, let the [=current session=]'s
-         [=WebSocket connection=] be |connection| and remove |connection| from
+      1. If |method| is "<code>session.new</code>", let |session| be the entry in
+         the list of [=active sessions=] whose [=session ID=] is equal to the
+         "<code>sessionId</code>" property of |value|, let |session|'s
+         [=WebSocket connection=] be |connection|, and remove |connection| from
          the set of [=WebSocket connections not associated with a session=].
 
       1. Let |response| be a new map matching the <code>CommandResponse</code>
@@ -887,9 +888,9 @@ with parameters |session|, |capabilities|, and |flags| is:
 
 <div algorithm="no HTTP new session">
 
-Implementations should also allow clients to establish a connection without
-going via a HTTP WebDriver session. In this case the URL to the WebSocket server
-is communicated out-of-band. Implementations that allow this <dfn>supports
+Implementations should also allow clients to establish a [=BiDi Session=] which
+is not a [=HTTP Session=]. In this case the URL to the WebSocket server is
+communicated out-of-band. An implementation that allows this <dfn>supports
 BiDi-only sessions</dfn>. At the time such an implementation is ready to accept
 requests to start a WebDriver session, it must:
 
