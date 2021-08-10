@@ -1408,11 +1408,9 @@ To <dfn>update the event map</dfn>, given
 |session|, |requested event names|, |browsing contexts|, and |enabled|:
 
 Note: The return value of this algorithm is a map between event names and
-contexts. When the events are being enabled globally, the contexts in the return
-value are those for which the event was already enabled. When the events are
-enabled for specific contexts, the contexts in the return value are those for
-which the event are now enabled but were not previously. When events are
-disabled, the return value is always empty.
+contexts. When the events are being enabled, the contexts in the return value
+are those for which the event are now enabled but were not previously. When
+events are disabled, the return value is always empty.
 
   1. Let |global event set| be a [=set/clone=] of the [=global event set=] for
      |session|.
@@ -1440,15 +1438,18 @@ disabled, the return value is always empty.
 
            1. If |global event set| doesn't contain |event name|:
 
-             1. Let |event enabled contexts| be the [=event enabled browsing
+             1. Let |already enabled contexts| be the [=event enabled browsing
                 contexts=] given |session| and |event name|
 
              1. Add |event name| to |global event set|.
 
-             1. For each |context| of |event enabled contexts|, remove |event
+             1. For each |context| of |already enabled contexts|, remove |event
                 name| from |event map|[|context|].
 
-             1. Set |enabled events|[|event name|] to |event enabled contexts|.
+             1. Let |newly enabled contexts| be a list of all [=top-level browsing
+                contexts=] that are not contained in |already enabled contexts|,
+
+             1. Set |enabled events|[|event name|] to |newly enabled contexts|.
 
       1. If |enabled| is false:
 
@@ -1615,17 +1616,13 @@ The [=remote end steps=] with |command parameters| are:
     1. Return true if |event one|'s [=subscribe priority=] is less than |event
        two|'s susbscribe priority, or false otherwise.
 
+1. If |list of contexts| is null, let |include global| be true, otherwise let
+   |include global| be false.
+
 1. For each |event name| → |contexts| in |subscribe step events|:
 
-  1. If |list of contexts| is null, let |include contexts| be a list of all
-     [=top-level browsing contexts=] that are not contained in |contexts|, and
-     let |include global| be true.
-
-     Otherwise let |include contexts| be |contexts| and let |include global| be
-     false.
-
   1. Run the [=remote end subscribe steps=] for the [=event=] with [=event name=]
-     |event name| given |include contexts| and |include global|.
+     |event name| given |contexts| and |include global|.
 
 1. Return [=success=] with data null.
 
