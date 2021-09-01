@@ -649,7 +649,7 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
          bytes=] given |response|.
 
       1. [=Send a WebSocket message=] comprised of |serialized| over
-         |connection| and return.
+         |connection|.
 
  1. Otherwise:
 
@@ -830,7 +830,7 @@ cycle, or otherwise when the maximum serialization depth is reached.
 a partial serialization of the node in the value property.
 
 Note: mirror objects do not keep the original object alive in the runtime. If an
-object is discarded in the runtime subsequent attempts to access it via the
+object is discarded in the runtime, subsequent attempts to access it via the
 protocol will result in an error.
 
 A [=/session=] has an <dfn>object id map</dfn>. This is a weak map from objects to
@@ -841,7 +841,7 @@ Issue: Should this be explicitly per realm?
 <div algorithm>
 To get the <dfn>object id for an object</dfn> given an |object|:
 
-  1. If the [=object id map=] for the [=current session=] does not contain |object|
+  1. If the [=object id map=] for the [=current session=] does not contain |object|,
      run the following steps:
 
      1. Let |object id| be a new, unique, string identifier for |object|. If
@@ -1213,21 +1213,21 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
 
             1. Let |serialized| be a map.
 
-            1. "nodeType", [=Get=](|value|, "nodeType"), false)
+            1. Set |serialized|["<code>nodeType</code>"] to [=Get=](|value|, "nodeType").
 
             1. Set |serialized|["<code>nodeValue</code>"] to [=Get=](|value|, "nodeValue")
 
             1. If |value| is an [=/Element=] or an <a spec=dom>Attribute</a>:
 
 
-              1. Set |serialized|["<code>localName</code>" to [=Get=](|value|, "localName")
+              1. Set |serialized|["<code>localName</code>"] to [=Get=](|value|, "localName").
 
               1. Set |serialized|["<code>namespaceURI</code>"] to [=Get=](|value|, "namespaceURI")
 
 
             1. Let |child node count| be the [=list/size=] of |serialized|'s [=children=].
 
-            1. Set |serialized|["<code>childNodeCount</code>" to |child node count|
+            1. Set |serialized|["<code>childNodeCount</code>"] to |child node count|.
 
             1. If |max depth| is equal to 0 let |children| be null.
                Otherwise, let |children| be an empty list and, for each node
@@ -1273,7 +1273,7 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
                   will be serialized irrespective of whether the shadow is open or closed,
                   but no properties of the node will be returned.
 
-               1. Set= |serialized|["<code>shadowRoot</code>"] to |serialized shadow|.
+               1. Set |serialized|["<code>shadowRoot</code>"] to |serialized shadow|.
 
         1. Let |remote value| be a map matching the <code>NodeValue</code>
            production in the [=local end definition=], with the <code>objectId</code>
@@ -1299,7 +1299,7 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
       <dd>
       1. [=Assert=]: [=type=](|value|) is Object
 
-      1. let |serialized| be null.
+      1. Let |serialized| be null.
 
       1. If |value| is not in the |set of known objects|, and |max depth|
          is greater than 0, run the following steps:
