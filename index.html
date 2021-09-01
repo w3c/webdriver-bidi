@@ -6,7 +6,7 @@
   <link href="https://www.w3.org/StyleSheets/TR/2016/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version 4f053d00e, updated Tue Aug 10 14:13:32 2021 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="019aff8b4914c9a12e5023ca698caa0e577fce7a" name="document-revision">
+  <meta content="916796da5767bd9d137bfbf9af2de7e3d93eab80" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -1729,11 +1729,9 @@ events for monitoring the status of the remote end.</p>
    <div class="algorithm" data-algorithm="update the event map">
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="update-the-event-map">update the event map</dfn>, given <var>session</var>, <var>requested event names</var>, <var>browsing contexts</var>, and <var>enabled</var>:</p>
     <p class="note" role="note"><span>Note:</span> The return value of this algorithm is a map between event names and
-contexts. When the events are being enabled globally, the contexts in the return
-value are those for which the event was already enabled. When the events are
-enabled for specific contexts, the contexts in the return value are those for
-which the event are now enabled but were not previously. When events are
-disabled, the return value is always empty.</p>
+contexts. When the events are being enabled, the contexts in the return value
+are those for which the event are now enabled but were not previously. When
+events are disabled, the return value is always empty.</p>
     <ol>
      <li data-md>
       <p>Let <var>global event set</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-clone" id="ref-for-list-clone">clone</a> of the <a data-link-type="dfn" href="#event-global-event-set" id="ref-for-event-global-event-set①">global event set</a> for <var>session</var>.</p>
@@ -1765,15 +1763,18 @@ disabled, the return value is always empty.</p>
             <p>If <var>global event set</var> doesn’t contain <var>event name</var>:</p>
             <ol>
              <li data-md>
-              <p>Let <var>event enabled contexts</var> be the <a data-link-type="dfn" href="#event-enabled-browsing-contexts" id="ref-for-event-enabled-browsing-contexts">event enabled browsing
+              <p>Let <var>already enabled contexts</var> be the <a data-link-type="dfn" href="#event-enabled-browsing-contexts" id="ref-for-event-enabled-browsing-contexts">event enabled browsing
   contexts</a> given <var>session</var> and <var>event name</var></p>
              <li data-md>
               <p>Add <var>event name</var> to <var>global event set</var>.</p>
              <li data-md>
-              <p>For each <var>context</var> of <var>event enabled contexts</var>, remove <var>event
+              <p>For each <var>context</var> of <var>already enabled contexts</var>, remove <var>event
   name</var> from <var>event map</var>[<var>context</var>].</p>
              <li data-md>
-              <p>Set <var>enabled events</var>[<var>event name</var>] to <var>event enabled contexts</var>.</p>
+              <p>Let <var>newly enabled contexts</var> be a list of all <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context②">top-level browsing
+  contexts</a> that are not contained in <var>already enabled contexts</var>,</p>
+             <li data-md>
+              <p>Set <var>enabled events</var>[<var>event name</var>] to <var>newly enabled contexts</var>.</p>
             </ol>
           </ol>
         </ol>
@@ -1800,7 +1801,7 @@ disabled, the return value is always empty.</p>
          <li data-md>
           <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context">get a browsing context</a> with <var>context id</var>.</p>
          <li data-md>
-          <p>Let <var>top-level context</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context②">top-level browsing context</a> for <var>context</var>.</p>
+          <p>Let <var>top-level context</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context③">top-level browsing context</a> for <var>context</var>.</p>
          <li data-md>
           <p>If <var>event map</var> does not contain <var>top-level context</var>, set <var>event
  map</var>[<var>top-level context</var>] to a new set.</p>
@@ -1940,15 +1941,12 @@ SessionSubscribeParameters = {
  two</var>’s susbscribe priority, or false otherwise.</p>
       </ol>
      <li data-md>
+      <p>If <var>list of contexts</var> is null, let <var>include global</var> be true, otherwise let <var>include global</var> be false.</p>
+     <li data-md>
       <p>For each <var>event name</var> → <var>contexts</var> in <var>subscribe step events</var>:</p>
       <ol>
        <li data-md>
-        <p>If <var>list of contexts</var> is null, let <var>include contexts</var> be a list of all <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context③">top-level browsing contexts</a> that are not contained in <var>contexts</var>, and
- let <var>include global</var> be true.</p>
-        <p>Otherwise let <var>include contexts</var> be <var>contexts</var> and let <var>include global</var> be
- false.</p>
-       <li data-md>
-        <p>Run the <a data-link-type="dfn" href="#remote-end-subscribe-steps" id="ref-for-remote-end-subscribe-steps①">remote end subscribe steps</a> for the <a data-link-type="dfn" href="#event" id="ref-for-event⑧">event</a> with <a data-link-type="dfn" href="#event-event-name" id="ref-for-event-event-name⑥">event name</a> <var>event name</var> given <var>include contexts</var> and <var>include global</var>.</p>
+        <p>Run the <a data-link-type="dfn" href="#remote-end-subscribe-steps" id="ref-for-remote-end-subscribe-steps①">remote end subscribe steps</a> for the <a data-link-type="dfn" href="#event" id="ref-for-event⑧">event</a> with <a data-link-type="dfn" href="#event-event-name" id="ref-for-event-event-name⑥">event name</a> <var>event name</var> given <var>contexts</var> and <var>include global</var>.</p>
       </ol>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑦">success</a> with data null.</p>
@@ -3829,8 +3827,7 @@ end:</p>
    <a href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context">https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-top-level-browsing-context">3.5. Events</a> <a href="#ref-for-top-level-browsing-context①">(2)</a>
-    <li><a href="#ref-for-top-level-browsing-context②">6.1.1. Definition</a>
-    <li><a href="#ref-for-top-level-browsing-context③">6.1.2.2. The session.subscribe Command</a>
+    <li><a href="#ref-for-top-level-browsing-context②">6.1.1. Definition</a> <a href="#ref-for-top-level-browsing-context③">(2)</a>
     <li><a href="#ref-for-top-level-browsing-context④">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
     <li><a href="#ref-for-top-level-browsing-context⑤">6.3.4.1. The script.realmCreated Event</a>
     <li><a href="#ref-for-top-level-browsing-context⑥">6.4.3.1. entryAdded</a>
