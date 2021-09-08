@@ -1930,6 +1930,7 @@ navigation status</dfn> struct, which has the following items:
 <pre class="cddl remote-cddl">
 
 BrowsingContextCommand = (
+    BrowsingContextCreate //
     BrowsingContextGetTreeCommand //
     BrowsingContextNavigateCommand //
     BrowsingContextReloadCommand
@@ -1941,6 +1942,7 @@ BrowsingContextCommand = (
 <pre class="cddl local-cddl">
 
 BrowsingContextResult = (
+    BrowsingContextCreateResult //
     BrowsingContextGetTreeResult //
     BrowsingContextNavigateResult
 )
@@ -2194,6 +2196,55 @@ To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
 
 ### Commands ### {#module-browsingContext-commands}
 
+#### The browsingContext.create Command ####  {#command-browsingContext-create}
+
+The <dfn export for=commands>browsingContext.create</dfn> command creates a new
+[=/browsing context=], either in a new window or in a new tab, and returns its
+[=browsing context id=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      BrowsingContextCreateCommand = {
+        method: "browsingContext.create",
+        params: BrowsingContextCreateParameters
+      }
+
+      BrowsingContextCreateType = "tab" / "window"
+
+      BrowsingContextCreateParameters = {
+        type: BrowsingContextCreateType
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        BrowsingContextCreateResult = {
+          context: BrowsingContext
+        }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.create">
+The [=remote end steps=] with |command parameters| are:
+
+  1. Let |type| be the value of the <code>type</code> field of
+     |command parameters| if present, or "<code>window</code>" otherwise.
+
+  1. TODO: insert step 5 of https://w3c.github.io/webdriver/#new-window verbatim here?
+
+  1. If |context id| be the [=browsing context id=] of the newly created [=/browsing context=].
+
+  1. Let |body| be a [=map=] matching the <code>BrowsingContextCreateResult</code>
+     production, with the <code>context</code> field set to |context id|.
+
+  1. Return [=success=] with data |body|.
+
+</div>
+
 #### The browsingContext.getTree Command ####  {#command-browsingContext-getTree}
 
 The <dfn export for=commands>browsingContext.getTree</dfn> command returns a
@@ -2228,7 +2279,7 @@ top-level contexts when no parent is provided.
 <div algorithm="remote end steps for browsingContext.getTree">
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
-1. Let the |parent id| be the value of the <code>parent</code> field of
+1. Let |parent id| be the value of the <code>parent</code> field of
    |command parameters| if present, or null otherwise.
 
 1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
