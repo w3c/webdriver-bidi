@@ -75,6 +75,7 @@ spec: CONSOLE; urlPrefix: https://console.spec.whatwg.org
 spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
   type: dfn
     text: Array; url: sec-array-objects
+    text: Await; url: await
     text: Completion Record; url: sec-completion-record-specification-type
     text: CreateArrayFromList; url: sec-createarrayfromlist
     text: CreateArrayIterator; url: sec-createarrayiterator
@@ -90,6 +91,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: IsRegExp; url: sec-isregexp
     text: LengthOfArrayLike; url: sec-lengthofarraylike
     text: Object; url: sec-object-objects
+    text: ScriptEvaluation; url: #sec-runtime-semantics-scriptevaluation
     text: Set; url: sec-set
     text: ThisTimeValue; url: thistimevalue
     text: ToDateString; url: sec-todatestring
@@ -105,7 +107,9 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/
   type: dfn
     text: WindowProxy; url: windowproxy
     text: a browsing context is discarded; url: a-browsing-context-is-discarded
+    text: create a classic script; url: creating-a-classic-script
     text: create a new browsing context; url: creating-a-new-browsing-context
+    text: default classic script fetch options; url: default-classic-script-fetch-options
     text: environment settings object's Realm; url: environment-settings-object's-realm
     text: handled; url: concept-error-handled
     text: history handling behavior; url: history-handling-behavior
@@ -2762,7 +2766,10 @@ relating to script realms and execution.
 
 <pre class="cddl remote-cddl">
 
-ScriptCommand = (ScriptGetRealmsCommand)
+ScriptCommand = (
+  ScriptEvaluateCommand //
+  ScriptGetRealmsCommand
+)
 
 </pre>
 
@@ -2770,7 +2777,10 @@ ScriptCommand = (ScriptGetRealmsCommand)
 
 <pre class="cddl local-cddl">
 
-ScriptResult = (ScriptGetRealmsResult)
+ScriptResult = (
+  ScriptEvaluateResult //
+  ScriptGetRealmsResult
+)
 
 ScriptEvent = (
     ScriptRealmCreatedEvent //
@@ -2781,6 +2791,54 @@ ScriptEvent = (
 
 
 ### Types ### {#module-script-types}
+
+#### The script.ExceptionDetails type #### {#type-script-ExceptionDetails}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl remote-cddl">
+ExceptionDetails = {
+  columnNumber: uint,
+  exception: RemoteValue,
+  lineNumber: uint,
+  stackTrace: StackTrace,
+  text: text,
+};
+</pre>
+
+The <code>ExceptionDetails</code> type represents a JavaScript exception.
+
+<div algorithm>
+
+To <dfn>get exception details</dfn> given a [=completion record=] |record|:
+
+1. Assert: |record|.\[[Type]] is <code>throw</code>.
+
+1. Let |text| be an implementation-defined textual description of the error
+   represented by |record|.
+
+   TODO: Tighten up the requirements here; people will probably try to parse
+   this data with regex or something equally bad.
+
+1. Let |exception| be the result of [=serialize as a remote value=] given
+   |record|.\[[Value]].
+
+1. Let |stack trace| be the [=stack trace for an exception=] given |record|.
+
+1. If |stack trace| has size of 1 or greater, let |line number| be value of the
+   <code>lineNumber</code> field in |stack trace|[0], and let |column number| be
+   the value of the <code>columnNumber</code> field |stack trace|[0]. Otherwise
+   let |line number| and |column number| be 0.
+
+1. Let |exception details| be a map matching the <code>ExceptionDetails</code>
+   production, with the <code>text</code> field set to |text|, the
+   <code>exception</code> field set to |exception|, the <code>lineNumber</code>
+   field set to |line number|, the <code>columnNumber</code> field set to
+   |column number|, and the <code>stackTrace</code> field set to |stack trace|.
+
+1. Return |exception details|.
+
+</div>
 
 #### The script.Realm type #### {#type-script-Realm}
 
@@ -2794,7 +2852,6 @@ Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
 uniquely identifying that realm. This is implicitly set when the realm is
 created.
 
-<!-- TEMPORARILY UNUSED
 <div algorithm>
 To <dfn>get a realm</dfn> given |realm id|:
 
@@ -2809,7 +2866,6 @@ To <dfn>get a realm</dfn> given |realm id|:
 
 Issue: This has the wrong error code
 </div>
--->
 
 #### The script.RealmInfo type ####  {#type-script-RealmInfo}
 
@@ -3043,6 +3099,105 @@ Issue: This has the wrong error code
 
 
 ### Commands ### {#module-script-commands}
+
+#### The script.evaluate Command ####  {#command-script-evaluate}
+
+The <dfn export for=commands>script.evaluate</dfn> command evaluates a provided
+script in a given realm. For convenience a browsing context can be provided in
+place of a realm, in which case the realm used is the realm of the browsing
+context's active document.
+
+The method returns the value of executing the provided script, unless it returns
+a promise and <code>awaitPromise</code> is true (which is the default), in which
+case the resolved value of the promise is returned.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      ScriptEvaluateCommand = {
+        method: "script.evaluate",
+        params: ScriptEvaluateParameters
+      }
+
+      ScriptEvaluateParameters = {
+        expression: text,
+        target: Target,
+        ?awaitPromise: bool,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      ScriptEvaluateResult = (
+        ScriptEvaluateResultSuccess //
+        ScriptEvaluateResultException
+      )
+
+      ScriptEvaluateResultSuccess = {
+         result: RemoteValue
+      }
+
+      ScriptEvaluateResultException = {
+        exceptionDetails: ExceptionDetails
+      }
+    </pre>
+   </dd>
+</dl>
+
+TODO: Add timeout argument. It's not totally clear how this ought to work; in
+Chrome it seems like the timeout doesn't apply to the promise resolve step, but
+that likely isn't what clients want.
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
+   given the value of the <code>target</code> field of |command parameters|.
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
+
+1. Let |source| be the value of the <code>expression</code> field of |command
+   parameters|.
+
+1. Let |await promise| be the value of the <code>awaitPromise</code> field of
+   |command parameters|, if present, or <code>true</code> otherwise.
+
+1. Let |options| be the [=default classic script fetch options=].
+
+1. Let |base URL| be the [=API base URL=] of |environment settings|.
+
+1. Let |script| be the result of [=create a classic script=] with |source|,
+   |environment settings|, |base URL|, and |options|.
+
+1. [=Prepare to run script=] with |environment settings|.
+
+1. Set |evaluation status| to [=ScriptEvaluation=](|script|'s record).
+
+1. If |evaluation status|.\[[Type]] is <code>normal</code>, |await promise| is
+   true, and [=IsPromise=](|evaluation status|.\[[Value]]):
+
+   1. Set |evaluation status| to <a spec=ECMASCRIPT>Await</a>(|evaluation status|.\[[Value]]).
+
+1. [=Clean up after running script=] with |environment settings|.
+
+1. If |evaluation status|.\[[Type]] is <code>throw</code>:
+
+  1. Let |exception details| be the result of [=get exception details=] given |evaluation
+     status|
+
+  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+     production, with the <code>exceptionDetails</code> field set to |exception
+     details|.
+
+1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
+
+1. Let |result| be the result of [=serialize as a remote value=] given
+   |evaluation status|.\[[Value]].
+
+1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
+   production, with the <code>result</code> field set to |result|.
 
 #### The script.getRealms Command ####  {#command-script-getRealms}
 
