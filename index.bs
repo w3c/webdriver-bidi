@@ -75,6 +75,7 @@ spec: CONSOLE; urlPrefix: https://console.spec.whatwg.org
 spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
   type: dfn
     text: Array; url: sec-array-objects
+    text: Completion Record; url: sec-completion-record-specification-type
     text: CreateArrayFromList; url: sec-createarrayfromlist
     text: CreateArrayIterator; url: sec-createarrayiterator
     text: CreateListFromArrayLike; url: sec-createlistfromarraylike
@@ -2893,6 +2894,154 @@ Note: Future variations of this specification will retain the invariant that
 
 </div>
 
+#### The script.StackFrame type #### {#types-script-StackFrame}
+
+<pre class="cddl local-cddl">
+StackFrame = {
+  columnNumber: int,
+  functionName: text,
+  lineNumber: int,
+  url: text,
+}
+</pre>
+
+A frame in a stack trace is represented by a <code>StackFrame</code>
+object. This has a <code>url</code> property, which represents the URL of the
+script, a <code>functionName</code> property which represents the name of the
+executing function, and <code>lineNumber</code> and <code>columnNumber</code>
+properties, which represent the line and column number of the executed code.
+
+#### The script.StackTrace type #### {#types-script-StackTrace}
+
+<pre class="cddl local-cddl">
+StackTrace = {
+  callFrames: [*StackFrame],
+}
+</pre>
+
+The <code>StackTrace</code> type represents the javascript stack at a point in
+script execution.
+
+Note: The details of how to get a list of stack frames, and the properties of
+that list are underspecified, and therefore the details here are implementation
+defined.
+
+It is assumed that an implementation is able to generate a <dfn>list of stack
+frames</dfn>, which is a list with one entry for each item in the javascript
+call stack, starting from the most recent. Each entry is a single <dfn>stack
+frame</dfn> corresponding to execution of a statement or expression in a script
+|script|, which contains the following fields:
+
+<dl>
+ <dt><dfn for=stackframe>script url</dfn>
+ <dd>The url of the resource containing |script|
+ <dt><dfn for=stackframe>function</dfn>
+ <dd>The name of the function being executed
+ <dt><dfn for=stackframe>line number</dfn>
+ <dd>The one-based line number of the executed code, relative to the top
+ of the resource containing |script|.
+ <dt><dfn for=stackframe>column number</dfn>
+ <dd>The zero-based column number of the executed code, relative to the start of
+ the line in the resource containing |script|.
+</dl>
+
+<div algorithm>
+
+To <dfn>construct a stack trace</dfn>, with a list of stack frames |stack|:
+
+1. Let |call frames| be a new list.
+
+1. For each [=stack frame=] |frame| in |stack|,
+   starting from the most recently executed frame, run the following steps:
+
+   1. Let |url| be the result of running the [=URL serializer=], given
+      the <a spec=url for=/>URL</a> of |frame|'s [=stackframe/script url=].
+
+   1. Let |frame info| be a new map matching the <code>StackFrame</code>
+      production, with the <code>url</code> field set to |url|, the
+      <code>functionName</code> field set to |frame|'s [=stackframe/function=],
+      the <code>lineNumber</code> field set to |frame|'s [=stackframe/line
+      number=] and the <code>columnNumber</code> field set to |frame|'s
+      [=stackframe/column number=].
+
+1. Append |frame info| to |call frames|.
+
+1. Let |stack trace| be a new map matching the <code>StackTrace</code>
+   production, with the <code>callFrames</code> property set to |call frames|.
+
+1. Return |stack trace|.
+
+</div>
+
+The <dfn>current stack trace</dfn> is the result of [=construct a stack trace=]
+given a [=list of stack frames=] representing the callstack of the [=running
+execution context=].
+
+<div algorithm>
+
+The <dfn>stack trace for an exception</dfn> with an exception, or a [=Completion
+Record=] of type <code>throw</code>, |exception|, is given by:
+
+1. If |exception| is a value that has been thrown as an exception, let |record|
+   be the [=Completion Record=] created to throw |exception|. Otherwise let
+   |record| be |exception|.
+
+1. Let |stack| be the [=list of stack frames=] corresponding to execution at the
+   point |record| was created.
+
+1. Return [=construct a stack trace=] given |stack|.
+
+</div>
+
+#### The script.Target type #### {#type-script-Target}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl remote-cddl">
+RealmTarget = {realm: Realm};
+
+ContextTarget = {context: BrowsingContext}
+
+Target = (
+  RealmTarget //
+  ContextTarget
+);
+</pre>
+
+The <code>Target</code> type represents a value that is either a
+<code>script.Realm</code> or a <code>browsingContext.BrowsingContext</code>. This
+is useful in cases where a context identifier can stand in for the realm
+associated with the context's active document.
+
+<div algorithm>
+To <dfn>get a realm from a target</dfn> given |target|:
+
+1. If |target| matches the <code>ContextTarget</code> production:
+
+  1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+     with |target|["<code>context</code>"].
+
+  1. Let |document| be |context|'s [=active document=].
+
+  1. Let |environment settings| be the [=environment settings object=] whose
+     [=responsible document=] is |document|.
+
+  1. Let |realm| be |environment settings|' [=realm execution context=]'s Realm component.
+
+1. Otherwise:
+
+  1. Assert: |target| matches the <code>RealmTarget</code> production.
+
+  1. Let |realm id| be the value of the <code>realm</code> field of |target|.
+
+  1. Let |realm| be [=get a realm=] given |realm id|.
+
+1. Return [=success=] with data |realm|
+
+Issue: This has the wrong error code
+</div>
+
+
 ### Commands ### {#module-script-commands}
 
 #### The script.getRealms Command ####  {#command-script-getRealms}
@@ -3226,7 +3375,7 @@ BaseLogEntry = {
   level: LogLevel,
   text: text / null,
   timestamp: int,
-  ?stackTrace: [*StackFrame],
+  ?stackTrace: StackTrace,
 }
 
 GenericLogEntry = {
@@ -3256,53 +3405,6 @@ with the log message string itself, and a <code>timestamp</code> property
 corresponding to the time the log entry was generated. Specific variants of the
 <code>LogEntry</code> are used to represent logs from different sources, and
 provide additional fields specific to the entry type.
-
-#### log.StackFrame #### {#types-log-stackframe}
-
-<pre class="cddl local-cddl">
-
-StackFrame = {
-  url: text,
-  functionName: text,
-  lineNumber: int,
-  columnNumber: int,
-}
-
-</pre>
-
-A frame in a stacktrace is represented by a <code>StackFrame</code> object. This
-has a <code>url</code> property, which represents the URL of the script, a
-<code>functionName</code> property which represents the name of the executing
-function, and <code>lineNumber</code> and <code>columnNumber</code> properties,
-which represent the line and column number of the executed code.
-
-The <dfn>current stack trace</dfn> is a representation of the stack of the
-[=running execution context=]. The details of this are unspecified, and so the
-behaviour here is implementation defined, but the general process is as follows:
-
-1. Let |stack trace| be a new list.
-
-1. For each stack frame |frame| in the stack of the running execution context,
-   starting from the most recently executed frame, run the following steps:
-
-   1. Let |url| be the result of running the [=URL serializer=], given
-      the <a spec=url for=/>URL</a> of |frame|'s associated script resource.
-
-   1. Let |functionName| be the name of |frame|'s associated function.
-
-   1. Let |lineNumber| and |columnNumber| be the one-based line and zero-based
-      column numbers, respectively, of the location in |frame|'s associated
-      script resource corresponding to |frame|.
-
-   1. Let |frame info| be a new map matching the <code>StackFrame</code>
-      production, with the <code>url</code> field set to |url|, the
-      <code>functionName</code> field set to |functionName|, the
-      <code>lineNumber</code> field set to |lineNumber| and the
-      <code>columnNumber</code> field set to |columnNumber|.
-
-1. Append |frame info| to |stack trace|.
-
-1. Return |stack trace|
 
 ### Events ### {#module-log-events}
 
@@ -3395,7 +3497,8 @@ ignore>line number</var>, <var ignore>column number</var>, |message| and
 
 1. Let |settings| be |script|'s [=script/settings object=].
 
-1. Let |stack| be the [=current stack trace=] for the exception.
+1. Let |stack| be the [=stack trace for an exception=] with the exception
+   corresponding to the error being reported.
 
 1. Let |entry| be a map matching the <code>JavascriptLogEntry</code> production,
    with <code>level</code> set to "<code>error</code>", <code>text</code> set to
