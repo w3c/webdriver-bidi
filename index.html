@@ -4,9 +4,9 @@
   <title>WebDriver BiDi</title>
   <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
   <link href="https://www.w3.org/StyleSheets/TR/2016/W3C-ED" rel="stylesheet">
-  <meta content="Bikeshed version 4f053d00e, updated Tue Aug 10 14:13:32 2021 -0700" name="generator">
+  <meta content="Bikeshed version e8cbf4ed2, updated Fri Sep 10 10:21:28 2021 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="916796da5767bd9d137bfbf9af2de7e3d93eab80" name="document-revision">
+  <meta content="b6bb9075d301f48a725de40f13e8d87cde207c25" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -457,7 +457,7 @@ dfn > a.self-link::before      { content: "#"; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2016/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2021-09-01">1 September 2021</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Editor’s Draft, <time class="dt-updated" datetime="2021-09-15">15 September 2021</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -549,6 +549,7 @@ dfn > a.self-link::before      { content: "#"; }
          <ol class="toc">
           <li><a href="#command-browsingContext-getTree"><span class="secno">6.2.3.1</span> <span class="content">The browsingContext.getTree Command</span></a>
           <li><a href="#command-browsingContext-navigate"><span class="secno">6.2.3.2</span> <span class="content">The browsingContext.navigate Command</span></a>
+          <li><a href="#command-browsingContext-reload"><span class="secno">6.2.3.3</span> <span class="content">The browsingContext.reload Command</span></a>
          </ol>
         <li>
          <a href="#module-contexts-events"><span class="secno">6.2.4</span> <span class="content">Events</span></a>
@@ -2003,7 +2004,8 @@ navigation status<a class="self-link" href="#webdriver-navigation-status"></a></
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑧">remote end definition</a></p>
 <pre class="cddl remote-cddl">BrowsingContextCommand = (
     BrowsingContextGetTreeCommand //
-    BrowsingContextNavigateCommand
+    BrowsingContextNavigateCommand //
+    BrowsingContextReloadCommand
 )
 </pre>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③④">local end definition</a></p>
@@ -2107,6 +2109,69 @@ browsing context.</p>
       <p>Return <var>contexts info</var></p>
     </ol>
    </div>
+   <div class="algorithm" data-algorithm="await a navigation">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="await-a-navigation">await a navigation</dfn> given <var>context</var>, <var>request</var>, <var>wait condition</var>, and optionally <var>history handling</var> (default: "<code>default</code>") and <var>ignore cache</var> (default: false): 
+    <ol>
+     <li data-md>
+      <p>Let <var>navigation id</var> be the string representation of a <a data-link-type="biblio" href="#biblio-rfc4122">UUID</a> based on truly random, or pseudo-random numbers.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate" id="ref-for-navigate">Navigate</a> <var>context</var> with resource <var>request</var>, and using <var>context</var> as the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#source-browsing-context" id="ref-for-source-browsing-context">source browsing context</a>, with <a data-link-type="dfn" href="https://html.spec.whatwg.org/#concept-navigation-id" id="ref-for-concept-navigation-id①">navigation id</a> <var>navigation id</var>, and <a data-link-type="dfn" href="https://html.spec.whatwg.org/#history-handling-behavior" id="ref-for-history-handling-behavior">history handling behavior</a> <var>history handling</var>. If <var>ignore cache</var> is true, the
+ navigation must not load resources from the HTTP cache.</p>
+      <p class="issue" id="issue-40db6a3c"><a class="self-link" href="#issue-40db6a3c"></a> property specify how the <var>ignore cache</var> flag works. This needs to
+ consider whether only the first load of a resource bypasses the cache
+ (i.e. whether this is like initially clearing the cache and proceeding like
+ normal), or whether resources not directly loaded by the HTML parser
+ (e.g. loads initiated by scripts or stylesheets) also bypass the cache.</p>
+     <li data-md>
+      <p>Let (<var>event received</var>, <var>navigate status</var>) be <a data-link-type="dfn" href="#awaits" id="ref-for-awaits①">await</a> given
+  «"<code>navigation started</code>", "<code>navigation failed</code>",
+  "<code>fragment navigated</code>"», and <var>navigation id</var>.</p>
+     <li data-md>
+      <p class="assertion">Assert: <var>navigate status</var>’s id is <var>navigation id</var>.</p>
+     <li data-md>
+      <p>If <var>navigate status</var>’s status is "<code>complete</code>":</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map②">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer①">URL serializer</a> given <var>navigate status</var>’s url.</p>
+       <li data-md>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①①">success</a> with data <var>body</var>.</p>
+      </ol>
+      <p class="note" role="note"><span>Note:</span> this is the case if the navigation only caused the fragment to
+ change.</p>
+     <li data-md>
+      <p>If <var>navigate status</var>’s status is "<code>canceled</code>" return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑦">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑦">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-error" id="ref-for-dfn-unknown-error">unknown error</a>.</p>
+      <p>TODO: is this the right way to handle errors here?</p>
+     <li data-md>
+      <p class="assertion">Assert: <var>navigate status</var>’s status is "<code>pending</code>" and <var>navigation id</var> is not null.</p>
+     <li data-md>
+      <p>If <var>wait condition</var> is "<code>none</code>":</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map③">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer②">URL serializer</a> given <var>navigate status</var>’s url.</p>
+       <li data-md>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①②">success</a> with data <var>body</var>.</p>
+      </ol>
+     <li data-md>
+      <p>If <var>wait condition</var> is "<code>interactive</code>", let <var>event name</var> be
+ "<code>domContentLoaded</code>", otherwise let <var>event name</var> be
+ "<code>load</code>".</p>
+     <li data-md>
+      <p>Let (<var>event received</var>, <var>status</var>) be <a data-link-type="dfn" href="#awaits" id="ref-for-awaits②">await</a> given «<var>event name</var>,
+  "<code>download started</code>", "<code>navigation aborted</code>",
+  "<code>navigation failed</code>"» and <var>navigation id</var>.</p>
+     <li data-md>
+      <p>If <var>event received</var> is "<code>navigation failed</code>"
+ return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑧">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑧">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-error" id="ref-for-dfn-unknown-error①">unknown error</a>.</p>
+      <p class="issue" id="issue-ceba1469"><a class="self-link" href="#issue-ceba1469"></a> Are we surfacing enough information about what failed and why with
+ an error here? What error code do we want? Is there going to be a problem
+ where local ends parse the implementation-defined strings to figure out
+ what actually went wrong?</p>
+     <li data-md>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map④">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>status</var>’s id, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer③">URL serializer</a> given <var>status</var>’s url.</p>
+     <li data-md>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①③">success</a> with data <var>body</var>.</p>
+    </ol>
+   </div>
    <h5 class="heading settled" data-level="6.2.2.3" id="type-browsingContext-Navigation"><span class="secno">6.2.2.3. </span><span class="content">The browsingContext.Navigation Type</span><a class="self-link" href="#type-browsingContext-Navigation"></a></h5>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⓪">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑦">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">Navigation = text;
@@ -2133,8 +2198,8 @@ navigation.</p>
      <li data-md>
       <p>Let <var>url</var> be <var>navigation status</var>’s url.</p>
      <li data-md>
-      <p>Return a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map②">map</a> matching the <code>NavigationInfo</code> production, with the <code>context</code> field set to <var>context id</var>, the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the
- result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer①">URL serializer</a> given <var>url</var>.</p>
+      <p>Return a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑤">map</a> matching the <code>NavigationInfo</code> production, with the <code>context</code> field set to <var>context id</var>, the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the
+ result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer④">URL serializer</a> given <var>url</var>.</p>
     </ol>
    </div>
    <h4 class="heading settled" data-level="6.2.3" id="module-browsingContext-commands"><span class="secno">6.2.3. </span><span class="content">Commands</span><a class="self-link" href="#module-browsingContext-commands"></a></h4>
@@ -2176,9 +2241,9 @@ BrowsingContextGetTreeParameters = {
       <p>Let <var>contexts</var> be the result of <a data-link-type="dfn" href="#get-the-descendent-browsing-contexts" id="ref-for-get-the-descendent-browsing-contexts①">get the descendent browsing contexts</a>,
  given <var>parent id</var>, <var>depth</var>, and <var>max depth</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map③">map</a> matching the <code>BrowsingContextGetTreeResult</code> production, with the <code>contexts</code> field set to <var>contexts</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑥">map</a> matching the <code>BrowsingContextGetTreeResult</code> production, with the <code>contexts</code> field set to <var>contexts</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①①">success</a> with data <var>body</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①④">success</a> with data <var>body</var>.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.2.3.2" id="command-browsingContext-navigate"><span class="secno">6.2.3.2. </span><span class="content">The browsingContext.navigate Command</span><a class="self-link" href="#command-browsingContext-navigate"></a></h5>
@@ -2231,79 +2296,57 @@ BrowsingContextNavigateParameters = {
       <p>Let <var>url record</var> be the result of applying the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-parser" id="ref-for-concept-url-parser">URL parser</a> to <var>url</var>,
  with <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-script-base-url" id="ref-for-concept-script-base-url①">base URL</a> <var>base</var>.</p>
      <li data-md>
-      <p>If <var>url record</var> is failure, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑦">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑦">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑧">invalid
+      <p>If <var>url record</var> is failure, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑨">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑧">invalid
  argument</a>.</p>
      <li data-md>
       <p>Let <var>request</var> be a new <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request" id="ref-for-concept-request">request</a> whose URL is <var>url record</var>.</p>
      <li data-md>
-      <p>Let <var>navigation id</var> be the string representation of a <a data-link-type="biblio" href="#biblio-rfc4122">UUID</a> based on truly random, or pseudo-random numbers.</p>
+      <p>Return the result of <a data-link-type="dfn" href="#await-a-navigation" id="ref-for-await-a-navigation">await a navigation</a> with <var>context</var>, <var>request</var> and <var>wait condition</var>.</p>
+    </ol>
+   </div>
+   <h5 class="heading settled" data-level="6.2.3.3" id="command-browsingContext-reload"><span class="secno">6.2.3.3. </span><span class="content">The browsingContext.reload Command</span><a class="self-link" href="#command-browsingContext-reload"></a></h5>
+   <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextreload">browsingContext.reload<a class="self-link" href="#commands-browsingcontextreload"></a></dfn> command reloads a
+browsing context.</p>
+   <dl>
+    <dt>Command Type
+    <dd>
+<pre class="cddl remote-cddl">BrowsingContextReloadCommand = {
+  method: "browsingContext.reload",
+  params: BrowsingContextReloadParameters
+}
+
+BrowsingContextReloadParameters = {
+  context: BrowsingContext,
+  ?ignoreCache: boolean,
+  ?wait: ReadinessState,
+}
+</pre>
+   </dl>
+   <div class="algorithm" data-algorithm="remote end steps for browsingContext.reload">
+     The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑦">remote end steps</a> with <var>command parameters</var> are: 
+    <ol>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate" id="ref-for-navigate">Navigate</a> <var>context</var> with resource <var>request</var>, and using <var>context</var> as the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#source-browsing-context" id="ref-for-source-browsing-context">source browsing context</a>, and with navigation id <var>navigation id</var>.</p>
+      <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
      <li data-md>
-      <p>Let (<var>event received</var>, <var>navigate status</var>) be <a data-link-type="dfn" href="#awaits" id="ref-for-awaits①">await</a> given
-  «"<code>navigation started</code>", "<code>navigation failed</code>",
-  and "<code>fragment navigated</code>"» and <var>navigation id</var>.</p>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try⑥">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context③">get a browsing context</a> with <var>context id</var>.</p>
      <li data-md>
-      <p class="assertion">Assert: <var>navigate status</var>’s id is <var>navigation id</var>.</p>
+      <p class="assertion">Assert: <var>context</var> is not null.</p>
      <li data-md>
-      <p>If <var>navigate status</var>’s status is "<code>complete</code>":</p>
-      <ol>
-       <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map④">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer②">URL serializer</a> given <var>navigate status</var>’s url.</p>
-       <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①②">success</a> with data <var>body</var>, and then run the following steps <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel" id="ref-for-in-parallel①">in
- parallel</a>:</p>
-        <ol>
-         <li data-md>
-          <p>Run the <a data-link-type="dfn" href="#webdriver-bidi-fragment-navigated" id="ref-for-webdriver-bidi-fragment-navigated">WebDriver-BiDi fragment navigated</a> steps given <var>context</var> and <var>navigate status</var></p>
-        </ol>
-      </ol>
-      <p class="note" role="note"><span>Note:</span> this is the case if the navigation only caused the fragment to
- change. The parallel steps here ensure that we return the command result
- before emitting the event, so the navigation id is known.</p>
+      <p>Let <var>ignore cache</var> be the the value of the <code>ignoreCache</code> field of <var>command
+ parameters</var> if present, or false otherwise.</p>
      <li data-md>
-      <p>If <var>navigate status</var>’s status is "<code>canceled</code>" return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑧">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑧">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-error" id="ref-for-dfn-unknown-error">unknown error</a>.</p>
-      <p>TODO: is this the right way to handle errors here?</p>
+      <p>Let <var>wait condition</var> be the value of the <code>wait</code> field of <var>command
+ parameters</var> if present, or "<code>none</code>" otherwise.</p>
      <li data-md>
-      <p class="assertion">Assert: <var>navigate status</var>’s status is "<code>pending</code>" and <var>navigation id</var> is not null.</p>
+      <p>Let <var>document</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#active-document" id="ref-for-active-document②">active document</a>.</p>
      <li data-md>
-      <p>If <var>wait condition</var> is "<code>none</code>":</p>
-      <ol>
-       <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑤">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer③">URL serializer</a> given <var>navigate status</var>’s url.</p>
-       <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①③">success</a> with data <var>body</var>, and then run the following steps <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel" id="ref-for-in-parallel②">in
- parallel</a>:</p>
-        <ol>
-         <li data-md>
-          <p>Run the <a data-link-type="dfn" href="#webdriver-bidi-navigation-started" id="ref-for-webdriver-bidi-navigation-started">WebDriver-BiDi navigation started</a> steps given <var>context</var> and <var>navigate status</var></p>
-        </ol>
-      </ol>
+      <p>Let <var>url</var> be <var>document</var>’s <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document-url" id="ref-for-concept-document-url①">URL</a>.</p>
      <li data-md>
-      <p>Run the <a data-link-type="dfn" href="#webdriver-bidi-navigation-started" id="ref-for-webdriver-bidi-navigation-started①">WebDriver-BiDi navigation started</a> steps given <var>context</var> and <var>navigate status</var></p>
-      <p class="note" role="note"><span>Note:</span> this event was previously suppressed to ensure that it would come
- after the command response in the case that <var>wait condition</var> is
- "<code>none</code>".</p>
-      <p class="issue" id="issue-89fd30ed"><a class="self-link" href="#issue-89fd30ed"></a> Replace this suppression mechanism with an event queue.</p>
+      <p>Let <var>request</var> be a new <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request" id="ref-for-concept-request①">request</a> whose URL is <var>url</var>.</p>
      <li data-md>
-      <p>If <var>wait condition</var> is "<code>interactive</code>", let <var>event name</var> be
- "<code>domContentLoaded</code>", otherwise let <var>event name</var> be
- "<code>load</code>".</p>
-     <li data-md>
-      <p>Let (<var>event received</var>, <var>status</var>) be <a data-link-type="dfn" href="#awaits" id="ref-for-awaits②">await</a> given «<var>event name</var>,
-  "<code>download started</code>", "<code>navigation aborted</code>",
-  "<code>navigation failed</code>"» and <var>navigation id</var>.</p>
-     <li data-md>
-      <p>If <var>event received</var> is "<code>navigation failed</code>"
- return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑨">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unknown-error" id="ref-for-dfn-unknown-error①">unknown error</a>.</p>
-      <p class="issue" id="issue-ceba1469"><a class="self-link" href="#issue-ceba1469"></a> Are we surfacing enough information about what failed and why with
- an error here? What error code do we want? Is there going to be a problem
- where local ends parse the implementation-defined strings to figure out
- what actually went wrong?</p>
-     <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑥">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>status</var>’s id, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer④">URL serializer</a> given <var>status</var>’s url.</p>
-     <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①④">success</a> with data <var>body</var>.</p>
+      <p>Return the result of <a data-link-type="dfn" href="#await-a-navigation" id="ref-for-await-a-navigation①">await a navigation</a> with <var>context</var>, <var>request</var>, <var>wait
+ condition</var>, history handling "<code>reload</code>", and ignore
+ cache <var>ignore cache</var>.</p>
     </ol>
    </div>
    <h4 class="heading settled" data-level="6.2.4" id="module-contexts-events"><span class="secno">6.2.4. </span><span class="content">Events</span><a class="self-link" href="#module-contexts-events"></a></h4>
@@ -2345,7 +2388,7 @@ BrowsingContextNavigateParameters = {
    </div>
    <div class="algorithm" data-algorithm="remote end event trigger for browsingContext.contextCreated">
     <p>The <a data-link-type="dfn" href="#remote-end-event-trigger" id="ref-for-remote-end-event-trigger">remote end event trigger</a> is:</p>
-    <p>When the <a data-link-type="dfn" href="https://html.spec.whatwg.org/#creating-a-new-browsing-context" id="ref-for-creating-a-new-browsing-context">create a new browsing context</a> algorithm is invoked, after the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#active-document" id="ref-for-active-document②">active document</a> of the browsing context is set, run the following steps:</p>
+    <p>When the <a data-link-type="dfn" href="https://html.spec.whatwg.org/#creating-a-new-browsing-context" id="ref-for-creating-a-new-browsing-context">create a new browsing context</a> algorithm is invoked, after the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#active-document" id="ref-for-active-document③">active document</a> of the browsing context is set, run the following steps:</p>
     <ol>
      <li data-md>
       <p>Let <var>context</var> be the newly created browsing context.</p>
@@ -2408,8 +2451,8 @@ become inaccessible but not yet get discarded because bfcache.</p>
 </pre>
    </dl>
    <div class="algorithm" data-algorithm="WebDriver-BiDi navigation started">
-     The <a data-link-type="dfn" href="#remote-end-event-trigger" id="ref-for-remote-end-event-trigger②">remote end event trigger</a> is the <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="WebDriver-BiDi navigation started" id="webdriver-bidi-navigation-started">WebDriver-BiDi navigation
-started</dfn> steps given <var>context</var> and <var>navigation status</var>: 
+     The <a data-link-type="dfn" href="#remote-end-event-trigger" id="ref-for-remote-end-event-trigger②">remote end event trigger</a> is the <dfn data-dfn-type="dfn" data-export data-lt="WebDriver-BiDi navigation started" id="webdriver-bidi-navigation-started">WebDriver-BiDi navigation
+started<a class="self-link" href="#webdriver-bidi-navigation-started"></a></dfn> steps given <var>context</var> and <var>navigation status</var>: 
     <ol>
      <li data-md>
       <p>If the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-current-session" id="ref-for-dfn-current-session⑧">current session</a> is null, return.</p>
@@ -2438,8 +2481,8 @@ started</dfn> steps given <var>context</var> and <var>navigation status</var>:
 </pre>
    </dl>
    <div class="algorithm" data-algorithm="WebDriver-BiDi fragment navigated">
-     The <a data-link-type="dfn" href="#remote-end-event-trigger" id="ref-for-remote-end-event-trigger③">remote end event trigger</a> is the <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="WebDriver-BiDi fragment navigated" id="webdriver-bidi-fragment-navigated">WebDriver-BiDi fragment
-navigated</dfn> steps given <var>context</var> and <var>navigation status</var>: 
+     The <a data-link-type="dfn" href="#remote-end-event-trigger" id="ref-for-remote-end-event-trigger③">remote end event trigger</a> is the <dfn data-dfn-type="dfn" data-export data-lt="WebDriver-BiDi fragment navigated" id="webdriver-bidi-fragment-navigated">WebDriver-BiDi fragment
+navigated<a class="self-link" href="#webdriver-bidi-fragment-navigated"></a></dfn> steps given <var>context</var> and <var>navigation status</var>: 
     <ol>
      <li data-md>
       <p>If the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-current-session" id="ref-for-dfn-current-session⑨">current session</a> is null, return.</p>
@@ -2751,7 +2794,7 @@ ScriptGetRealmsResult = {
 </pre>
    </dl>
    <div class="algorithm" data-algorithm="remote end steps for script.getRealms">
-     The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑦">remote end steps</a> with <var>command parameters</var> are: 
+     The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑧">remote end steps</a> with <var>command parameters</var> are: 
     <ol>
      <li data-md>
       <p>Let <var>environment settings</var> be a list of all the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object">environment settings objects</a> that have their <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-environment-execution-ready-flag" id="ref-for-concept-environment-execution-ready-flag">execution ready flag</a> set.</p>
@@ -2759,9 +2802,9 @@ ScriptGetRealmsResult = {
       <p>If <var>command parameters</var> contains <code>context</code>:</p>
       <ol>
        <li data-md>
-        <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try⑥">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context③">get a browsing context</a> with <var>command parameters</var>["<code>context</code>"].</p>
+        <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try⑦">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context④">get a browsing context</a> with <var>command parameters</var>["<code>context</code>"].</p>
        <li data-md>
-        <p>Let <var>document</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#active-document" id="ref-for-active-document③">active document</a>.</p>
+        <p>Let <var>document</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#active-document" id="ref-for-active-document④">active document</a>.</p>
        <li data-md>
         <p>Let <var>context environment settings</var> be a list.</p>
        <li data-md>
@@ -2818,7 +2861,7 @@ ScriptGetRealmsResult = {
     The <a data-link-type="dfn" href="#remote-end-event-trigger" id="ref-for-remote-end-event-trigger⑨">remote end event trigger</a> is: 
    <div class="algorithm" data-algorithm="remote end event trigger for script.realmCreated">
     <p>When any of the <a data-link-type="dfn" href="https://html.spec.whatwg.org/#set-up-a-window-environment-settings-object" id="ref-for-set-up-a-window-environment-settings-object">set up a window environment settings object</a>, <a data-link-type="dfn" href="https://html.spec.whatwg.org/#set-up-a-worker-environment-settings-object" id="ref-for-set-up-a-worker-environment-settings-object">set up a
-worker environment settings object</a> or <a data-link-type="dfn">set up a worklet environment settings
+worker environment settings object</a> or <a data-link-type="dfn" href="https://html.spec.whatwg.org/#set-up-a-worklet-environment-settings-object" id="ref-for-set-up-a-worklet-environment-settings-object">set up a worklet environment settings
 object</a> algorithms are invoked, immediately prior to returning the settings
 object:</p>
     <ol>
@@ -3166,7 +3209,7 @@ the js exception and console API types that are represented by different methods
       <p>For each <var>context id</var> → <var>events</var> in <a data-link-type="dfn" href="#log-event-buffer" id="ref-for-log-event-buffer②">log event buffer</a>:</p>
       <ol>
        <li data-md>
-        <p>Let <var>maybe context</var> be the result of <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context④">getting a browsing context</a> given <var>context id</var>.</p>
+        <p>Let <var>maybe context</var> be the result of <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑤">getting a browsing context</a> given <var>context id</var>.</p>
        <li data-md>
         <p>If <var>maybe context</var> is an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①⓪">error</a>, remove <var>context id</var> from <a data-link-type="dfn" href="#log-event-buffer" id="ref-for-log-event-buffer③">log event
  buffer</a> and continue.</p>
@@ -3244,12 +3287,14 @@ end:</p>
   <h3 class="no-num no-ref heading settled" id="index-defined-here"><span class="content">Terms defined by this specification</span><a class="self-link" href="#index-defined-here"></a></h3>
   <ul class="index">
    <li><a href="#active-listeners">active listeners</a><span>, in § 4</span>
+   <li><a href="#await-a-navigation">await a navigation</a><span>, in § 6.2.2.2</span>
    <li><a href="#awaits">awaits</a><span>, in § 2</span>
    <li><a href="#modules-browsingcontext">browsingContext</a><span>, in § 6.2</span>
    <li><a href="#event-browsing-context-event-map">browsing context event map</a><span>, in § 3.5</span>
    <li><a href="#commands-browsingcontextgettree">browsingContext.getTree</a><span>, in § 6.2.3.1</span>
    <li><a href="#browsing-context-id">browsing context id</a><span>, in § 6.2.2.1</span>
    <li><a href="#commands-browsingcontextnavigate">browsingContext.navigate</a><span>, in § 6.2.3.2</span>
+   <li><a href="#commands-browsingcontextreload">browsingContext.reload</a><span>, in § 6.2.3.3</span>
    <li><a href="#browsing-context-tree-discarded">browsing context tree discarded</a><span>, in § 7.1</span>
    <li><a href="#buffer-a-log-event">buffer a log event</a><span>, in § 6.4</span>
    <li><a href="#navigation-status-canceled">canceled</a><span>, in § 6.2</span>
@@ -3430,6 +3475,7 @@ end:</p>
    <a href="https://dom.spec.whatwg.org/#concept-document-url">https://dom.spec.whatwg.org/#concept-document-url</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-document-url">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-concept-document-url①">6.2.3.3. The browsingContext.reload Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-attribute-value">
@@ -3579,6 +3625,7 @@ end:</p>
    <a href="https://fetch.spec.whatwg.org/#concept-request">https://fetch.spec.whatwg.org/#concept-request</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-request">6.2.3.2. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-concept-request①">6.2.3.3. The browsingContext.reload Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-request-window">
@@ -3630,8 +3677,9 @@ end:</p>
    <ul>
     <li><a href="#ref-for-active-document">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
     <li><a href="#ref-for-active-document①">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-active-document②">6.2.4.1. The browsingContext.contextCreated Event</a>
-    <li><a href="#ref-for-active-document③">6.3.3.1. The script.getRealms Command</a>
+    <li><a href="#ref-for-active-document②">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-active-document③">6.2.4.1. The browsingContext.contextCreated Event</a>
+    <li><a href="#ref-for-active-document④">6.3.3.1. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-script-base-url">
@@ -3701,23 +3749,29 @@ end:</p>
     <li><a href="#ref-for-concept-error-handled">7.1. HTML</a>
    </ul>
   </aside>
+  <aside class="dfn-panel" data-for="term-for-history-handling-behavior">
+   <a href="https://html.spec.whatwg.org/#history-handling-behavior">https://html.spec.whatwg.org/#history-handling-behavior</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-history-handling-behavior">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+   </ul>
+  </aside>
   <aside class="dfn-panel" data-for="term-for-in-parallel">
    <a href="https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel">https://html.spec.whatwg.org/multipage/infrastructure.html#in-parallel</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-in-parallel">2. Infrastructure</a>
-    <li><a href="#ref-for-in-parallel①">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-in-parallel②">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-navigate">
    <a href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate">https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-navigate">6.2.3.2. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-navigate">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-navigation-id">
    <a href="https://html.spec.whatwg.org/#concept-navigation-id">https://html.spec.whatwg.org/#concept-navigation-id</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-navigation-id">6.2. The browsingContext Module</a>
+    <li><a href="#ref-for-concept-navigation-id①">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-WorkerGlobalScope-owner-set">
@@ -3798,6 +3852,12 @@ end:</p>
     <li><a href="#ref-for-set-up-a-worker-environment-settings-object">6.3.4.1. The script.realmCreated Event</a>
    </ul>
   </aside>
+  <aside class="dfn-panel" data-for="term-for-set-up-a-worklet-environment-settings-object">
+   <a href="https://html.spec.whatwg.org/#set-up-a-worklet-environment-settings-object">https://html.spec.whatwg.org/#set-up-a-worklet-environment-settings-object</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-set-up-a-worklet-environment-settings-object">6.3.4.1. The script.realmCreated Event</a>
+   </ul>
+  </aside>
   <aside class="dfn-panel" data-for="term-for-settings-object">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#settings-object">https://html.spec.whatwg.org/multipage/webappapis.html#settings-object</a><b>Referenced in:</b>
    <ul>
@@ -3814,7 +3874,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-source-browsing-context">
    <a href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#source-browsing-context">https://html.spec.whatwg.org/multipage/browsing-the-web.html#source-browsing-context</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-source-browsing-context">6.2.3.2. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-source-browsing-context">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-terminate-a-worker">
@@ -3888,10 +3948,9 @@ end:</p>
    <a href="https://infra.spec.whatwg.org/#ordered-map">https://infra.spec.whatwg.org/#ordered-map</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-ordered-map">6.1.2.1. The session.status Command</a>
-    <li><a href="#ref-for-ordered-map①">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
-    <li><a href="#ref-for-ordered-map②">6.2.2.4. The browsingContext.NavigationInfo Type</a>
-    <li><a href="#ref-for-ordered-map③">6.2.3.1. The browsingContext.getTree Command</a>
-    <li><a href="#ref-for-ordered-map④">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-ordered-map⑤">(2)</a> <a href="#ref-for-ordered-map⑥">(3)</a>
+    <li><a href="#ref-for-ordered-map①">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-ordered-map②">(2)</a> <a href="#ref-for-ordered-map③">(3)</a> <a href="#ref-for-ordered-map④">(4)</a>
+    <li><a href="#ref-for-ordered-map⑤">6.2.2.4. The browsingContext.NavigationInfo Type</a>
+    <li><a href="#ref-for-ordered-map⑥">6.2.3.1. The browsingContext.getTree Command</a>
     <li><a href="#ref-for-ordered-map⑦">6.2.4.1. The browsingContext.contextCreated Event</a>
     <li><a href="#ref-for-ordered-map⑧">6.2.4.2. The browsingContext.contextDestroyed Event</a>
     <li><a href="#ref-for-ordered-map⑨">6.2.4.3. The browsingContext.navigationStarted Event</a>
@@ -4034,9 +4093,8 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-concept-url-serializer">
    <a href="https://url.spec.whatwg.org/#concept-url-serializer">https://url.spec.whatwg.org/#concept-url-serializer</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-url-serializer">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
-    <li><a href="#ref-for-concept-url-serializer①">6.2.2.4. The browsingContext.NavigationInfo Type</a>
-    <li><a href="#ref-for-concept-url-serializer②">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-concept-url-serializer③">(2)</a> <a href="#ref-for-concept-url-serializer④">(3)</a>
+    <li><a href="#ref-for-concept-url-serializer">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-concept-url-serializer①">(2)</a> <a href="#ref-for-concept-url-serializer②">(3)</a> <a href="#ref-for-concept-url-serializer③">(4)</a>
+    <li><a href="#ref-for-concept-url-serializer④">6.2.2.4. The browsingContext.NavigationInfo Type</a>
     <li><a href="#ref-for-concept-url-serializer⑤">6.4.2.2. log.StackFrame</a>
    </ul>
   </aside>
@@ -4103,7 +4161,8 @@ end:</p>
     <li><a href="#ref-for-dfn-errors③">4.1. Establishing a Connection</a>
     <li><a href="#ref-for-dfn-errors④">6.1.1. Definition</a> <a href="#ref-for-dfn-errors⑤">(2)</a>
     <li><a href="#ref-for-dfn-errors⑥">6.2.2.1. The browsingContext.BrowsingContext Type</a>
-    <li><a href="#ref-for-dfn-errors⑦">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-dfn-errors⑧">(2)</a> <a href="#ref-for-dfn-errors⑨">(3)</a>
+    <li><a href="#ref-for-dfn-errors⑦">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-errors⑧">(2)</a>
+    <li><a href="#ref-for-dfn-errors⑨">6.2.3.2. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-errors①⓪">6.4.3.1. entryAdded</a>
    </ul>
   </aside>
@@ -4115,7 +4174,8 @@ end:</p>
     <li><a href="#ref-for-dfn-error-code③">4.1. Establishing a Connection</a>
     <li><a href="#ref-for-dfn-error-code④">6.1.1. Definition</a> <a href="#ref-for-dfn-error-code⑤">(2)</a>
     <li><a href="#ref-for-dfn-error-code⑥">6.2.2.1. The browsingContext.BrowsingContext Type</a>
-    <li><a href="#ref-for-dfn-error-code⑦">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-dfn-error-code⑧">(2)</a> <a href="#ref-for-dfn-error-code⑨">(3)</a>
+    <li><a href="#ref-for-dfn-error-code⑦">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-error-code⑧">(2)</a>
+    <li><a href="#ref-for-dfn-error-code⑨">6.2.3.2. The browsingContext.navigate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-get-a-property">
@@ -4181,7 +4241,8 @@ end:</p>
     <li><a href="#ref-for-dfn-remote-end-steps④">6.1.2.3. The session.unsubscribe Command</a>
     <li><a href="#ref-for-dfn-remote-end-steps⑤">6.2.3.1. The browsingContext.getTree Command</a>
     <li><a href="#ref-for-dfn-remote-end-steps⑥">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-dfn-remote-end-steps⑦">6.3.3.1. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps⑦">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps⑧">6.3.3.1. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-sessions">
@@ -4216,8 +4277,8 @@ end:</p>
     <li><a href="#ref-for-dfn-success⑦">6.1.2.2. The session.subscribe Command</a>
     <li><a href="#ref-for-dfn-success⑧">6.1.2.3. The session.unsubscribe Command</a>
     <li><a href="#ref-for-dfn-success⑨">6.2.2.1. The browsingContext.BrowsingContext Type</a> <a href="#ref-for-dfn-success①⓪">(2)</a>
-    <li><a href="#ref-for-dfn-success①①">6.2.3.1. The browsingContext.getTree Command</a>
-    <li><a href="#ref-for-dfn-success①②">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-dfn-success①③">(2)</a> <a href="#ref-for-dfn-success①④">(3)</a>
+    <li><a href="#ref-for-dfn-success①①">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-success①②">(2)</a> <a href="#ref-for-dfn-success①③">(3)</a>
+    <li><a href="#ref-for-dfn-success①④">6.2.3.1. The browsingContext.getTree Command</a>
     <li><a href="#ref-for-dfn-success①⑤">6.3.3.1. The script.getRealms Command</a>
    </ul>
   </aside>
@@ -4229,7 +4290,8 @@ end:</p>
     <li><a href="#ref-for-dfn-try③">6.1.2.3. The session.unsubscribe Command</a>
     <li><a href="#ref-for-dfn-try④">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
     <li><a href="#ref-for-dfn-try⑤">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-dfn-try⑥">6.3.3.1. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-try⑥">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-dfn-try⑦">6.3.3.1. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-unknown-command">
@@ -4241,7 +4303,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-dfn-unknown-error">
    <a href="https://w3c.github.io/webdriver/#dfn-unknown-error">https://w3c.github.io/webdriver/#dfn-unknown-error</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-unknown-error">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-dfn-unknown-error①">(2)</a>
+    <li><a href="#ref-for-dfn-unknown-error">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-unknown-error①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-web-element-reference">
@@ -4358,6 +4420,7 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-concept-environment-execution-ready-flag">execution ready flag</span>
      <li><span class="dfn-paneled" id="term-for-concept-realm-global">global object</span>
      <li><span class="dfn-paneled" id="term-for-concept-error-handled">handled</span>
+     <li><span class="dfn-paneled" id="term-for-history-handling-behavior">history handling behavior</span>
      <li><span class="dfn-paneled" id="term-for-in-parallel">in parallel</span>
      <li><span class="dfn-paneled" id="term-for-navigate">navigate</span>
      <li><span class="dfn-paneled" id="term-for-concept-navigation-id">navigation id</span>
@@ -4373,6 +4436,7 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-session-history">session history</span>
      <li><span class="dfn-paneled" id="term-for-set-up-a-window-environment-settings-object">set up a window environment settings object</span>
      <li><span class="dfn-paneled" id="term-for-set-up-a-worker-environment-settings-object">set up a worker environment settings object</span>
+     <li><span class="dfn-paneled" id="term-for-set-up-a-worklet-environment-settings-object">set up a worklet environment settings object</span>
      <li><span class="dfn-paneled" id="term-for-settings-object">settings object</span>
      <li><span class="dfn-paneled" id="term-for-shared-workers">shared worker</span>
      <li><span class="dfn-paneled" id="term-for-source-browsing-context">source browsing context</span>
@@ -4528,7 +4592,11 @@ in general?<a href="#issue-66909ae2"> ↵ </a></div>
    <div class="issue"> this assumes for-in works on iterators<a href="#issue-c12b3c7f"> ↵ </a></div>
    <div class="issue"> This needs to be generalized to work with realms too<a href="#issue-77ae0f57"> ↵ </a></div>
    <div class="issue"> This needs to be generalised to work with realms too<a href="#issue-851a021c"> ↵ </a></div>
-   <div class="issue"> Replace this suppression mechanism with an event queue.<a href="#issue-89fd30ed"> ↵ </a></div>
+   <div class="issue"> property specify how the <var>ignore cache</var> flag works. This needs to
+ consider whether only the first load of a resource bypasses the cache
+ (i.e. whether this is like initially clearing the cache and proceeding like
+ normal), or whether resources not directly loaded by the HTML parser
+ (e.g. loads initiated by scripts or stylesheets) also bypass the cache.<a href="#issue-40db6a3c"> ↵ </a></div>
    <div class="issue"> Are we surfacing enough information about what failed and why with
  an error here? What error code do we want? Is there going to be a problem
  where local ends parse the implementation-defined strings to figure out
@@ -4568,7 +4636,7 @@ to express as a patch to the specification since it requires changing multiple p
    <b><a href="#awaits">#awaits</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-awaits">2. Infrastructure</a>
-    <li><a href="#ref-for-awaits①">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-awaits②">(2)</a>
+    <li><a href="#ref-for-awaits①">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-awaits②">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="resume">
@@ -4920,8 +4988,9 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-get-a-browsing-context">6.1.1. Definition</a>
     <li><a href="#ref-for-get-a-browsing-context①">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
     <li><a href="#ref-for-get-a-browsing-context②">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-get-a-browsing-context③">6.3.3.1. The script.getRealms Command</a>
-    <li><a href="#ref-for-get-a-browsing-context④">6.4.3.1. entryAdded</a>
+    <li><a href="#ref-for-get-a-browsing-context③">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-get-a-browsing-context④">6.3.3.1. The script.getRealms Command</a>
+    <li><a href="#ref-for-get-a-browsing-context⑤">6.4.3.1. entryAdded</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-the-browsing-context-info">
@@ -4937,6 +5006,13 @@ to express as a patch to the specification since it requires changing multiple p
    <ul>
     <li><a href="#ref-for-get-the-descendent-browsing-contexts">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
     <li><a href="#ref-for-get-the-descendent-browsing-contexts①">6.2.3.1. The browsingContext.getTree Command</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="await-a-navigation">
+   <b><a href="#await-a-navigation">#await-a-navigation</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-await-a-navigation">6.2.3.2. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-await-a-navigation①">6.2.3.3. The browsingContext.reload Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-the-navigation-info">
@@ -4961,18 +5037,6 @@ to express as a patch to the specification since it requires changing multiple p
    <b><a href="#emit-a-context-created-event">#emit-a-context-created-event</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-emit-a-context-created-event">6.2.4.1. The browsingContext.contextCreated Event</a> <a href="#ref-for-emit-a-context-created-event①">(2)</a>
-   </ul>
-  </aside>
-  <aside class="dfn-panel" data-for="webdriver-bidi-navigation-started">
-   <b><a href="#webdriver-bidi-navigation-started">#webdriver-bidi-navigation-started</a></b><b>Referenced in:</b>
-   <ul>
-    <li><a href="#ref-for-webdriver-bidi-navigation-started">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-webdriver-bidi-navigation-started①">(2)</a>
-   </ul>
-  </aside>
-  <aside class="dfn-panel" data-for="webdriver-bidi-fragment-navigated">
-   <b><a href="#webdriver-bidi-fragment-navigated">#webdriver-bidi-fragment-navigated</a></b><b>Referenced in:</b>
-   <ul>
-    <li><a href="#ref-for-webdriver-bidi-fragment-navigated">6.2.3.2. The browsingContext.navigate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="realm-id">
