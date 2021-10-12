@@ -2839,6 +2839,7 @@ relating to script realms and execution.
 
 ScriptCommand = (
   ScriptEvaluateCommand //
+  ScriptInvokeCommand //
   ScriptGetRealmsCommand
 )
 
@@ -2850,6 +2851,7 @@ ScriptCommand = (
 
 ScriptResult = (
   ScriptEvaluateResult //
+  ScriptInvokeResult //
   ScriptGetRealmsResult
 )
 
@@ -3266,6 +3268,146 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |result| be the result of [=serialize as a remote value=] given
    |evaluation status|.\[[Value]].
+
+1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
+   production, with the <code>result</code> field set to |result|.
+
+#### The script.invoke Command ####  {#command-script-invoke}
+
+The <dfn export for=commands>script.invoke</dfn> command invokes a provided
+function with given arguments in a given realm.
+
+ <code>RealmInfo</code> can be either a realm or a browsing context.
+
+Issue: declare `RemoteValueArgument`.
+
+Issue: declare `LocalValueArgument`.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      ScriptInvokeCommand = {
+        method: "script.invoke",
+        params: ScriptInvokeParameters
+      }
+
+      ScriptInvokeParameters = {
+        functionDeclaration: text;
+        arguments: [InvokeArgument];
+        ?awaitPromise: bool;
+        target: Target;
+      }
+
+      InvokeArgument = (
+        RemoteValueArgument //
+        LocalValueArgument
+      );
+
+      // TODO: declare.
+      RemoteValueArgument = {
+        objectId: string;
+      };
+
+      // TODO: declare.
+      LocalValueArgument = {
+        type: string;
+        value: any;
+      };
+
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      ScriptInvokeResult = (
+        ScriptInvokeResultSuccess //
+        ScriptInvokeResultException
+      )
+
+      ScriptInvokeResultSuccess = {
+         result: RemoteValue
+      }
+
+      ScriptInvokeResultException = {
+        exceptionDetails: ExceptionDetails
+      }
+    </pre>
+   </dd>
+</dl>
+
+Issue: TODO: Add timeout argument as described in the script.evaluate.
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
+   given the value of the <code>target</code> field of |command parameters|.
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
+
+1. Let |function declaration| be the value of the <code>functionDeclaration</code> field of |command
+   parameters|.
+
+1. Let |arguments declaration| be the value of the <code>arguments</code> field of |command
+   parameters|.
+
+1. Let |await promise| be the value of the <code>awaitPromise</code> field of
+   |command parameters|, if present, or <code>true</code> otherwise.
+
+1. Let |options| be the [=default classic script fetch options=].
+
+1. Let |base URL| be the [=API base URL=] of |environment settings|.
+
+1. Let |function script| be the result of [=create a classic script=] with |function declaration|,
+   |environment settings|, |base URL|, and |options|.
+
+1. [=Prepare to run function script=] with |environment settings|.
+
+1. Set |function evaluation status| to [=ScriptEvaluation=](|function script|'s record).
+
+1. If |function evaluation status|.\[[Type]] is <code>throw</code>:
+
+  1. Let |exception details| be the result of [=get exception details=] given |function evaluation status|
+
+  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+     production, with the <code>exceptionDetails</code> field set to |exception details|.
+
+1. Let |script arguments| be an empty list.
+
+1. For each |arg declaration| of |arguments declaration|:
+
+  Issue: describe |deserialize form InvokeArgument|.
+
+  1. Let |script arg| be the result of |deserialize form InvokeArgument|(|arg declaration|).
+
+  1. Append |script arg| to the |script arguments|.
+
+Issue: describe |make function with arguments|.
+
+1. Set |call function with arguments| to |make function with arguments| with |function| and |script arguments|.
+
+1. Set |call evaluation status| to [=ScriptEvaluation=]|call function with arguments|.
+
+1. If |call evaluation status|.\[[Type]] is <code>normal</code>, |await promise| is
+   true, and [=IsPromise=](|call evaluation status|.\[[Value]]):
+
+   1. Set |call evaluation status| to <a spec=ECMASCRIPT>Await</a>(|call evaluation status|.\[[Value]]).
+
+1. [=Clean up after running script=] with |environment settings|.
+
+1. If |call evaluation status|.\[[Type]] is <code>throw</code>:
+
+  1. Let |exception details| be the result of [=get exception details=] given |call evaluation status|.
+
+  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+     production, with the <code>exceptionDetails</code> field set to |exception
+     details|.
+
+1. Assert: |call evaluation status|.\[[Type]] is <code>normal</code>.
+
+1. Let |result| be the result of [=serialize as a remote value=] given
+   |call evaluation status|.\[[Value]].
 
 1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
    production, with the <code>result</code> field set to |result|.
