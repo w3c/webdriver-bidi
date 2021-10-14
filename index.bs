@@ -2839,7 +2839,7 @@ relating to script realms and execution.
 
 ScriptCommand = (
   ScriptEvaluateCommand //
-  ScriptInvokeCommand //
+  ScriptCallFunctionCommand //
   ScriptGetRealmsCommand
 )
 
@@ -2851,7 +2851,7 @@ ScriptCommand = (
 
 ScriptResult = (
   ScriptEvaluateResult //
-  ScriptInvokeResult //
+  ScriptCallFunctionResult //
   ScriptGetRealmsResult
 )
 
@@ -3272,9 +3272,9 @@ The [=remote end steps=] with |command parameters| are:
 1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
    production, with the <code>result</code> field set to |result|.
 
-#### The script.invoke Command ####  {#command-script-invoke}
+#### The script.callFunction Command ####  {#command-script-callFunction}
 
-The <dfn export for=commands>script.invoke</dfn> command invokes a provided
+The <dfn export for=commands>script.callFunction</dfn> command calls a provided
 function with given arguments in a given realm.
 
  <code>RealmInfo</code> can be either a realm or a browsing context.
@@ -3287,29 +3287,27 @@ Issue: declare `LocalValueArgument`.
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      ScriptInvokeCommand = {
-        method: "script.invoke",
-        params: ScriptInvokeParameters
+      ScriptCallFunctionCommand = {
+        method: "script.callFunction",
+        params: ScriptCallFunctionParameters
       }
 
-      ScriptInvokeParameters = {
+      ScriptCallFunctionParameters = {
         functionDeclaration: text;
-        arguments: [InvokeArgument];
+        arguments: [CallFunctionArgument];
         ?awaitPromise: bool;
         target: Target;
       }
 
-      InvokeArgument = (
+      CallFunctionArgument = (
         RemoteValueArgument //
         LocalValueArgument
       );
 
-      // TODO: declare.
       RemoteValueArgument = {
         objectId: string;
       };
 
-      // TODO: declare.
       LocalValueArgument = {
         type: string;
         value: any;
@@ -3320,16 +3318,16 @@ Issue: declare `LocalValueArgument`.
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      ScriptInvokeResult = (
-        ScriptInvokeResultSuccess //
-        ScriptInvokeResultException
+      ScriptCallFunctionResult = (
+        ScriptCallFunctionResultSuccess //
+        ScriptCallFunctionResultException
       )
 
-      ScriptInvokeResultSuccess = {
+      ScriptCallFunctionResultSuccess = {
          result: RemoteValue
       }
 
-      ScriptInvokeResultException = {
+      ScriptCallFunctionResultException = {
         exceptionDetails: ExceptionDetails
       }
     </pre>
@@ -3377,9 +3375,9 @@ The [=remote end steps=] with |command parameters| are:
 
 1. For each |arg declaration| of |arguments declaration|:
 
-  Issue: describe |deserialize form InvokeArgument|.
+  Issue: describe |deserialize form CallFunctionArgument|.
 
-  1. Let |script arg| be the result of |deserialize form InvokeArgument|(|arg declaration|).
+  1. Let |script arg| be the result of |deserialize form CallFunctionArgument|(|arg declaration|).
 
   1. Append |script arg| to the |script arguments|.
 
