@@ -91,6 +91,8 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: IsRegExp; url: sec-isregexp
     text: LengthOfArrayLike; url: sec-lengthofarraylike
     text: Object; url: sec-object-objects
+    text: InstantiateOrdinaryFunctionObject; url: #sec-runtime-semantics-instantiateordinaryfunctionobject
+    text: EvaluateFunctionBody; url: #sec-runtime-semantics-evaluatefunctionbody
     text: ScriptEvaluation; url: #sec-runtime-semantics-scriptevaluation
     text: Set; url: sec-set
     text: ThisTimeValue; url: thistimevalue
@@ -3344,68 +3346,53 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |environment settings| be the [=environment settings object=] whose
    [=realm execution context=]'s Realm component is |realm|.
 
-1. Let |function declaration| be the value of the <code>functionDeclaration</code> field of |command
-   parameters|.
+1. [=Prepare to run script=] with |environment settings|.
 
-1. Let |arguments declaration| be the value of the <code>arguments</code> field of |command
-   parameters|.
+1. Let |function declaration| be the value of the
+   <code>functionDeclaration</code> field of |command parameters|.
 
-1. Let |await promise| be the value of the <code>awaitPromise</code> field of
-   |command parameters|, if present, or <code>true</code> otherwise.
+1. Let |arguments declaration| be the value of the <code>arguments</code> field
+   of |command parameters|.
 
-1. Let |options| be the [=default classic script fetch options=].
-
-1. Let |base URL| be the [=API base URL=] of |environment settings|.
-
-1. Let |function script| be the result of [=create a classic script=] with |function declaration|,
-   |environment settings|, |base URL|, and |options|.
-
-1. [=Prepare to run function script=] with |environment settings|.
-
-1. Set |function evaluation status| to [=ScriptEvaluation=](|function script|'s record).
-
-1. If |function evaluation status|.\[[Type]] is <code>throw</code>:
-
-  1. Let |exception details| be the result of [=get exception details=] given |function evaluation status|
-
-  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
-     production, with the <code>exceptionDetails</code> field set to |exception details|.
-
-1. Let |script arguments| be an empty list.
+1. Let |JS arguments list| be an empty list.
 
 1. For each |arg declaration| of |arguments declaration|:
 
-  Issue: describe |deserialize form CallFunctionArgument|.
+  Issue: describe |deserialize CallFunctionArgument|.
 
-  1. Let |script arg| be the result of |deserialize form CallFunctionArgument|(|arg declaration|).
+  1. Let |JS arg| be the result of
+     |deserialize CallFunctionArgument|(|arg declaration|).
 
-  1. Append |script arg| to the |script arguments|.
+  1. Append |JS arg| to the |JS arguments list|.
 
-Issue: describe |make function with arguments|.
+1. Let |JS function object| be the result of
+   [=InstantiateOrdinaryFunctionObject=](|function declaration|).
 
-1. Set |call function with arguments| to |make function with arguments| with |function| and |script arguments|.
+1. Set |function evaluation status| to
+   [=EvaluateFunctionBody=](|JS function object|, |JS arguments list|).
 
-1. Set |call evaluation status| to [=ScriptEvaluation=]|call function with arguments|.
+1. If |function evaluation status|.\[[Type]] is <code>normal</code>,
+   |await promise| is true, and
+   [=IsPromise=](|call evaluation status|.\[[Value]]):
 
-1. If |call evaluation status|.\[[Type]] is <code>normal</code>, |await promise| is
-   true, and [=IsPromise=](|call evaluation status|.\[[Value]]):
-
-   1. Set |call evaluation status| to <a spec=ECMASCRIPT>Await</a>(|call evaluation status|.\[[Value]]).
+   1. Set |function evaluation status| to
+      <a spec=ECMASCRIPT>Await</a>(|call evaluation status|.\[[Value]]).
 
 1. [=Clean up after running script=] with |environment settings|.
 
-1. If |call evaluation status|.\[[Type]] is <code>throw</code>:
+1. If |function evaluation status|.\[[Type]] is <code>throw</code>:
 
-  1. Let |exception details| be the result of [=get exception details=] given |call evaluation status|.
+  1. Let |exception details| be the result of [=get exception details=] given
+     |function evaluation status|.
 
   1. Return a new map matching the <code>ScriptEvaluateResultException</code>
-     production, with the <code>exceptionDetails</code> field set to |exception
-     details|.
+     production, with the <code>exceptionDetails</code> field set to
+     |exception details|.
 
-1. Assert: |call evaluation status|.\[[Type]] is <code>normal</code>.
+1. Assert: |function evaluation status|.\[[Type]] is <code>normal</code>.
 
 1. Let |result| be the result of [=serialize as a remote value=] given
-   |call evaluation status|.\[[Value]].
+   |function evaluation status|.\[[Value]].
 
 1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
    production, with the <code>result</code> field set to |result|.
