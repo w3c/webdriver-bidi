@@ -91,8 +91,8 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: IsRegExp; url: sec-isregexp
     text: LengthOfArrayLike; url: sec-lengthofarraylike
     text: Object; url: sec-object-objects
-    text: InstantiateOrdinaryFunctionObject; url: #sec-runtime-semantics-instantiateordinaryfunctionobject
-    text: EvaluateFunctionBody; url: #sec-runtime-semantics-evaluatefunctionbody
+    text: IsCallable; url: #sec-iscallable
+    text: OrdinaryCallEvaluateBody; url: #sec-ordinarycallevaluatebody
     text: ScriptEvaluation; url: #sec-runtime-semantics-scriptevaluation
     text: Set; url: sec-set
     text: ThisTimeValue; url: thistimevalue
@@ -941,7 +941,7 @@ Issue: Defined <dfn>deserialize a reference</dfn> steps.
 
 ### Primitive Protocol Value ### {#data-types-protocolValue-primitiveValue}
 
-<dfn>Primitive Protocol Value</dfn> represents primitive protocol values which can be serialized to /
+Represents primitive protocol values which can be serialized to /
 deserialized from ECMAScript without reference to existing objects.
 
 ```
@@ -3428,6 +3428,28 @@ The <dfn>deserialize an argument value</dfn>(|argumentValue|) is the following:
 1. If |argumentValue| is [=RemoteReference=], return [=deserialize a reference=](|argumentValue|).
 1. Return [=deserialize a local value=](|argumentValue|).
 
+The steps to <dfn>get function object</dfn> with a given |function declaration|,
+|environment settings|, |base URL|, and |options| are the following:
+
+1. Let |function script| be the result of [=create a classic script=] with |function declaration|,
+   |environment settings|, |base URL|, and |options|.
+
+1. [=Prepare to run script=] with |environment settings|.
+
+1. Set |function evaluation status| to [=ScriptEvaluation=](|function script|'s record).
+
+1. [=Clean up after running script=] with |environment settings|.
+
+1. Assert: |function evaluation status|.\[[Type]] is not <code>throw</code>.
+
+1. Let |function object| be |evaluation status|.\[[Value]].
+
+1. Assert [=IsCallable=](|function object|) is true.
+
+1. Return |function object|.
+
+Issue: Define behavior in case of exception during script evaluation.
+
 The [=remote end steps=] with |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
@@ -3435,11 +3457,6 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |environment settings| be the [=environment settings object=] whose
    [=realm execution context=]'s Realm component is |realm|.
-
-1. [=Prepare to run script=] with |environment settings|.
-
-1. Let |function declaration| be the value of the
-   <code>functionDeclaration</code> field of |command parameters|.
 
 1. Let |arguments declaration| be the value of the <code>arguments</code> field
    of |command parameters|.
@@ -3453,11 +3470,16 @@ The [=remote end steps=] with |command parameters| are:
 
   1. Append |deserialized argument| to the |deserialized arguments list|.
 
-1. Let |function object| be the result of
-   [=InstantiateOrdinaryFunctionObject=](|function declaration|).
+1. Let |function declaration| be the value of the
+   <code>functionDeclaration</code> field of |command parameters|.
+
+1. Let |function object| be the result of [=get function object=](|function declaration|,
+   |environment settings|, |base URL|, and |options|).
+
+1. [=Prepare to run script=] with |environment settings|.
 
 1. Set |function evaluation status| to
-   [=EvaluateFunctionBody=](|function object|, |deserialized arguments list|).
+   [=OrdinaryCallEvaluateBody=](|function object|, |deserialized arguments list|).
 
 1. If |function evaluation status|.\[[Type]] is <code>normal</code>,
    |await promise| is true, and
