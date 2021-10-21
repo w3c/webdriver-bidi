@@ -921,7 +921,184 @@ requests to start a WebDriver session, it must:
 
 # Common Data Types # {#data-types}
 
-## Remote Value ## {#type-common-RemoteValue}
+## Reference ## {#data-types-reference}
+
+|Reference| represents reference to existing ECMAScript object in
+[=object id map=].
+
+```
+ObjectId = text;
+
+RemoteReference = {
+   objectId: ObjectId,
+   *text => any,
+}
+```
+
+## Value ## {#data-types-value}
+
+### Primitive Value ### {#data-types-value-PrimitiveValue}
+
+<dfn>Primitive Value</dfn> represents primitive values which can be serialized to /
+deserialized from ECMAScript without reference to existing objects.
+
+```
+PrimitiveValue = {
+  UndefinedValue //
+  NullValue //
+  StringValue //
+  NumberValue //
+  BooleanValue //
+  BigIntValue //
+}
+
+UndefinedValue = {
+  type: "undefined",
+}
+
+NullValue = {
+  type: "null",
+}
+
+StringValue = {
+  type: "string",
+  value: text,
+}
+
+SpecialNumber = "NaN" / "-0" / "+Infinity" / "-Infinity";
+
+NumberValue = {
+  type: "number",
+  value: number / SpecialNumber,
+}
+
+BooleanValue = {
+  type: "boolean",
+  value: bool,
+}
+
+BigIntValue = {
+  type: "bigint",
+  value: text,
+}
+```
+
+<div algorithm>
+
+To <dfn>serialize primitive value</dfn> given a |value|:
+
+1. Let |remote value| be |undefined|.
+
+1. In the following list of conditions and associated steps, run the first set
+   of steps for which the associated condition is true:
+
+  <dl>
+    <dt>[=Type=](|value|) is Undefined
+    <dd>Let |remote value| be a map matching the <code>UndefinedValue</code>
+    production in the [=local end definition=].
+
+    <dt>[=Type=](|value|) is Null
+    <dd>Let |remote value| be a map matching the <code>NullValue</code>
+    production in the [=local end definition=].
+
+    <dt>[=Type=](|value|) is String
+    <dd>Let |remote value| be a map matching the <code>StringValue</code>
+    production in the [=local end definition=], with the <code>value</code>
+    property set to |value|.
+
+    Issue: This doesn't handle lone surrogates
+
+    <dt>[=Type=](|value|) is Number
+    <dd>
+    1. Switch on the value of |value|:
+      <dl>
+        <dt>NaN
+        <dd>Let |serialized| be <code>"NaN"</code>
+        <dt>-0
+        <dd>Let |serialized| be <code>"-0"</code>
+        <dt>+Infinity
+        <dd>Let |serialized| be <code>"+Infinity"</code>
+        <dt>-Infinity
+        <dd>Let |serialized| be <code>"-Infinity"</code>
+        <dt>Otherwise:
+        <dd>Let |serialized| be |value|
+      </dl>
+
+    1. Let |remote value| be a map matching the <code>NumberValue</code>
+       production in the [=local end definition=], with the <code>value</code>
+       property set to |serialized|.
+
+    <dt>[=Type=](|value|) is Boolean
+    <dd>Let |remote value| be a map matching the <code>BooleanValue</code>
+        production in the [=local end definition=], with the <code>value</code>
+        property set to |value|.
+
+    <dt>[=Type=](|value|) is BigInt
+    <dd>Let |remote value| be a map matching the <code>BigIntValue</code>
+        production in the [=local end definition=], with the <code>value</code>
+        property set to the result of running the [=ToString=] operation on
+        |value|.
+
+  </dl>
+
+1. Return |remote value|
+
+</div>
+
+### Local Value ### {#data-types-value-LocalValue}
+
+|Local Value| represents both primitive and non-primitive values which can be
+deserialized to ECMAScript without reference to existing objects.
+
+Issue: Defined |deserialize local value| steps.
+
+```
+LocalValue = {
+  PrimitiveValue //
+  ArrayLocalValue //
+  ObjectLocalValue //
+  MapLocalValue //
+  SetLocalValue //
+  RegExpLocalValue //
+  DateLocalValue //
+}
+
+ListLocalValue = [*LocalValue];
+
+RegExpLocalValue = {
+  type: "regexp",
+  value: text
+}
+
+DateLocalValue = {
+  type: "date",
+  value: text
+}
+
+ArrayLocalValue = {
+  type: "array",
+  value: ListLocalValue,
+}
+
+ObjectLocalValue = {
+  type: "object",
+  value: MappingLocalValue,
+}
+
+MappingLocalValue = [*[(LocalValue / text), LocalValue]];
+
+MapLocalValue = {
+  type: "map",
+  value: MappingLocalValue,
+}
+
+SetLocalValue = {
+  type: "set",
+  value: ListLocalValue
+}
+```
+
+### Remote Value ### {#data-types-value-RemoteValue}
 
 Values accessible from the ECMAScript runtime are represented by a mirror
 object, specified as <code>RemoteValue</code>. The value's type is specified in
@@ -986,146 +1163,107 @@ Issue: This error code isn't right.
 [=remote end definition=] and [=local end definition=]
 ```
 RemoteValue = {
-  UndefinedValue //
-  NullValue //
-  StringValue //
-  NumberValue //
-  BooleanValue //
-  BigIntValue //
-  SymbolValue //
-  ArrayValue //
-  ObjectValue //
-  FunctionValue //
-  RegExpValue //
-  DateValue //
-  MapValue //
-  SetValue //
-  WeakMapValue //
-  WeakSetValue //
-  IteratorValue //
-  GeneratorValue //
-  ErrorValue //
-  ProxyValue //
-  PromiseValue //
-  TypedArrayValue //
-  ArrayBufferValue //
-  NodeValue //
-  WindowProxyValue //
+  PrimitiveValue //
+  SymbolRemoteValue //
+  ArrayRemoteValue //
+  ObjectRemoteValue //
+  FunctionRemoteValue //
+  RegExpRemoteValue //
+  DateRemoteValue //
+  MapRemoteValue //
+  SetRemoteValue //
+  WeakMapRemoteValue //
+  WeakSetRemoteValue //
+  IteratorRemoteValue //
+  GeneratorRemoteValue //
+  ErrorRemoteValue //
+  ProxyRemoteValue //
+  PromiseRemoteValue //
+  TypedArrayRemoteValue //
+  ArrayBufferRemoteValue //
+  NodeRemoteValue //
+  WindowProxyRemoteValue //
 }
 
-ObjectId = text;
+ListRemoteValue = [*RemoteValue];
 
-ListValue = [*RemoteValue];
+MappingRemoteValue = [*[(RemoteValue / text), RemoteValue]];
 
-MappingValue = [*[(RemoteValue / text), RemoteValue]];
-
-UndefinedValue = {
-  type: "undefined",
-}
-
-NullValue = {
-  type: "null",
-}
-
-StringValue = {
-  type: "string",
-  value: text,
-}
-
-SpecialNumber = "NaN" / "-0" / "+Infinity" / "-Infinity";
-
-NumberValue = {
-  type: "number",
-  value: number / SpecialNumber,
-}
-
-BooleanValue = {
-  type: "boolean",
-  value: bool,
-}
-
-BigIntValue = {
-  type: "bigint",
-  value: text,
-}
-
-SymbolValue = {
-  type: "symbol",
-  objectId: ObjectId,
+SymbolRemoteValue = {
+   type: "symbol",
+   objectId: ObjectId,
 }
 
 ArrayValue = {
   type: "array",
   objectId: ObjectId,
-  value?: ListValue,
+  value?: ListRemoteValue,
 }
 
 ObjectValue = {
   type: "object",
   objectId: ObjectId,
-  value?: MappingValue,
+  value?: MappingRemoteValue,
 }
 
-FunctionValue = {
-  type: "function",
+FunctionRemoteValue = {
+   type: "function",
+   objectId: ObjectId,
+}
+
+RegExpRemoteValue = {
+   RegExpLocalValue,
+   objectId: ObjectId,
+}
+
+DateRemoteValue = {
+  DateLocalValue,
   objectId: ObjectId,
 }
 
-RegExpValue = {
-  type: "regexp",
-  objectId: ObjectId,
-  value: text
-}
-
-DateValue = {
-  type: "date",
-  objectId: ObjectId,
-  value: text
-}
-
-MapValue = {
+MapRemoteValue = {
   type: "map",
   objectId: ObjectId,
-  value?: MappingValue,
+  value: MappingRemoteValue,
 }
 
-SetValue = {
+SetRemoteValue = {
   type: "set",
   objectId: ObjectId,
-  value?: ListValue
+  value: ListRemoteValue
 }
 
-WeakMapValue = {
+WeakMapRemoteValue = {
   type: "weakmap",
   objectId: ObjectId,
 }
 
-WeakSetValue = {
+WeakSetRemoteValue = {
   type: "weakset",
   objectId: ObjectId,
 }
 
-ErrorValue = {
+ErrorRemoteValue = {
   type: "error",
   objectId: ObjectId,
 }
 
-PromiseValue = {
+PromiseRemoteValue = {
   type: "promise",
   objectId: ObjectId,
 }
 
-TypedArrayValue = {
+TypedArrayRemoteValue = {
   type: "typedarray",
   objectId: ObjectId,
 }
 
-ArrayBufferValue = {
+ArrayBufferRemoteValue = {
   type: "arraybuffer",
   objectId: ObjectId,
 }
 
-NodeValue = {
+NodeRemoteValue = {
   type: "node",
   objectId: ObjectId,
   value?: NodeProperties,
@@ -1137,12 +1275,12 @@ NodeProperties = {
   localName?: text,
   namespaceURI?: text,
   childNodeCount: uint,
-  children?: [*NodeValue],
+  children?: [*NodeRemoteValue],
   attributes?: {*text => text},
-  shadowRoot?: NodeValue / null,
+  shadowRoot?: NodeRemoteValue / null,
 }
 
-WindowProxyValue = {
+WindowProxyRemoteValue = {
   type: "window",
   objectId: ObjectId,
 }
@@ -1156,61 +1294,20 @@ Issue: handle String / Number / etc. wrapper objects specially?
 
 <div algorithm>
 
-To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
+To <dfn>serialize as a remote value</dfn> given a |value|, a |max depth|,
 |node details|, and a |set of known objects|:
+
+1. Let |remote value| be a result of [=serialize primitive value=]
+   given a |value|.
+
+1. If |remote value| is not |undefined|, return |remote value|.
 
 1. In the following list of conditions and associated steps, run the first set
    of steps for which the associated condition is true:
 
   <dl>
-    <dt>[=Type=](|value|) is Undefined
-    <dd>Let |remote value| be a map matching the <code>UndefinedValue</code>
-    production in the [=local end definition=].
-
-    <dt>[=Type=](|value|) is Null
-    <dd>Let |remote value| be a map matching the <code>NullValue</code>
-    production in the [=local end definition=].
-
-    <dt>[=Type=](|value|) is String
-    <dd>Let |remote value| be a map matching the <code>StringValue</code>
-    production in the [=local end definition=], with the <code>value</code>
-    property set to |value|.
-
-    Issue: This doesn't handle lone surrogates
-
-    <dt>[=Type=](|value|) is Number
-    <dd>
-    1. Switch on the value of |value|:
-      <dl>
-        <dt>NaN
-        <dd>Let |serialized| be <code>"NaN"</code>
-        <dt>-0
-        <dd>Let |serialized| be <code>"-0"</code>
-        <dt>+Infinity
-        <dd>Let |serialized| be <code>"+Infinity"</code>
-        <dt>-Infinity
-        <dd>Let |serialized| be <code>"-Infinity"</code>
-        <dt>Otherwise:
-        <dd>Let |serialized| be |value|
-      </dl>
-
-    1. Let |remote value| be a map matching the <code>NumberValue</code>
-       production in the [=local end definition=], with the <code>value</code>
-       property set to |serialized|.
-
-    <dt>[=Type=](|value|) is Boolean
-    <dd>Let |remote value| be a map matching the <code>BooleanValue</code>
-        production in the [=local end definition=], with the <code>value</code>
-        property set to |value|.
-
-    <dt>[=Type=](|value|) is BigInt
-    <dd>Let |remote value| be a map matching the <code>BigIntValue</code>
-        production in the [=local end definition=], with the <code>value</code>
-        property set to the result of running the [=ToString=] operation on
-        |value|.
-
     <dt>[=Type=](|value|) is Symbol
-    <dd>Let |remote value| be a map matching the <code>SymbolValue</code>
+    <dd>Let |remote value| be a map matching the <code>SymbolRemoteValue</code>
         production in the [=local end definition=], with the <code>objectId</code>
         property set to the [=object id for an object=] |value|.
 
@@ -1226,7 +1323,7 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
               [=CreateArrayIterator=](|value|, value), |max depth|, |node details| and
               |set of known objects|.
 
-    1. Let |remote value| be a map matching the <code>ArrayValue</code> production
+    1. Let |remote value| be a map matching the <code>ArrayRemoteValue</code> production
        in the [=local end definition=], with the <code>objectId</code> property set
        to the [=object id for an object=] |value|, and the <code>value</code>
        field set to |serialized| if it's not null, or ommitted otherwise.
@@ -1239,7 +1336,7 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
 
         1. Let |serialized| be the string-concatenation of "/", |pattern|, "/", and |flags|.
 
-        1. Let |remote value| be a map matching the <code>RegExpValue</code>
+        1. Let |remote value| be a map matching the <code>RegExpRemoteValue</code>
            production in the [=local end definition=], with the <code>objectId</code>
            property set to the [=object id for an object=] |object| and the value
            set to |serialized|
@@ -1248,7 +1345,7 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
     <dd>
       1. Let |serialized| be [=ToDateString=]([=thisTimeValue=](|value|)).
 
-      1. Let |remote value| be a map matching the <code>DateValue</code>
+      1. Let |remote value| be a map matching the <code>DateRemoteValue</code>
          production in the [=local end definition=], with the <code>objectId</code>
          property set to the [=object id for an object=] |object| and the value
          set to |serialized|.
@@ -1265,7 +1362,7 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
               [=CreateMapIterator=](|value|, key+value), |max depth|, |node details| and
               |set of known objects|.
 
-    1. Let |remote value| be a map matching the <code>MapValue</code>
+    1. Let |remote value| be a map matching the <code>MapRemoteValue</code>
        production in the [=local end definition=], with the
        <code>objectId</code> property set to the [=object id for an object=]
        |value|, and the <code>value</code> field set to |serialized| if it's
@@ -1283,39 +1380,39 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
               [=CreateSetIterator=](|value|, value), |max depth|, |node details| and
               |set of known objects|.
 
-     1. Let |remote value| be a map matching the <code>SetValue</code>
+     1. Let |remote value| be a map matching the <code>SetRemoteValue</code>
         production in the [=local end definition=], with the
         <code>objectId</code> property set to the [=object id for an object=]
         |value|, and the <code>value</code> field set to |serialized| if it's
         not null, or ommitted otherwise.
 
     <dt>|value| has a \[[WeakMapData]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>WeakMapValue</code>
+    <dd>Let |remote value| be a map matching the <code>WeakMapRemoteValue</code>
         production in the [=local end definition=], with the <code>objectId</code>
         property set to the [=object id for an object=] |value|.
 
     <dt>|value| has a \[[WeakSetData]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>WeakSetValue</code>
+    <dd>Let |remote value| be a map matching the <code>WeakSetRemoteValue</code>
         production in the [=local end definition=], with the <code>objectId</code>
         property set to the [=object id for an object=] |value|.
 
     <dt>|value| has an \[[ErrorData]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>ErrorValue</code>
+    <dd>Let |remote value| be a map matching the <code>ErrorRemoteValue</code>
         production in the [=local end definition=], with the <code>objectId</code>
         property set to the [=object id for an object=] |value|.
 
     <dt>[=IsPromise=](|value|)
-    <dd>Let |remote value| be a map matching the <code>PromiseValue</code>
+    <dd>Let |remote value| be a map matching the <code>PromiseRemoteValue</code>
         production in the [=local end definition=], with the <code>objectId</code>
         property set to the [=object id for an object=] |value|.
 
     <dt>|value| has a \[[TypedArrayName]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>TypedArrayValue</code>
+    <dd>Let |remote value| be a map matching the <code>TypedArrayRemoteValue</code>
         production in the [=local end definition=], with the <code>objectId</code>
         property set to the [=object id for an object=] |value|.
 
     <dt>|value| has an \[[ArrayBufferData]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>ArrayBufferValue</code>
+    <dd>Let |remote value| be a map matching the <code>ArrayBufferRemoteValue</code>
         production in the [=local end definition=], with the <code>objectId</code>
         property set to the [=object id for an object=] |value|.
 
@@ -1329,7 +1426,7 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
 
           1. Set |serialized|["<code>nodeType</code>"] to [=Get=](|value|, "nodeType").
 
-          1. Set |serialized|["<code>nodeValue</code>"] to [=Get=](|value|, "nodeValue")
+          1. Set |serialized|["<code>NodeRemoteValue</code>"] to [=Get=](|value|, "nodeValue")
 
           1. If |value| is an [=/Element=] or an <a spec=dom>Attribute</a>:
 
@@ -1389,7 +1486,7 @@ To <dfn>serialize as a remote value</dfn> given an |value|, a |max depth|,
 
              1. Set |serialized|["<code>shadowRoot</code>"] to |serialized shadow|.
 
-      1. Let |remote value| be a map matching the <code>NodeValue</code>
+      1. Let |remote value| be a map matching the <code>NodeRemoteValue</code>
          production in the [=local end definition=], with the <code>objectId</code>
          property set to the [=object id for an object=] |value|, and <code>value</code>
          set to |serialized|, if |serialized| is not null.
@@ -3281,6 +3378,13 @@ function with given arguments in a given realm.
 
  <code>RealmInfo</code> can be either a realm or a browsing context.
 
+```
+ArgumentValue = (
+   RemoteReference //
+   LocalValue
+);
+```
+
 Issue: declare `RemoteValueArgument`.
 
 Issue: declare `LocalValueArgument`.
@@ -3356,12 +3460,12 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |JS arguments list| be an empty list.
 
-1. For each |arg declaration| of |arguments declaration|:
+1. For each |argument declaration| of |arguments declaration|:
 
   Issue: describe |deserialize CallFunctionArgument|.
 
   1. Let |JS arg| be the result of
-     |deserialize CallFunctionArgument|(|arg declaration|).
+     |deserialize CallFunctionArgument|(|argument declaration|).
 
   1. Append |JS arg| to the |JS arguments list|.
 
