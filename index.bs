@@ -82,6 +82,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: CreateListFromArrayLike; url: sec-createlistfromarraylike
     text: CreateMapIterator; url: sec-createmapiterator
     text: CreateSetIterator; url: sec-createsetiterator
+    text: Date.ToDateString; url: sec-todatestring
     text: EnumerableOwnPropertyNames; url: sec-enumerableownpropertynames
     text: Get; url: sec-get
     text: HasProperty; url: sec-hasproperty
@@ -90,13 +91,17 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: IsPromise; url: sec-ispromise
     text: IsRegExp; url: sec-isregexp
     text: LengthOfArrayLike; url: sec-lengthofarraylike
+    text: new BigInt; url: sec-bigint-constructor
+    text: new Number; url: sec-number-constructor
+    text: new String; url: sec-string-constructor
     text: Object; url: sec-object-objects
+    text: Object.fromEntries; url: sec-object.fromentries
     text: IsCallable; url: #sec-iscallable
     text: Call; url: #sec-call
     text: ScriptEvaluation; url: #sec-runtime-semantics-scriptevaluation
     text: Set; url: sec-set
+    text: RegExp; url: sec-regexp-pattern-flags
     text: ThisTimeValue; url: thistimevalue
-    text: ToDateString; url: sec-todatestring
     text: ToString; url: sec-tostring
     text: Type; url: sec-ecmascript-data-types-and-values
     text: current realm record; url: current-realm
@@ -926,6 +931,11 @@ requests to start a WebDriver session, it must:
 <dfn>RemoteReference</dfn> represents reference to existing ECMAScript object in
 [=object id map=].
 
+A [=BiDi session=] has an <dfn>object id map</dfn>. This is a weak map
+from objects to their corresponding id.
+
+Issue: Should this be explicitly per realm?
+
 ```
 ObjectId = text;
 
@@ -935,7 +945,19 @@ RemoteReference = {
 }
 ```
 
-Issue: Defined <dfn>deserialize a reference</dfn> steps.
+<div algorithm>
+To <dfn>deserialize a remote reference</dfn> given a |remote reference|:
+
+1. Let |object id| be the value of the <code>objectId</code> field of |remote reference|.
+
+1. For each |object| → |id value| of [=object id map=]:
+
+  1. If |id value| is equal to |object id|, return [=success=] with data
+     |object|
+
+1. Return [=error=] with [=error code=] [=invalid argument=].
+
+</div>
 
 ## Protocol Value ## {#data-types-protocolValue}
 
@@ -945,7 +967,7 @@ Represents primitive protocol values which can be serialized to /
 deserialized from ECMAScript without reference to existing objects.
 
 ```
-PrimitiveValue = {
+PrimitiveProtocolValue = {
   UndefinedValue //
   NullValue //
   StringValue //
@@ -1047,44 +1069,75 @@ To <dfn>serialize primitive protocol value</dfn> given a |value|:
 
 </div>
 
+<div algorithm>
+
+To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol value|:
+
+1. Let |type| be the value of the <code>type</code> field of |primitive protocol value|.
+
+1. Let |value| be undefined.
+
+1. If |primitive protocol value| has field <code>value</code>:
+   1. Let |value| be the value of the <code>value</code> field of |primitive protocol value|.
+
+1. In the following list of conditions and associated steps, run the first set
+   of steps for which the associated condition is true:
+
+  <dl>
+    <dt>|type| is undefined
+    <dd>Return [=error=] with [=error code=] [=invalid argument=].
+
+    <dt>|type| equals <code>UndefinedValue.type</code>
+    <dd>Return [=success=] with data <code>undefined</code>.
+
+    <dt>|type| equals <code>NullValue.type</code>
+    <dd>Return [=success=] with data <code>null</code>.
+
+    <dt>|type| equals <code>StringValue.type</code>
+    <dd>Return [=success=] with data <code>[=new String=](|value|)</code>.
+
+    <dt>|type| equals <code>NumberValue.type</code>
+    <dd>Return [=success=] with data <code>[=new Number=](|value|)</code>.
+
+    <dt>|type| equals <code>BooleanValue.type</code>
+    <dd>Return [=success=] with data |value|.
+
+    <dt>|type| equals <code>BigIntValue.type</code>
+    <dd>Return [=success=] with data <code>[=new BigInt=](|value|)</code>.
+
+  </dl>
+
+1. Return [=error=] with [=error code=] [=invalid argument=]
+
+</div>
+
 ### Local Value ### {#data-types-protocolValue-LocalValue}
 
 Represents both primitive and non-primitive protocol values which can be
 deserialized to ECMAScript without reference to existing objects.
 
-Issue: Define <dfn>deserialize a local value</dfn> steps.
 
 ```
 LocalValue = {
   PrimitiveProtocolValue //
   ArrayLocalValue //
-  ObjectLocalValue //
-  MapLocalValue //
-  SetLocalValue //
-  RegExpLocalValue //
   DateLocalValue //
+  MapLocalValue //
+  ObjectLocalValue //
+  RegExpLocalValue //
+  SetLocalValue //
 }
 
 ListLocalValue = [*LocalValue];
-
-RegExpLocalValue = {
-  type: "regexp",
-  value: text
-}
-
-DateLocalValue = {
-  type: "date",
-  value: text
-}
 
 ArrayLocalValue = {
   type: "array",
   value: ListLocalValue,
 }
 
-ObjectLocalValue = {
-  type: "object",
-  value: MappingLocalValue,
+DateLocalValue = {
+  type: "date",
+  value: text
 }
 
 MappingLocalValue = [*[(LocalValue / text), LocalValue]];
@@ -1094,11 +1147,142 @@ MapLocalValue = {
   value: MappingLocalValue,
 }
 
+ObjectLocalValue = {
+  type: "object",
+  value: MappingLocalValue,
+}
+
+RegExpLocalValue = {
+  type: "regexp",
+  value: text
+}
+
 SetLocalValue = {
   type: "set",
   value: ListLocalValue
 }
 ```
+
+<div algorithm>
+
+To <dfn>map serialized key-value list to deserialized key-value list</dfn> given a
+|serialized key-value list|:
+
+1. Let |deserialized key-value list| be a new list.
+
+1. For each |serialized key-value| in the |serialized key-value list|:
+
+   1. If |serialized key-value| has not 2 elements,
+      return [=error=] with [=error code=] [=invalid argument=].
+
+   1. Let |serialized key| be the first element of |serialized key-value|.
+
+   1. If |serialized key| is a <code>string</code>,
+      let |deserialized key| be |serialized key|.
+
+   1. Otherwise let |deserialized key| be result of [=try=] to [=deserialize a local value=] with
+      given |serialized key|.
+
+   1. If |deserialized key| is [=error=], return |deserialized key|.
+
+   1. Let |serialized value| be the second element of |serialized key-value|.
+
+   1. Let |deserialized value| be result of [=try=] to [=deserialize a local value=] with given
+      |serialized value|.
+
+   1. If |deserialized value| is [=error=], return |deserialized value|.
+
+   1. Append a <code>new [=Array=](|deserialized key|, |deserialized value|)</code>
+      to |deserialized key-value list|.
+
+1. Return [=success=] with data |deserialized key-value list|.
+
+</div>
+
+<div algorithm>
+
+To <dfn>map serialized value list to deserialized value list</dfn> given a |serialized value list|:
+
+1. Let |deserialized values| be a new list.
+
+1. For each |serialized value| in the |serialized value list|:
+
+   1. Let |deserialized value| be result of [=try=] to [=deserialize a local value=] with given
+      |serialized value|.
+
+   1. If |deserialized value| is [=error=], return |deserialized value|.
+
+   1. Append |deserialized value| to |deserialized values|;
+
+1. Return [=success=] with data |deserialized values|.
+
+</div>
+
+<div algorithm>
+
+To <dfn>deserialize a local value</dfn> given a |local protocol value|:
+
+1. If is <code>PrimitiveProtocolValue</code>, return [=deserialize primitive protocol value=]
+   of |local protocol value|.
+
+1. Let |type| be the value of the <code>type</code> field of |local protocol value|.
+
+1. Let |value| be the value of the <code>value</code> field of |local protocol value|.
+
+1. In the following list of conditions and associated steps, run the first set of steps for which
+   the associated condition is true:
+
+  <dl>
+    <dt>|type| is undefined
+    <dd>Return [=error=] with [=error code=] [=invalid argument=].
+
+    <dt>|type| equals <code>ArrayLocalValue.type</code>
+    <dd>
+      1. Let |deserialized value list| be a result of [=try=] to
+         [=map serialized value list to deserialized value list=] with given |value|.
+
+      1. If |deserialized value| is [=error=], return |deserialized value|.
+
+      1. Return [=success=] with data <code>new [=Array=](|deserialized values|)</code>.
+
+    <dt>|type| equals <code>DateLocalValue.type</code>
+    <dd>Return [=success=] with data <code>new [=Date=](|value|)</code>.
+
+    <dt>|type| equals <code>MapLocalValue.type</code>
+    <dd>
+      1. Let |deserialized key-value list| be a result of [=try=]
+         [=map serialized key-value list to deserialized key-value list=] with given |value|.
+
+      1. If |deserialized key-value list| is [=error=], return |deserialized key-value list|.
+
+      1. Return [=success=] with data <code>new [=Map=](|deserialized key-value list|)</code>.
+
+    <dt>|type| equals <code>ObjectLocalValue.type</code>
+    <dd>
+      1. Let |deserialized key-value list| be a result of [=try=]
+         [=map serialized key-value list to deserialized key-value list=] with given |value|.
+
+      1. If |deserialized key-value list| is [=error=], return |deserialized key-value list|.
+
+      1. Return [=success=] with data
+         <code>[=Object.fromEntries=](|deserialized key-value list|)</code>.
+
+    <dt>|type| equals <code>RegExpLocalValue.type</code>
+    <dd>Return [=success=] with data <code>new [=RegExp=](|value|)</code>.
+
+    <dt>|type| equals <code>SetLocalValue.type</code>
+    <dd>
+      1. Let |deserialized value list| be a result of [=try=]
+         [=map serialized value list to deserialized value list=] with given |value|.
+
+      1. If |deserialized value| is [=error=], return |deserialized value|.
+
+      1. Return [=success=] with data <code>new [=Set=](|deserialized values|)</code>.
+  </dl>
+
+1. Return [=error=] with [=error code=] [=invalid argument=]
+
+</div>
 
 ### Remote Value ### {#data-types-protocolValue-RemoteValue}
 
@@ -1124,11 +1308,6 @@ Note: mirror objects do not keep the original object alive in the runtime. If an
 object is discarded in the runtime, subsequent attempts to access it via the
 protocol will result in an error.
 
-A [=BiDi session=] has an <dfn>object id map</dfn>. This is a weak map
-from objects to their corresponding id.
-
-Issue: Should this be explicitly per realm?
-
 <div algorithm>
 To get the <dfn>object id for an object</dfn> given a |session| and |object|:
 
@@ -1146,21 +1325,6 @@ To get the <dfn>object id for an object</dfn> given a |session| and |object|:
    id map=].
 
 </div>
-
-<!--
-<div algorithm>
-To get the <dfn>object for an object id</dfn> given an |object id|:
-
-1. For each |object| → |id value| of [=object id map=]:
-
-  1. If |id value| is equal to |object id|, return [=success=] with data
-     |object|
-
-1. Return [=error=] with [=error code=] [=no such element=]
-
-Issue: This error code isn't right.
-</div>
--->
 
 [=remote end definition=] and [=local end definition=]
 ```
@@ -1345,7 +1509,7 @@ To <dfn>serialize as a remote value</dfn> given a |value|, a |max depth|,
 
     <dt>|value| has a \[[DateValue]] [=internal slot=].
     <dd>
-      1. Let |serialized| be [=ToDateString=]([=thisTimeValue=](|value|)).
+      1. Let |serialized| be [=Date.ToDateString=]([=thisTimeValue=](|value|)).
 
       1. Let |remote value| be a map matching the <code>DateRemoteValue</code>
          production in the [=local end definition=], with the <code>objectId</code>
@@ -1432,11 +1596,9 @@ To <dfn>serialize as a remote value</dfn> given a |value|, a |max depth|,
 
           1. If |value| is an [=/Element=] or an <a spec=dom>Attribute</a>:
 
-
             1. Set |serialized|["<code>localName</code>"] to [=Get=](|value|, "localName").
 
             1. Set |serialized|["<code>namespaceURI</code>"] to [=Get=](|value|, "namespaceURI")
-
 
           1. Let |child node count| be the [=list/size=] of |serialized|'s [=children=].
 
@@ -3426,29 +3588,39 @@ function with given arguments in a given realm.
 
 Issue: TODO: Add timeout argument as described in the script.evaluate.
 
-The <dfn>deserialize an argument value</dfn>(|argumentValue|) is the following:
+<div algorithm>
+To <dfn>deserialize an argument value</dfn> given an |serialized argument|:
 
-1. If |argumentValue| is [=RemoteReference=], return [=deserialize a reference=](|argumentValue|).
+1. If |serialized argument| is [=RemoteReference=], return [=deserialize a remote reference=] of
+   |serialized argument|.
 
-1. Return [=deserialize a local value=](|argumentValue|).
+1. Return [=deserialize a local value=] of |serialized argument|.
 
-The <dfn>deserialize arguments</dfn>(|arguments|) is the following:
+</div>
 
-1. Let |deserialized arguments| be an empty list.
+<div algorithm>
 
-1. For each |argument| of |arguments declaration|:
+To <dfn>deserialize arguments</dfn> given |serialized arguments list|:
 
-  1. Let |deserialized argument| be the result of
-     [=deserialize an argument value=](|argument|).
+1. Let |deserialized arguments list| be an empty list.
 
-  1. Append |deserialized argument| to the |deserialized arguments|.
+1. For each |serialized argument| of |serialized arguments list|:
 
-1. Return |deserialized arguments|.
+  1. Let |deserialized argument| be the result of [=try=] to [=deserialize an argument value=] with
+     given |serialized argument|.
+
+  1. If |deserialized argument| is [=error=], return |deserialized argument|.
+
+  1. Append |deserialized argument| to the |deserialized arguments list|.
+
+1. Return [=success=] with data |deserialized arguments list|.
 
 Issue: Clarify behaviour in case of deserialization failed.
+</div>
 
-The steps to <dfn>evaluate function body</dfn> with a given |function declaration|,
-|environment settings|, |base URL|, and |options| are the following:
+<div algorithm>
+To <dfn>evaluate function body</dfn> with a given |function declaration|,
+|environment settings|, |base URL|, and |options|:
 
 Note: the |function declaration| is parenthesized and evaluated.
 
@@ -3464,6 +3636,8 @@ Note: the |function declaration| is parenthesized and evaluated.
 1. Return |function body evaluation status|.
 
 Issue: Define behavior in case of exception during script evaluation.
+</div>
+
 
 The [=remote end steps=] with |command parameters| are:
 
@@ -3473,11 +3647,13 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |environment settings| be the [=environment settings object=] whose
    [=realm execution context=]'s Realm component is |realm|.
 
-1. Let |arguments declaration| be the value of the <code>arguments</code> field
+1. Let |command arguments| be the value of the <code>arguments</code> field
    of |command parameters|.
 
-1. Let |deserialized arguments| be the result of
-   [=deserialize arguments=](|arguments declaration|)
+1. Let |deserialized arguments| be the result of [=try=] to [=deserialize arguments=] with given
+   |command arguments|.
+
+1. If |deserialized arguments| is [=error=], return |deserialized arguments|.
 
 1. Let |function declaration| be the value of the
    <code>functionDeclaration</code> field of |command parameters|.
@@ -3490,7 +3666,7 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |exception details| be the result of [=get exception details=] given
      |function body evaluation status|.
 
-  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+  1. Return a new map matching the <code>ScriptCallFunctionResultException</code>
      production, with the <code>exceptionDetails</code> field set to
      |exception details|.
 
@@ -3518,7 +3694,7 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |exception details| be the result of [=get exception details=] given
      |evaluation status|.
 
-  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+  1. Return a new map matching the <code>ScriptCallFunctionResultException</code>
      production, with the <code>exceptionDetails</code> field set to
      |exception details|.
 
@@ -3527,7 +3703,7 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |result| be the result of [=serialize as a remote value=] given
    |evaluation status|.\[[Value]].
 
-1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
+1. Return a new map matching the <code>ScriptCallFunctionResultSuccess</code>
    production, with the <code>result</code> field set to |result|.
 
 #### The script.getRealms Command ####  {#command-script-getRealms}
