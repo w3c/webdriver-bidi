@@ -77,6 +77,9 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
   type: dfn
     text: Array; url: sec-array-objects
     text: Await; url: await
+    text: BigInt; url: sec-bigint-constructor
+    text: boolean; url: sec-terms-and-definitions-boolean-value
+    text: Call; url: #sec-call
     text: Completion Record; url: sec-completion-record-specification-type
     text: CreateArrayFromList; url: sec-createarrayfromlist
     text: CreateArrayIterator; url: sec-createarrayiterator
@@ -85,6 +88,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: CreateSetIterator; url: sec-createsetiterator
     text: Date Time String Format; url: sec-date-time-string-format
     text: Date.ToDateString; url: sec-todatestring
+    text: Date.parse; url: sec-date.parse
     text: EnumerableOwnPropertyNames; url: sec-enumerableownpropertynames
     text: Get; url: sec-get
     text: HasProperty; url: sec-hasproperty
@@ -93,19 +97,19 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: IsPromise; url: sec-ispromise
     text: IsRegExp; url: sec-isregexp
     text: LengthOfArrayLike; url: sec-lengthofarraylike
-    text: new BigInt; url: sec-bigint-constructor
-    text: new Number; url: sec-number-constructor
-    text: new String; url: sec-string-constructor
+    text: Map; url: sec-map-objects
+    text: Number; url: sec-number-constructor
+    text: null; url: sec-null-value
     text: Object; url: sec-object-objects
     text: Object.fromEntries; url: sec-object.fromentries
-    text: IsCallable; url: #sec-iscallable
-    text: Call; url: #sec-call
     text: ScriptEvaluation; url: #sec-runtime-semantics-scriptevaluation
-    text: Set; url: sec-set
+    text: Set object; url: sec-set-objects
+    text: String; url: sec-string-constructor
     text: RegExp; url: sec-regexp-pattern-flags
     text: ThisTimeValue; url: thistimevalue
     text: ToString; url: sec-tostring
     text: Type; url: sec-ecmascript-data-types-and-values
+    text: undefined; url: sec-undefined-value
     text: current realm record; url: current-realm
     text: internal slot; url: sec-object-internal-methods-and-internal-slots
     text: primitive ECMAScript value; url: sec-primitive-value
@@ -1082,28 +1086,29 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
 1. If |primitive protocol value| has field <code>value</code>:
    1. Let |value| be the value of the <code>value</code> field of |primitive protocol value|.
 
-1. In the following list of conditions and associated steps, run the first set
-   of steps for which the associated condition is true:
+1. In the following list of conditions and associated steps, run the first set of steps for which
+   the associated condition is true. If this throws exception, return [=error=] with [=error code=]
+   [=invalid argument=]:
 
   <dl>
 
     <dt>|type| is the string "<code>undefined</code>"
-    <dd>Return [=success=] with data <code>undefined</code>.
+    <dd>Return [=success=] with data set to [=undefined=].
 
     <dt>|type| is the string "<code>null</code>"
-    <dd>Return [=success=] with data <code>null</code>.
+    <dd>Return [=success=] with data set to [=null=].
 
     <dt>|type| is the string "<code>string</code>"
-    <dd>Return [=success=] with data <code>[=new String=](|value|)</code>.
+    <dd>Return [=success=] with data set to a new [=String=] with |value|.
 
     <dt>|type| is the string "<code>number</code>"
-    <dd>Return [=success=] with data <code>[=new Number=](|value|)</code>.
+    <dd>Return [=success=] with data set to a new [=Number=] with |value|.
 
     <dt>|type| is the string "<code>boolean</code>"
-    <dd>Return [=success=] with data |value|.
+    <dd>Return [=success=] with data set to a [=boolean=] |value|.
 
     <dt>|type| is the string "<code>bigint</code>"
-    <dd>Return [=success=] with data <code>[=new BigInt=](|value|)</code>.
+    <dd>Return [=success=] with data set to a new [=BigInt=] with |value|.
 
   </dl>
 
@@ -1154,7 +1159,8 @@ ObjectLocalValue = {
 
 RegExpLocalValue = {
   type: "regexp",
-  value: text
+  pattern: text,
+  flags?: text
 }
 
 SetLocalValue = {
@@ -1165,8 +1171,7 @@ SetLocalValue = {
 
 <div algorithm>
 
-To <dfn>deserialize key-value list</dfn> given a
-|serialized key-value list|:
+To <dfn>deserialize key-value list</dfn> given a |serialized key-value list|:
 
 1. Let |deserialized key-value list| be a new list.
 
@@ -1221,14 +1226,15 @@ To <dfn>deserialize local value</dfn> given a |local protocol value|:
 1. If |local protocol value| matches the <code>PrimitiveValue</code> production, return
    [=deserialize primitive protocol value=] with |local protocol value|.
 
-1. Let |type| be the value of the <code>type</code> field of |local protocol value|.
+1. Let |type| be the value of the <code>type</code> field of |local protocol value| or undefined if
+   no such a field.
 
-1. Let |value| be the value of the <code>value</code> field of |local protocol value|.
+1. Let |value| be the value of the <code>value</code> field of |local protocol value| or undefined
+   if no such a field.
 
 1. In the following list of conditions and associated steps, run the first set of steps for which
-   the associated condition is true:
-
-  Issue: TODO: define via `script.evaluate` to provide proper parse or runtime error handling.
+   the associated condition is true. If this throws exception, return [=error=] with [=error code=]
+   [=invalid argument=]:
 
   Issue: TODO: add regex options.
 
@@ -1239,38 +1245,50 @@ To <dfn>deserialize local value</dfn> given a |local protocol value|:
       1. Let |deserialized value list| be a result of [=trying=] to [=deserialize value list=] with
          given |value|.
 
-      1. Return [=success=] with data <code>new [=Array=](|deserialized value list|)</code>.
+      1. Return [=success=] with data set to a new [=Array=] object constructed with
+         |deserialized value list| as <code>values</code>.
 
     <dt>|type| is the string "<code>date</code>"
     <dd>
-      1. If |value| matches [=Date Time String Format=], return [=success=] with data <code>new [=Date=](|value|)</code>.
+      1. If |value| does not match [=Date Time String Format=], return [=error=] with
+         [=error code=] [=invalid argument=].
 
-      1. Otherwise return [=error=] with [=error code=] [=invalid argument=].
+      1. Return [=success=] with data set to a result of [=Date.parse=] with |value| as
+         <code>string</code>.
 
     <dt>|type| is the string "<code>map</code>"
     <dd>
       1. Let |deserialized key-value list| be a result of [=trying=] to
          [=deserialize key-value list=] with |value|.
 
-      1. Return [=success=] with data <code>new [=Map=](|deserialized key-value list|)</code>.
+      1. Return [=success=] with data set to a new [=Map=] object constructed with
+         |deserialized key-value list| as <code>iterable</code>.
 
     <dt>|type| is the string "<code>object</code>"
     <dd>
       1. Let |deserialized key-value list| be a result of [=trying=] to
          [=deserialize key-value list=] with |value|.
 
-      1. Return [=success=] with data
-         <code>[=Object.fromEntries=](|deserialized key-value list|)</code>.
+      1. Return [=success=] with data set to a result of [=Object.fromEntries=] with
+         |deserialized key-value list| as <code>iterable</code>.
 
     <dt>|type| is the string "<code>regexp</code>"
-    <dd>Return [=success=] with data <code>new [=RegExp=](|value|)</code>.
+    <dd>
+      1. Let |pattern| be the value of the <code>pattern</code> field of |local protocol value|.
+
+      1. Let |flags| be the value of the <code>flags</code> field of |local protocol value| or
+         undefined if no such a field.
+
+      1. Return [=success=] with data set to a new [=RegExp=] object constructed with |pattern| and
+         |flags|.
 
     <dt>|type| is the string "<code>set</code>"
     <dd>
       1. Let |deserialized value list| be a result of [=trying=] to
          [=deserialize value list=] with |value|.
 
-      1. Return [=success=] with data <code>new [=Set=](|deserialized value list|)</code>.
+      1. Return [=success=] with data set to a new [=Set object=] constructed with
+         |deserialized value list| as <code>[iterable]</code>.
 
     <dt>otherwise
     <dd>Return [=error=] with [=error code=] [=invalid argument=].
