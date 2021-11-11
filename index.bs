@@ -1372,13 +1372,13 @@ SymbolRemoteValue = {
 ArrayValue = {
   type: "array",
   objectId: ObjectId,
-  value?: ListRemoteValue,
+  ?value: ListRemoteValue,
 }
 
 ObjectValue = {
   type: "object",
   objectId: ObjectId,
-  value?: MappingRemoteValue,
+  ?value: MappingRemoteValue,
 }
 
 FunctionRemoteValue = {
@@ -1441,18 +1441,18 @@ ArrayBufferRemoteValue = {
 NodeRemoteValue = {
   type: "node",
   objectId: ObjectId,
-  value?: NodeProperties,
+  ?value: NodeProperties,
 }
 
 NodeProperties = {
   nodeType: uint,
   nodeValue: text,
-  localName?: text,
-  namespaceURI?: text,
+  ?localName: text,
+  ?namespaceURI: text,
   childNodeCount: uint,
-  children?: [*NodeRemoteValue],
-  attributes?: {*text => text},
-  shadowRoot?: NodeRemoteValue / null,
+  ?children: [*NodeRemoteValue],
+  ?attributes: {*text => text},
+  ?shadowRoot: NodeRemoteValue / null,
 }
 
 WindowProxyRemoteValue = {
@@ -3546,8 +3546,6 @@ The [=remote end steps=] with |command parameters| are:
 
 #### The script.callFunction Command ####  {#command-script-callFunction}
 
-Issue: Add `this` parameter.
-
 The <dfn export for=commands>script.callFunction</dfn> command calls a provided
 function with given arguments in a given realm.
 
@@ -3565,6 +3563,7 @@ function with given arguments in a given realm.
       ScriptCallFunctionParameters = {
         functionDeclaration: text;
         arguments: [ArgumentValue];
+        ?this: ArgumentValue;
         ?awaitPromise: bool;
         target: Target;
       }
@@ -3598,12 +3597,12 @@ function with given arguments in a given realm.
 Issue: TODO: Add timeout argument as described in the script.evaluate.
 
 <div algorithm>
-To <dfn>deserialize an argument value</dfn> given an |serialized argument|:
+To <dfn>deserialize a parameter value</dfn> given an |serialized value|:
 
-1. If |serialized argument| matches the [=RemoteReference=] production, return
-   [=deserialize remote reference=] of |serialized argument|.
+1. If |serialized value| matches the [=RemoteReference=] production, return
+   [=deserialize remote reference=] of |serialized value|.
 
-1. Return [=deserialize local value=] of |serialized argument|.
+1. Return [=deserialize local value=] of |serialized value|.
 
 </div>
 
@@ -3615,7 +3614,7 @@ To <dfn>deserialize arguments</dfn> given |serialized arguments list|:
 
 1. For each |serialized argument| of |serialized arguments list|:
 
-  1. Let |deserialized argument| be the result of [=trying=] to [=deserialize an argument value=]
+  1. Let |deserialized argument| be the result of [=trying=] to [=deserialize a parameter value=]
      with |serialized argument|.
 
   1. Append |deserialized argument| to the |deserialized arguments list|.
@@ -3661,6 +3660,12 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |deserialized arguments| be the result of [=trying=] to [=deserialize arguments=] with
    |command arguments|.
 
+1. Let |this parameter| be the value of the <code>this</code> field
+   of |command parameters|.
+
+1. Let |this object| be the result of [=trying=] to [=deserialize a parameter value=]
+   with |this parameter|.
+
 1. Let |function declaration| be the value of the
    <code>functionDeclaration</code> field of |command parameters|.
 
@@ -3678,11 +3683,11 @@ The [=remote end steps=] with |command parameters| are:
 
 1. [=Prepare to run script=] with |environment settings|.
 
-1. Set |evaluation status| to [=Call=](|function object|, |null|, |deserialized arguments|).
+1. Set |evaluation status| to
+   [=Call=](|function object|, |this object|, ...|deserialized arguments|).
 
-1. If |evaluation status|.\[[Type]] is <code>normal</code>,
-   |await promise| is true, and
-   [=IsPromise=](|call evaluation status|.\[[Value]]):
+1. If |evaluation status|.\[[Type]] is <code>normal</code>, and |await promise| is true,
+   and [=IsPromise=](|call evaluation status|.\[[Value]]):
 
    1. Set |evaluation status| to
       <a spec=ECMASCRIPT>Await</a>(|evaluation status|.\[[Value]]).
