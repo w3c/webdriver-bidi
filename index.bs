@@ -120,6 +120,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/
     text: set up a window environment settings object; url: set-up-a-window-environment-settings-object
     text: set up a worker environment settings object; url: set-up-a-worker-environment-settings-object
     text: set up a worklet environment settings object; url: set-up-a-worklet-environment-settings-object
+    text: window open steps; url: multipage/window-object.html#window-open-steps
     text: worker event loop; url: worker-event-loop-2
     text: worklet global scopes; url: concept-document-worklet-global-scopes
 </pre>
@@ -2232,11 +2233,31 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
 The [=remote end steps=] with |command parameters| are:
 
   1. Let |type| be the value of the <code>type</code> field of
-     |command parameters| if present, or "<code>window</code>" otherwise.
+     |command parameters|.
 
-  1. TODO: insert step 5 of https://w3c.github.io/webdriver/#new-window verbatim here?
+  <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
+       but without using the "current browsing context" concept. -->
+  1. Create a new [=top-level browsing context=] by running the [=window open
+     steps=] with <var ignore>url</var> set to "<code>about:blank</code>",
+     <var ignore>target</var> set to the empty string, and
+     <var ignore>features</var> set to "<code>noopener</code>". This must be
+     done without invoking the [=/focusing steps=] for the created browsing
+     context. If |type| is "<code>tab</code>", and the implementation supports
+     multiple browsing contexts in the same OS window, the new browsing context
+     should share an OS window with any other [=top-level browsing context=]. If
+     |type| is "<code>window</code>", and the implementation supports multiple
+     browsing contexts in separate OS windows, the created browsing context
+     should be in a new OS window. In all other cases the details of how the
+     browsing context is presented to the user are implementation defined.
 
-  1. If |context id| be the [=browsing context id=] of the newly created [=/browsing context=].
+     Issue: HTML's [=window open steps=] depend on the "entry global object"
+     and WebDriver's <a href="https://w3c.github.io/webdriver/#new-window">New
+     Window</a> command depends on the "current browsing context". Given that we
+     don't have any such implicit context here, what OS window should new tabs
+     be opened in?
+
+  1. Let |context id| be the [=browsing context id=] of the newly created
+     [=/browsing context=].
 
   1. Let |body| be a [=map=] matching the <code>BrowsingContextCreateResult</code>
      production, with the <code>context</code> field set to |context id|.
