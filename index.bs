@@ -951,6 +951,8 @@ RemoteReference = {
 }
 ```
 
+Issue: handle "stale object reference" case.
+
 <div algorithm>
 To <dfn>deserialize remote reference</dfn> given a |remote reference|:
 
@@ -1086,28 +1088,31 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
    1. Let |value| be the value of the <code>value</code> field of |primitive protocol value|.
 
 1. In the following list of conditions and associated steps, run the first set of steps for which
-   the associated condition is true. If this throws exception, return [=error=] with [=error code=]
-   [=invalid argument=]:
+   the associated condition is true:
 
   <dl>
 
     <dt>|type| is the string "<code>undefined</code>"
-    <dd>Return [=success=] with data set to [=undefined=].
+    <dd>Return [=success=] with data [=undefined=].
 
     <dt>|type| is the string "<code>null</code>"
-    <dd>Return [=success=] with data set to [=null=].
+    <dd>Return [=success=] with data [=null=].
 
     <dt>|type| is the string "<code>string</code>"
-    <dd>Return [=success=] with data set to a new [=String=] with |value|.
+    <dd>Return [=success=] with data [=String=](|value|).
 
     <dt>|type| is the string "<code>number</code>"
-    <dd>Return [=success=] with data set to a new [=Number=] with |value|.
+    <dd>Return [=success=] with data [=Number=](|value|).
 
     <dt>|type| is the string "<code>boolean</code>"
-    <dd>Return [=success=] with data set to a [=boolean=] |value|.
+    <dd>Return [=success=] with data |value|.
 
     <dt>|type| is the string "<code>bigint</code>"
-    <dd>Return [=success=] with data set to a new [=BigInt=] with |value|.
+    <dd>
+      1. Let |bigint_result| be [=BigInt=](|value|). If this throws exception, return [=error=]
+         with [=error code=] [=invalid argument=]
+
+      1. Return [=success=] with data |bigint_result|.
 
   </dl>
 
@@ -1192,10 +1197,10 @@ To <dfn>deserialize key-value list</dfn> given a |serialized key-value list|:
    1. Let |deserialized value| be result of [=trying=] to [=deserialize local value=] with
       |serialized value|.
 
-   1. Append a <code>new [=Array=](|deserialized key|, |deserialized value|)</code>
-      to |deserialized key-value list|.
+   1. Append [=CreateArrayFromList=](«|deserialized key|, |deserialized value|») to
+      |deserialized key-value list|.
 
-1. Return [=success=] with data |deserialized key-value list|.
+1. Return [=success=] with data [=CreateArrayFromList=](|deserialized key-value list|).
 
 </div>
 
@@ -1232,8 +1237,7 @@ To <dfn>deserialize local value</dfn> given a |local protocol value|:
    if no such a field.
 
 1. In the following list of conditions and associated steps, run the first set of steps for which
-   the associated condition is true. If this throws exception, return [=error=] with [=error code=]
-   [=invalid argument=]:
+   the associated condition is true:
 
   <dl>
 
@@ -1242,32 +1246,32 @@ To <dfn>deserialize local value</dfn> given a |local protocol value|:
       1. Let |deserialized value list| be a result of [=trying=] to [=deserialize value list=] with
          given |value|.
 
-      1. Return [=success=] with data set to a new [=Array=] object constructed with
-         |deserialized value list| as <code>values</code>.
+      1. Return [=success=] with data [=CreateArrayFromList=](|deserialized value list|).
 
     <dt>|type| is the string "<code>date</code>"
     <dd>
       1. If |value| does not match [=Date Time String Format=], return [=error=] with
          [=error code=] [=invalid argument=].
 
-      1. Return [=success=] with data set to a result of [=Date.parse=] with |value| as
-         <code>string</code>.
+      1. Return [=success=] with data [=Date.parse=](|value|).
 
     <dt>|type| is the string "<code>map</code>"
     <dd>
       1. Let |deserialized key-value list| be a result of [=trying=] to
          [=deserialize key-value list=] with |value|.
 
-      1. Return [=success=] with data set to a new [=Map=] object constructed with
-         |deserialized key-value list| as <code>iterable</code>.
+      1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
+
+      1. Return [=success=] with data [=Map=](|iterable|).
 
     <dt>|type| is the string "<code>object</code>"
     <dd>
       1. Let |deserialized key-value list| be a result of [=trying=] to
          [=deserialize key-value list=] with |value|.
 
-      1. Return [=success=] with data set to a result of [=Object.fromEntries=] with
-         |deserialized key-value list| as <code>iterable</code>.
+      1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
+
+      1. Return [=success=] with data [=Object.fromEntries=](|iterable|).
 
     <dt>|type| is the string "<code>regexp</code>"
     <dd>
@@ -1276,16 +1280,19 @@ To <dfn>deserialize local value</dfn> given a |local protocol value|:
       1. Let |flags| be the value of the <code>flags</code> field of |local protocol value| or
          undefined if no such a field.
 
-      1. Return [=success=] with data set to a new [=RegExp=] object constructed with |pattern| and
-         |flags|.
+      1. Let |regex_result| be [=Regexp=](|pattern|, |flags|). If this throws exception, return [=error=]
+         with [=error code=] [=invalid argument=].
+
+      1. Return [=success=] with data |regex_result|.
 
     <dt>|type| is the string "<code>set</code>"
     <dd>
-      1. Let |deserialized value list| be a result of [=trying=] to
-         [=deserialize value list=] with |value|.
+      1. Let |deserialized value list| be a result of [=trying=] to [=deserialize value list=]
+         with |value|.
 
-      1. Return [=success=] with data set to a new [=Set object=] constructed with
-         |deserialized value list| as <code>[iterable]</code>.
+      1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
+
+      1. Return [=success=] with data [=Set object=](|iterable|).
 
     <dt>otherwise
     <dd>Return [=error=] with [=error code=] [=invalid argument=].
@@ -1312,6 +1319,8 @@ cycle, or otherwise when the maximum serialization depth is reached.
 
 [=Nodes=] are also represented by <code>RemoteValue</code> instances. These have
 a partial serialization of the node in the value property.
+
+Issue: reconsider mirror objects' lifecycle.
 
 Note: mirror objects do not keep the original object alive in the runtime. If an
 object is discarded in the runtime, subsequent attempts to access it via the
@@ -3572,8 +3581,8 @@ function with given arguments in a given realm.
 
 <code>RealmInfo</code> can be either a realm or a browsing context.
 
-Note: <code>this</code> argument is ignore in case of arrow function in
-<code>functionDeclaration</code>.
+Note: In case of an arrow function in <code>functionDeclaration</code>, the <code>this</code>
+argument doesn't affect function's <code>this</code> binding.
 
 <dl>
    <dt>Command Type</dt>
