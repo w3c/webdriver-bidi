@@ -3494,105 +3494,6 @@ Issue: This has the wrong error code
 
 ### Commands ### {#module-script-commands}
 
-#### The script.evaluate Command ####  {#command-script-evaluate}
-
-The <dfn export for=commands>script.evaluate</dfn> command evaluates a provided
-script in a given realm. For convenience a browsing context can be provided in
-place of a realm, in which case the realm used is the realm of the browsing
-context's active document.
-
-The method returns the value of executing the provided script, unless it returns
-a promise and <code>awaitPromise</code> is true (which is the default), in which
-case the resolved value of the promise is returned.
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-      <pre class="cddl remote-cddl">
-      ScriptEvaluateCommand = {
-        method: "script.evaluate",
-        params: ScriptEvaluateParameters
-      }
-
-      ScriptEvaluateParameters = {
-        expression: text,
-        target: Target,
-        ?awaitPromise: bool,
-      }
-      </pre>
-   </dd>
-   <dt>Return Type</dt>
-   <dd>
-    <pre class="cddl local-cddl">
-      ScriptEvaluateResult = (
-        ScriptEvaluateResultSuccess //
-        ScriptEvaluateResultException
-      )
-
-      ScriptEvaluateResultSuccess = {
-         result: RemoteValue
-      }
-
-      ScriptEvaluateResultException = {
-        exceptionDetails: ExceptionDetails
-      }
-    </pre>
-   </dd>
-</dl>
-
-TODO: Add timeout argument. It's not totally clear how this ought to work; in
-Chrome it seems like the timeout doesn't apply to the promise resolve step, but
-that likely isn't what clients want.
-
-The [=remote end steps=] with |command parameters| are:
-
-1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
-   given the value of the <code>target</code> field of |command parameters|.
-
-1. Let |environment settings| be the [=environment settings object=] whose
-   [=realm execution context=]'s Realm component is |realm|.
-
-1. Let |source| be the value of the <code>expression</code> field of |command
-   parameters|.
-
-1. Let |await promise| be the value of the <code>awaitPromise</code> field of
-   |command parameters|, if present, or <code>true</code> otherwise.
-
-1. Let |options| be the [=default classic script fetch options=].
-
-1. Let |base URL| be the [=API base URL=] of |environment settings|.
-
-1. Let |script| be the result of [=create a classic script=] with |source|,
-   |environment settings|, |base URL|, and |options|.
-
-1. [=Prepare to run script=] with |environment settings|.
-
-1. Set |evaluation status| to [=ScriptEvaluation=](|script|'s record).
-
-1. If |evaluation status|.\[[Type]] is <code>normal</code>, |await promise| is
-   true, and [=IsPromise=](|evaluation status|.\[[Value]]):
-
-   1. Set |evaluation status| to <a spec=ECMASCRIPT>Await</a>(|evaluation status|.\[[Value]]).
-
-1. [=Clean up after running script=] with |environment settings|.
-
-1. If |evaluation status|.\[[Type]] is <code>throw</code>:
-
-  1. Let |exception details| be the result of [=get exception details=] given |evaluation
-     status|
-
-  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
-     production, with the <code>exceptionDetails</code> field set to |exception
-     details|.
-
-1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
-
-1. Let |result| be the result of [=serialize as a remote value=] given
-   |evaluation status|.\[[Value]].
-
-1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
-   production, with the <code>result</code> field set to |result|.
-
 #### The script.callFunction Command ####  {#command-script-callFunction}
 
 The <dfn export for=commands>script.callFunction</dfn> command calls a provided
@@ -3761,6 +3662,105 @@ The [=remote end steps=] with |command parameters| are:
    |evaluation status|.\[[Value]].
 
 1. Return a new map matching the <code>ScriptCallFunctionResultSuccess</code>
+   production, with the <code>result</code> field set to |result|.
+
+#### The script.evaluate Command ####  {#command-script-evaluate}
+
+The <dfn export for=commands>script.evaluate</dfn> command evaluates a provided
+script in a given realm. For convenience a browsing context can be provided in
+place of a realm, in which case the realm used is the realm of the browsing
+context's active document.
+
+The method returns the value of executing the provided script, unless it returns
+a promise and <code>awaitPromise</code> is true (which is the default), in which
+case the resolved value of the promise is returned.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      ScriptEvaluateCommand = {
+        method: "script.evaluate",
+        params: ScriptEvaluateParameters
+      }
+
+      ScriptEvaluateParameters = {
+        expression: text,
+        target: Target,
+        ?awaitPromise: bool,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      ScriptEvaluateResult = (
+        ScriptEvaluateResultSuccess //
+        ScriptEvaluateResultException
+      )
+
+      ScriptEvaluateResultSuccess = {
+         result: RemoteValue
+      }
+
+      ScriptEvaluateResultException = {
+        exceptionDetails: ExceptionDetails
+      }
+    </pre>
+   </dd>
+</dl>
+
+TODO: Add timeout argument. It's not totally clear how this ought to work; in
+Chrome it seems like the timeout doesn't apply to the promise resolve step, but
+that likely isn't what clients want.
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
+   given the value of the <code>target</code> field of |command parameters|.
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
+
+1. Let |source| be the value of the <code>expression</code> field of |command
+   parameters|.
+
+1. Let |await promise| be the value of the <code>awaitPromise</code> field of
+   |command parameters|, if present, or <code>true</code> otherwise.
+
+1. Let |options| be the [=default classic script fetch options=].
+
+1. Let |base URL| be the [=API base URL=] of |environment settings|.
+
+1. Let |script| be the result of [=create a classic script=] with |source|,
+   |environment settings|, |base URL|, and |options|.
+
+1. [=Prepare to run script=] with |environment settings|.
+
+1. Set |evaluation status| to [=ScriptEvaluation=](|script|'s record).
+
+1. If |evaluation status|.\[[Type]] is <code>normal</code>, |await promise| is
+   true, and [=IsPromise=](|evaluation status|.\[[Value]]):
+
+   1. Set |evaluation status| to <a spec=ECMASCRIPT>Await</a>(|evaluation status|.\[[Value]]).
+
+1. [=Clean up after running script=] with |environment settings|.
+
+1. If |evaluation status|.\[[Type]] is <code>throw</code>:
+
+  1. Let |exception details| be the result of [=get exception details=] given |evaluation
+     status|
+
+  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+     production, with the <code>exceptionDetails</code> field set to |exception
+     details|.
+
+1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
+
+1. Let |result| be the result of [=serialize as a remote value=] given
+   |evaluation status|.\[[Value]].
+
+1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
    production, with the <code>result</code> field set to |result|.
 
 #### The script.getRealms Command ####  {#command-script-getRealms}
