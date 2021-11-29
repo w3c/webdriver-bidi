@@ -934,7 +934,7 @@ requests to start a WebDriver session, it must:
 
 ## Reference ## {#data-types-reference}
 
-<dfn>RemoteReference</dfn> represents reference to existing ECMAScript object in
+<dfn>RemoteReference</dfn> represents a remote reference to an exising ECMAScript object in
 [=object id map=].
 
 A [=BiDi session=] has an <dfn>object id map</dfn>. This is a weak map
@@ -971,7 +971,8 @@ To <dfn>deserialize remote reference</dfn> given a |remote reference|:
 
 ### Primitive Protocol Value ### {#data-types-protocolValue-primitiveProtocolValue}
 
-Represents primitive protocol values which can only be represented by value, never by reference.
+<dfn>PrimitiveProtocolValue</dfn> represents values which can only be represented by value, never
+by reference.
 
 ```
 PrimitiveProtocolValue = {
@@ -1126,8 +1127,8 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
 
 ### Local Value ### {#data-types-protocolValue-LocalValue}
 
-Represents both primitive and non-primitive protocol values which can be
-deserialized to ECMAScript without reference to existing objects.
+<dfn>LocalValue</dfn> represents both primitive and non-primitive values which can be deserialized
+to ECMAScript without reference to existing objects.
 
 
 ```
@@ -1233,7 +1234,10 @@ To <dfn>deserialize value list</dfn> given a |serialized value list|:
 
 To <dfn>deserialize local value</dfn> given a |local protocol value|:
 
-1. If |local protocol value| matches the <code>PrimitiveProtocolValue</code> production, return
+1. If |local protocol value| matches the [=RemoteReference=] production, return
+   [=deserialize remote reference=] of |local protocol value|.
+
+1. If |local protocol value| matches the [=PrimitiveProtocolValue=] production, return
    [=deserialize primitive protocol value=] with |local protocol value|.
 
 1. Let |type| be the value of the <code>type</code> field of |local protocol value| or undefined if
@@ -3550,16 +3554,6 @@ argument doesn't affect function's <code>this</code> binding.
 Issue: TODO: Add timeout argument as described in the script.evaluate.
 
 <div algorithm>
-To <dfn>deserialize a parameter value</dfn> given an |serialized value|:
-
-1. If |serialized value| matches the [=RemoteReference=] production, return
-   [=deserialize remote reference=] of |serialized value|.
-
-1. Return [=deserialize local value=] of |serialized value|.
-
-</div>
-
-<div algorithm>
 
 To <dfn>deserialize arguments</dfn> given |serialized arguments list|:
 
@@ -3567,7 +3561,7 @@ To <dfn>deserialize arguments</dfn> given |serialized arguments list|:
 
 1. For each |serialized argument| of |serialized arguments list|:
 
-  1. Let |deserialized argument| be the result of [=trying=] to [=deserialize a parameter value=]
+  1. Let |deserialized argument| be the result of [=trying=] to [=deserialize local value=]
      with |serialized argument|.
 
   1. Append |deserialized argument| to the |deserialized arguments list|.
@@ -3621,7 +3615,7 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |this object| be null.
 
 1. If |this parameter| is not null, set |this object| to the result of [=trying=] to
-   [=deserialize a parameter value=] with |this parameter|.
+   [=deserialize local value=] with |this parameter|.
 
 1. Let |function declaration| be the value of the
    <code>functionDeclaration</code> field of |command parameters|.
