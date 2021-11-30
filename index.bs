@@ -119,6 +119,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: set up a window environment settings object; url: window-object.html#set-up-a-window-environment-settings-object
     text: set up a worker environment settings object; url: workers.html#set-up-a-worker-environment-settings-object
     text: set up a worklet environment settings object; url: worklets.html#set-up-a-worklet-environment-settings-object
+    text: window open steps; url: multipage/window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url: worklets.html#concept-document-worklet-global-scopes
 </pre>
@@ -1929,6 +1930,7 @@ navigation status</dfn> struct, which has the following items:
 <pre class="cddl remote-cddl">
 
 BrowsingContextCommand = (
+    BrowsingContextCreateCommand //
     BrowsingContextGetTreeCommand //
     BrowsingContextNavigateCommand //
     BrowsingContextReloadCommand
@@ -1940,6 +1942,7 @@ BrowsingContextCommand = (
 <pre class="cddl local-cddl">
 
 BrowsingContextResult = (
+    BrowsingContextCreateResult //
     BrowsingContextGetTreeResult //
     BrowsingContextNavigateResult
 )
@@ -2193,6 +2196,75 @@ To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
 
 ### Commands ### {#module-browsingContext-commands}
 
+#### The browsingContext.create Command ####  {#command-browsingContext-create}
+
+The <dfn export for=commands>browsingContext.create</dfn> command creates a new
+[=/browsing context=], either in a new tab or in a new window, and returns its
+[=browsing context id=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      BrowsingContextCreateCommand = {
+        method: "browsingContext.create",
+        params: BrowsingContextCreateParameters
+      }
+
+      BrowsingContextCreateType = "tab" / "window"
+
+      BrowsingContextCreateParameters = {
+        type: BrowsingContextCreateType
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        BrowsingContextCreateResult = {
+          context: BrowsingContext
+        }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.create">
+The [=remote end steps=] with |command parameters| are:
+
+  1. Let |type| be the value of the <code>type</code> field of
+     |command parameters|.
+
+  <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
+       but without using the "current browsing context" concept. -->
+  1. Create a new [=top-level browsing context=] by running the [=window open
+     steps=] with <var ignore>url</var> set to "<code>about:blank</code>",
+     <var ignore>target</var> set to the empty string, and
+     <var ignore>features</var> set to "<code>noopener</code>". This must be
+     done without invoking the [=/focusing steps=] for the created browsing
+     context. If |type| is "<code>tab</code>", and the implementation supports
+     multiple browsing contexts in the same OS window, the new browsing context
+     should share an OS window with any other [=top-level browsing context=]. If
+     |type| is "<code>window</code>", and the implementation supports multiple
+     browsing contexts in separate OS windows, the created browsing context
+     should be in a new OS window. In all other cases the details of how the
+     browsing context is presented to the user are implementation defined.
+
+     Issue: HTML's [=window open steps=] depend on the "entry global object"
+     and WebDriver's <a href="https://w3c.github.io/webdriver/#new-window">New
+     Window</a> command depends on the "current browsing context". Given that we
+     don't have any such implicit context here, what OS window should new tabs
+     be opened in?
+
+  1. Let |context id| be the [=browsing context id=] of the newly created
+     [=/browsing context=].
+
+  1. Let |body| be a [=map=] matching the <code>BrowsingContextCreateResult</code>
+     production, with the <code>context</code> field set to |context id|.
+
+  1. Return [=success=] with data |body|.
+
+</div>
+
 #### The browsingContext.getTree Command ####  {#command-browsingContext-getTree}
 
 The <dfn export for=commands>browsingContext.getTree</dfn> command returns a
@@ -2227,7 +2299,7 @@ top-level contexts when no parent is provided.
 <div algorithm="remote end steps for browsingContext.getTree">
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
-1. Let the |parent id| be the value of the <code>parent</code> field of
+1. Let |parent id| be the value of the <code>parent</code> field of
    |command parameters| if present, or null otherwise.
 
 1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
