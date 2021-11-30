@@ -6,7 +6,7 @@
   <link href="https://www.w3.org/StyleSheets/TR/2021/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version bbc364800, updated Mon Nov 15 13:57:55 2021 -0800" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="9bfad74fb1e85bf1a62aecc35f1b610f083c5a93" name="document-revision">
+  <meta content="f5ce4658b6f8c4319da649ce26b3a6d09d9702c1" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -563,9 +563,10 @@ dfn > a.self-link::before      { content: "#"; }
         <li>
          <a href="#module-browsingContext-commands"><span class="secno">6.2.3</span> <span class="content">Commands</span></a>
          <ol class="toc">
-          <li><a href="#command-browsingContext-getTree"><span class="secno">6.2.3.1</span> <span class="content">The browsingContext.getTree Command</span></a>
-          <li><a href="#command-browsingContext-navigate"><span class="secno">6.2.3.2</span> <span class="content">The browsingContext.navigate Command</span></a>
-          <li><a href="#command-browsingContext-reload"><span class="secno">6.2.3.3</span> <span class="content">The browsingContext.reload Command</span></a>
+          <li><a href="#command-browsingContext-create"><span class="secno">6.2.3.1</span> <span class="content">The browsingContext.create Command</span></a>
+          <li><a href="#command-browsingContext-getTree"><span class="secno">6.2.3.2</span> <span class="content">The browsingContext.getTree Command</span></a>
+          <li><a href="#command-browsingContext-navigate"><span class="secno">6.2.3.3</span> <span class="content">The browsingContext.navigate Command</span></a>
+          <li><a href="#command-browsingContext-reload"><span class="secno">6.2.3.4</span> <span class="content">The browsingContext.reload Command</span></a>
          </ol>
         <li>
          <a href="#module-contexts-events"><span class="secno">6.2.4</span> <span class="content">Events</span></a>
@@ -2206,6 +2207,7 @@ navigation status<a class="self-link" href="#webdriver-navigation-status"></a></
      <h4 class="heading settled" data-level="6.2.1" id="module-browsingContext-definition"><span class="secno">6.2.1. </span><span class="content">Definition</span><a class="self-link" href="#module-browsingContext-definition"></a></h4>
      <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑨">remote end definition</a></p>
 <pre class="cddl remote-cddl">BrowsingContextCommand = (
+    BrowsingContextCreateCommand //
     BrowsingContextGetTreeCommand //
     BrowsingContextNavigateCommand //
     BrowsingContextReloadCommand
@@ -2213,6 +2215,7 @@ navigation status<a class="self-link" href="#webdriver-navigation-status"></a></
 </pre>
      <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑤">local end definition</a></p>
 <pre class="cddl local-cddl">BrowsingContextResult = (
+    BrowsingContextCreateResult //
     BrowsingContextGetTreeResult //
     BrowsingContextNavigateResult
 )
@@ -2406,7 +2409,58 @@ navigation.</p>
       </ol>
      </div>
      <h4 class="heading settled" data-level="6.2.3" id="module-browsingContext-commands"><span class="secno">6.2.3. </span><span class="content">Commands</span><a class="self-link" href="#module-browsingContext-commands"></a></h4>
-     <h5 class="heading settled" data-level="6.2.3.1" id="command-browsingContext-getTree"><span class="secno">6.2.3.1. </span><span class="content">The browsingContext.getTree Command</span><a class="self-link" href="#command-browsingContext-getTree"></a></h5>
+     <h5 class="heading settled" data-level="6.2.3.1" id="command-browsingContext-create"><span class="secno">6.2.3.1. </span><span class="content">The browsingContext.create Command</span><a class="self-link" href="#command-browsingContext-create"></a></h5>
+     <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextcreate">browsingContext.create<a class="self-link" href="#commands-browsingcontextcreate"></a></dfn> command creates a new <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context②">browsing context</a>, either in a new tab or in a new window, and returns its <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑤">browsing context id</a>.</p>
+     <dl>
+      <dt>Command Type
+      <dd>
+<pre class="cddl remote-cddl">BrowsingContextCreateCommand = {
+  method: "browsingContext.create",
+  params: BrowsingContextCreateParameters
+}
+
+BrowsingContextCreateType = "tab" / "window"
+
+BrowsingContextCreateParameters = {
+  type: BrowsingContextCreateType
+}
+</pre>
+      <dt>Return Type
+      <dd>
+<pre class="cddl local-cddl">BrowsingContextCreateResult = {
+  context: BrowsingContext
+}
+</pre>
+     </dl>
+     <div class="algorithm" data-algorithm="remote end steps for browsingContext.create">
+       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑥">remote end steps</a> with <var>command parameters</var> are: 
+      <ol>
+       <li data-md>
+        <p>Let <var>type</var> be the value of the <code>type</code> field of <var>command parameters</var>.</p>
+       <li data-md>
+        <p>Create a new <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑤">top-level browsing context</a> by running the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/multipage/window-object.html#window-open-steps" id="ref-for-window-open-steps">window open
+ steps</a> with <var>url</var> set to "<code>about:blank</code>", <var>target</var> set to the empty string, and <var>features</var> set to "<code>noopener</code>". This must be
+ done without invoking the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/interaction.html#focusing-steps" id="ref-for-focusing-steps">focusing steps</a> for the created browsing
+ context. If <var>type</var> is "<code>tab</code>", and the implementation supports
+ multiple browsing contexts in the same OS window, the new browsing context
+ should share an OS window with any other <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑥">top-level browsing context</a>. If <var>type</var> is "<code>window</code>", and the implementation supports multiple
+ browsing contexts in separate OS windows, the created browsing context
+ should be in a new OS window. In all other cases the details of how the
+ browsing context is presented to the user are implementation defined.</p>
+        <p class="issue" id="issue-038b5945"><a class="self-link" href="#issue-038b5945"></a> HTML’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/multipage/window-object.html#window-open-steps" id="ref-for-window-open-steps①">window open steps</a> depend on the "entry global object"
+ and WebDriver’s <a href="https://w3c.github.io/webdriver/#new-window">New
+ Window</a> command depends on the "current browsing context". Given that we
+ don’t have any such implicit context here, what OS window should new tabs
+ be opened in?</p>
+       <li data-md>
+        <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑥">browsing context id</a> of the newly created <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context③">browsing context</a>.</p>
+       <li data-md>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑥">map</a> matching the <code>BrowsingContextCreateResult</code> production, with the <code>context</code> field set to <var>context id</var>.</p>
+       <li data-md>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑤">success</a> with data <var>body</var>.</p>
+      </ol>
+     </div>
+     <h5 class="heading settled" data-level="6.2.3.2" id="command-browsingContext-getTree"><span class="secno">6.2.3.2. </span><span class="content">The browsingContext.getTree Command</span><a class="self-link" href="#command-browsingContext-getTree"></a></h5>
      <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextgettree">browsingContext.getTree<a class="self-link" href="#commands-browsingcontextgettree"></a></dfn> command returns a
 tree of all browsing contexts that are descendents of the given context, or all
 top-level contexts when no parent is provided.</p>
@@ -2431,10 +2485,10 @@ BrowsingContextGetTreeParameters = {
 </pre>
      </dl>
      <div class="algorithm" data-algorithm="remote end steps for browsingContext.getTree">
-       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑥">remote end steps</a> with <var>session</var> and <var>command parameters</var> are: 
+       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑦">remote end steps</a> with <var>session</var> and <var>command parameters</var> are: 
       <ol>
        <li data-md>
-        <p>Let the <var>parent id</var> be the value of the <code>parent</code> field of <var>command parameters</var> if present, or null otherwise.</p>
+        <p>Let <var>parent id</var> be the value of the <code>parent</code> field of <var>command parameters</var> if present, or null otherwise.</p>
        <li data-md>
         <p>Let <var>max depth</var> be the value of the <code>maxDepth</code> field of <var>command
  parameters</var> if present, or 0 otherwise.</p>
@@ -2444,12 +2498,12 @@ BrowsingContextGetTreeParameters = {
         <p>Let <var>contexts</var> be the result of <a data-link-type="dfn" href="#get-the-descendent-browsing-contexts" id="ref-for-get-the-descendent-browsing-contexts①">get the descendent browsing contexts</a>,
  given <var>parent id</var>, <var>depth</var>, and <var>max depth</var>.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑥">map</a> matching the <code>BrowsingContextGetTreeResult</code> production, with the <code>contexts</code> field set to <var>contexts</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑦">map</a> matching the <code>BrowsingContextGetTreeResult</code> production, with the <code>contexts</code> field set to <var>contexts</var>.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑤">success</a> with data <var>body</var>.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑥">success</a> with data <var>body</var>.</p>
       </ol>
      </div>
-     <h5 class="heading settled" data-level="6.2.3.2" id="command-browsingContext-navigate"><span class="secno">6.2.3.2. </span><span class="content">The browsingContext.navigate Command</span><a class="self-link" href="#command-browsingContext-navigate"></a></h5>
+     <h5 class="heading settled" data-level="6.2.3.3" id="command-browsingContext-navigate"><span class="secno">6.2.3.3. </span><span class="content">The browsingContext.navigate Command</span><a class="self-link" href="#command-browsingContext-navigate"></a></h5>
      <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextnavigate">browsingContext.navigate<a class="self-link" href="#commands-browsingcontextnavigate"></a></dfn> command navigates a
 browsing context to the given URL.</p>
      <dl>
@@ -2477,7 +2531,7 @@ BrowsingContextNavigateParameters = {
 </pre>
      </dl>
      <div class="algorithm" data-algorithm="remote end steps for browsingContext.navigate">
-       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑦">remote end steps</a> with <var>session</var> and <var>command parameters</var> are: 
+       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑧">remote end steps</a> with <var>session</var> and <var>command parameters</var> are: 
       <ol>
        <li data-md>
         <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
@@ -2507,7 +2561,7 @@ BrowsingContextNavigateParameters = {
         <p>Return the result of <a data-link-type="dfn" href="#await-a-navigation" id="ref-for-await-a-navigation">await a navigation</a> with <var>context</var>, <var>request</var> and <var>wait condition</var>.</p>
       </ol>
      </div>
-     <h5 class="heading settled" data-level="6.2.3.3" id="command-browsingContext-reload"><span class="secno">6.2.3.3. </span><span class="content">The browsingContext.reload Command</span><a class="self-link" href="#command-browsingContext-reload"></a></h5>
+     <h5 class="heading settled" data-level="6.2.3.4" id="command-browsingContext-reload"><span class="secno">6.2.3.4. </span><span class="content">The browsingContext.reload Command</span><a class="self-link" href="#command-browsingContext-reload"></a></h5>
      <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextreload">browsingContext.reload<a class="self-link" href="#commands-browsingcontextreload"></a></dfn> command reloads a
 browsing context.</p>
      <dl>
@@ -2526,7 +2580,7 @@ BrowsingContextReloadParameters = {
 </pre>
      </dl>
      <div class="algorithm" data-algorithm="remote end steps for browsingContext.reload">
-       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑧">remote end steps</a> with <var>command parameters</var> are: 
+       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑨">remote end steps</a> with <var>command parameters</var> are: 
       <ol>
        <li data-md>
         <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
@@ -2582,7 +2636,7 @@ BrowsingContextReloadParameters = {
        <li data-md>
         <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-browsing-context-info" id="ref-for-get-the-browsing-context-info①">get the browsing context info</a> given <var>context</var>, 0, and 1.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑦">map</a> matching the <code>BrowsingContextCreatedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑧">map</a> matching the <code>BrowsingContextCreatedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p><a data-link-type="dfn" href="#emit-an-event" id="ref-for-emit-an-event">Emit an event</a> with <var>session</var> and <var>body</var>.</p>
       </ol>
@@ -2634,7 +2688,7 @@ BrowsingContextReloadParameters = {
        <li data-md>
         <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-browsing-context-info" id="ref-for-get-the-browsing-context-info②">get the browsing context info</a>, given <var>context</var>, 0, and 0.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑧">map</a> matching the <code>BrowsingContextDestroyedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨">map</a> matching the <code>BrowsingContextDestroyedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p>Let <var>related browsing contexts</var> be a set containing the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#parent-browsing-context" id="ref-for-parent-browsing-context①">parent browsing
  context</a> of <var>context</var>, if that is not null, or an empty set otherwise.</p>
@@ -2668,7 +2722,7 @@ started<a class="self-link" href="#webdriver-bidi-navigation-started"></a></dfn>
        <li data-md>
         <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨">map</a> matching the <code>BrowsingContextNavigationStarted</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⓪">map</a> matching the <code>BrowsingContextNavigationStarted</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
        <li data-md>
@@ -2700,7 +2754,7 @@ navigated<a class="self-link" href="#webdriver-bidi-fragment-navigated"></a></df
        <li data-md>
         <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info①">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⓪">map</a> matching the <code>BrowsingContextFragmentNavigatedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①①">map</a> matching the <code>BrowsingContextFragmentNavigatedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
        <li data-md>
@@ -2732,7 +2786,7 @@ loaded<a class="self-link" href="#webdriver-bidi-dom-content-loaded"></a></dfn> 
        <li data-md>
         <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info②">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①①">map</a> matching the <code>BrowsingContextDomContentLoadedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①②">map</a> matching the <code>BrowsingContextDomContentLoadedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p>Let <var>related browsing contexts</var> be a set containing <var>context</var>.</p>
        <li data-md>
@@ -2764,7 +2818,7 @@ complete<a class="self-link" href="#webdriver-bidi-load-complete"></a></dfn> ste
        <li data-md>
         <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info③">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①②">map</a> matching the <code>BrowsingContextLoadEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①③">map</a> matching the <code>BrowsingContextLoadEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p>Let <var>related browsing contexts</var> be a set containing <var>context</var>.</p>
        <li data-md>
@@ -2796,7 +2850,7 @@ started<a class="self-link" href="#webdriver-bidi-download-started"></a></dfn> s
        <li data-md>
         <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info④">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①③">map</a> matching the <code>BrowsingContextDownloadWillBegin</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①④">map</a> matching the <code>BrowsingContextDownloadWillBegin</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
        <li data-md>
@@ -2828,7 +2882,7 @@ aborted<a class="self-link" href="#webdriver-bidi-navigation-aborted"></a></dfn>
        <li data-md>
         <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info⑤">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①④">map</a> matching the <code>BrowsingContextNavigationAborted</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⑤">map</a> matching the <code>BrowsingContextNavigationAborted</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
        <li data-md>
@@ -2860,7 +2914,7 @@ failed<a class="self-link" href="#webdriver-bidi-navigation-failed"></a></dfn> s
        <li data-md>
         <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info⑥">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⑤">map</a> matching the <code>BrowsingContextNavigationFailed</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⑥">map</a> matching the <code>BrowsingContextNavigationFailed</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
        <li data-md>
@@ -2945,13 +2999,13 @@ created.</p>
        To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-a-realm">get a realm</dfn> given <var>realm id</var>: 
       <ol>
        <li data-md>
-        <p>If <var>realm id</var> is null, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑥">success</a> with data null.</p>
+        <p>If <var>realm id</var> is null, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑦">success</a> with data null.</p>
        <li data-md>
         <p>If there is no <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms①">realm</a> with <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id">id</a> <var>realm id</var> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①②">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①⓪">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-frame" id="ref-for-dfn-no-such-frame①">no such frame</a></p>
        <li data-md>
         <p>Let <var>realm</var> be the <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms②">realm</a> with <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id①">id</a> <var>realm id</var>.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑦">success</a> with data <var>realm</var></p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑧">success</a> with data <var>realm</var></p>
       </ol>
       <p class="issue" id="issue-89e6b783"><a class="self-link" href="#issue-89e6b783"></a> This has the wrong error code</p>
      </div>
@@ -3163,7 +3217,7 @@ associated with the context’s active document.</p>
           <p>Let <var>realm</var> be <a data-link-type="dfn" href="#get-a-realm" id="ref-for-get-a-realm">get a realm</a> given <var>realm id</var>.</p>
         </ol>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑧">success</a> with data <var>realm</var></p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑨">success</a> with data <var>realm</var></p>
       </ol>
       <p class="issue" id="issue-89e6b783①"><a class="self-link" href="#issue-89e6b783①"></a> This has the wrong error code</p>
      </div>
@@ -3209,7 +3263,7 @@ ScriptEvaluateResultException = {
      <p>TODO: Add timeout argument. It’s not totally clear how this ought to work; in
 Chrome it seems like the timeout doesn’t apply to the promise resolve step, but
 that likely isn’t what clients want.</p>
-     <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑨">remote end steps</a> with <var>command parameters</var> are:</p>
+     <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①⓪">remote end steps</a> with <var>command parameters</var> are:</p>
      <ol>
       <li data-md>
        <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⓪">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
@@ -3259,7 +3313,7 @@ that likely isn’t what clients want.</p>
      <h5 class="heading settled" data-level="6.3.3.2" id="command-script-getRealms"><span class="secno">6.3.3.2. </span><span class="content">The script.getRealms Command</span><a class="self-link" href="#command-script-getRealms"></a></h5>
      <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptgetrealms">script.getRealms<a class="self-link" href="#commands-scriptgetrealms"></a></dfn> command returns a list of
 all realms, optionally filtered to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms③">realms</a> of a specific type, or to the
-realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document②">document</a> currently loaded in a specified <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context②">browsing context</a>.</p>
+realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document②">document</a> currently loaded in a specified <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context④">browsing context</a>.</p>
      <dl>
       <dt>Command Type
       <dd>
@@ -3283,7 +3337,7 @@ ScriptGetRealmsResult = {
 </pre>
      </dl>
      <div class="algorithm" data-algorithm="remote end steps for script.getRealms">
-       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①⓪">remote end steps</a> with <var>session</var> and <var>command parameters</var> are: 
+       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①①">remote end steps</a> with <var>session</var> and <var>command parameters</var> are: 
       <ol>
        <li data-md>
         <p>Let <var>environment settings</var> be a list of all the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object②">environment settings objects</a> that have their <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-environment-execution-ready-flag" id="ref-for-concept-environment-execution-ready-flag">execution ready flag</a> set.</p>
@@ -3330,7 +3384,7 @@ ScriptGetRealmsResult = {
         <p>Let <var>body</var> be a map matching the <code>GetRealmsResult</code> production,
  with the <code>realms</code> field set to <var>realms</var>.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑨">success</a> with data <var>body</var>.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⓪">success</a> with data <var>body</var>.</p>
       </ol>
       <p class="issue" id="issue-ac9113ee"><a class="self-link" href="#issue-ac9113ee"></a> Extend this to also allow realm parents e.g. for nested workers? Or get all ancestor workers.</p>
       <p class="issue" id="issue-b6525c5d"><a class="self-link" href="#issue-b6525c5d"></a> We might want to have a more sophisticated filter system than just a
@@ -3388,7 +3442,7 @@ object:</p>
           <p>If the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#responsible-document" id="ref-for-responsible-document④">responsible document</a> of <var>settings</var> is a <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document③">Document</a>:</p>
           <ol>
            <li data-md>
-            <p>Let <var>context</var> be <var>settings</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#responsible-document" id="ref-for-responsible-document⑤">responsible document</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#concept-document-bc" id="ref-for-concept-document-bc②">browsing context</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑤">top-level browsing context</a>.</p>
+            <p>Let <var>context</var> be <var>settings</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#responsible-document" id="ref-for-responsible-document⑤">responsible document</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#concept-document-bc" id="ref-for-concept-document-bc②">browsing context</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑦">top-level browsing context</a>.</p>
            <li data-md>
             <p>If <var>context</var> is not in <var>contexts</var>, continue.</p>
            <li data-md>
@@ -3490,7 +3544,7 @@ worker</a> algorithm:</p>
      <h3 class="heading settled" data-level="6.4" id="module-log"><span class="secno">6.4. </span><span class="content">Log</span><a class="self-link" href="#module-log"></a></h3>
      <p>The <dfn data-dfn-for="modules" data-dfn-type="dfn" data-export id="modules-log">log<a class="self-link" href="#modules-log"></a></dfn> module contains functionality and events
 related to logging.</p>
-     <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①②">BiDi Session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="log-event-buffer">log event buffer</dfn> which is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⑥">map</a> from <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑤">browsing context id</a> to a list of log events for that context that have not
+     <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①②">BiDi Session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="log-event-buffer">log event buffer</dfn> which is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⑦">map</a> from <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑦">browsing context id</a> to a list of log events for that context that have not
 been emitted. User agents may impose a maximum size on this buffer, subject to
 the condition that if events A and B happen in the same context with A occuring
 before B, and both are added to the buffer, the entry for B must not be removed
@@ -3506,7 +3560,7 @@ before the entry for A.</p>
         <p>For each <var>context</var> of <var>contexts</var>:</p>
         <ol>
          <li data-md>
-          <p>Append the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑥">browsing context id</a> for <var>context</var> to <var>context ids</var>.</p>
+          <p>Append the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑧">browsing context id</a> for <var>context</var> to <var>context ids</var>.</p>
         </ol>
        <li data-md>
         <p>For each <var>context id</var> in <var>context ids</var>:</p>
@@ -3694,7 +3748,7 @@ the js exception and console API types that are represented by different methods
          <li data-md>
           <p>Let <var>context</var> be <var>maybe context</var>’s data</p>
          <li data-md>
-          <p>Let <var>top level context</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑥">top-level browsing context</a>.</p>
+          <p>Let <var>top level context</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑧">top-level browsing context</a>.</p>
          <li data-md>
           <p>If <var>include global</var> is true and <var>top level context</var> is not in <var>contexts</var>,
  or if <var>include global</var> is false and <var>top level context</var> is in <var>contexts</var>:</p>
@@ -3731,7 +3785,7 @@ as part of the standards process.</p>
         <p>Discard all <code class="idl"><a data-link-type="idl" href="https://dom.spec.whatwg.org/#document" id="ref-for-document">Document</a></code> objects for all the entries in <var>browsingContext</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/history.html#session-history" id="ref-for-session-history">session
  history</a>.</p>
        <li data-md>
-        <p>If <var>browsingContext</var> is a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑦">top-level browsing context</a>, then <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#bcg-remove" id="ref-for-bcg-remove">remove a browsing context</a> <var>browsingContext</var>.</p>
+        <p>If <var>browsingContext</var> is a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑨">top-level browsing context</a>, then <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#bcg-remove" id="ref-for-bcg-remove">remove a browsing context</a> <var>browsingContext</var>.</p>
       </ol>
      </div>
      <p class="issue" id="issue-b664c1e3"><a class="self-link" href="#issue-b664c1e3"></a> The actual patch might be better to split the algorithm into an outer algorithm that is
@@ -3772,11 +3826,12 @@ end:</p>
    <li><a href="#bidi-flag">BiDi flag</a><span>, in § 3.2</span>
    <li><a href="#bidi-session">BiDi session</a><span>, in § 3.2</span>
    <li><a href="#modules-browsingcontext">browsingContext</a><span>, in § 6.2</span>
+   <li><a href="#commands-browsingcontextcreate">browsingContext.create</a><span>, in § 6.2.3.1</span>
    <li><a href="#event-browsing-context-event-map">browsing context event map</a><span>, in § 3.5</span>
-   <li><a href="#commands-browsingcontextgettree">browsingContext.getTree</a><span>, in § 6.2.3.1</span>
+   <li><a href="#commands-browsingcontextgettree">browsingContext.getTree</a><span>, in § 6.2.3.2</span>
    <li><a href="#browsing-context-id">browsing context id</a><span>, in § 6.2.2.1</span>
-   <li><a href="#commands-browsingcontextnavigate">browsingContext.navigate</a><span>, in § 6.2.3.2</span>
-   <li><a href="#commands-browsingcontextreload">browsingContext.reload</a><span>, in § 6.2.3.3</span>
+   <li><a href="#commands-browsingcontextnavigate">browsingContext.navigate</a><span>, in § 6.2.3.3</span>
+   <li><a href="#commands-browsingcontextreload">browsingContext.reload</a><span>, in § 6.2.3.4</span>
    <li><a href="#browsing-context-tree-discarded">browsing context tree discarded</a><span>, in § 7.1</span>
    <li><a href="#buffer-a-log-event">buffer a log event</a><span>, in § 6.4</span>
    <li><a href="#navigation-status-canceled">canceled</a><span>, in § 6.2</span>
@@ -3975,7 +4030,7 @@ end:</p>
    <a href="https://dom.spec.whatwg.org/#concept-document-url">https://dom.spec.whatwg.org/#concept-document-url</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-document-url">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
-    <li><a href="#ref-for-concept-document-url①">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-concept-document-url①">6.2.3.4. The browsingContext.reload Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-attribute-value">
@@ -4138,8 +4193,8 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-concept-request">
    <a href="https://fetch.spec.whatwg.org/#concept-request">https://fetch.spec.whatwg.org/#concept-request</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-request">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-concept-request①">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-concept-request">6.2.3.3. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-concept-request①">6.2.3.4. The browsingContext.reload Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-request-window">
@@ -4190,8 +4245,8 @@ end:</p>
    <a href="https://html.spec.whatwg.org/multipage/browsers.html#active-document">https://html.spec.whatwg.org/multipage/browsers.html#active-document</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-active-document">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
-    <li><a href="#ref-for-active-document①">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-active-document②">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-active-document①">6.2.3.3. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-active-document②">6.2.3.4. The browsingContext.reload Command</a>
     <li><a href="#ref-for-active-document③">6.2.4.1. The browsingContext.contextCreated Event</a>
     <li><a href="#ref-for-active-document④">6.3.2.6. The script.Target type</a>
     <li><a href="#ref-for-active-document⑤">6.3.3.2. The script.getRealms Command</a>
@@ -4206,7 +4261,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-concept-script-base-url">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-script-base-url">https://html.spec.whatwg.org/multipage/webappapis.html#concept-script-base-url</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-script-base-url">6.2.3.2. The browsingContext.navigate Command</a> <a href="#ref-for-concept-script-base-url①">(2)</a>
+    <li><a href="#ref-for-concept-script-base-url">6.2.3.3. The browsingContext.navigate Command</a> <a href="#ref-for-concept-script-base-url①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-document-bc">
@@ -4274,6 +4329,12 @@ end:</p>
    <ul>
     <li><a href="#ref-for-concept-environment-execution-ready-flag">6.3.3.2. The script.getRealms Command</a>
     <li><a href="#ref-for-concept-environment-execution-ready-flag①">6.3.4.1. The script.realmCreated Event</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-focusing-steps">
+   <a href="https://html.spec.whatwg.org/multipage/interaction.html#focusing-steps">https://html.spec.whatwg.org/multipage/interaction.html#focusing-steps</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-focusing-steps">6.2.3.1. The browsingContext.create Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-realm-global">
@@ -4439,15 +4500,22 @@ end:</p>
     <li><a href="#ref-for-top-level-browsing-context">3.5. Events</a> <a href="#ref-for-top-level-browsing-context①">(2)</a>
     <li><a href="#ref-for-top-level-browsing-context②">6.1.1. Definition</a> <a href="#ref-for-top-level-browsing-context③">(2)</a>
     <li><a href="#ref-for-top-level-browsing-context④">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
-    <li><a href="#ref-for-top-level-browsing-context⑤">6.3.4.1. The script.realmCreated Event</a>
-    <li><a href="#ref-for-top-level-browsing-context⑥">6.4.3.1. entryAdded</a>
-    <li><a href="#ref-for-top-level-browsing-context⑦">7.1. HTML</a>
+    <li><a href="#ref-for-top-level-browsing-context⑤">6.2.3.1. The browsingContext.create Command</a> <a href="#ref-for-top-level-browsing-context⑥">(2)</a>
+    <li><a href="#ref-for-top-level-browsing-context⑦">6.3.4.1. The script.realmCreated Event</a>
+    <li><a href="#ref-for-top-level-browsing-context⑧">6.4.3.1. entryAdded</a>
+    <li><a href="#ref-for-top-level-browsing-context⑨">7.1. HTML</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-unloading-document-cleanup-steps">
    <a href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#unloading-document-cleanup-steps">https://html.spec.whatwg.org/multipage/browsing-the-web.html#unloading-document-cleanup-steps</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-unloading-document-cleanup-steps">6.3.4.2. The script.realmDestroyed Event</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-window-open-steps">
+   <a href="https://html.spec.whatwg.org/multipage/multipage/window-object.html#window-open-steps">https://html.spec.whatwg.org/multipage/multipage/window-object.html#window-open-steps</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-window-open-steps">6.2.3.1. The browsingContext.create Command</a> <a href="#ref-for-window-open-steps①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-worker-event-loop-2">
@@ -4500,17 +4568,18 @@ end:</p>
     <li><a href="#ref-for-ordered-map">6.1.3.1. The session.status Command</a>
     <li><a href="#ref-for-ordered-map①">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-ordered-map②">(2)</a> <a href="#ref-for-ordered-map③">(3)</a> <a href="#ref-for-ordered-map④">(4)</a>
     <li><a href="#ref-for-ordered-map⑤">6.2.2.4. The browsingContext.NavigationInfo Type</a>
-    <li><a href="#ref-for-ordered-map⑥">6.2.3.1. The browsingContext.getTree Command</a>
-    <li><a href="#ref-for-ordered-map⑦">6.2.4.1. The browsingContext.contextCreated Event</a>
-    <li><a href="#ref-for-ordered-map⑧">6.2.4.2. The browsingContext.contextDestroyed Event</a>
-    <li><a href="#ref-for-ordered-map⑨">6.2.4.3. The browsingContext.navigationStarted Event</a>
-    <li><a href="#ref-for-ordered-map①⓪">6.2.4.4. The browsingContext.fragmentNavigated Event</a>
-    <li><a href="#ref-for-ordered-map①①">6.2.4.5. The browsingContext.domContentLoaded Event</a>
-    <li><a href="#ref-for-ordered-map①②">6.2.4.6. The browsingContext.load Event</a>
-    <li><a href="#ref-for-ordered-map①③">6.2.4.7. The browsingContext.downloadWillBegin Event</a>
-    <li><a href="#ref-for-ordered-map①④">6.2.4.8. The browsingContext.navigationAborted Event</a>
-    <li><a href="#ref-for-ordered-map①⑤">6.2.4.9. The browsingContext.navigationFailed Event</a>
-    <li><a href="#ref-for-ordered-map①⑥">6.4. Log</a>
+    <li><a href="#ref-for-ordered-map⑥">6.2.3.1. The browsingContext.create Command</a>
+    <li><a href="#ref-for-ordered-map⑦">6.2.3.2. The browsingContext.getTree Command</a>
+    <li><a href="#ref-for-ordered-map⑧">6.2.4.1. The browsingContext.contextCreated Event</a>
+    <li><a href="#ref-for-ordered-map⑨">6.2.4.2. The browsingContext.contextDestroyed Event</a>
+    <li><a href="#ref-for-ordered-map①⓪">6.2.4.3. The browsingContext.navigationStarted Event</a>
+    <li><a href="#ref-for-ordered-map①①">6.2.4.4. The browsingContext.fragmentNavigated Event</a>
+    <li><a href="#ref-for-ordered-map①②">6.2.4.5. The browsingContext.domContentLoaded Event</a>
+    <li><a href="#ref-for-ordered-map①③">6.2.4.6. The browsingContext.load Event</a>
+    <li><a href="#ref-for-ordered-map①④">6.2.4.7. The browsingContext.downloadWillBegin Event</a>
+    <li><a href="#ref-for-ordered-map①⑤">6.2.4.8. The browsingContext.navigationAborted Event</a>
+    <li><a href="#ref-for-ordered-map①⑥">6.2.4.9. The browsingContext.navigationFailed Event</a>
+    <li><a href="#ref-for-ordered-map①⑦">6.4. Log</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-parse-a-json-string-to-an-infra-value">
@@ -4637,7 +4706,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-concept-url-parser">
    <a href="https://url.spec.whatwg.org/#concept-url-parser">https://url.spec.whatwg.org/#concept-url-parser</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-url-parser">6.2.3.2. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-concept-url-parser">6.2.3.3. The browsingContext.navigate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-url-serializer">
@@ -4701,7 +4770,7 @@ end:</p>
     <li><a href="#ref-for-dfn-errors⑥">6.1.3.2. The session.new Command</a> <a href="#ref-for-dfn-errors⑦">(2)</a>
     <li><a href="#ref-for-dfn-errors⑧">6.2.2.1. The browsingContext.BrowsingContext Type</a>
     <li><a href="#ref-for-dfn-errors⑨">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-errors①⓪">(2)</a>
-    <li><a href="#ref-for-dfn-errors①①">6.2.3.2. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-dfn-errors①①">6.2.3.3. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-errors①②">6.3.2.2. The script.Realm type</a>
     <li><a href="#ref-for-dfn-errors①③">6.4.3.1. entryAdded</a>
    </ul>
@@ -4715,7 +4784,7 @@ end:</p>
     <li><a href="#ref-for-dfn-error-code④">6.1.1. Definition</a> <a href="#ref-for-dfn-error-code⑤">(2)</a>
     <li><a href="#ref-for-dfn-error-code⑥">6.2.2.1. The browsingContext.BrowsingContext Type</a>
     <li><a href="#ref-for-dfn-error-code⑦">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-error-code⑧">(2)</a>
-    <li><a href="#ref-for-dfn-error-code⑨">6.2.3.2. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-dfn-error-code⑨">6.2.3.3. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-error-code①⓪">6.3.2.2. The script.Realm type</a>
    </ul>
   </aside>
@@ -4744,7 +4813,7 @@ end:</p>
     <li><a href="#ref-for-dfn-invalid-argument②">4. Transport</a> <a href="#ref-for-dfn-invalid-argument③">(2)</a> <a href="#ref-for-dfn-invalid-argument④">(3)</a>
     <li><a href="#ref-for-dfn-invalid-argument⑤">4.1. Establishing a Connection</a>
     <li><a href="#ref-for-dfn-invalid-argument⑥">6.1.1. Definition</a> <a href="#ref-for-dfn-invalid-argument⑦">(2)</a>
-    <li><a href="#ref-for-dfn-invalid-argument⑧">6.2.3.2. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-dfn-invalid-argument⑧">6.2.3.3. The browsingContext.navigate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-invalid-session-id">
@@ -4800,11 +4869,12 @@ end:</p>
     <li><a href="#ref-for-dfn-remote-end-steps③">6.1.3.2. The session.new Command</a>
     <li><a href="#ref-for-dfn-remote-end-steps④">6.1.3.3. The session.subscribe Command</a>
     <li><a href="#ref-for-dfn-remote-end-steps⑤">6.1.3.4. The session.unsubscribe Command</a>
-    <li><a href="#ref-for-dfn-remote-end-steps⑥">6.2.3.1. The browsingContext.getTree Command</a>
-    <li><a href="#ref-for-dfn-remote-end-steps⑦">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-dfn-remote-end-steps⑧">6.2.3.3. The browsingContext.reload Command</a>
-    <li><a href="#ref-for-dfn-remote-end-steps⑨">6.3.3.1. The script.evaluate Command</a>
-    <li><a href="#ref-for-dfn-remote-end-steps①⓪">6.3.3.2. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps⑥">6.2.3.1. The browsingContext.create Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps⑦">6.2.3.2. The browsingContext.getTree Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps⑧">6.2.3.3. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps⑨">6.2.3.4. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps①⓪">6.3.3.1. The script.evaluate Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps①①">6.3.3.2. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-sessions">
@@ -4845,10 +4915,11 @@ end:</p>
     <li><a href="#ref-for-dfn-success⑨">6.1.3.4. The session.unsubscribe Command</a>
     <li><a href="#ref-for-dfn-success①⓪">6.2.2.1. The browsingContext.BrowsingContext Type</a> <a href="#ref-for-dfn-success①①">(2)</a>
     <li><a href="#ref-for-dfn-success①②">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-success①③">(2)</a> <a href="#ref-for-dfn-success①④">(3)</a>
-    <li><a href="#ref-for-dfn-success①⑤">6.2.3.1. The browsingContext.getTree Command</a>
-    <li><a href="#ref-for-dfn-success①⑥">6.3.2.2. The script.Realm type</a> <a href="#ref-for-dfn-success①⑦">(2)</a>
-    <li><a href="#ref-for-dfn-success①⑧">6.3.2.6. The script.Target type</a>
-    <li><a href="#ref-for-dfn-success①⑨">6.3.3.2. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-success①⑤">6.2.3.1. The browsingContext.create Command</a>
+    <li><a href="#ref-for-dfn-success①⑥">6.2.3.2. The browsingContext.getTree Command</a>
+    <li><a href="#ref-for-dfn-success①⑦">6.3.2.2. The script.Realm type</a> <a href="#ref-for-dfn-success①⑧">(2)</a>
+    <li><a href="#ref-for-dfn-success①⑨">6.3.2.6. The script.Target type</a>
+    <li><a href="#ref-for-dfn-success②⓪">6.3.3.2. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-try">
@@ -4859,8 +4930,8 @@ end:</p>
     <li><a href="#ref-for-dfn-try④">6.1.3.3. The session.subscribe Command</a>
     <li><a href="#ref-for-dfn-try⑤">6.1.3.4. The session.unsubscribe Command</a>
     <li><a href="#ref-for-dfn-try⑥">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
-    <li><a href="#ref-for-dfn-try⑦">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-dfn-try⑧">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-dfn-try⑦">6.2.3.3. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-dfn-try⑧">6.2.3.4. The browsingContext.reload Command</a>
     <li><a href="#ref-for-dfn-try⑨">6.3.2.6. The script.Target type</a>
     <li><a href="#ref-for-dfn-try①⓪">6.3.3.1. The script.evaluate Command</a>
     <li><a href="#ref-for-dfn-try①①">6.3.3.2. The script.getRealms Command</a>
@@ -4996,6 +5067,7 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-environment-settings-object">environment settings object</span>
      <li><span class="dfn-paneled" id="term-for-environment-settings-object&apos;s-realm">environment settings object's realm</span>
      <li><span class="dfn-paneled" id="term-for-concept-environment-execution-ready-flag">execution ready flag</span>
+     <li><span class="dfn-paneled" id="term-for-focusing-steps">focusing steps</span>
      <li><span class="dfn-paneled" id="term-for-concept-realm-global">global object</span>
      <li><span class="dfn-paneled" id="term-for-concept-error-handled">handled</span>
      <li><span class="dfn-paneled" id="term-for-history-handling-behavior">history handling behavior</span>
@@ -5022,6 +5094,7 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-terminate-a-worker">terminate a worker</span>
      <li><span class="dfn-paneled" id="term-for-top-level-browsing-context">top-level browsing context</span>
      <li><span class="dfn-paneled" id="term-for-unloading-document-cleanup-steps">unloading document cleanup steps</span>
+     <li><span class="dfn-paneled" id="term-for-window-open-steps">window open steps</span>
      <li><span class="dfn-paneled" id="term-for-worker-event-loop-2">worker event loop</span>
      <li><span class="dfn-paneled" id="term-for-concept-document-worklet-global-scopes">worklet global scopes</span>
     </ul>
@@ -5183,6 +5256,11 @@ in general? <a class="issue-return" href="#issue-66909ae2" title="Jump to sectio
  an error here? What error code do we want? Is there going to be a problem
  where local ends parse the implementation-defined strings to figure out
  what actually went wrong? <a class="issue-return" href="#issue-ceba1469" title="Jump to section">↵</a></div>
+   <div class="issue"> HTML’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/multipage/window-object.html#window-open-steps">window open steps</a> depend on the "entry global object"
+ and WebDriver’s <a href="https://w3c.github.io/webdriver/#new-window">New
+ Window</a> command depends on the "current browsing context". Given that we
+ don’t have any such implicit context here, what OS window should new tabs
+ be opened in? <a class="issue-return" href="#issue-038b5945" title="Jump to section">↵</a></div>
    <div class="issue"> the way this hooks into HTML feels very fragile. See https://github.com/whatwg/html/issues/6194 <a class="issue-return" href="#issue-7a4ace46" title="Jump to section">↵</a></div>
    <div class="issue"> It’s unclear if we ought to only fire this event for browsing
 contexts that have active documents; navigation can also cause contexts to
@@ -5648,7 +5726,8 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-browsing-context-id">6.2.2.1. The browsingContext.BrowsingContext Type</a> <a href="#ref-for-browsing-context-id①">(2)</a>
     <li><a href="#ref-for-browsing-context-id②">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-browsing-context-id③">(2)</a>
     <li><a href="#ref-for-browsing-context-id④">6.2.2.4. The browsingContext.NavigationInfo Type</a>
-    <li><a href="#ref-for-browsing-context-id⑤">6.4. Log</a> <a href="#ref-for-browsing-context-id⑥">(2)</a>
+    <li><a href="#ref-for-browsing-context-id⑤">6.2.3.1. The browsingContext.create Command</a> <a href="#ref-for-browsing-context-id⑥">(2)</a>
+    <li><a href="#ref-for-browsing-context-id⑦">6.4. Log</a> <a href="#ref-for-browsing-context-id⑧">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-a-browsing-context">
@@ -5656,8 +5735,8 @@ to express as a patch to the specification since it requires changing multiple p
    <ul>
     <li><a href="#ref-for-get-a-browsing-context">6.1.1. Definition</a>
     <li><a href="#ref-for-get-a-browsing-context①">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
-    <li><a href="#ref-for-get-a-browsing-context②">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-get-a-browsing-context③">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-get-a-browsing-context②">6.2.3.3. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-get-a-browsing-context③">6.2.3.4. The browsingContext.reload Command</a>
     <li><a href="#ref-for-get-a-browsing-context④">6.3.2.6. The script.Target type</a>
     <li><a href="#ref-for-get-a-browsing-context⑤">6.3.3.2. The script.getRealms Command</a>
     <li><a href="#ref-for-get-a-browsing-context⑥">6.4.3.1. entryAdded</a>
@@ -5675,14 +5754,14 @@ to express as a patch to the specification since it requires changing multiple p
    <b><a href="#get-the-descendent-browsing-contexts">#get-the-descendent-browsing-contexts</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-get-the-descendent-browsing-contexts">6.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
-    <li><a href="#ref-for-get-the-descendent-browsing-contexts①">6.2.3.1. The browsingContext.getTree Command</a>
+    <li><a href="#ref-for-get-the-descendent-browsing-contexts①">6.2.3.2. The browsingContext.getTree Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="await-a-navigation">
    <b><a href="#await-a-navigation">#await-a-navigation</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-await-a-navigation">6.2.3.2. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-await-a-navigation①">6.2.3.3. The browsingContext.reload Command</a>
+    <li><a href="#ref-for-await-a-navigation">6.2.3.3. The browsingContext.navigate Command</a>
+    <li><a href="#ref-for-await-a-navigation①">6.2.3.4. The browsingContext.reload Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-the-navigation-info">
