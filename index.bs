@@ -102,9 +102,11 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: null; url: sec-null-value
     text: Object; url: sec-object-objects
     text: Object.fromEntries; url: sec-object.fromentries
-    text: ScriptEvaluation; url: #sec-runtime-semantics-scriptevaluation
+    text: ScriptEvaluation; url: sec-runtime-semantics-scriptevaluation
     text: Set object; url: sec-set-objects
     text: String; url: sec-string-constructor
+    text: StringToBigInt; url: sec-stringtobigint
+    text: StringToNumber; url: sec-stringtonumber
     text: RegExp; url: sec-regexp-pattern-flags
     text: ThisTimeValue; url: thistimevalue
     text: ToString; url: sec-tostring
@@ -1107,15 +1109,21 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
     <dd>Return [=success=] with data |value|.
 
     <dt>|type| is the string "<code>number</code>"
-    <dd>Return [=success=] with data [=Number=](|value|).
+    <dd>
+      1. Let |number_result| be [=StringToNumber=](|value|).
+
+      1. If |number_result| is NaN, return [=error=] with [=error code=] [=invalid argument=]
+
+      1. Return [=success=] with data |number_result|.
 
     <dt>|type| is the string "<code>boolean</code>"
     <dd>Return [=success=] with data |value|.
 
     <dt>|type| is the string "<code>bigint</code>"
     <dd>
-      1. Let |bigint_result| be [=BigInt=](|value|). If this throws exception, return [=error=]
-         with [=error code=] [=invalid argument=]
+      1. Let |bigint_result| be [=StringToBigInt=](|value|).
+
+      1. If |bigint_result| is undefined, return [=error=] with [=error code=] [=invalid argument=]
 
       1. Return [=success=] with data |bigint_result|.
 
@@ -1342,10 +1350,9 @@ To get the <dfn>object id for an object</dfn> given a |session| and |object|:
 1. If |session|'s [=object id map=] does not contain |object|, run the
    following steps:
 
-  1. Let |object id| be a new, unique, string identifier for |object|. If
-     |object| is an [=/element=] this must be the [=web element reference=] for
-     |object|; if it's a {{WindowProxy}} object, this must be the [=window
-     handle=] for |object|.
+  1. Let |object id| be a new, unique, string identifier for |object|. If |object| is an
+     [=/element=] this must be the [=web element reference=] for |object|; if it's a {{WindowProxy}}
+     object, this must be the [=browsing context id=] for |object|.
 
   1. Set the value of |object| in |session|'s [=object id map=] to |object id|.
 
@@ -3635,7 +3642,7 @@ The [=remote end steps=] with |command parameters| are:
 1. [=Prepare to run script=] with |environment settings|.
 
 1. Set |evaluation status| to
-   [=Call=](|function object|, |this object|, ...|deserialized arguments|).
+   [=Call=](|function object|, |this object|, |deserialized arguments|).
 
 1. If |evaluation status|.\[[Type]] is <code>normal</code>, and |await promise| is true,
    and [=IsPromise=](|call evaluation status|.\[[Value]]):
