@@ -3619,7 +3619,10 @@ variant is used in cases where the script completes with a thrown exception.
 <pre class="cddl local-cddl remote-cddl">
 RealmTarget = {realm: Realm};
 
-ContextTarget = {context: BrowsingContext}
+ContextTarget = {
+  context: BrowsingContext,
+  ?sandbox: text
+}
 
 Target = (
   RealmTarget //
@@ -3640,12 +3643,18 @@ To <dfn>get a realm from a target</dfn> given |target|:
   1. Let |context| be the result of [=trying=] to [=get a browsing context=]
      with |target|["<code>context</code>"].
 
-  1. Let |document| be |context|'s [=active document=].
+  1. If |target| does not contain a field named "<code>sandbox</code>":
 
-  1. Let |environment settings| be the [=environment settings object=] whose
-     [=responsible document=] is |document|.
+    1. Let |document| be |context|'s [=active document=].
 
-  1. Let |realm| be |environment settings|' [=realm execution context=]'s Realm component.
+    1. Let |environment settings| be the [=environment settings object=] whose
+       [=responsible document=] is |document|.
+
+    1. Let |realm| be |environment settings|' [=realm execution context=]'s
+       Realm component.
+
+  1. Otherwise: let |realm| be [=get or create a sandbox realm=] given
+     |target|["<code>sandbox</code>"] and |context|.
 
 1. Otherwise:
 
