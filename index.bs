@@ -932,6 +932,138 @@ requests to start a WebDriver session, it must:
 
 </div>
 
+# Sandboxed Script Execution # {#sandbox}
+
+A common requirements for automation tools is to execute scripts which have
+access to the DOM of a document, but don't have information about any changes to
+the DOM APIs made by scripts running in the browsing context containing the
+document.
+
+A [=BiDi session=] has a <dfn>context sandbox map</dfn> which is a weak map
+in which the keys are [=browsing contexts=] and the values are weak maps between
+strings and {{SandboxWindowProxy}} objects.
+
+Note: The definition of sandboxes here is an attempt to codify the behaviour of
+existing implementations. It exposes parts of the implementations that have
+previously been considered internal by specifications, in particular the
+distinction between the internal state of platform objects (which is typically
+implemented as native objects in the main implementation language of the browser
+engine) and the ECMAScript-visible state. Because existing sandbox
+implementations happen at a low level in the engine, implementations converging
+toward the specficication in all details might be a slow process. In the
+meantime, implementors are encouraged to provide detailed documentation on any
+differences with the specification, and users of this feature are encouraged to
+explicitly test that scripts running in sandboxes work in all implementations.
+
+## Sandbox Realms ## {#sandbox-realm}
+
+Each sandbox is a unique EMCAScript [=Realm=]. However the sandbox realm
+provides access to platform objects in an existing {{Window}} realm via
+{{SandboxProxy}} objects.
+
+<div algorithm>
+To <dfn>get or create a sandbox realm</dfn> given |name| and |source browsing context|:
+
+1. If [=context sandbox map=] does not contain |name|, set |source browsing
+   context|[|name|] to a new map.
+
+1. Let |sandboxes| be [=context sandbox map=][|name|].
+
+1. If |sandboxes| does not contain |name|, set |sandboxes|[|name|] to [=create
+   a sandbox realm=] with |source browsing context|.
+
+1. Return |sandboxes|[|name|].
+
+</div>
+
+<div algorithm>
+To <dfn>create a sandbox realm</dfn> with |source browsing context|:
+
+1. Let |agent| be
+
+1. Let |realm| be the result of [=creating a new JavaScript realm=] given |agent| and the following customizations:
+
+  * For the global object, create a new {{SandboxWindowProxy}} whose
+    \[[Wrapped]] internal slot is set to |source browsing context|'s {{WindowProxy}}
+
+1. Let |environment settings| be an [=environment settings object=] whose
+   algorithms are defined as follows:
+
+   <dl>
+       <dt>The [=realm execution context=]
+       <dd>
+
+       <dt>The [=module map=]
+       <dd>Issue: Not sure if this ought to be the module map of the assocaited
+       Document, or an empty module map.
+
+       <dt>The [=responsible document=]
+       <dd>Return |source browsing context|'s [=associated {{Document}}=]
+
+       <dt>The [=API URL character encoding=]
+       <dd>Return the current character encoding of |source browsing context|'s [=associated {{Document}}=].
+
+       <dt>The [=API base URL=]
+       <dd>Return the current [=base URL=] of |source browsing context|'s [=associated
+       {{Document}}=].
+
+       <dt>The [=origin=]
+       <dd>Return the [=origin=] of window's [=associated {{Document}}=].
+
+       <dt>The [=policy container=]
+       <dd>Issue: Unsure if we ought to use the same as the spurce browsing
+       context, or if we always want an empty policy container for the sandbox,
+       since e.g. CSP shouldn't apply.
+
+       <dt>The [=cross-origin isolated capability=]
+       <dd>Return the [=cross-origin isolated capability=] of |source browsing
+       context|'s [=associated {{Document}}=]'s [=environment settings object=].
+
+       <dt>The time origin
+       <dd>Return |source browsing context|'s [=associated
+        {{Document}}=]'s [=load timing info=]'s [=navigation start time=].
+  </dl>
+
+1. Set |realm|'s \[[HostDefined]] field to |environment settings|.
+
+1. Return |realm|.
+
+</div>
+
+
+## Sandbox Proxy Objects ## {#sandbox-proxy}
+
+A <dfn>SandboxProxy</dfn> object is an exotic object that mediates sandboxed access to
+objects from another realm. Sandbox proxy objects are designed to enforce the
+following restrictions:
+
+* Platform objects are accessible, but property access returns only
+  WebIDL-defined properties and not ECMAScript defined properties (either
+  "expando" properties that are not present in the underlying interface, or
+  ECMAScript defined properties that shadow a property in the underlying
+  interface.
+
+* Setting a property either runs the WebIDL-defined setter steps, or sets a
+  property on the proxy object. This means that properties written inside the
+  sandbox.
+
+There is no {{SandboxProxy}} interface object.
+
+Every {{SandboxProxy}} object has a \[[Wrapped]] internal slot representing the
+wrapped object.
+
+</div>
+
+## SandboxWindowProxy ## {#sandbox-sandboxwindowproxy}
+
+<xmp class=idl>
+interface SandboxWindowProxy : WindowProxy {};
+</xmp>
+
+A {{SandboxWindowProxy}} is a {{WindowProxy}} object wrapped by a
+{{SandboxProxy}} object.
+
+
 # Common Data Types # {#data-types}
 
 ## Reference ## {#data-types-reference}
