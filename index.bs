@@ -4029,6 +4029,63 @@ Issue: We might want to have a more sophisticated filter system than just a
 
 ### Events ### {#module-script-events}
 
+#### The script.postMessage Event #### {#event-script-postMessage}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        ScriptPostMessageEvent = {
+         method: "script.postMessage",
+         params: MessageInfo
+       }
+
+       MessageInfo = {
+         realm: Realm,
+         message: RemoteValue
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn>script postMessage</dfn> steps given |message| are:
+
+1. Let |serialize result| be the result of [=serialize as a remote value=] given
+   |message|.
+
+1. If |serialize result| is an error, then throw a [=TypeError=] exception and return.
+
+1. Let |serialized message| be |serialize result|'s [=data=].
+
+1. Let |related browsing contexts| be a set containing the
+   {{SandboxGlobalScope}}'s [=asssociated browsing context=].
+
+1. Let |realm| be the {{SandboxGlobalScope}}'s [=relevant realm=].
+
+1. [=Emit an postMessage event=] with |realm|, |serialized message| and |related
+   browsing contexts|.
+
+</div>
+
+<div algorithm>
+To <dfn>emit a postMessage event</dfn> given |realm|, |remote value|, and |related
+browsing contexts|:
+
+1. Let |message info| be a map matching the <code>MessageInfo</code> production,
+   with the <code>realm</code> field set to |realm| and the <code>message</code>
+   field set to |remote value|.
+
+1. Let |body| be a map matching the <code>ScriptPostMessageEvent</code>
+   production, with the <code>params</code> field set to |message info|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>script.realmpostMessage</code>" and |related browsing contexts|:
+
+  1. [=Emit an event=] with |session| and |body|.
+
+</div>
+
 #### The script.realmCreated Event #### {#event-script-realmCreated}
 
 <dl>
