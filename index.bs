@@ -3508,6 +3508,32 @@ Record=] of type <code>throw</code>, |exception|, is given by:
 
 </div>
 
+#### The script.Result type #### {#type-script-Result}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl remote-cddl">
+ScriptResult = (
+  ScriptResultSuccess //
+  ScriptResultException
+)
+
+ScriptResultSuccess = {
+  result: RemoteValue,
+  realm: Realm
+}
+
+ScriptResultException = {
+  exceptionDetails: ExceptionDetails
+  realm: Realm
+}
+</pre>
+
+The <code>Result</code> type indicates the return value of a command that
+executes script. The <code>ScriptResultSuccess</code> variant is used in cases
+where the script completes normally and the <code>ScriptResultException</code>
+variant is used in cases where the script completes with a thrown exception.
+
 #### The script.Target type #### {#type-script-Target}
 
 [=Remote end definition=] and [=local end definition=]
@@ -3596,18 +3622,7 @@ argument doesn't affect function's <code>this</code> binding.
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      ScriptCallFunctionResult = (
-        ScriptCallFunctionResultSuccess //
-        ScriptCallFunctionResultException
-      )
-
-      ScriptCallFunctionResultSuccess = {
-         result: RemoteValue
-      }
-
-      ScriptCallFunctionResultException = {
-        exceptionDetails: ExceptionDetails
-      }
+      ScriptCallFunctionResult = ScriptResult;
     </pre>
    </dd>
 </dl>
@@ -3711,7 +3726,7 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |exception details| be the result of [=get exception details=] given
      |evaluation status|.
 
-  1. Return a new map matching the <code>ScriptCallFunctionResultException</code>
+  1. Return a new map matching the <code>ScriptResultException</code>
      production, with the <code>exceptionDetails</code> field set to
      |exception details|.
 
@@ -3720,7 +3735,7 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |result| be the result of [=serialize as a remote value=] given
    |evaluation status|.\[[Value]].
 
-1. Return a new map matching the <code>ScriptCallFunctionResultSuccess</code>
+1. Return a new map matching the <code>ScriptResultSuccess</code>
    production, with the <code>result</code> field set to |result|.
 
 #### The script.evaluate Command ####  {#command-script-evaluate}
@@ -3753,19 +3768,8 @@ case the resolved value of the promise is returned.
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      ScriptEvaluateResult = (
-        ScriptEvaluateResultSuccess //
-        ScriptEvaluateResultException
-      )
-
-      ScriptEvaluateResultSuccess = {
-         result: RemoteValue
-      }
-
-      ScriptEvaluateResultException = {
-        exceptionDetails: ExceptionDetails
-      }
-    </pre>
+    ScriptEvaluateResult = ScriptResult;
+   </pre>
    </dd>
 </dl>
 
@@ -3810,7 +3814,7 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |exception details| be the result of [=get exception details=] given |evaluation
      status|
 
-  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+  1. Return a new map matching the <code>ScriptResultException</code>
      production, with the <code>exceptionDetails</code> field set to |exception
      details|.
 
@@ -3819,7 +3823,7 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |result| be the result of [=serialize as a remote value=] given
    |evaluation status|.\[[Value]].
 
-1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
+1. Return a new map matching the <code>ScriptResultSuccess</code>
    production, with the <code>result</code> field set to |result|.
 
 #### The script.getRealms Command ####  {#command-script-getRealms}
