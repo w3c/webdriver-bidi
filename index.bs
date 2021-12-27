@@ -3411,12 +3411,67 @@ Issue: This has the wrong error code
 
 <pre class="cddl local-cddl">
 RealmInfo = {
+  WindowRealmInfo //
+  DedicatedWorkerRealmInfo //
+  SharedWorkerRealmInfo //
+  ServiceWorkerRealmInfo //
+  WorkerRealmInfo //
+  PaintWorkletRealmInfo //
+  AudioWorkletRealmInfo //
+  WorkletRealmInfo //
+  GenericRealmInfo
+}
+
+BaseRealmInfo = {
   realm: Realm,
-  type: RealmType,
   origin: text
 }
 
-RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" / "worker" / "paint-worklet" / "audio-worklet" / "worklet" / text
+WindowRealmInfo = {
+  BaseRealmInfo,
+  type: "window",
+  context: BrowsingContext
+}
+
+DedicatedWorkerRealmInfo = {
+  BaseRealmInfo,
+  type: "dedicated-worker"
+}
+
+SharedWorkerRealmInfo = {
+  BaseRealmInfo,
+  type: "shared-worker"
+}
+
+ServiceWorkerRealmInfo = {
+  BaseRealmInfo,
+  type: "service-worker"
+}
+
+WorkerRealmInfo = {
+  BaseRealmInfo,
+  type: "worker"
+}
+
+PaintWorkletRealmInfo = {
+  BaseRealmInfo,
+  type: "paint-worklet"
+}
+
+AudioWorkletRealmInfo = {
+  BaseRealmInfo,
+  type: "audio-worklet"
+}
+
+WorkletRealmInfo = {
+  BaseRealmInfo,
+  type: "worklet"
+}
+
+GenericRealmInfo = {
+  BaseRealmInfo,
+  type: text
+}
 </pre>
 
 The <code>RealmInfo</code> type represents the properties of a realm.
@@ -3428,57 +3483,71 @@ To <dfn>get the realm info</dfn> given |environment settings|:
 
 1. Let |realm id| be the [=realm id=] for |realm|.
 
+1. Let |origin| be the [=serialization of an origin=] given |environment settings|'s |origin|.
+
 1. Run the steps under the first matching condition:
 
   <dl>
     <dt>The [=Realm/global object=] specified by |environment settings| is a [=Window=] object
     <dd>
-     1. Let |type| be "<code>window</code>".
+      1. Let |document| be |environment settings|' [=responsible document=].
+      1. Let |browsing context| be |document|'s [=browsing context=].
+      1. Let |context id| be the [=browsing context id=] for |browsing context|.
+      1. Let |realm info| be a map matching the <code>WindowRealmInfo</code> production,
+        with the <code>realm</code> field set to |realm id|, the <code>type</code>
+        field set to "<code>window</code>", the <code>origin</code> field set to |origin|,
+        and the <code>context</code> field set to |context id|.
 
     <dt>The [=Realm/global object=] specified by |environment settings| is a {{DedicatedWorkerGlobalScope}} object
     <dd>
-      1. Let |type| be "<code>dedicated-worker</code>".
+      1. Let |realm info| be a map matching the <code>DedicatedWorkerRealmInfo</code> production,
+        with the <code>realm</code> field set to |realm id|, the <code>type</code>
+        field set to "<code>dedicated-worker</code>" and the <code>origin</code> field set to |origin|.
+
     <dt>The [=Realm/global object=] specified by |environment settings| is a {{SharedWorkerGlobalScope}} object
+    <dd>
+      1. Let |realm info| be a map matching the <code>SharedWorkerRealmInfo</code> production,
+        with the <code>realm</code> field set to |realm id|, the <code>type</code>
+        field set to "<code>shared-worker</code>" and the <code>origin</code> field set to |origin|.
 
-   <dd>
-      1. Let |type| be "<code>shared-worker</code>".
     <dt>The [=Realm/global object=] specified by |environment settings| is a {{ServiceWorkerGlobalScope}} object
-
-   <dd>
-      1. Let |type| be "<code>service-worker</code>".
+    <dd>
+      1. Let |realm info| be a map matching the <code>ServiceWorkerRealmInfo</code> production,
+        with the <code>realm</code> field set to |realm id|, the <code>type</code>
+        field set to "<code>service-worker</code>" and the <code>origin</code> field set to |origin|.
 
    <dt>The [=Realm/global object=] specified by |environment settings| is a {{WorkerGlobalScope}} object
    <dd>
-      1. Let |type| be "<code>worker</code>".
+      1. Let |realm info| be a map matching the <code>WorkerRealmInfo</code> production,
+        with the <code>realm</code> field set to |realm id|, the <code>type</code>
+        field set to "<code>worker</code>" and the <code>origin</code> field set to |origin|.
 
    <dt>The [=Realm/global object=] specified by |environment settings| is a {{PaintWorkletGlobalScope}} object
    <dd>
-      1. Let |type| be "<code>paint-worklet</code>".
+      1. Let |realm info| be a map matching the <code>PaintWorkletRealmInfo</code> production,
+        with the <code>realm</code> field set to |realm id|, the <code>type</code>
+        field set to "<code>paint-worklet</code>" and the <code>origin</code> field set to |origin|.
 
    <dt>The [=Realm/global object=] specified by |environment settings| is a {{AudioWorkletGlobalScope}} object
    <dd>
-      1. Let |type| be "<code>audio-worklet</code>".
+      1. Let |realm info| be a map matching the <code>AudioWorkletRealmInfo</code> production,
+        with the <code>realm</code> field set to |realm id|, the <code>type</code>
+        field set to "<code>audio-worklet</code>" and the <code>origin</code> field set to |origin|.
 
    <dt>The [=Realm/global object=] specified by |environment settings| is a {{WorkletGlobalScope}} object
    <dd>
-      1. Let |type| be "<code>worklet</code>".
+      1. Let |realm info| be a map matching the <code>WorkletRealmInfo</code> production,
+        with the <code>realm</code> field set to |realm id|, the <code>type</code>
+        field set to "<code>worklet</code>" and the <code>origin</code> field set to |origin|.
 
    <dt>Otherwise:
    <dd>
-      1. Return null.
+      1. Let |realm info| be a map matching the <code>GenericRealmInfo</code> production,
+        with the <code>realm</code> field set to |realm id|, the <code>type</code>
+        field set to "<code>unknown</code>" and the <code>origin</code> field set to |origin|.
   </dl>
 
-1. Let |origin| be the [=serialization of an origin=] given |environment settings|'s |origin|.
-
-1. Let |realm info| be a map matching the <code>RealmInfo</code> production,
-   with the <code>realm</code> field set to |realm id|, the <code>type</code>
-   field set to |type| and the <code>origin</code> field set to |origin|.
-
 1. Return |realm info|
-
-Issue: We currently don't provide information about realms of unknown
-       types. That might be a problem for e.g. extension-related realms.
-
 
 Note: Future variations of this specification will retain the invariant that
          the last component of the type name after splitting on "<code>-</code>"
