@@ -122,6 +122,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
     text: a browsing context is discarded; url: window-object.html#a-browsing-context-is-discarded
+    text: close; url: window-object.html#close-a-browsing-context
     text: create a classic script; url: webappapis.html#creating-a-classic-script
     text: create a new browsing context; url: browsers.html#creating-a-new-browsing-context
     text: default classic script fetch options; url: webappapis.html#default-classic-script-fetch-options
@@ -2270,6 +2271,7 @@ navigation status</dfn> struct, which has the following items:
 <pre class="cddl remote-cddl">
 
 BrowsingContextCommand = (
+    BrowsingContextCloseCommand //
     BrowsingContextCreateCommand //
     BrowsingContextGetTreeCommand //
     BrowsingContextNavigateCommand //
@@ -2535,6 +2537,50 @@ To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
 </div>
 
 ### Commands ### {#module-browsingContext-commands}
+
+#### The browsingContext.close Command ####  {#command-browsingContext-close}
+
+The <dfn export for=commands>browsingContext.close</dfn> command closes a
+[=top-level browsing context=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      BrowsingContextCloseCommand = {
+        method: "browsingContext.close",
+        params: BrowsingContextCloseParameters
+      }
+
+      BrowsingContextCloseParameters = {
+        context: BrowsingContext
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.close">
+The [=remote end steps=] with |command parameters| are:
+
+  1. Let |context id| be the value of the <code>context</code> field of
+     |command parameters|.
+
+  1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+     with |context id|.
+
+  1. Assert: |context| is not null.
+
+  1. If |context| is not a [=top-level browsing context=], return [=error=] with
+     [=error code=] [=invalid argument=].
+
+  1. [=Close=] |context|.
+
+Issue(w3c/webdriver-bidi#170): There is an open discussion about the behavior
+when closing the last [=top-level browsing context=]. We could expect to close
+the browser, close the session or leave this up to the implementation.
+
+</div>
+
 
 #### The browsingContext.create Command ####  {#command-browsingContext-create}
 
