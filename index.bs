@@ -35,23 +35,31 @@ spec: RFC8610; urlPrefix: https://tools.ietf.org/html/rfc8610
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
+    text: actions options; url: dfn-actions-options
     text: active sessions; url: dfn-active-session
     text: additional WebDriver capability; url: dfn-additional-webdriver-capability
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
     text: capability name; url: dfn-capability-name
     text: create a session; url: dfn-create-a-session
+    text: dispatch actions; url: dfn-dispatch-actions
+    text: dispatch tick actions; url: dfn-dispatch-tick-actions
     text: draw a bounding box from the framebuffer; url: dfn-draw-a-bounding-box-from-the-framebuffer
     text: encode a canvas as Base64; url: dfn-encoding-a-canvas-as-base64
     text: endpoint node; url: dfn-endpoint-node
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
+    text: extract an action sequence; url: dfn-extract-an-action-sequence
     text: get a node; url: dfn-get-a-node
     text: get or create a node reference; url: dfn-get-or-create-a-node-reference
     text: getting a property; url: dfn-get-a-property
+    text: get element origin; url: dfn-get-element-origin
+    text: get the input state; url: dfn-get-the-input-state
     text: http session; url: dfn-http-session
+    text: input cancel list; url: dfn-input-cancel-list
     text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
     text: invalid session id; url: dfn-invalid-session-id
+    text: is element origin; url: dfn-is-element-origin
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
     text: maximum active sessions; url: dfn-maximum-active-sessions
@@ -63,6 +71,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: readiness state; url: dfn-readiness-state
     text: remote end steps; url: dfn-remote-end-steps
     text: remote end; url: dfn-remote-ends
+    text: reset the input state; url: dfn-reset-the-input-state
     text: session ID; url: dfn-session-id
     text: session not created; url: dfn-session-not-created
     text: session; url: dfn-sessions
@@ -261,6 +270,7 @@ Command = {
 
 CommandData = (
   BrowsingContextCommand //
+  InputCommand //
   ScriptCommand //
   SessionCommand
 )
@@ -321,6 +331,7 @@ EventData = (
 <pre class="cddl remote-cddl local-cddl">
 Extensible = (*text => any)
 
+js-int = -9007199254740991..9007199254740991
 js-uint = 0..9007199254740991
 </pre>
 
@@ -5752,6 +5763,303 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 10, given
 
         1. If [=log event buffer=] contains |other context id|, remove |event|
            from [=log event buffer=][|other context id|].
+
+</div>
+
+## Input ## {#module-input}
+
+The <dfn export for=modules>input</dfn> module contains functionality for
+simulated user input.
+
+### Definition ### {#module-input-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+
+InputCommand = (
+  input.PerformActionsCommand //
+  input.ReleaseActionsCommand
+)
+</pre>
+
+### Types ### {#module-input-types}
+
+#### input.ElementOrigin ### {#module-input-origin}
+
+Tjhe <code>input.ElementOrigin</code> type represents an {{Element}} that will
+be used as a coordinate origin.
+
+<pre class="cddl remote-cddl">
+input.ElementOrigin = {
+  "type": "node",
+  sharedId: SharedId
+}
+</pre>
+
+<div algorithm>
+The <dfn>is <code>input.ElementOrigin</code></dfn> steps given |object| are:
+
+1. I |object| is a [=/map=] matching the <code>input.ElementOrigin</code>
+   production, return true.
+
+1. Return false.
+
+</div>
+
+<div algorithm>
+The <dfn>get an Element from <code>input.ElementOrigin</code></dfn> steps given
+|origin| and |context| are:
+
+1. Assert: |origin| matches <code>input.ElementOrigin</code>.
+
+<!-- converting to realm here is kind of silly since we immediately convert back
+     in [=deserialize remote reference=] -->
+1. Let |document| be |context|'s [=active document=].
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=relevant global object=]'s <a>associated <code>Document</code></a> is
+   |document|.
+
+1. Let |realm| be |environment settings|' [=realm execution context=]'s
+   Realm component.
+
+1. Let |node| be the result of [=trying=] to [=deserialize remote reference=]
+   with |realm| and |origin|.
+
+1. If |node| doesn't implement {{Element}} return [=error=] with [=error code=]
+   [=no such element=].
+
+1. Retrun [=success=] with data |node|.
+
+</div>
+
+### Commands ### {#module-input-commands}
+
+#### The input.performActions Command ####  {#command-input-performActions}
+
+The <dfn export for=commands>input.performActions</dfn> command performs a
+specified sequence of user input actions.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      input.PerformActionsCommand = {
+        method: "input.performActions",
+        params: input.PerformActionsParameters
+      };
+
+      input.PerformActionsParameters = {
+        context: browsingContext.BrowsingContext,
+        actions: [*input.SourceActions]
+      }
+
+      input.SourceActions = (
+        input.NoneSourceActions /
+        input.KeySourceActions /
+        input.PointerSourceActions /
+        input.WheelSourceActions
+      )
+
+      input.NoneSourceActions = {
+        type: "none",
+        actions: [*input.NoneSourceAction]
+      }
+
+      input.NoneSourceAction = input.PauseAction
+
+      input.KeySourceActions = {
+        type: "key",
+        actions: [*input.KeySourceAction]
+      }
+
+      input.KeySourceAction = (
+        input.PauseAction /
+        input.KeyDownAction /
+        input.KeyUpAction
+      )
+
+      input.PointerSourceActions = {
+        type: "pointer",
+        ? parameters: input.PointerParameters,
+        actions: [*input.PointerSourceAction]
+      }
+
+      input.PointerParameters = {
+        ?pointerType: "mouse" / "pen" / "touch"
+      }
+
+      input.PointerSourceAction = (
+        input.PauseAction /
+        input.PointerDownAction /
+        input.PointerUpAction /
+        input.PointerMoveAction
+      )
+
+      input.WheelSourceActions = {
+        type: "wheel",
+        actions: [*input.WheelSourceAction]
+      }
+
+      input.WheelSourceAction = (
+        input.PauseAction /
+        input.WheelScrollAction
+      )
+
+      input.PauseAction = {
+        type: "pause",
+        ? duration: js-uint
+      }
+
+      input.KeyDownAction = {
+        type: "keyDown",
+        value: text
+      }
+
+      input.KeyUpAction = {
+        type: "keyUp",
+        value: text
+      }
+
+      input.PointerUpAction = {
+        type: "pointerUp",
+        button: js-uint,
+        input.PointerCommonProperties,
+      }
+
+      input.PointerDownAction = {
+        type: "pointerUp",
+        button: js-uint,
+        input.PointerCommonProperties
+      }
+
+      input.PointerMoveAction = {
+        type: "pointerMove",
+        x: js-uint,
+        y: js-uint,
+        ? duration: js-uint,
+        ? origin: input.Origin,
+        input.PointerCommonProperties,
+      }
+
+      input.WheelScrollAction = {
+        type: "scroll",
+        x: js-uint,
+        y: js-uint,
+        deltaX: js-int,
+        deltaY: js-int,
+        ? duration: js-uint,
+        ? origin: input.Origin,
+        input.PointerCommonProperties,
+      }
+
+      input.PointerCommonProperties = (
+        ? width: js-uint,
+        ? height: js-uint,
+        ? pressure: float,
+        ? tangentialPressure: float,
+        ? tiltX: -90..90,
+        ? tiltY: -90..90,
+        ? twist: 0..359,
+        ? altitudeAngle: float,
+        ? azimuthAngle: float,
+      )
+
+      input.Origin = "viewport" / "pointer" / input.ElementOrigin
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for input.performActions">
+
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Let |input state| be [=get the input state=] with |session| and |context|'s
+   [=top-level browsing context=].
+
+1. Let |actions options| be a new [=actions options=] with the [=is element
+   origin=] steps set to [=is input.ElementOrigin=], and the
+   [=get element origin=] steps set to [=get an Element from
+   input.ElementOrigin=].
+
+1. Let |actions by tick| be the result of trying to [=extract an action
+   sequence=] with |input state|, |command parameters|, and |actions options|.
+
+1. [=Try=] to [=dispatch actions=] with |input state|, |actions by tick|,
+   |context|, and |actions options|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The input.releaseActions Command ####  {#command-input-releaseActions}
+
+The <dfn export for=commands>input.releaseActions</dfn> command resets the input
+state associated with the current session.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      input.ReleaseActionsCommand = {
+        method: "input.releaseActions",
+        params: input.ReleaseActionsParameters
+      };
+
+      input.ReleaseActionsParameters = {
+        context: browsingContext.BrowsingContext,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for input.releaseActions">
+
+The [=remote end steps=] given <var ignore>session</var>, and |command
+parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Let |top-level context| be |context|'s [=top-level browsing context=].
+
+1. Let |input state| be [=get the input state=] with |session| and |top-level context|.
+
+1. Let |actions options| be a new [=actions options=] with the [=is element
+   origin=] steps set to [=is input.ElementOrigin=], and the
+   [=get element origin=] steps set to [=get an Element from
+   input.ElementOrigin=].
+
+1. Let |undo actions| be |input state|’s [=input cancel list=] in reverse order.
+
+1. [=Try=] to [=dispatch tick actions=] with |undo actions|, 0, |context|, and
+   |actions options|.
+
+1. [=Reset the input state=] with |session| and |top-level context|.
+
+1. Return [=success=] with data null.
 
 </div>
 
