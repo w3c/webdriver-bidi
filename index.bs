@@ -40,6 +40,8 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
     text: capability name; url: dfn-capability-name
     text: create a session; url: dfn-create-a-session
+    text: draw a bounding box from the framebuffer; url: dfn-draw-a-bounding-box-from-the-framebuffer
+    text: encode a canvas as Base64; url: dfn-encoding-a-canvas-as-base64
     text: endpoint node; url: dfn-endpoint-node
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
@@ -66,6 +68,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: trying; url: dfn-try
     text: unknown command; url: dfn-unknown-command
     text: unknown error; url: dfn-unknown-error
+    text: unsupported operation; url: dfn-unsupported-operation
     text: web element reference; url: dfn-web-element-reference
     text: webdriver-active flag; url: dfn-webdriver-active-flag
     text: window handle; url: dfn-window-handle
@@ -119,6 +122,9 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: realm; url: sec-code-realms
     text: running execution context; url: running-execution-context
     text: time value; url: sec-time-values-and-time-range
+spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
+  type: dfn
+    text: rectangle; url: rectangle
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
     text: a browsing context is discarded; url: window-object.html#a-browsing-context-is-discarded
@@ -132,6 +138,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: report an error; url: webappapis.html#report-the-error
     text: remove a browsing context; url: browsers.html#bcg-remove
+    text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: session history; url: history.html#session-history
     text: set up a window environment settings object; url: window-object.html#set-up-a-window-environment-settings-object
     text: set up a worker environment settings object; url: workers.html#set-up-a-worker-environment-settings-object
@@ -2443,6 +2450,7 @@ navigation status</dfn> struct, which has the following items:
 <pre class="cddl remote-cddl">
 
 BrowsingContextCommand = (
+    BrowsingContextCaptureScreenshotCommand //
     BrowsingContextCloseCommand //
     BrowsingContextCreateCommand //
     BrowsingContextGetTreeCommand //
@@ -2456,6 +2464,7 @@ BrowsingContextCommand = (
 <pre class="cddl local-cddl">
 
 BrowsingContextResult = (
+    BrowsingContextCaptureScreenshotResult //
     BrowsingContextCreateResult //
     BrowsingContextGetTreeResult //
     BrowsingContextNavigateResult
@@ -2698,6 +2707,72 @@ To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
 
 ### Commands ### {#module-browsingContext-commands}
 
+#### The browsingContext.captureScreenshot Command ####  {#command-browsingContext-captureScreenshot}
+
+The <dfn export for=commands>browsingContext.captureScreenshot</dfn> command
+captures an image of the given browsing context, and returns it as a
+Base64-encoded string.
+
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      BrowsingContextCaptureScreenshotCommand = {
+        method: "browsingContext.captureScreenshot",
+        params: BrowsingContextCaptureScreenshotParameters
+      }
+
+      BrowsingContextCaptureScreenshotParameters = {
+        context: BrowsingContext
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        BrowsingContextCaptureScreenshotResult = {
+          data: text
+        }
+    </pre>
+   </dd>
+</dl>
+
+TODO: Full page screenshots, and multiple output formats
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. If the implementation is unable to capture a screenshot of |context| for any
+   reason then return [=error=] with [=code=] [=unsupported operation=].
+
+1. Let |document| be |context|'s [=active document=].
+
+1. Immediately after the next invocation of the [=run the animation frame
+   callbacks=] algorithm for |document|:
+
+   Issue: This ought to be integrated into the update rendering algorithm
+   in some more explicit way.
+
+ 1. Let |root rect| be |document|’s [=document element=]'s [=rectangle=].
+
+ 1. Let |canvas| be the result of [=trying=] to [=draw a bounding box from the
+    framebuffer=] with |root rect|.
+
+ 1. Let |encoding result| be the result of [=trying=] to [=encode a canvas as
+    Base64=] with |canvas|.
+
+ 1. Let |body| be a [=map=] matching the
+    <code>BrowsingContextCaptureScreenshotResult</code> production, with the
+    <code>data</code> field set to |encoding result|.
+
+ 1. Return [=success=] with data |body|.
+
 #### The browsingContext.close Command ####  {#command-browsingContext-close}
 
 The <dfn export for=commands>browsingContext.close</dfn> command closes a
@@ -2740,7 +2815,6 @@ when closing the last [=top-level browsing context=]. We could expect to close
 the browser, close the session or leave this up to the implementation.
 
 </div>
-
 
 #### The browsingContext.create Command ####  {#command-browsingContext-create}
 
