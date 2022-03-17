@@ -2440,7 +2440,7 @@ browsing context.
 
 <div algorithm>
 To <dfn>get the browsing context info</dfn> given |context|,
-|depth| and |max depth|:
+|max depth| and |is root|:
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
@@ -2454,43 +2454,31 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
    Note: This includes the fragment component of the URL.
 
-1. Let |child info| be the result of [=get the descendent browsing contexts=]
-   given |context id|, |depth| + 1, and |max depth|.
+1. Let |child infos| be null.
+
+1. If |max depth| is null, or |max depth| is greater than 0:
+
+  1. Let |child contexts| be a list containing all [=/browsing contexts=]
+     which are [=child browsing contexts=] of |parent|.
+
+  1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null otherwise.
+
+  1. Set |child infos| to an empty list
+
+  1. For each |context| of |child contexts|:
+
+    1. Let |info| be the result of [=get the browsing context info=] given
+       |context|, |child depth|, and false.
+
+    1. Append |info| to |child infos|
 
 1. Let |context info| be a [=map=] matching the
    <code>BrowsingContextInfo</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
-   if |depth| is 0, or unset otherwise, the <code>url</code> field set to
-   |url|, and the <code>children</code> field set to |child info|.
+   if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
+   field set to |url|, and the <code>children</code> field set to |child infos|.
 
 1. Return |context info|.
-
-</div>
-
-<div algorithm>
-To <dfn>get the descendent browsing contexts</dfn> given |parent id|, |depth|
-and |max depth|:
-
-1. If |max depth| is greater than zero, and |depth| is equal to |max depth|,
-   return null.
-
-1. Let |parent| be the result of [=trying=] to [=get a browsing context=]
-   given |parent id|.
-
-1. If |parent| is null, let |child contexts| be a list containing all [=top-level
-   browsing contexts=]. Otherwise let |child contexts| be a list containing all
-   [=/browsing contexts=] which are [=child browsing contexts=] of |parent|.
-
-1. Let |contexts info| be a list.
-
-1. For each |context| of |child contexts|:
-
-  1. Let |info| be the result of [=get the browsing context info=] given
-     |context|, |depth|, and |max depth|.
-
-  1. Append |info| to |contexts info|
-
-1. Return |contexts info|
 
 </div>
 
@@ -2739,8 +2727,8 @@ The [=remote end steps=] with |command parameters| are:
 #### The browsingContext.getTree Command ####  {#command-browsingContext-getTree}
 
 The <dfn export for=commands>browsingContext.getTree</dfn> command returns a
-tree of all browsing contexts that are descendents of the given context, or all
-top-level contexts when no parent is provided.
+tree of all descendent browsing contexts including the given parent iself,
+or all top-level contexts when no parent is provided.
 
 <dl>
    <dt>Command Type</dt>
@@ -2774,15 +2762,25 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    |command parameters| if present, or null otherwise.
 
 1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
-   parameters| if present, or 0 otherwise.
+   parameters| if present, or null otherwise.
 
-1. Let |depth| be 0.
+1. Let |contexts| be an empty list.
 
-1. Let |contexts| be the result of [=get the descendent browsing contexts=],
-   given |parent id|, |depth|, and |max depth|.
+1. If |parent id| is not null, append the result of [=trying=] to
+   [=get a browsing context=] given |parent id| to |contexts|.
+   Otherwise append all [=top-level browsing contexts=] to |contexts|.
+
+1. Let |contexts info| be an empty list.
+
+1. For each |context| of |contexts|:
+
+  1. Let |info| be the result of [=get the browsing context info=] given
+     |context|, |max depth|, and true.
+
+  1. Append |info| to |contexts info|
 
 1. Let |body| be a [=map=] matching the <code>BrowsingContextGetTreeResult</code>
-   production, with the <code>contexts</code> field set to |contexts|.
+   production, with the <code>contexts</code> field set to |contexts info|.
 
 1. Return [=success=] with data |body|.
 
@@ -2942,7 +2940,7 @@ To <dfn>Recursively emit context created events</dfn> given |session| and |conte
 To <dfn>Emit a context created event</dfn> given |session| and |context|:
 
 1. Let |params| be the result of [=get the browsing context info=] given
-   |context|, 0, and 1.
+   |context|, 0, and true.
 
 1. Let |body| be a [=map=] matching the
    <code>BrowsingContextCreatedEvent</code> production, with the
@@ -3004,7 +3002,7 @@ Define the following [=browsing context tree discarded=] steps:
 1. Let |context| be the browsing context being discarded.
 
 1. Let |params| be the result of [=get the browsing context info=], given
-   |context|, 0, and 0.
+   |context|, 0, and true.
 
 1. Let |body| be a [=map=] matching the
     <code>BrowsingContextDestroyedEvent</code> production, with the
