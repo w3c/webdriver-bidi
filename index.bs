@@ -1264,15 +1264,19 @@ ObjectLocalValue = {
   value: MappingLocalValue,
 }
 
+RegExpValue = {
+  pattern: text,
+  ?flags: text,
+}
+
 RegExpLocalValue = {
   type: "regexp",
-  pattern: text,
-  ?flags: text
+  value: RegExpValue,
 }
 
 SetLocalValue = {
   type: "set",
-  value: ListLocalValue
+  value: ListLocalValue,
 }
 ```
 
@@ -1648,12 +1652,14 @@ To <dfn>serialize as a remote value</dfn> given a |value|, a |max depth|,
 
         1. Let |flags| be [=ToString=]([=Get=](|value|, "flags")).
 
-        1. Let |serialized| be the string-concatenation of "/", |pattern|, "/", and |flags|.
+        1. Let |value| be a map matching the <code>RegExpValue</code> production in the
+           [=local end definition=], with the <code>pattern</code> property set to the
+           |pattern| and the the <code>flags</code> property set to the |flags|.
 
         1. Let |remote value| be a map matching the <code>RegExpRemoteValue</code>
            production in the [=local end definition=], with the <code>objectId</code>
-           property set to the [=object id for an object=] |object| and the value
-           set to |serialized|
+           property set to the [=object id for an object=] |object| and the
+           <code>value</code> property set to |value|.
 
     <dt>|value| has a \[[DateValue]] [=internal slot=].
     <dd>
