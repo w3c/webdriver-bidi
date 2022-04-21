@@ -8,6 +8,7 @@ if [ "$1" = "--install" ]; then
     cargo install cddl
     npm install parse5
 fi
+# Extract CDDL content from spec into files
 $ROOT/scripts/cddl/generate.js
 
 cddl compile-cddl --cddl local.cddl
