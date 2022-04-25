@@ -53,6 +53,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
     text: maximum active sessions; url: dfn-maximum-active-sessions
+    text: no such alert; url: dfn-no-such-alert
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
     text: process capabilities; url: dfn-processing-capabilities
@@ -130,14 +131,18 @@ spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
     text: a browsing context is discarded; url: window-object.html#a-browsing-context-is-discarded
+    text: alert; url: timers-and-user-prompts.html#dom-alert
     text: close; url: window-object.html#close-a-browsing-context
     text: create a classic script; url: webappapis.html#creating-a-classic-script
     text: create a new browsing context; url: browsers.html#creating-a-new-browsing-context
+    text: confirm; url: timers-and-user-prompts.html#dom-confirm
     text: default classic script fetch options; url: webappapis.html#default-classic-script-fetch-options
     text: environment settings object's Realm; url: webappapis.html#environment-settings-object's-realm
     text: handled; url: webappapis.html#concept-error-handled
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
     text: navigation id; url: browsing-the-web.html#navigation-id
+    text: prompt; url: timers-and-user-prompts.html#dom-prompt
+    text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: report an error; url: webappapis.html#report-the-error
     text: remove a browsing context; url: browsers.html#bcg-remove
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
@@ -2460,6 +2465,7 @@ BrowsingContextCommand = (
     BrowsingContextCloseCommand //
     BrowsingContextCreateCommand //
     BrowsingContextGetTreeCommand //
+    BrowsingContextHandleUserPromptCommand //
     BrowsingContextNavigateCommand //
     BrowsingContextReloadCommand
 )
@@ -2485,7 +2491,9 @@ BrowsingContextEvent = (
     BrowsingContextLoadEvent //
     BrowsingContextDownloadWillBegin //
     BrowsingContextNavigationAbortedEvent //
-    BrowsingContextNavigationFailedEvent
+    BrowsingContextNavigationFailedEvent //
+    BrowsingContextUserPromptClosedEvent //
+    BrowsingContextUserPromptOpenedEvent
 )
 
 </pre>
@@ -2950,6 +2958,70 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    production, with the <code>contexts</code> field set to |contexts info|.
 
 1. Return [=success=] with data |body|.
+
+</div>
+
+#### The browsingContext.handleUserPrompt Command ####  {#command-browsingContext-handleUserPrompt}
+
+The <dfn export for=commands>browsingContext.handleUserPrompt</dfn>
+command allows closing an open prompt
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      BrowsingContextHandleUserPromptCommand = {
+        method: "browsingContext.handleUserPrompt",
+        params: BrowsingContextHandleUserPromptParameters
+      }
+
+      BrowsingContextHandleUserPromptParameters = {
+        context: BrowsingContext,
+        ? accept: bool,
+        ? userText: text,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.handleUserPrompt">
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Let |accept| be the value of the <code>accept</code> field of |command
+   parameters| if present, or true otherwise.
+
+1. Let |text| be the value of the <code>text</code> field of |command
+   parameters| if present, or the empty string otherwise.
+
+1. If |context| is currently showing a simple dialog from a call to [=alert=] then
+   acknowledge the prompt.
+
+   Otherwise if |context| is currently showing a simple dialog from a call to
+   [=confirm=], then respond positively if |accept| is true, or respond
+   negatively if |accept| is false.
+
+   Otherwise if |context| is currently showing a simple dialog from a call to
+   [=prompt=], then respond with the string value |text| if |accept| is
+   true, or abort if  |accept| is false.
+
+   Otherwise, if |context| is currently showing a prompt as part of the [=prompt
+   to unload=] steps, then confirm the navigation if |accept| is true, otherwise
+   refuse the navigation.
+
+   Otherwise return [=error=] with [=error code=] [=no such alert=].
+
+1. Return [=success=] with data null.
 
 </div>
 
@@ -3461,6 +3533,96 @@ failed</dfn> steps given |context| and |navigation status|:
 
 </div>
 
+#### The browsingContext.userPromptClosed Event #### {#event-browsingContext-userPromptClosed}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        BrowsingContextUserPromptClosedEvent = {
+         method: "browsingContext.userPromptClosed",
+         params: UserPromptInfo
+       }
+       UserPromptResult = {
+         context: BrowsingContext,
+         confirmed: bool,
+         ? userInput: text
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
+closed</dfn> steps given |window|, |confirmed| and optional |user input|
+(default: null).
+
+1. Let |context| be |window|'s [=browsing context=].
+
+1. Let |context id| be the [=browsing context id=] for |context|.
+
+1. Let |params| be a [=map=] matching the <code>UserPromptResult</code>
+   production with the <code>context</code> field set to |context id|, the
+   <code>confirmed</code> field set to |confirmed|, and the <code>userInput</code> field set
+   to |user input| if |user input| is not null.
+
+1. Let |body| be a [=map=] matching the
+   <code>BrowsingContextUserPromptClosed</code> production, with the
+   <code>params</code> field set to |params|.
+
+1. Let |related browsing contexts| be a [=set=] containing |context|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.userPromptClosed</code>" and |related browsing contexts|:
+
+  1. [=Emit an event=] with |session| and |body|.
+
+</div>
+
+#### The browsingContext.userPromptOpened Event #### {#event-browsingContext-userPromptOpened}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        BrowsingContextUserPromptOpenedEvent = {
+         method: "browsingContext.userPromptOpened",
+         params: UserPromptInfo
+       }
+       UserPromptInfo = {
+         context: BrowsingContext,
+         type: "alert" / "confirm" / "prompt" / "beforeunload",
+         message: text
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
+opened</dfn> steps given |window|, |type| and |message|.
+
+1. Let |context| be |window|'s [=browsing context=].
+
+1. Let |context id| be the [=browsing context id=] for |context|.
+
+1. Let |params| be a [=map=] matching the <code>UserPromptInfo</code>
+   production with the <code>context</code> field set to |context id|, the
+   <code>type</code> field set to |type|, and the <code>message</code> field set
+   to |message|.
+
+1. Let |body| be a [=map=] matching the
+   <code>BrowsingContextUserPromptOpened</code> production, with the
+   <code>params</code> field set to |params|.
+
+1. Let |related browsing contexts| be a [=set=] containing |context|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.userPromptOpened</code>" and |related browsing contexts|:
+
+  1. [=Emit an event=] with |session| and |body|.
+
+</div>
 
 ## The script Module ## {#module-script}
 
