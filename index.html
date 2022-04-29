@@ -8,7 +8,7 @@
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
   <meta content="Bikeshed version fb1e763a4, updated Tue Mar 1 13:13:50 2022 -0800" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="0f070233625924b92c9f33b048b6763912bc1cc9" name="document-revision">
+  <meta content="f286d8ef9e9c29ca9f9286bc470c17ece7ae1e55" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -3461,12 +3461,61 @@ created.</p>
      <h5 class="heading settled" data-level="7.3.2.3" id="type-script-RealmInfo"><span class="secno">7.3.2.3. </span><span class="content">The script.RealmInfo type</span><a class="self-link" href="#type-script-RealmInfo"></a></h5>
      <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④④">Local end definition</a></p>
 <pre class="cddl local-cddl">RealmInfo = {
+  WindowRealmInfo //
+  DedicatedWorkerRealmInfo //
+  SharedWorkerRealmInfo //
+  ServiceWorkerRealmInfo //
+  WorkerRealmInfo //
+  PaintWorkletRealmInfo //
+  AudioWorkletRealmInfo //
+  WorkletRealmInfo //
+}
+
+BaseRealmInfo = {
   realm: Realm,
-  type: RealmType,
   origin: text
 }
 
-RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" / "worker" / "paint-worklet" / "audio-worklet" / "worklet" / text
+WindowRealmInfo = {
+  BaseRealmInfo,
+  type: "window",
+  context: BrowsingContext
+}
+
+DedicatedWorkerRealmInfo = {
+  BaseRealmInfo,
+  type: "dedicated-worker"
+}
+
+SharedWorkerRealmInfo = {
+  BaseRealmInfo,
+  type: "shared-worker"
+}
+
+ServiceWorkerRealmInfo = {
+  BaseRealmInfo,
+  type: "service-worker"
+}
+
+WorkerRealmInfo = {
+  BaseRealmInfo,
+  type: "worker"
+}
+
+PaintWorkletRealmInfo = {
+  BaseRealmInfo,
+  type: "paint-worklet"
+}
+
+AudioWorkletRealmInfo = {
+  BaseRealmInfo,
+  type: "audio-worklet"
+}
+
+WorkletRealmInfo = {
+  BaseRealmInfo,
+  type: "worklet"
+}
 </pre>
      <p>The <code>RealmInfo</code> type represents the properties of a realm.</p>
      <div class="algorithm" data-algorithm="get the realm info">
@@ -3477,73 +3526,86 @@ RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" /
        <li data-md>
         <p>Let <var>realm id</var> be the <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id②">realm id</a> for <var>realm</var>.</p>
        <li data-md>
+        <p>Let <var>origin</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/origin.html#ascii-serialisation-of-an-origin" id="ref-for-ascii-serialisation-of-an-origin">serialization of an origin</a> given <var>environment settings</var>’s <var>origin</var>.</p>
+       <li data-md>
+        <p>Let <var>global object</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global②">global object</a> specified by <var>environment settings</var></p>
+       <li data-md>
         <p>Run the steps under the first matching condition:</p>
         <dl>
-         <dt>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global②">global object</a> specified by <var>environment settings</var> is a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-window" id="ref-for-concept-request-window">Window</a> object 
+         <dt><var>global object</var> is a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-window" id="ref-for-concept-request-window">Window</a> object 
          <dd>
           <ol>
            <li data-md>
-            <p>Let <var>type</var> be "<code>window</code>".</p>
+            <p>Let <var>document</var> be <var>environment settings</var>’ <a data-link-type="dfn">responsible document</a>.</p>
+           <li data-md>
+            <p>Let <var>browsing context</var> be <var>document</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑤">browsing context</a>.</p>
+           <li data-md>
+            <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑧">browsing context id</a> for <var>browsing context</var>.</p>
+           <li data-md>
+            <p>Let <var>realm info</var> be a map matching the <code>WindowRealmInfo</code> production,
+ with the <code>realm</code> field set to <var>realm id</var>, the <code>origin</code> field set to <var>origin</var>, and the <code>context</code> field set to <var>context id</var>.</p>
           </ol>
-         <dt>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global③">global object</a> specified by <var>environment settings</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#dedicatedworkerglobalscope" id="ref-for-dedicatedworkerglobalscope">DedicatedWorkerGlobalScope</a></code> object 
+         <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#dedicatedworkerglobalscope" id="ref-for-dedicatedworkerglobalscope">DedicatedWorkerGlobalScope</a></code> object 
          <dd>
           <ol>
            <li data-md>
-            <p>Let <var>type</var> be "<code>dedicated-worker</code>".</p>
+            <p>Let <var>realm info</var> be a map matching the <code>DedicatedWorkerRealmInfo</code> production,
+ with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field
+ set to <var>origin</var>.</p>
           </ol>
-         <dt>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global④">global object</a> specified by <var>environment settings</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#sharedworkerglobalscope" id="ref-for-sharedworkerglobalscope">SharedWorkerGlobalScope</a></code> object 
+         <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#sharedworkerglobalscope" id="ref-for-sharedworkerglobalscope">SharedWorkerGlobalScope</a></code> object 
          <dd>
           <ol>
            <li data-md>
-            <p>Let <var>type</var> be "<code>shared-worker</code>".</p>
+            <p>Let <var>realm info</var> be a map matching the <code>SharedWorkerRealmInfo</code> production,
+ with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
           </ol>
-         <dt>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global⑤">global object</a> specified by <var>environment settings</var> is a <code class="idl"><a data-link-type="idl" href="https://w3c.github.io/ServiceWorker/#serviceworkerglobalscope" id="ref-for-serviceworkerglobalscope">ServiceWorkerGlobalScope</a></code> object 
+         <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://w3c.github.io/ServiceWorker/#serviceworkerglobalscope" id="ref-for-serviceworkerglobalscope">ServiceWorkerGlobalScope</a></code> object 
          <dd>
           <ol>
            <li data-md>
-            <p>Let <var>type</var> be "<code>service-worker</code>".</p>
+            <p>Let <var>realm info</var> be a map matching the <code>ServiceWorkerRealmInfo</code> production,
+ with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field
+ set to <var>origin</var>.</p>
           </ol>
-         <dt>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global⑥">global object</a> specified by <var>environment settings</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#workerglobalscope" id="ref-for-workerglobalscope①">WorkerGlobalScope</a></code> object 
+         <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#workerglobalscope" id="ref-for-workerglobalscope①">WorkerGlobalScope</a></code> object 
          <dd>
           <ol>
            <li data-md>
-            <p>Let <var>type</var> be "<code>worker</code>".</p>
+            <p>Let <var>realm info</var> be a map matching the <code>WorkerRealmInfo</code> production,
+ with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
           </ol>
-         <dt>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global⑦">global object</a> specified by <var>environment settings</var> is a <code class="idl"><a data-link-type="idl" href="https://drafts.css-houdini.org/css-paint-api-1/#paintworkletglobalscope" id="ref-for-paintworkletglobalscope">PaintWorkletGlobalScope</a></code> object 
+         <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://drafts.css-houdini.org/css-paint-api-1/#paintworkletglobalscope" id="ref-for-paintworkletglobalscope">PaintWorkletGlobalScope</a></code> object 
          <dd>
           <ol>
            <li data-md>
-            <p>Let <var>type</var> be "<code>paint-worklet</code>".</p>
+            <p>Let <var>realm info</var> be a map matching the <code>PaintWorkletRealmInfo</code> production,
+ with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
           </ol>
-         <dt>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global⑧">global object</a> specified by <var>environment settings</var> is a <code class="idl"><a data-link-type="idl" href="https://webaudio.github.io/web-audio-api/#AudioWorkletGlobalScope" id="ref-for-AudioWorkletGlobalScope">AudioWorkletGlobalScope</a></code> object 
+         <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://webaudio.github.io/web-audio-api/#AudioWorkletGlobalScope" id="ref-for-AudioWorkletGlobalScope">AudioWorkletGlobalScope</a></code> object 
          <dd>
           <ol>
            <li data-md>
-            <p>Let <var>type</var> be "<code>audio-worklet</code>".</p>
+            <p>Let <var>realm info</var> be a map matching the <code>AudioWorkletRealmInfo</code> production,
+ with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
           </ol>
-         <dt>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global⑨">global object</a> specified by <var>environment settings</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/worklets.html#workletglobalscope" id="ref-for-workletglobalscope">WorkletGlobalScope</a></code> object 
+         <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/worklets.html#workletglobalscope" id="ref-for-workletglobalscope">WorkletGlobalScope</a></code> object 
          <dd>
           <ol>
            <li data-md>
-            <p>Let <var>type</var> be "<code>worklet</code>".</p>
+            <p>Let <var>realm info</var> be a map matching the <code>WorkletRealmInfo</code> production,
+ with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
           </ol>
          <dt>Otherwise: 
          <dd>
           <ol>
            <li data-md>
-            <p>Return null.</p>
+            <p>Let <var>realm info</var> be null.</p>
           </ol>
         </dl>
        <li data-md>
-        <p>Let <var>origin</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/origin.html#ascii-serialisation-of-an-origin" id="ref-for-ascii-serialisation-of-an-origin">serialization of an origin</a> given <var>environment settings</var>’s <var>origin</var>.</p>
-       <li data-md>
-        <p>Let <var>realm info</var> be a map matching the <code>RealmInfo</code> production,
- with the <code>realm</code> field set to <var>realm id</var>, the <code>type</code> field set to <var>type</var> and the <code>origin</code> field set to <var>origin</var>.</p>
-       <li data-md>
         <p>Return <var>realm info</var></p>
       </ol>
-      <p class="issue" id="issue-56892cd2"><a class="self-link" href="#issue-56892cd2"></a> We currently don’t provide information about realms of unknown
-       types. That might be a problem for e.g. extension-related realms.</p>
       <p class="note" role="note"><span>Note:</span> Future variations of this specification will retain the invariant that
          the last component of the type name after splitting on "<code>-</code>"
          will always be "<code>worker</code>" for globals implementing <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#workerglobalscope" id="ref-for-workerglobalscope②">WorkerGlobalScope</a></code>, and "<code>worklet</code>" for globals
@@ -3916,7 +3978,7 @@ that likely isn’t what clients want.</p>
      <h5 class="heading settled" data-level="7.3.3.3" id="command-script-getRealms"><span class="secno">7.3.3.3. </span><span class="content">The script.getRealms Command</span><a class="self-link" href="#command-script-getRealms"></a></h5>
      <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptgetrealms">script.getRealms<a class="self-link" href="#commands-scriptgetrealms"></a></dfn> command returns a list of
 all realms, optionally filtered to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms④">realms</a> of a specific type, or to the
-realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document②">document</a> currently loaded in a specified <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑤">browsing context</a>.</p>
+realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document②">document</a> currently loaded in a specified <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑥">browsing context</a>.</p>
      <dl>
       <dt>Command Type
       <dd>
@@ -3962,7 +4024,7 @@ ScriptGetRealmsResult = {
              <li data-md>
               <p>The <a data-link-type="dfn">responsible document</a> of <var>settings</var> is <var>document</var></p>
              <li data-md>
-              <p>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global①⓪">global object</a> specified by <var>settings</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#workerglobalscope" id="ref-for-workerglobalscope③">WorkerGlobalScope</a></code> with <var>document</var> in its <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/workers.html#concept-WorkerGlobalScope-owner-set" id="ref-for-concept-WorkerGlobalScope-owner-set①">owner set</a></p>
+              <p>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global③">global object</a> specified by <var>settings</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#workerglobalscope" id="ref-for-workerglobalscope③">WorkerGlobalScope</a></code> with <var>document</var> in its <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/workers.html#concept-WorkerGlobalScope-owner-set" id="ref-for-concept-WorkerGlobalScope-owner-set①">owner set</a></p>
             </ul>
             <p>Append <var>settings</var> to <var>context environment settings</var>.</p>
           </ol>
@@ -4147,7 +4209,7 @@ worker</a> algorithm:</p>
      <h3 class="heading settled" data-level="7.4" id="module-log"><span class="secno">7.4. </span><span class="content">Log</span><a class="self-link" href="#module-log"></a></h3>
      <p>The <dfn data-dfn-for="modules" data-dfn-type="dfn" data-export id="modules-log">log<a class="self-link" href="#modules-log"></a></dfn> module contains functionality and events
 related to logging.</p>
-     <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①④">BiDi Session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="log-event-buffer">log event buffer</dfn> which is a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑧">map</a> from <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑧">browsing context id</a> to a list of log events for that context that have not
+     <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①④">BiDi Session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="log-event-buffer">log event buffer</dfn> which is a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑧">map</a> from <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑨">browsing context id</a> to a list of log events for that context that have not
 been emitted. User agents may impose a maximum size on this buffer, subject to
 the condition that if events A and B happen in the same context with A occuring
 before B, and both are added to the buffer, the entry for B must not be removed
@@ -4163,7 +4225,7 @@ before the entry for A.</p>
         <p>For each <var>context</var> of <var>contexts</var>:</p>
         <ol>
          <li data-md>
-          <p>Append the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑨">browsing context id</a> for <var>context</var> to <var>context ids</var>.</p>
+          <p>Append the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①⓪">browsing context id</a> for <var>context</var> to <var>context ids</var>.</p>
         </ol>
        <li data-md>
         <p>For each <var>context id</var> in <var>context ids</var>:</p>
@@ -5075,8 +5137,8 @@ end:</p>
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global">https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-realm-global">4. Transport</a> <a href="#ref-for-concept-realm-global①">(2)</a>
-    <li><a href="#ref-for-concept-realm-global②">7.3.2.3. The script.RealmInfo type</a> <a href="#ref-for-concept-realm-global③">(2)</a> <a href="#ref-for-concept-realm-global④">(3)</a> <a href="#ref-for-concept-realm-global⑤">(4)</a> <a href="#ref-for-concept-realm-global⑥">(5)</a> <a href="#ref-for-concept-realm-global⑦">(6)</a> <a href="#ref-for-concept-realm-global⑧">(7)</a> <a href="#ref-for-concept-realm-global⑨">(8)</a>
-    <li><a href="#ref-for-concept-realm-global①⓪">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-concept-realm-global②">7.3.2.3. The script.RealmInfo type</a>
+    <li><a href="#ref-for-concept-realm-global③">7.3.3.3. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-error-handled">
@@ -6061,8 +6123,6 @@ the browser, close the session or leave this up to the implementation. <a href="
 contexts that have active documents; navigation can also cause contexts to
 become inaccessible but not yet get discarded because bfcache. <a class="issue-return" href="#issue-4e122e13" title="Jump to section">↵</a></div>
    <div class="issue"> This has the wrong error code <a class="issue-return" href="#issue-89e6b783" title="Jump to section">↵</a></div>
-   <div class="issue"> We currently don’t provide information about realms of unknown
-       types. That might be a problem for e.g. extension-related realms. <a class="issue-return" href="#issue-56892cd2" title="Jump to section">↵</a></div>
    <div class="issue"> This has the wrong error code <a class="issue-return" href="#issue-89e6b783①" title="Jump to section">↵</a></div>
    <div class="issue"> TODO: Add timeout argument as described in the script.evaluate. <a class="issue-return" href="#issue-6eade172" title="Jump to section">↵</a></div>
    <div class="issue"> Extend this to also allow realm parents e.g. for nested workers? Or get all ancestor workers. <a class="issue-return" href="#issue-ac9113ee" title="Jump to section">↵</a></div>
@@ -6614,7 +6674,8 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-browsing-context-id③">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-browsing-context-id④">(2)</a>
     <li><a href="#ref-for-browsing-context-id⑤">7.2.2.4. The browsingContext.NavigationInfo Type</a>
     <li><a href="#ref-for-browsing-context-id⑥">7.2.3.2. The browsingContext.create Command</a> <a href="#ref-for-browsing-context-id⑦">(2)</a>
-    <li><a href="#ref-for-browsing-context-id⑧">7.4. Log</a> <a href="#ref-for-browsing-context-id⑨">(2)</a>
+    <li><a href="#ref-for-browsing-context-id⑧">7.3.2.3. The script.RealmInfo type</a>
+    <li><a href="#ref-for-browsing-context-id⑨">7.4. Log</a> <a href="#ref-for-browsing-context-id①⓪">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-a-browsing-context">
