@@ -170,10 +170,27 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: shared worker; url: workers.html#shared-workers
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
-    text: worklet global scopes; url: worklets.html#concept-document-worklet-global-scopes
+    text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
+spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
+  type: dfn
+    text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
+spec: HR-TIME; urlPrefix: https://w3c.github.io/hr-time/
+  type: dfn
+    text: get time origin timestamp; url: dfn-get-time-origin-timestamp
 spec: RFC4648; urlPrefix: https://tools.ietf.org/html/rfc4648
   type: dfn
     text: Base64 Encode; url: section-4
+</pre>
+
+<pre class="biblio">
+{
+    "SAME-SITE-COOKIES": {
+        "authors": ["Mike West", "Mark Goodwin"],
+        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site",
+        "publisher": "IETF",
+        "title": "Same-Site Cookies"
+    }
+}
 </pre>
 
 <style>
@@ -271,6 +288,7 @@ Command = {
 CommandData = (
   BrowsingContextCommand //
   InputCommand //
+  NetworkCommand //
   ScriptCommand //
   SessionCommand
 )
@@ -304,10 +322,11 @@ ErrorResponse = {
 }
 
 ResultData = (
-  EmptyResult //
-  SessionResult //
   BrowsingContextResult //
-  ScriptResult
+  EmptyResult //
+  NetworkResult //
+  ScriptResult //
+  SessionResult
 )
 
 EmptyResult = {
@@ -321,8 +340,9 @@ Event = {
 
 EventData = (
   BrowsingContextEvent //
-  ScriptEvent //
-  LogEvent
+  LogEvent //
+  NetworkEvent //
+  ScriptEvent
 )
 </pre>
 
@@ -578,6 +598,19 @@ To <dfn>obtain a set of event names</dfn> given an |name|:
    |events|.
 
 1. Return [=success=] with data |events|.
+
+</div>
+
+<div algorithm>
+To <dfn>emit events</dfn> given |body| and |related browsing contexts|:
+
+1. [=Assert=]: |body| has [=map/size=] 2 and [=contains=] "<code>method</code>"
+   and "<code>params</code>".
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given |body|["method"] and |related browsing contexts|:
+
+  1. [=Emit an event=] with |session| and |body|.
 
 </div>
 
@@ -3085,7 +3118,6 @@ The <dfn export for=commands>browsingContext.captureScreenshot</dfn> command
 captures an image of the given browsing context, and returns it as a
 Base64-encoded string.
 
-
 <dl>
    <dt>Command Type</dt>
    <dd>
@@ -4168,6 +4200,799 @@ opened</dfn> steps given |window|, |type| and |message|.
 
 </div>
 
+## The network Module ## {#module-network}
+
+The <dfn export for=modules>network</dfn> module contains commands and events
+relating to network requests.
+
+### Definition ### {#module-network-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+
+NetworkCommand = (
+)
+
+</pre>
+
+[=local end definition=]
+
+<pre class="cddl local-cddl">
+
+NetworkResult = (
+)
+
+NetworkEvent = (
+    network.BeforeRequestSent //
+    network.FetchError //
+    network.ResponseStarted //
+    network.ResponseCompleted
+)
+
+</pre>
+
+A [=remote end=] has a <dfn>before request sent map</dfn> which is initially an
+empty map.  It's used to track the network events for which a
+<code>network.beforeRequestSent</code> event has already been sent.
+
+### Types ### {#module-network-types}
+
+#### The network.BaseParameters type #### {#type-network-BaseParameters}
+
+<pre class="cddl local-cddl">
+network.BaseParameters = {
+    context: BrowsingContext / null,
+    navigation: Navigation / null,
+    redirectCount: js-uint,
+    request: network.RequestData,
+    timestamp: js-uint,
+}
+</pre>
+
+The <code>network.BaseParameters</code> type is an abstract type representing
+the data that's common to all network events.
+
+Issue: Consider including the `sharedId` of the document node that initiated the
+request in addition to the context.
+
+<div algorithm>
+To <dfn>get the base network event data</dfn> given |request| and |redirect count|:
+
+1. Let |request data| be the result of [=get the request data=] with |request|.
+
+1. Let |navigation| be |request|'s [=request/navigation id=].
+
+1. Let |context id| be null.
+
+1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
+   be the result of [=get related browsing contexts=] with |request|'s
+   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+   set.
+
+1. If |request|'s [=request/window=] is an [=environment settings object=]:
+
+  1. Let |environment settings| be |request|'s [=request/window=]
+
+  1. If there is a [=/browsing context=] whose [=active window=] is |environment
+     settings|' [=environment settings object/global object=], let |context id|
+     be the [=browsing context id=] for that context.
+
+1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
+
+1. Let |params| be [=/map=] matching the <code>network.BaseParameters</code>
+   production, with the <code>request</code> field set to |request data|, the
+   |navigation| field set to <code>navigation</code>, the <code>context</code>
+   field set to |context id|, the <code>timestamp</code> field set to
+   |timestamp|, and the <code>redirectCount</code> field set to |redirect count|.
+
+1. Return (|related browsing contexts|, |params|)
+
+</div>
+
+#### The network.Cookie type #### {#type-network-Cookie}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl">
+network.Cookie = {
+    name: text,
+    ? value: text,
+    ? binaryValue: [ uint ]
+    domain: text,
+    path: text,
+    ? expires: js-uint,
+    size: js-uint,
+    httpOnly: bool,
+    secure: bool,
+    sameSite: "strict" / "lax" / "none",
+};
+</pre>
+
+The <code>network.Cookie</code> type represents a cookie.
+
+If the cookie value can be represented as a UTF-8 encoded string, the
+<code>value</code> field will be present. Otherwise the <code>binaryValue</code>
+field will be present and consist of an array of integers representing the bytes
+of the cookie value.
+
+<div algorithm>
+To <dfn>get a cookie</dfn> given |stored cookie|:
+
+Note: The definitions of |stored cookie|'s fields are from [[COOKIES]], except
+samesite-flag, which is from [[SAME-SITE-COOKIES]].
+
+1. Let |name| be the result of [=UTF-8 decode=] with |stored cookie|'s name field.
+
+1. Let |utf8 decoded value| be the result of [=UTF-8 decode without BOM or fail=]
+   with |stored cookie|'s value.
+
+1. If |utf8 decoded value| is failure, then:
+
+    1. Let |value| be null and |binary value| be an empty list.
+
+    1. For each |byte| in |stored cookie|'s value:
+
+      1. Append the [=byte/value=] of |byte| to |binary value|.
+
+   Otherwise: Let |value| be |utf8 decoded value| and |binary value| be null.
+
+1. Let |domain| be |stored cookie|'s domain field.
+
+1. Let |path| be |stored cookie|'s path field.
+
+1. Let |expires| be |stored cookie|'s expires field represented as a unix
+   timestamp, if set, or null otherwise.
+
+1. Let |size| be the byte length of the result of serializing |stored cookie|
+   as it would be represented in a <code>Cookie</code> header.
+
+1. Let |http only| be true if |stored cookie|'s http-only-flag is true, or false
+   otherwise.
+
+1. Let |secure| be true if |stored cookie|'s secure-only-flag is true, or false
+   otherwise.
+
+1. Let |same site| be "<code>none</code>" if |stored cookie|'s samesite-flag is
+   "<code>None</code>", "<code>lax</code>" if it is "<code>Lax</code>, or
+   "<code>strict</code>" if it is "<code>Strict</code>".
+
+1. Return a map matching the <code>network.Cookie</code> production,
+   with the <code>name</code> field set to |name|, the <code>value</code> field
+   set to |value| if it's not null or omitted otherwise, the
+   <code>binaryValue</code> field set to |binary value| if it's not null or
+   omitted otherwise, the <code>domain</code> field set to |domain|, the
+   <code>path</code> field set to |path|, the <code>expires</code> field set to
+   |expires| if it's not null, or omitted otherwise, the <code>size</code> field
+   set to |size|, the <code>httpOnly</code> field set to |http only|, the
+   <code>secure</code> field set to |secure|, and the <code>sameSite</code>
+   field set to |same site|.
+
+</div>
+
+#### The network.FetchTimingInfo type #### {#type-network-FetchTimingInfo}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl">
+network.FetchTimingInfo = {
+    timeOrigin: float,
+    requestTime: float,
+    redirectStart: float,
+    redirectEnd: float,
+    fetchStart: float,
+    dnsStart: float,
+    dnsEnd: float,
+    connectStart: float,
+    connectEnd: float,
+    tlsStart: float,
+    <!-- tlsEnd: float this should be the same as connectEnd -->
+    requestStart: float,
+    responseStart: float,
+    <!-- TODO responseHeadersEnd: float: Not sure quite what to use for this -->
+    responseEnd: float,
+};
+</pre>
+
+The <code>network.FetchTimingInfo</code> type represents the time of each part
+of the request, relative to the <a spec=html>time origin</a> of the [=/request=]'s
+[=request/client=].
+
+<div algorithm>
+To <dfn>get the fetch timings</dfn> given |request|:
+
+1. Let |global| be |request|'s [=request/client=].
+
+1. If |global| is null, return a map matching the
+   <code>network.FetchTimingInfo</code> production, with all fields set to 0.
+
+1. Let |time origin| be [=get time origin timestamp=] with |global|.
+
+1. Let |timings| be |request|'s [=fetch timing info=].
+
+1. Let |connection timing| be |timings|' [=final connection timing info=] if
+   it's not null, or a new [=connection timing info=] otherwise.
+
+1. Let |request time| be [=convert fetch timestamp=] given |timings|' <a spec=fetch>start time</a> and |global|.
+
+1. Let |redirect start| be [=convert fetch timestamp=] given |timings|'
+   [=redirect start time=] and |global|.
+
+1. Let |redirect end| be [=convert fetch timestamp=] given |timings|' [=redirect
+   end time=] and |global|.
+
+1. Let |fetch start| be [=convert fetch timestamp=] given |timings|'
+   [=post-redirect start time=] and |global|.
+
+1. Let |DNS start| be [=convert fetch timestamp=] given |connection timing|'s
+   [=domain lookup start time=] and |global|.
+
+1. Let |DNS end| be [=convert fetch timestamp=] given |connection timing|'s
+   [=domain lookup end time=] and |global|.
+
+1. Let |TLS start| be [=convert fetch timestamp=] given |connection timing|'s
+   [=secure connection start time=] and |global|.
+
+1. Let |connect start| be [=convert fetch timestamp=] given |connection
+   timing|'s [=connection start time=] and |global|.
+
+1. Let |connect end| be [=convert fetch timestamp=] given |connection timing|'s
+   [=connection end time=] and |global|.
+
+1. Let |request start| be [=convert fetch timestamp=] given |timings|' [=final
+   network-request start time=] and |global|.
+
+1. Let |response start| be [=convert fetch timestamp=] given |timings|' [=final
+   network-response start time=] and |global|.
+
+1. Let |response end| be [=convert fetch timestamp=] given |timings|'
+   <a spec=fetch>end time</a> and |global|.
+
+1. Return a [=/map=] matching the <code>network.FetchTimingInfo</code> production
+    with the <code>timeOrigin</code> field set to |time origin|, the
+    <code>requestTime</code> field set to |request time|, the
+    <code>redirectStart</code> field set to |redirect start|, the
+    <code>redirectEnd</code> field set to |redirect end|, the
+    <code>fetchStart</code> field set to |fetch start|, the
+    <code>dnsStart</code> field set to |DNS start|, the <code>dnsEnd</code>
+    field set to |DNS end|, the <code>connectStart</code> field set to |connect
+    start|, the <code>connectEnd</code> field set to |connect end|, the
+    <code>tlsStart</code> field set to |TLS start|, the
+    <code>requestStart</code> field set to |request start|, the
+    <code>responseStart</code> field set to |response start|, and the
+    <code>responseEnd</code> field set to |response end|.
+
+</div>
+
+TODO: Add service worker fields
+
+#### The network.Header type #### {#type-network-Header}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl">
+network.Header = {
+    name: text,
+    ? value: text,
+    ? binaryValue: [ uint ]
+};
+</pre>
+
+The <code>network.Header</code> type represents a single request header.
+
+If the header value can be represented as a UTF-8 encoded string, the
+<code>value</code> field will be present. Otherwise the <code>binaryValue</code>
+field will be present and consist of an array of integers representing the bytes
+of the header.
+
+<div algorithm>
+To <dfn>get a header</dfn> given |name bytes| and |value bytes|:
+
+1. Let |name| be the result of [=UTF-8 decode=] with |name bytes|.
+
+   Assert: Since header names are constrained to be ASCII-only this cannot fail.
+
+1. Let |utf8 decoded value| be the result of [=UTF-8 decode without BOM or fail=]
+   with |value bytes|.
+
+1. If |utf8 decoded value| is failure, then:
+
+    1. Let |value| be null and |binary value| be an empty list.
+
+    1. For each |byte| in |value bytes|:
+
+      1. Append the [=byte/value=] of |byte| to |binary value|.
+
+   Otherwise: let |value| be |utf8 decoded value| and let |binary value|
+   be null.
+
+1. Return a map matching the <code>network.Header</code> production, with the
+   <code>name</code> field set to |name|, the <code>value</code> field
+   set to |value| if it's not null, or omitted otherwise, and the
+   <code>binaryValue</code> field set to |binary value| if it's not null, or
+   omitted otherwise.
+
+</div>
+
+#### The network.Initiator type #### {#type-network-Initiator}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl">
+network.Initiator = {
+    type: "parser" / "script" / "preflight" / "other",
+    ?columnNumber: js-uint,
+    ?lineNumber: js-uint,
+    ?stackTrace: script.StackTrace,
+    ?request: network.Request
+};
+</pre>
+
+The <code>network.Initiatior</code> type represents the source of a network
+request.
+
+<div algorithm>
+To <dfn>get the initiator</dfn> given |request|:
+
+1. Let |request id| be |request|'s [=request id=].
+
+1. Let |type| be "<code>other</code>".
+
+1. If |request| is a [=CORS-Preflight Request=], set |type| to
+   "<code>preflight</code>".
+
+1. TODO: Get the |type|. It's not quite clear how this ought to work; the CDP
+   data depends on whether the navigation was kicked off by the parser or by
+   script (so e.g. inserting an image from script causes the initiator to be
+   "<code>script</code>"), but that doesn't correspond to anything in Fetch.
+
+1. If |request|'s [=request/initiator type=] is "<code>fetch</code>" or
+   "<code>xmlhttprequest</code>":
+
+  1. Let |stack trace| be the [=current stack trace=].
+
+  1. If |stack trace| has size of 1 or greater, let |line number| be value of the
+     <code>lineNumber</code> field in |stack trace|[0], and let |column number| be
+     the value of the <code>columnNumber</code> field |stack trace|[0]. Otherwise
+     let |line number| and |column number| be 0.
+
+  Otherwise, let |stack trace|, |column number|, and |line number| all be null.
+
+  TODO: Chrome includes the current parser position as column number / line
+  number for parser-inserted resources.
+
+1. Return a [=/map=] matching the <code>network.Initiator</code> production, with
+   the <code>type</code> field set to |type|, the <code>columnNumber</code>
+   field set to |column number| if it's not null, or omitted otherwise, the
+   <code>lineNumber</code> field set to |line number| if it's not null, or
+   omitted otherwise, the <code>stackTrace</code> field set to |stack trace| if
+   it's not null, or omitted otherwise, and the <code>request</code> field set
+   to |request id|.
+
+</div>
+
+#### The network.Request type #### {#type-network-Request}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl remote-cddl">
+network.Request = text;
+</pre>
+
+Each network request has an associated <dfn export>request id</dfn>, which is a
+string uniquely identifying that request. The identifier for a request resulting from a
+redirect matches that of the request that initiated it.
+
+#### The network.RequestData type #### {#type-network-RequestData}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl">
+network.RequestData = {
+    request: network.Request,
+    url: text,
+    method: text,
+    headers: [*network.Header],
+    cookies: [*network.Cookie],
+    headersSize: js-uint,
+    bodySize: js-uint / null,
+    timings: network.FetchTimingInfo,
+};
+</pre>
+
+The <code>network.RequestData</code> type represents an ongoing network request.
+
+<div algorithm>
+
+To <dfn>get the request data</dfn> given |request|:
+
+1. Let |request id| be request's [=request id=].
+
+1. Let |url| be the result of running the [=URL serializer=] with |request|'s
+   [=request/URL=].
+
+1. Let |method| be |request|'s [=request/method=].
+
+1. Let |body size| be null.
+
+1. Let |body| be request's [=request/body=].
+
+1. If |body| is a [=byte sequence=], let |body size| be the length of that
+   sequence. Otherwise, if |body| is a [=/body=] then let |body size| be that
+   body's <a spec=fetch>length</a>.
+
+1. Let |headers size| be the size in bytes of |request|'s [=request/headers list=] when
+   serialized as mandated by [[HTTP11]].
+
+   Note: For protocols which allow header compression, this is the compressed
+   size of the headers, as sent over the network.
+
+1. Let |headers| be an empty list.
+
+1. Let |cookies| be an empty list.
+
+1. For each (|name|, |value|) in |request|'s [=request/headers list=]:
+
+  1. Append the result of [=get a header=] with |name| and |value| to |headers|.
+
+  1. If |name| is a [=byte-case-insensitive=] match for "<code>Cookie</code>" then:
+
+    1. For each |cookie| in the user agent's cookie store that are included in
+       |request|:
+
+       Note: [[COOKIES]] defines some baseline requirements for which cookies in
+       the store can be included in a request, but user agents are free to
+       impose additional constraints.
+
+       1. Append the result of [=get a cookie=] given |cookie| to |cookies|.
+
+1. Let |timings| be [=get the fetch timings=] with |request|.
+
+1. Return a map matching the <code>network.RequestData</code> production, with
+   the <code>request</code> field set to |request id|, <code>url</code> field
+   set to |url|, the <code>method</code> field set to |method|, the
+   <code>headers</code> field set to |headers|, the |cookies| field set to
+   |cookies|, and the <code>headersSize</code> field set to |headers size|,
+   the <code>bodySize</code> field set to |body size|, and the
+   <code>timings</code> field set to |timings|.
+
+</div>
+
+#### The network.ResponseContent type #### {#type-network-ResponseContent}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl">
+network.ResponseContent = {
+    size: js-uint
+};
+</pre>
+
+The <code>network.ResponseContent</code> type represents the decoded response to
+a network request.
+
+<!-- Not sure this is worthwhile if it only ends up with a single field, but it
+would be natural to add a field here if we have a way to return the body -->
+
+<div algorithm>
+To <dfn>get the response content info</dfn> given |response|.
+
+1. Return a new map matching the <code>network.ResponseContent</code>
+   production, with the <code>size</code> field set to |response|'s [=response body
+   info=]'s [=decoded size=]
+
+</div>
+
+#### The network.ResponseData type #### {#type-network-ResponseData}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl">
+network.ResponseData = {
+    url: text,
+    protocol: text,
+    status: js-uint,
+    statusText: text,
+    fromCache: bool,
+    headers: [*network.Header],
+    mimeType: text,
+    bytesReceived: js-uint,
+    headersSize: js-uint / null,
+    bodySize: js-uint / null,
+    content: network.ResponseContent
+};
+</pre>
+
+The <code>network.ResponseData</code> type represents the response to a network
+request.
+
+<div algorithm>
+
+To <dfn>get the protocol</dfn> given |response|:
+
+1. Let |protocol| be the empty string.
+
+1. If |response|'s [=final connection timing info=] is not null, set |protocol|
+   to |response|'s [=final connection timing info=]'s [=ALPN negotiated
+   protocol=].
+
+1. If |protocol| is the empty string, or is equal to "<code>unknown</code>":
+
+  1. Set |protocol| to |response|'s [=response/url=]'s [=url/scheme=]
+
+  1. If |protocol| is equal to either "<code>http</code>" or
+     "<code>https</code>" and |response| has an associated HTTP Response.
+
+     Note: [[FETCH]] isn't clear about the relation between a HTTP network response and
+     a response object.
+
+     <!-- It would be better to move this into Fetch itself. -->
+
+    1. Let |http version| be the HTTP Response's Status line's HTTP-version [[HTTP11]].
+
+    1. If |http version| starts with "<code>HTTP/</code>":
+
+      1. Let |version| be the [=code unit substring=] of |http version| from 5
+         to |http version|'s [=string/length=].
+
+      1. If |version| is "<code>0.9</code>", set |protocol| to
+         "<code>http/0.9</code>", otherwise if |version| is "<code>1.0</code>",
+         set |protocol| to "<code>http/1.0</code>", otherwise if |version| is
+         "<code>1.1</code>", set |protocol| to "<code>http/1.1</code>".
+
+1. Return |protocol|.
+
+</div>
+
+<div algorithm>
+To <dfn>get the response data</dfn> given |response|:
+
+1. Let |url| be the result of running the [=URL serializer=] with |response|'s
+   [=response/URL=].
+
+1. Set |protocol| to [=get the protocol=] given |response|.
+
+1. Let |status| be |response|'s [=response/status=].
+
+1. Let |status text| be |response|'s [=status message=].
+
+1. If |response|'s [=cache state=] is "<code>local</code>", let |from cache| be
+   true, otherwise let it be false.
+
+1. Let |headers| be an empty list.
+
+1. Let |mime type| be the [=essence=] of the [=computed mime type=] for |response|.
+
+   Note: this is whatever MIME type the browser is actually using, even if it
+   isn't following the exact algorithm in the [[MIMESNIFF]] specification.
+
+1. For each (|name|, |value|) in |response|'s [=response/headers list=]:
+
+  1. Append the result of [=get a header=] with |name| and |value| to |headers|.
+
+1. Let |bytes received| be the total number of bytes transmitted as part of the
+   HTTP response associated with |response|.
+
+1. Let |headers size| be the number of bytes transmitted as part of the header
+   fields section of the HTTP response.
+
+1. Let |body size| be |response|'s [=response body info=]'s [=encoded size=].
+
+1. Let |content| be the result of [=get the response content info=] with |response|.
+
+1. Return a [=/map=] matching the <code>network.ResponseData</code> production,
+   with the <code>url</code> field set to |url|, the <code>protocol</code> field
+   set to |protocol|, the <code>status</code> field set to |status|, the
+   <code>statusText</code> field set to |status text|, the
+   <code>fromCache</code> field set to |from cache|, the <code>headers</code>
+   field set to |headers|, the <code>mimeType</code> field set to |mime type|, the
+   <code>bytesReceived</code> field set to |bytes received|, the
+   <code>headersSize</code> field set to |headers size|, the
+   <code>bodySize</code> field set to |body size|, and the <code>content</code>
+   field set to |content|.
+
+</div>
+
+### Events ### {#module-network-event}
+
+#### The network.beforeRequestSent Event #### {#event-network-beforeSendRequest}
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        network.BeforeRequestSent = {
+         method: "network.beforeRequestSent",
+         params: network.BeforeRequestSentParameters
+       }
+
+       network.BeforeRequestSentParameters = {
+         network.BaseParameters,
+         initiator: network.Initiator,
+       }
+      </pre>
+   </dd>
+</dl>
+
+This event is emitted before a request is sent (either over the network or
+before it's handled by a serviceworker or a local cache).
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi before
+request sent</dfn> steps given |request|:
+
+1. If [=before request sent map=] does not contain |request|, set [=before
+   request sent map=][|request|] to a new set.
+
+1. Let |redirect count| be |request|'s [=redirect count=].
+
+1. Add |redirect count| to [=before request sent map=][|request|].
+
+1. Let (|related browsing contexts|, |params|) be the result of [=get the base
+   network event data=] with |request|, and |redirect count|.
+
+1. Let |initiator| be the result of [=get the initiator=] with |request|.
+
+1. Set the <code>initiator</code> field of |params| to |initiator|.
+
+1. Assert: |params| matches the <code>network.BeforeRequestSentParameters</code>
+   production.
+
+1. Let |body| be a map matching the <code>network.BeforeRequestSent</code>
+   production, with the <code>params</code> field set to |params|.
+
+1. [=Emit events=] with |body| and |related browsing contexts|.
+
+</div>
+
+#### The network.fetchError Event #### {#event-network-fetchError}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        network.FetchError = {
+         method: "network.fetchError",
+         params: network.FetchErrorParameters
+       }
+
+       network.FetchErrorParameters = {
+         network.BaseParameters,
+         errorText: text,
+       }
+      </pre>
+   </dd>
+</dl>
+
+This event is emitted when a network request ends in an error.
+
+<div algorithm>
+
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fetch
+error</dfn> steps given |request|:
+
+1. If [=before request sent map=][|request|] does not contain |request|'s
+   [=redirect count=], then run the [=WebDriver BiDi before request sent=] steps
+   with |request|.
+
+   Note: This ensures that a <code>network.beforeRequestSent</code> can
+   always be emitted before a <code>network.fetchError</code>, without the
+   caller needing to explicitly invoke the [=WebDriver BiDi before request
+   sent=] steps on every error path.
+
+1. Let (|related browsing contexts|, |params|) be the result of [=get the
+   base network event data=] given |request|.
+
+1. TODO: Set the <code>errorText</code> field of |params|.
+
+1. Assert: |params| matches the <code>network.FetchErrorParameters</code>
+   production.
+
+1. Let |body| be a map matching the <code>network.FetchError</code>
+   production, with the <code>params</code> field set to |params|.
+
+1. [=Emit events=] with |body| and |related browsing contexts|.
+
+</div>
+
+#### The network.responseCompleted Event #### {#event-network-responseCompleted}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        network.ResponseCompleted = {
+         method: "network.responseCompleted",
+         params: network.ResponseCompletedParameters
+       }
+
+       network.ResponseCompletedParameters = {
+         network.BaseParameters,
+         response: network.ResponseData,
+       }
+      </pre>
+   </dd>
+</dl>
+
+This event is emitted after the full response body is received.
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response
+completed</dfn> steps given |request| and |response|:
+
+1. Let |redirect count| be |request|'s [=redirect count=].
+
+1. Assert: [=before request sent map=][|request|] contains |redirect count|.
+
+   Note: This implies that every caller needs to ensure that the [=WebDriver BiDi
+   before request sent=] steps are invoked with |request| before these steps.
+
+1. Let (|related browsing contexts|, |params|) be the result of [=get the
+   base network event data=] given |request| and |redirect count|.
+
+1. Let |response data| be the result of [=get the response data=] with |response|.
+
+1. Set the <code>response</code> field of |params| to |response data|.
+
+1. Assert: |params| matches the <code>network.ResponseCompletedParameters</code>
+   production.
+
+1. Let |body| be a map matching the <code>network.ResponseCompleted</code>
+   production, with the <code>params</code> field set to |params|.
+
+1. [=Emit events=] with |body| and |related browsing contexts|.
+
+</div>
+
+#### The network.responseStarted Event #### {#event-network-responseStarted}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        network.ResponseStarted = {
+         method: "network.responseStarted",
+         params: network.ResponseStartedParameters
+       }
+
+       network.ResponseStartedParameters = {
+         network.BaseParameters,
+         response: network.ResponseData,
+       }
+      </pre>
+   </dd>
+</dl>
+
+This event is emitted after the response headers are received but before the
+body is complete.
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response
+started</dfn> steps given |request| and |response|:
+
+1. Let |redirect count| be |request|'s [=redirect count=].
+
+1. Assert: [=before request sent map=][|request|] is equal to |redirect count|.
+
+   Note: This implies that every caller needs to ensure that the [=WebDriver BiDi
+   before request sent=] steps are invoked with |request| before these steps.
+
+1. Let (|related browsing contexts|, |params|) be the result of [=get the base
+   network event data=] with |request| and |redirect count|.
+
+1. Let |response data| be the result of [=get the response data=] with |response|.
+
+1. Set the <code>response</code> field of |params| to |response data|.
+
+1. Assert: |params| matches the <code>network.ResponseStartedParameters</code>
+   production.
+
+1. Let |body| be a map matching the <code>network.ResponseStarted</code>
+   production, with the <code>params</code> field set to |params|.
+
+1. [=Emit events=] with |body| and |related browsing contexts|.
+
+</div>
+
 ## The script Module ## {#module-script}
 
 The <dfn export for=modules>script</dfn> module contains commands and events
@@ -4550,7 +5375,7 @@ script.RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-wo
 The <code>script.RealmType</code> type represents the different types of Realm.
 
 
-#### The script.StackFrame type #### {#types-script-StackFrame}
+#### The script.StackFrame type #### {#type-script-StackFrame}
 
 <pre class="cddl remote-cddl local-cddl">
 script.StackFrame = {
@@ -4567,7 +5392,7 @@ script, a <code>functionName</code> property which represents the name of the
 executing function, and <code>lineNumber</code> and <code>columnNumber</code>
 properties, which represent the line and column number of the executed code.
 
-#### The script.StackTrace type #### {#types-script-StackTrace}
+#### The script.StackTrace type #### {#type-script-StackTrace}
 
 <pre class="cddl remote-cddl local-cddl">
 script.StackTrace = {
