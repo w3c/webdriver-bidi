@@ -1009,17 +1009,17 @@ Issue: Define how this works.
 
 ## Reference ## {#data-types-reference}
 
-Each EMCAScript [=Realm=] has a corresponding <dfn>object id map</dfn>. This is a weak map
-from objects to their corresponding id.
+Each EMCAScript [=Realm=] has a corresponding <dfn>handle map</dfn>. This is a strong map
+from objects to their corresponding handle id.
 
 <dfn>RemoteReference</dfn> represents a remote reference to an exising ECMAScript object in
-[=object id map=] in the given [=Realm=].
+[=handle map=] in the given [=Realm=].
 
 ```
-ObjectId = text;
+Handle = text;
 
 RemoteReference = {
-   objectId: ObjectId,
+   handle: Handle,
    *text => any,
 }
 ```
@@ -1029,11 +1029,11 @@ Issue: handle "stale object reference" case.
 <div algorithm>
 To <dfn>deserialize remote reference</dfn> given |realm| and |remote reference|:
 
-1. Let |object id| be the value of the <code>objectId</code> field of |remote reference|.
+1. Let |handle| be the value of the <code>handle</code> field of |remote reference|.
 
-1. For each |object| → |id value| of the given |realm|'s [=object id map=]:
+1. For each |object| → |handle value| of the given |realm|'s [=handle map=]:
 
-  1. If |id value| is equal to |object id|, return [=success=] with data
+  1. If |handle value| is equal to |handle|, return [=success=] with data
      |object|
 
 1. Return [=error=] with [=error code=] [=invalid argument=].
@@ -1408,7 +1408,7 @@ the <code>type</code> property. In the case of JSON-representable primitive
 values, this contains the value in the <code>value</code> property; in the case
 of non-JSON-representable primitives, the <code>value</code> property contains a
 string representation of the value. For non-primitive objects, the
-<code>objectId</code> property contains a string id that provides a unique
+<code>handle</code> property contains a string id that provides a unique
 handle to the object, valid for its lifetime inside the engine. For some
 non-primitive types, the <code>value</code> property contains a representation
 of the data in the ECMAScript object; for container types this can contain
@@ -1427,21 +1427,21 @@ object is discarded in the runtime, subsequent attempts to access it via the
 protocol will result in an error.
 
 <div algorithm>
-To get the <dfn>object id for an object</dfn> given |realm|, |ownership|
+To get the <dfn>handle for an object</dfn> given |realm|, |ownership|
 and |object|:
 
 1. If |ownership| is equal <code>none</code>, return <code>null</code>.
 
-1. If the given |realm|'s [=object id map=] does not contain |object|, run the
+1. If the given |realm|'s [=handle map=] does not contain |object|, run the
    following steps:
 
-  1. Let |object id| be a new, unique, string identifier for |object|. If |object| is an
+  1. Let |handle| be a new, unique, string identifier for |object|. If |object| is an
      [=/element=] this must be the [=web element reference=] for |object|; if it's a {{WindowProxy}}
      object, this must be the [=browsing context id=] for |object|.
 
-  1. Set the value of |object| in |realm|'s [=object id map=] to |object id|.
+  1. Set the value of |object| in |realm|'s [=handle map=] to |handle|.
 
-1. Return the result of getting the value for |object| in |realm|'s [=object id map=].
+1. Return the result of getting the value for |object| in |realm|'s [=handle map=].
 
 </div>
 
@@ -1476,96 +1476,96 @@ MappingRemoteValue = [*[(RemoteValue / text), RemoteValue]];
 
 SymbolRemoteValue = {
    type: "symbol",
-   ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 ArrayRemoteValue = {
   type: "array",
-  ?objectId: ObjectId,
+   ?handle: Handle,
   ?value: ListRemoteValue,
 }
 
 ObjectRemoteValue = {
   type: "object",
-  ?objectId: ObjectId,
+   ?handle: Handle,
   ?value: MappingRemoteValue,
 }
 
 FunctionRemoteValue = {
    type: "function",
-   ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 RegExpRemoteValue = {
    RegExpLocalValue,
-   ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 DateRemoteValue = {
   DateLocalValue,
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 MapRemoteValue = {
   type: "map",
-  ?objectId: ObjectId,
+   ?handle: Handle,
   value: MappingRemoteValue,
 }
 
 SetRemoteValue = {
   type: "set",
-  ?objectId: ObjectId,
+   ?handle: Handle,
   value: ListRemoteValue
 }
 
 WeakMapRemoteValue = {
   type: "weakmap",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 WeakSetRemoteValue = {
   type: "weakset",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 IteratorRemoteValue = {
   type: "iterator",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 GeneratorRemoteValue = {
   type: "generator",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 ErrorRemoteValue = {
   type: "error",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 ProxyRemoteValue = {
   type: "proxy",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 PromiseRemoteValue = {
   type: "promise",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 TypedArrayRemoteValue = {
   type: "typedarray",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 ArrayBufferRemoteValue = {
   type: "arraybuffer",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 
 NodeRemoteValue = {
   type: "node",
-  ?objectId: ObjectId,
+   ?handle: Handle,
   ?value: NodeProperties,
 }
 
@@ -1582,7 +1582,7 @@ NodeProperties = {
 
 WindowProxyRemoteValue = {
   type: "window",
-  ?objectId: ObjectId,
+   ?handle: Handle,
 }
 ```
 
@@ -1616,7 +1616,7 @@ a |node details|, an |ownership|, a |set of known objects| and a |realm|:
 1. In the following list of conditions and associated steps, run the first set
    of steps for which the associated condition is true:
 
-1. Let |objectId| be the [=object id for an object=] given |realm|, |ownership|
+1. Let |handle| be the [=handle for an object=] given |realm|, |ownership|
    and |value|.
 
 1. Let |child ownership| be <code>none</code>.
@@ -1627,8 +1627,8 @@ a |node details|, an |ownership|, a |set of known objects| and a |realm|:
   <dl>
     <dt>[=Type=](|value|) is Symbol
     <dd>Let |remote value| be a map matching the <code>SymbolRemoteValue</code>
-        production in the [=local end definition=], with the <code>objectId</code>
-        property set to |objectId| if it's not null, or omitted otherwise.
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>[=IsArray=](|value|)
     <dd>
@@ -1643,8 +1643,8 @@ a |node details|, an |ownership|, a |set of known objects| and a |realm|:
               |child ownership|, |set of known objects| and |realm|.
 
     1. Let |remote value| be a map matching the <code>ArrayRemoteValue</code>
-       production in the [=local end definition=], with the <code>objectId</code>
-       property set to |objectId| if it's not null, or omitted otherwise, and the
+       production in the [=local end definition=], with the <code>handle</code>
+       property set to |handle| if it's not null, or omitted otherwise, and the
        <code>value</code> field set to |serialized| if it's not null, or omitted
        otherwise.
 
@@ -1659,8 +1659,8 @@ a |node details|, an |ownership|, a |set of known objects| and a |realm|:
            |pattern| and the the <code>flags</code> property set to the |flags|.
 
         1. Let |remote value| be a map matching the <code>RegExpRemoteValue</code>
-           production in the [=local end definition=], with the <code>objectId</code>
-           property set to |objectId| if it's not null, or omitted otherwise, and
+           production in the [=local end definition=], with the <code>handle</code>
+           property set to |handle| if it's not null, or omitted otherwise, and
            the <code>value</code> property set to |value|.
 
     <dt>|value| has a \[[DateValue]] [=internal slot=].
@@ -1668,8 +1668,8 @@ a |node details|, an |ownership|, a |set of known objects| and a |realm|:
       1. Let |serialized| be [=Date.ToDateString=]([=thisTimeValue=](|value|)).
 
       1. Let |remote value| be a map matching the <code>DateRemoteValue</code>
-         production in the [=local end definition=], with the <code>objectId</code>
-         property set to |objectId| if it's not null, or omitted otherwise, and the
+         production in the [=local end definition=], with the <code>handle</code>
+         property set to |handle| if it's not null, or omitted otherwise, and the
          value set to |serialized|.
 
     <dt>|value| has a \[[MapData]] [=internal slot=]
@@ -1686,7 +1686,7 @@ a |node details|, an |ownership|, a |set of known objects| and a |realm|:
 
     1. Let |remote value| be a map matching the <code>MapRemoteValue</code>
        production in the [=local end definition=], with the
-       <code>objectId</code> property set to |objectId| if it's not null, or omitted
+       <code>handle</code> property set to |handle| if it's not null, or omitted
        otherwise, and the <code>value</code> field set to |serialized| if it's not
        null, or omitted otherwise.
 
@@ -1704,39 +1704,39 @@ a |node details|, an |ownership|, a |set of known objects| and a |realm|:
 
      1. Let |remote value| be a map matching the <code>SetRemoteValue</code>
         production in the [=local end definition=], with the
-        <code>objectId</code> property set to |objectId| if it's not null, or omitted
+        <code>handle</code> property set to |handle| if it's not null, or omitted
         otherwise, and the <code>value</code> field set to |serialized| if it's not
         null, or omitted otherwise.
 
     <dt>|value| has a \[[WeakMapData]] [=internal slot=]
     <dd>Let |remote value| be a map matching the <code>WeakMapRemoteValue</code>
-        production in the [=local end definition=], with the <code>objectId</code>
-        property set to |objectId| if it's not null, or omitted otherwise.
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>|value| has a \[[WeakSetData]] [=internal slot=]
     <dd>Let |remote value| be a map matching the <code>WeakSetRemoteValue</code>
-        production in the [=local end definition=], with the <code>objectId</code>
-        property set to |objectId| if it's not null, or omitted otherwise.
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>|value| has an \[[ErrorData]] [=internal slot=]
     <dd>Let |remote value| be a map matching the <code>ErrorRemoteValue</code>
-        production in the [=local end definition=], with the <code>objectId</code>
-        property set to |objectId| if it's not null, or omitted otherwise.
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>[=IsPromise=](|value|)
     <dd>Let |remote value| be a map matching the <code>PromiseRemoteValue</code>
-        production in the [=local end definition=], with the <code>objectId</code>
-        property set to |objectId| if it's not null, or omitted otherwise.
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>|value| has a \[[TypedArrayName]] [=internal slot=]
     <dd>Let |remote value| be a map matching the <code>TypedArrayRemoteValue</code>
-        production in the [=local end definition=], with the <code>objectId</code>
-        property set to |objectId| if it's not null, or omitted otherwise.
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>|value| has an \[[ArrayBufferData]] [=internal slot=]
     <dd>Let |remote value| be a map matching the <code>ArrayBufferRemoteValue</code>
-        production in the [=local end definition=], with the <code>objectId</code>
-        property set to |objectId| if it's not null, or omitted otherwise.
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>|value| is a [=platform object=] that implements [=Node=]
     <dd>
@@ -1800,31 +1800,31 @@ a |node details|, an |ownership|, a |set of known objects| and a |realm|:
                   [=serialize as a remote value=] with |shadow root|, |child depth|,
                   false, |child ownership|, |set of known objects| and |realm|.
 
-                Note: this means the <code>objectId</code> for the shadow root
+                Note: this means the <code>handle</code> for the shadow root
                 will be serialized irrespective of whether the shadow is open or closed,
                 but no properties of the node will be returned.
 
              1. Set |serialized|["<code>shadowRoot</code>"] to |serialized shadow|.
 
       1. Let |remote value| be a map matching the <code>NodeRemoteValue</code>
-         production in the [=local end definition=], with the <code>objectId</code>
-         property set to |objectId| if it's not null, or omitted otherwise,
+         production in the [=local end definition=], with the <code>handle</code>
+         property set to |handle| if it's not null, or omitted otherwise,
          and <code>value</code> set to |serialized|, if |serialized| is not null.
 
     <dt>|value| is a [=platform object=] that implements {{WindowProxy}}
     <dd>1. Let |remote value| be a map matching the <code>WindowProxyValue</code>
-           production in the [=local end definition=], with the <code>objectId</code>
-           property set to |objectId| if it's not null, or omitted otherwise.
+           production in the [=local end definition=], with the <code>handle</code>
+           property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>|value| is a [=platform object=]
     <dd>1. Let |remote value| be a map matching the <code>ObjectValue</code>
-           production in the [=local end definition=], with the <code>objectId</code>
-           property set to |objectId| if it's not null, or omitted otherwise.
+           production in the [=local end definition=], with the <code>handle</code>
+           property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>[=IsCallable=](|value|)
     <dd>Let |remote value| be a map matching the <code>FunctionValue</code>
-        production in the [=local end definition=], with the <code>objectId</code>
-        property set to |objectId| if it's not null, or omitted otherwise.
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle| if it's not null, or omitted otherwise.
 
     <dt>Otherwise:
     <dd>
@@ -1842,8 +1842,8 @@ a |node details|, an |ownership|, a |set of known objects| and a |realm|:
           |realm|.
 
     1. Let |remote value| be a map matching the <code>ObjectValue</code> production
-       in the [=local end definition=], with the <code>objectId</code> property set
-       to |objectId| if it's not null, or omitted otherwise, and the
+       in the [=local end definition=], with the <code>handle</code> property set
+       to |handle| if it's not null, or omitted otherwise, and the
        <code>value</code> field set to |serialized|.
   </dl>
 
@@ -3743,6 +3743,14 @@ To <dfn>get a realm from a target</dfn> given |target|:
 
 Issue: This has the wrong error code
 </div>
+
+#### The script.Ownership type #### {#type-script-Ownership}
+
+<pre class="cddl local-cddl remote-cddl">
+SerializationOwnershipModel = "root" // "none"
+
+The <code>SerializationOwnershipModel</code> specifies how the serialized value
+ownership should be treated.
 
 
 ### Commands ### {#module-script-commands}
