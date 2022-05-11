@@ -1010,7 +1010,7 @@ Issue: Define how this works.
 ## Reference ## {#data-types-reference}
 
 Each EMCAScript [=Realm=] has a corresponding <dfn>handle map</dfn>. This is a strong map
-from objects to their corresponding handle id.
+from handle ids to their corresponding objects.
 
 <dfn>RemoteReference</dfn> represents a remote reference to an exising ECMAScript object in
 [=handle map=] in the given [=Realm=].
@@ -1031,7 +1031,7 @@ To <dfn>deserialize remote reference</dfn> given |realm| and |remote reference|:
 
 1. Let |handle| be the value of the <code>handle</code> field of |remote reference|.
 
-1. For each |object| → |handle value| of the given |realm|'s [=handle map=]:
+1. For each |handle value| → |object| of the given |realm|'s [=handle map=]:
 
   1. If |handle value| is equal to |handle|, return [=success=] with data
      |object|
@@ -1432,16 +1432,11 @@ and |object|:
 
 1. If |ownership| is equal <code>none</code>, return <code>null</code>.
 
-1. If the given |realm|'s [=handle map=] does not contain |object|, run the
-   following steps:
+1. Let |handle| be a new, unique, string handle for |object|.
 
-  1. Let |handle| be a new, unique, string identifier for |object|. If |object| is an
-     [=/element=] this must be the [=web element reference=] for |object|; if it's a {{WindowProxy}}
-     object, this must be the [=browsing context id=] for |object|.
+1. Set the value of |handle| in |realm|'s [=handle map=] to |object|.
 
-  1. Set the value of |object| in |realm|'s [=handle map=] to |handle|.
-
-1. Return the result of getting the value for |object| in |realm|'s [=handle map=].
+1. Return |handle| as a result.
 
 </div>
 
