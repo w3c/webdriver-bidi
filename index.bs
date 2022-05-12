@@ -1462,6 +1462,7 @@ To <dfn>handle internal ids</dfn> given |object remote value map|, |remote value
 
     1. Set the <code>internalId</code> field of |previously serialized remote value|
        to |internal id|.
+
 </div>
 
 [=remote end definition=] and [=local end definition=]
@@ -1886,7 +1887,7 @@ a |node details|, an |ownership|, a |set of known objects|, an
   </dl>
 
 1. [=Handle internal ids=] given |object remote value map|, |remote value| and
-|value|.
+   |value|.
 
 1. Return |remote value|
 
@@ -3800,6 +3801,43 @@ ownership should be treated.
 
 
 ### Commands ### {#module-script-commands}
+
+#### The script.disown Command ####  {#command-script-disown}
+
+The <dfn export for=commands>script.disown</dfn> command disowns the given handles.
+This does not guarantee the handled object will be disposed, as there can be other
+handles or strong ECMAScript references.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      ScriptDisownCommand = {
+        method: "script.disown",
+        params: DisownParameters
+      }
+
+      GetRealmsParameters = {
+        handles: [Handle]
+        target: Target;
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for script.disown">
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
+   given the value of the <code>target</code> field of |command parameters|.
+
+1. Let |handles| the value of the <code>handles</code> field of |command parameters|.
+
+1. For each |handle| of |handles|:
+   1. If |realm|'s [=handle map=] contains |handle|, remove |handle| from the
+      |realm|'s [=handle map=].
+
+</div>
 
 #### The script.callFunction Command ####  {#command-script-callFunction}
 
