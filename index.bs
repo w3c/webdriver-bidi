@@ -1009,11 +1009,11 @@ Issue: Define how this works.
 
 ## Reference ## {#data-types-reference}
 
-Each EMCAScript [=Realm=] has a corresponding <dfn>handle map</dfn>. This is a strong
-map from handle ids to their corresponding objects.
+Each EMCAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
+strong map from handle ids to their corresponding objects.
 
-<dfn>RemoteReference</dfn> represents a remote reference to an exising ECMAScript object in
-[=handle map=] in the given [=Realm=].
+<dfn>RemoteReference</dfn> represents a remote reference to an exising ECMAScript
+object in [=handle object map=] in the given [=Realm=].
 
 ```
 Handle = text;
@@ -1031,12 +1031,10 @@ To <dfn>deserialize remote reference</dfn> given |realm| and |remote reference|:
 
 1. Let |handle| be the value of the <code>handle</code> field of |remote reference|.
 
-1. For each |handle value| → |object| of the given |realm|'s [=handle map=]:
+1. If the given |realm|'s [=handle object map=] does not contain |handle value|,
+   return [=error=] with [=error code=] [=invalid argument=].
 
-  1. If |handle value| is equal to |handle|, return [=success=] with data
-     |object|
-
-1. Return [=error=] with [=error code=] [=invalid argument=].
+1. Return the |handle| value of the given |realm|'s [=handle object map=].
 
 </div>
 
@@ -1440,7 +1438,7 @@ and |object|:
 
 1. Let |handle| be a new, unique, string handle for |object|.
 
-1. Set the value of |handle| in |realm|'s [=handle map=] to |object|.
+1. Set the value of |handle| in |realm|'s [=handle object map=] to |object|.
 
 1. Return |handle| as a result.
 
@@ -3837,8 +3835,8 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |handles| the value of the <code>handles</code> field of |command parameters|.
 
 1. For each |handle| of |handles|:
-   1. If |realm|'s [=handle map=] contains |handle|, remove |handle| from the
-      |realm|'s [=handle map=].
+   1. If |realm|'s [=handle object map=] contains |handle|, remove |handle| from the
+      |realm|'s [=handle object map=].
 
 </div>
 
