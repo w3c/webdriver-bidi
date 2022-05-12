@@ -1009,8 +1009,8 @@ Issue: Define how this works.
 
 ## Reference ## {#data-types-reference}
 
-Each EMCAScript [=Realm=] has a corresponding <dfn>handle map</dfn>. This is a strong map
-from handle ids to their corresponding objects.
+Each EMCAScript [=Realm=] has a corresponding <dfn>handle map</dfn>. This is a strong
+map from handle ids to their corresponding objects.
 
 <dfn>RemoteReference</dfn> represents a remote reference to an exising ECMAScript object in
 [=handle map=] in the given [=Realm=].
@@ -1407,15 +1407,21 @@ object, specified as <code>RemoteValue</code>. The value's type is specified in
 the <code>type</code> property. In the case of JSON-representable primitive
 values, this contains the value in the <code>value</code> property; in the case
 of non-JSON-representable primitives, the <code>value</code> property contains a
-string representation of the value. For non-primitive objects, the
-<code>handle</code> property contains a string id that provides a unique
-handle to the object, valid for realm's lifetime. For some
-non-primitive types, the <code>value</code> property contains a representation
-of the data in the ECMAScript object; for container types this can contain
-further <code>RemoteValue</code> instances. The <code>value</code> property can
-be null if there is a duplicate object i.e. the object has already been
-serialized in the current <code>RemoteValue</code>, perhaps as part of a
-cycle, or otherwise when the maximum serialization depth is reached.
+string representation of the value.
+For non-primitive objects, the <code>handle</code> property contains a string id that
+provides a unique handle to the object, valid for realm's lifetime, unless the handle
+is disowned by the <code>script.disown</code> command. The handles are unique,
+meaning serialization of the same ECMAScript object twice will have 2 different
+handles. The object will not be disposed until all the handles are disowned.
+For some non-primitive types, the <code>value</code> property contains a
+representation of the data in the ECMAScript object; for container types this can
+contain further <code>RemoteValue</code> instances. The <code>value</code> property
+can be null if there is a duplicate object i.e. the object has already been
+serialized in the current <code>RemoteValue</code>, perhaps as part of a cycle, or
+otherwise when the maximum serialization depth is reached.
+In case of duplicated objects in the same <code>RemoteValue</code>, the value is
+provided only for one of the remote values, while the unique-per-ECMAScript-object
+<code>internalId</code> is provided for all the duplicated objects.
 
 [=Nodes=] are also represented by <code>RemoteValue</code> instances. These have
 a partial serialization of the node in the value property.
