@@ -3768,11 +3768,44 @@ executes script. The <code>ScriptResultSuccess</code> variant is used in cases
 where the script completes normally and the <code>ScriptResultException</code>
 variant is used in cases where the script completes with a thrown exception.
 
+#### The script.Source type #### {#type-script-Source}
+
+[=Local end definition=]
+
+<pre class="cddl local-cddl">
+Source = (
+  realm: Realm,
+  ?context: BrowsingContext
+);
+</pre>
+
+The <code>Source</code> type represents a <code>script.Realm</code> that
+optionally contains a <code>browsingContext.BrowsingContext</code>.
+
+<div algorithm>
+To <dfn>get the source</dfn> given |source realm|:
+
+1. Let |realm| be the |realm id| for |source realm|.
+
+1. If |source realm| is associated with a [=browsing context=]:
+
+  1. Let |context| be the [=browsing context id=] of this [=/browsing context=].
+     Otherwise let |context| be <code>null</code>.
+
+1. Let |source| be a [=map=] matching the
+   <code>Source</code> production with the <code>realm</code>
+   field set to |realm|, and the <code>context</code>
+   field set to |context| if |context| is not <code>null</code>, or unset otherwise.
+
+1. Return |source|.
+
+</div>
+
 #### The script.Target type #### {#type-script-Target}
 
-[=Remote end definition=] and [=local end definition=]
+[=Remote end definition=]
 
-<pre class="cddl local-cddl remote-cddl">
+<pre class="cddl remote-cddl">
 RealmTarget = {realm: Realm};
 
 ContextTarget = {
@@ -4397,7 +4430,7 @@ worker=] algorithm:
 
 </div>
 
-## Log ## {#module-log}
+## The log Module ## {#module-log}
 
 The <dfn export for=modules>log</dfn> module contains functionality and events
 related to logging.
@@ -4461,6 +4494,8 @@ LogEvent = (
 
 #### log.LogEntry #### {#types-log-logentry}
 
+[=Local end definition=]
+
 <pre class="cddl local-cddl">
 
 LogLevel = "debug" / "info" / "warning" / "error"
@@ -4473,6 +4508,7 @@ LogEntry = (
 
 BaseLogEntry = {
   level: LogLevel,
+  source: Source,
   text: text / null,
   timestamp: int,
   ?stackTrace: StackTrace,
@@ -4487,7 +4523,6 @@ ConsoleLogEntry = {
   BaseLogEntry,
   type: "console",
   method: text,
-  realm: Realm,
   args: [*RemoteValue],
 }
 
@@ -4500,7 +4535,8 @@ JavascriptLogEntry = {
 
 Each log event is represented by a <code>LogEntry</code> object. This has a
 <code>type</code> property which represents the type of log entry added, a
-<code>level</code> property representing severity, a <code>text</code> property
+<code>level</code> property representing severity, a <code>source</code>
+property representing the origin of the log entry, a <code>text</code> property
 with the log message string itself, and a <code>timestamp</code> property
 corresponding to the time the log entry was generated. Specific variants of the
 <code>LogEntry</code> are used to represent logs from different sources, and
@@ -4566,6 +4602,8 @@ ignore>options</var>:
 
    1. Add |serialized arg| to |serialized args|.
 
+1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
+
 1. If |method| is "<code>assert</code>", "<code>error</code>",
    "<code>trace</code>", or "<code>warn</code>", let |stack| be the [=current
    stack trace=]. Otherwise let |stack| be null.
@@ -4574,8 +4612,8 @@ ignore>options</var>:
    with the the <code>level</code> field set to |level|, the <code>text</code>
    field set to |text|, the <code>timestamp</code> field set to |timestamp|, the
    <code>stackTrace</code> field set to |stack| if |stack| is not null, or
-   omitted otherwise, the |method| field set to |method|, the <code>realm</code>
-   field set to |realm| and the <code>args</code> field set to |serialized
+   omitted otherwise, the |method| field set to |method|, the <code>source</code>
+   field set to |source| and the <code>args</code> field set to |serialized
    args|.
 
 1. Let |body| be a map matching the <code>LogEntryAddedEvent</code> production, with
@@ -4605,9 +4643,12 @@ ignore>line number</var>, <var ignore>column number</var>, |message| and
 1. Let |stack| be the [=stack trace for an exception=] with the exception
    corresponding to the error being reported.
 
+1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
+
 1. Let |entry| be a map matching the <code>JavascriptLogEntry</code> production,
    with <code>level</code> set to "<code>error</code>", <code>text</code> set to
-   |message|, and the <code>timestamp</code> field set to |timestamp|.
+   |message|, <code>source</code> set to |source|, and the <code>timestamp</code>
+   field set to |timestamp|.
 
 1. Let |related browsing contexts| be the result of [=get related browsing
    contexts=] given |settings|.
