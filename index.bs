@@ -1022,6 +1022,10 @@ Issue: Define how this works.
 Each EMCAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
 strong map from handle ids to their corresponding objects.
 
+```
+OwnershipModel = "root" / "none";
+```
+
 <dfn>RemoteReference</dfn> represents a remote reference to an exising ECMAScript
 object in [=handle object map=] in the given [=Realm=].
 
@@ -1444,10 +1448,10 @@ object is discarded in the runtime, subsequent attempts to access it via the
 protocol will result in an error.
 
 <div algorithm>
-To get the <dfn>handle for an object</dfn> given |realm|, |ownership|
-and |object|:
+To get the <dfn>handle for an object</dfn> given |realm|, |ownership type| and
+|object|:
 
-1. If |ownership| is equal <code>none</code>, return <code>null</code>.
+1. If |ownership type| is equal "<code>none</code>", return <code>null</code>.
 
 1. Let |handle id| be a new, unique, string handle for |object|.
 
@@ -1660,7 +1664,7 @@ Issue: handle String / Number / etc. wrapper objects specially?
 <div algorithm>
 
 To <dfn>serialize as a remote value</dfn> given a |value|, a |max depth|,
-a |node details|, an |ownership|, a |serialization internal map| and a |realm|:
+an |ownership type|, a |serialization internal map| and a |realm|:
 
 1. Let |remote value| be a result of [=serialize primitive protocol value=]
    given a |value|.
@@ -1670,13 +1674,13 @@ a |node details|, an |ownership|, a |serialization internal map| and a |realm|:
 1. In the following list of conditions and associated steps, run the first set
    of steps for which the associated condition is true:
 
-1. Let |handle id| be the [=handle for an object=] given |realm|, |ownership|
+1. Let |handle id| be the [=handle for an object=] given |realm|, |ownership type|
    and |value|.
 
 1. Let |known object| be <code>true</code>, if |value| is in the
    |serialization internal map|, otherwise <code>false</code>.
 
-1. Let |child ownership| be <code>none</code>.
+1. Let |child ownership| be "<code>none</code>".
 
   <dl>
     <dt>[=Type=](|value|) is Symbol
@@ -1700,7 +1704,7 @@ a |node details|, an |ownership|, a |serialization internal map| and a |realm|:
        greater than 0, run the following steps:
 
            1. Let |serialized| be the result of [=serialize as a list=] given
-              [=CreateArrayIterator=](|value|, value), |max depth|, |node details|,
+              [=CreateArrayIterator=](|value|, value), |max depth|,
               |serialization internal map| and |realm|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
@@ -1747,7 +1751,7 @@ a |node details|, an |ownership|, a |serialization internal map| and a |realm|:
          greater than 0, run the following steps:
 
            1. Let |serialized| be the result of [=serialize as a mapping=] given
-              [=CreateMapIterator=](|value|, key+value), |max depth|, |node details|,
+              [=CreateMapIterator=](|value|, key+value), |max depth|,
               |child ownership|, |serialization internal map| and |realm|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
@@ -1768,8 +1772,8 @@ a |node details|, an |ownership|, a |serialization internal map| and a |realm|:
       1. If |known object| is <code>false</code>, and |max depth| is not null and
          greater than 0, run the following steps:
            1. Let |serialized| be the result of [=serialize as a list=] given
-              [=CreateSetIterator=](|value|, value), |max depth|, |node details|,
-              |child ownership|, |serialization internal map| and |realm|.
+              [=CreateSetIterator=](|value|, value), |max depth|, |child ownership|,
+              |serialization internal map| and |realm|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
        |serialized|.
@@ -1815,8 +1819,7 @@ a |node details|, an |ownership|, a |serialization internal map| and a |realm|:
 
       1. Let |serialized| be null.
 
-      1. If |known object| is <code>false</code>, and |node details| is true, run the
-         following steps:
+      1. If |known object| is <code>false</code>, run the following steps:
 
           1. Let |serialized| be a map.
 
@@ -1841,7 +1844,7 @@ a |node details|, an |ownership|, a |serialization internal map| and a |realm|:
             1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null otherwise.
 
             1. Let |serialized| be the result of [=serialize as a remote value=]
-               with |child|, |child depth|, |node details|, |child ownership|,
+               with |child|, |child depth|, |child ownership|,
                |serialization internal map| and |realm|.
 
             1. Append |serialized| to |children|.
@@ -1916,7 +1919,7 @@ a |node details|, an |ownership|, a |serialization internal map| and a |realm|:
 
        1. Let |serialized| be the result of [=serialize as a mapping=] given
           [=EnumerableOwnPropertyNames=](|value|, key+value), |max depth|,
-          |node details|, |child ownership|, |serialization internal map| and
+          |child ownership|, |serialization internal map| and
           |realm|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
@@ -1928,8 +1931,6 @@ a |node details|, an |ownership|, a |serialization internal map| and a |realm|:
 
 Issue: Does it make sense to use the same depth parameter for nodes and objects
 in general?
-
-Issue: consider deprecate |node details| in favour of |max depth|.
 
 Issue: |children| and child nodes are different things. Either <code>childNodeCount</code> should
 reference to <code>childNodes</code>, or it should be renamed to <code>childrenCount</code>.
@@ -1943,8 +1944,8 @@ remove optional flag from the field.
 </div>
 
 <div algorithm>
-To <dfn>serialize as a list</dfn> given |iterable|, |max depth|,
-|node details|, |child ownership|, |serialization internal map| and |realm|:
+To <dfn>serialize as a list</dfn> given |iterable|, |max depth|, |child ownership|,
+|serialization internal map| and |realm|:
 
   1. Let |serialized| be a new list.
 
@@ -1954,8 +1955,8 @@ To <dfn>serialize as a list</dfn> given |iterable|, |max depth|,
        otherwise.
 
     1. Let |serialized child| be the result of [=serialize as a remote value=]
-       with arguments |child value|, |child depth|, |node details|,
-       |child ownership|, |serialization internal map| and |realm|.
+       with arguments |child value|, |child depth|, |child ownership|,
+       |serialization internal map| and |realm|.
 
     1. Append |serialized child| to |serialized|.
 
@@ -1965,7 +1966,7 @@ To <dfn>serialize as a list</dfn> given |iterable|, |max depth|,
 Issue: this assumes for-in works on iterators
 
 <div algorithm>
-To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|, |node details|,
+To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
 |child ownership|, |serialization internal map| and |realm|:
 
 1. Let |serialized| be a new list.
@@ -1985,11 +1986,11 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|, |node detail
 
   1. If [=Type=](|key|) is String, let |serialized key| be |child key|,
      otherwise let |serialized key| be the result of [=serialize as a remote value=]
-     with arguments |child key|, |child depth|, |node details|,
-     |serialization internal map| and |realm|.
+     with arguments |child key|, |child depth|, |serialization internal map| and
+     |realm|.
 
   1. Let |serialized value| be the result of [=serialize as a remote value=]
-     with arguments |value|, |child depth|, |node details|, |child ownership|,
+     with arguments |value|, |child depth|, |child ownership|,
      |serialization internal map| and |realm|.
 
   1. Let |serialized child| be («|serialized key|, |serialized value|»).
@@ -3445,9 +3446,9 @@ To <dfn>get exception details</dfn> given a |realm| and a [=completion record=] 
    this data with regex or something equally bad.
 
 1. Let |exception| be the result of [=serialize as a remote value=] given
-   |record|.\[[Value]], <code>1</code> as |max depth|, <code>true</code> as
-   |node details|, <code>root</code> as |ownership|, <code>new map</code> as
-   |serialization internal map| and |realm|.
+   |record|.\[[Value]], <code>1</code> as |max depth|, <code>root</code> as
+   |ownership type|, <code>new map</code> as |serialization internal map| and
+   |realm|.
 
 1. Let |stack trace| be the [=stack trace for an exception=] given |record|.
 
@@ -3878,8 +3879,8 @@ function with given arguments in a given realm.
 
 <code>RealmInfo</code> can be either a realm or a browsing context.
 
-Note: In case of an arrow function in <code>functionDeclaration</code>, the <code>this</code>
-argument doesn't affect function's <code>this</code> binding.
+Note: In case of an arrow function in <code>functionDeclaration</code>, the
+<code>this</code> argument doesn't affect function's <code>this</code> binding.
 
 <dl>
    <dt>Command Type</dt>
@@ -3896,6 +3897,7 @@ argument doesn't affect function's <code>this</code> binding.
         ?this: ArgumentValue;
         ?awaitPromise: bool;
         target: Target;
+        ?ownership: OwnershipModel;
       }
 
       ArgumentValue = (
@@ -3914,9 +3916,6 @@ argument doesn't affect function's <code>this</code> binding.
 </dl>
 
 Issue: TODO: Add timeout argument as described in the script.evaluate.
-
-Issue: TODO: Add ownership model parameter.
-See https://github.com/w3c/webdriver-bidi/issues/90
 
 <div algorithm>
 
@@ -3987,6 +3986,12 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |function declaration| be the value of the
    <code>functionDeclaration</code> field of |command parameters|.
 
+1. Let |await promise| be the value of the <code>awaitPromise</code> field of
+   |command parameters|, if present, or <code>true</code> otherwise.
+
+1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
+   |command parameters|, if present, or <code>none</code> otherwise.
+
 1. Let |function body evaluation status| be the result of [=evaluate function body=]
    (|function declaration|, |environment settings|, |base URL|, |options| and |realm|).
 
@@ -4004,8 +4009,8 @@ The [=remote end steps=] with |command parameters| are:
 1. Set |evaluation status| to
    [=Call=](|function object|, |this object|, |deserialized arguments|).
 
-1. If |evaluation status|.\[[Type]] is <code>normal</code>, and |await promise| is true,
-   and [=IsPromise=](|evaluation status|.\[[Value]]):
+1. If |evaluation status|.\[[Type]] is <code>normal</code>, and |await promise| is
+   <code>true</code>, and [=IsPromise=](|evaluation status|.\[[Value]]):
 
    1. Set |evaluation status| to
       <a spec=ECMASCRIPT>Await</a>(|evaluation status|.\[[Value]]).
@@ -4024,9 +4029,9 @@ The [=remote end steps=] with |command parameters| are:
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
 1. Let |result| be the result of [=serialize as a remote value=] given
-   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, <code>true</code>
-   as |node details|, <code>root</code> as |ownership|, <code>new map</code> as
-   |serialization internal map| and |realm|.
+   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result ownership|
+   as |ownership type|, <code>new map</code> as |serialization internal map| and
+   |realm|.
 
 1. Return a new map matching the <code>ScriptResultSuccess</code>
    production, with the <code>realm</code> field set to |realm id|,
@@ -4053,9 +4058,10 @@ case the resolved value of the promise is returned.
       }
 
       ScriptEvaluateParameters = {
-        expression: text,
-        target: Target,
-        ?awaitPromise: bool,
+        expression: text;
+        target: Target;
+        ?awaitPromise: bool;
+        ?resultOwnership: OwnershipModel;
       }
       </pre>
    </dd>
@@ -4066,9 +4072,6 @@ case the resolved value of the promise is returned.
    </pre>
    </dd>
 </dl>
-
-Issue: TODO: Add ownership model parameter.
-See https://github.com/w3c/webdriver-bidi/issues/90
 
 TODO: Add timeout argument. It's not totally clear how this ought to work; in
 Chrome it seems like the timeout doesn't apply to the promise resolve step, but
@@ -4089,6 +4092,9 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |await promise| be the value of the <code>awaitPromise</code> field of
    |command parameters|, if present, or <code>true</code> otherwise.
+
+1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
+   |command parameters|, if present, or <code>none</code> otherwise.
 
 1. Let |options| be the [=default classic script fetch options=].
 
@@ -4120,9 +4126,9 @@ The [=remote end steps=] with |command parameters| are:
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
 1. Let |result| be the result of [=serialize as a remote value=] given
-   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, <code>true</code> as
-   |node details|, <code>root</code> as |ownership|, <code>new map</code> as
-   |serialization internal map| and |realm|.
+   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result ownership|
+   as |ownership type|, <code>new map</code> as |serialization internal map| and
+   |realm|.
 
 1. Return a new map matching the <code>ScriptResultSuccess</code>
    production, with the with the <code>realm</code> field set to |realm id|, and
