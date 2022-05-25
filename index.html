@@ -6,9 +6,9 @@
   <meta content="ED" name="w3c-status">
   <link href="https://www.w3.org/StyleSheets/TR/2021/W3C-ED" rel="stylesheet">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="Bikeshed version fb1e763a4, updated Tue Mar 1 13:13:50 2022 -0800" name="generator">
+  <meta content="Bikeshed version fdd5936bf, updated Tue May 24 14:57:39 2022 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="f11e1fd859d2d804047bb3f8299939fe6b2d4963" name="document-revision">
+  <meta content="c19e77ff3868c48068d5cc94373fa0e847ef21b3" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -469,7 +469,7 @@ dfn > a.self-link::before      { content: "#"; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-05-11">11 May 2022</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-05-25">25 May 2022</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -628,13 +628,15 @@ dfn > a.self-link::before      { content: "#"; }
           <li><a href="#types-script-StackTrace"><span class="secno">7.3.2.5</span> <span class="content">The script.StackTrace type</span></a>
           <li><a href="#type-script-Result"><span class="secno">7.3.2.6</span> <span class="content">The script.Result type</span></a>
           <li><a href="#type-script-Target"><span class="secno">7.3.2.7</span> <span class="content">The script.Target type</span></a>
+          <li><a href="#type-script-Ownership"><span class="secno">7.3.2.8</span> <span class="content">The script.Ownership type</span></a>
          </ol>
         <li>
          <a href="#module-script-commands"><span class="secno">7.3.3</span> <span class="content">Commands</span></a>
          <ol class="toc">
-          <li><a href="#command-script-callFunction"><span class="secno">7.3.3.1</span> <span class="content">The script.callFunction Command</span></a>
-          <li><a href="#command-script-evaluate"><span class="secno">7.3.3.2</span> <span class="content">The script.evaluate Command</span></a>
-          <li><a href="#command-script-getRealms"><span class="secno">7.3.3.3</span> <span class="content">The script.getRealms Command</span></a>
+          <li><a href="#command-script-disown"><span class="secno">7.3.3.1</span> <span class="content">The script.disown Command</span></a>
+          <li><a href="#command-script-callFunction"><span class="secno">7.3.3.2</span> <span class="content">The script.callFunction Command</span></a>
+          <li><a href="#command-script-evaluate"><span class="secno">7.3.3.3</span> <span class="content">The script.evaluate Command</span></a>
+          <li><a href="#command-script-getRealms"><span class="secno">7.3.3.4</span> <span class="content">The script.getRealms Command</span></a>
          </ol>
         <li>
          <a href="#module-script-events"><span class="secno">7.3.4</span> <span class="content">Events</span></a>
@@ -1417,13 +1419,16 @@ access to that data in a <code class="idl"><a data-link-type="idl" href="https:/
    <p class="issue" id="issue-5dc87d67"><a class="self-link" href="#issue-5dc87d67"></a> Define how this works.</p>
    <h2 class="heading settled" data-level="6" id="data-types"><span class="secno">6. </span><span class="content">Common Data Types</span><a class="self-link" href="#data-types"></a></h2>
    <h3 class="heading settled" data-level="6.1" id="data-types-reference"><span class="secno">6.1. </span><span class="content">Reference</span><a class="self-link" href="#data-types-reference"></a></h3>
-   <p>Each EMCAScript <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms①">Realm</a> has a corresponding <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="object-id-map">object id map</dfn>. This is a weak map
-from objects to their corresponding id.</p>
-   <p><dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="remotereference">RemoteReference</dfn> represents a remote reference to an exising ECMAScript object in <a data-link-type="dfn" href="#object-id-map" id="ref-for-object-id-map">object id map</a> in the given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms②">Realm</a>.</p>
-<pre>ObjectId = text;
+   <p>Each EMCAScript <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms①">Realm</a> has a corresponding <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="handle-object-map">handle object map</dfn>. This is a
+strong map from handle ids to their corresponding objects.</p>
+<pre>OwnershipModel = "root" / "none";
+</pre>
+   <p><dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="remotereference">RemoteReference</dfn> represents a remote reference to an exising ECMAScript
+object in <a data-link-type="dfn" href="#handle-object-map" id="ref-for-handle-object-map">handle object map</a> in the given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms②">Realm</a>.</p>
+<pre>Handle = text;
 
 RemoteReference = {
-   objectId: ObjectId,
+   handle: Handle,
    *text => any,
 }
 </pre>
@@ -1432,15 +1437,13 @@ RemoteReference = {
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="deserialize-remote-reference">deserialize remote reference</dfn> given <var>realm</var> and <var>remote reference</var>: 
     <ol>
      <li data-md>
-      <p>Let <var>object id</var> be the value of the <code>objectId</code> field of <var>remote reference</var>.</p>
+      <p>Let <var>handle id</var> be the value of the <code>handle</code> field of <var>remote reference</var>.</p>
      <li data-md>
-      <p>For each <var>object</var> → <var>id value</var> of the given <var>realm</var>’s <a data-link-type="dfn" href="#object-id-map" id="ref-for-object-id-map①">object id map</a>:</p>
-      <ol>
-       <li data-md>
-        <p>If <var>id value</var> is equal to <var>object id</var>, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤">success</a> with data <var>object</var></p>
-      </ol>
+      <p>Let <var>handle map</var> be <var>realm</var>’s <a data-link-type="dfn" href="#handle-object-map" id="ref-for-handle-object-map①">handle object map</a></p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑥">invalid argument</a>.</p>
+      <p>If <var>handle map</var> does not contain <var>handle value</var>, then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑥">invalid argument</a>.</p>
+     <li data-md>
+      <p>Return <var>handle map</var>[<var>handle id</var>].</p>
     </ol>
    </div>
    <h3 class="heading settled" data-level="6.2" id="data-types-protocolValue"><span class="secno">6.2. </span><span class="content">Protocol Value</span><a class="self-link" href="#data-types-protocolValue"></a></h3>
@@ -1552,30 +1555,30 @@ BigIntValue = {
  the associated condition is true:</p>
       <dl>
        <dt><var>type</var> is the string "<code>undefined</code>" 
-       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑥">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-undefined-value" id="ref-for-sec-undefined-value">undefined</a>. 
+       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-undefined-value" id="ref-for-sec-undefined-value">undefined</a>. 
        <dt><var>type</var> is the string "<code>null</code>" 
-       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑦">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-null-value" id="ref-for-sec-null-value">null</a>. 
+       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑥">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-null-value" id="ref-for-sec-null-value">null</a>. 
        <dt><var>type</var> is the string "<code>string</code>" 
-       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑧">success</a> with data <var>value</var>. 
+       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑦">success</a> with data <var>value</var>. 
        <dt><var>type</var> is the string "<code>number</code>" 
        <dd>
         <ol>
          <li data-md>
-          <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑥">Type</a>(<var>value</var>) is Number, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑨">success</a> with data <var>value</var>.</p>
+          <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑥">Type</a>(<var>value</var>) is Number, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑧">success</a> with data <var>value</var>.</p>
          <li data-md>
           <p class="assertion">Assert: <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑦">Type</a>(<var>value</var>) is String.</p>
          <li data-md>
-          <p>If <var>value</var> is the string "<code>NaN</code>", return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⓪">success</a> with
+          <p>If <var>value</var> is the string "<code>NaN</code>", return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑨">success</a> with
  data NaN.</p>
          <li data-md>
           <p>Let <var>number_result</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-stringtonumber" id="ref-for-sec-stringtonumber">StringToNumber</a>(<var>value</var>).</p>
          <li data-md>
           <p>If <var>number_result</var> is NaN, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑤">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑤">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑦">invalid argument</a></p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①①">success</a> with data <var>number_result</var>.</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⓪">success</a> with data <var>number_result</var>.</p>
         </ol>
        <dt><var>type</var> is the string "<code>boolean</code>" 
-       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①②">success</a> with data <var>value</var>. 
+       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①①">success</a> with data <var>value</var>. 
        <dt><var>type</var> is the string "<code>bigint</code>" 
        <dd>
         <ol>
@@ -1584,7 +1587,7 @@ BigIntValue = {
          <li data-md>
           <p>If <var>bigint_result</var> is undefined, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑥">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument⑧">invalid argument</a></p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①③">success</a> with data <var>bigint_result</var>.</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①②">success</a> with data <var>bigint_result</var>.</p>
         </ol>
       </dl>
      <li data-md>
@@ -1670,7 +1673,7 @@ SetLocalValue = {
         <p>Append <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist">CreateArrayFromList</a>(«<var>deserialized key</var>, <var>deserialized value</var>») to <var>deserialized key-value list</var>.</p>
       </ol>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①④">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist①">CreateArrayFromList</a>(<var>deserialized key-value list</var>).</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①③">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist①">CreateArrayFromList</a>(<var>deserialized key-value list</var>).</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="deserialize value list">
@@ -1689,7 +1692,7 @@ SetLocalValue = {
         <p>Append <var>deserialized value</var> to <var>deserialized values</var>;</p>
       </ol>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑤">success</a> with data <var>deserialized values</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①④">success</a> with data <var>deserialized values</var>.</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="deserialize local value">
@@ -1715,7 +1718,7 @@ SetLocalValue = {
          <li data-md>
           <p>Let <var>deserialized value list</var> be a result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③">trying</a> to <a data-link-type="dfn" href="#deserialize-value-list" id="ref-for-deserialize-value-list">deserialize value list</a> given <var>realm</var> and <var>value</var>.</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑥">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist②">CreateArrayFromList</a>(<var>deserialized value list</var>).</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑤">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist②">CreateArrayFromList</a>(<var>deserialized value list</var>).</p>
         </ol>
        <dt><var>type</var> is the string "<code>date</code>" 
        <dd>
@@ -1723,7 +1726,7 @@ SetLocalValue = {
          <li data-md>
           <p>If <var>value</var> does not match <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-date-time-string-format" id="ref-for-sec-date-time-string-format">Date Time String Format</a>, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑨">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①①">invalid argument</a>.</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑦">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-date.parse" id="ref-for-sec-date.parse">Date.parse</a>(<var>value</var>).</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑥">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-date.parse" id="ref-for-sec-date.parse">Date.parse</a>(<var>value</var>).</p>
         </ol>
        <dt><var>type</var> is the string "<code>map</code>" 
        <dd>
@@ -1733,7 +1736,7 @@ SetLocalValue = {
          <li data-md>
           <p>Let <var>iterable</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist③">CreateArrayFromList</a>(<var>deserialized key-value list</var>)</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑧">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects">Map</a>(<var>iterable</var>).</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑦">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects">Map</a>(<var>iterable</var>).</p>
         </ol>
        <dt><var>type</var> is the string "<code>object</code>" 
        <dd>
@@ -1743,7 +1746,7 @@ SetLocalValue = {
          <li data-md>
           <p>Let <var>iterable</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist④">CreateArrayFromList</a>(<var>deserialized key-value list</var>)</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑨">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object.fromentries" id="ref-for-sec-object.fromentries">Object.fromEntries</a>(<var>iterable</var>).</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑧">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object.fromentries" id="ref-for-sec-object.fromentries">Object.fromEntries</a>(<var>iterable</var>).</p>
         </ol>
        <dt><var>type</var> is the string "<code>regexp</code>" 
        <dd>
@@ -1756,7 +1759,7 @@ SetLocalValue = {
          <li data-md>
           <p>Let <var>regex_result</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-regexp-pattern-flags" id="ref-for-sec-regexp-pattern-flags">Regexp</a>(<var>pattern</var>, <var>flags</var>). If this throws exception, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①⓪">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①⓪">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①②">invalid argument</a>.</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⓪">success</a> with data <var>regex_result</var>.</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑨">success</a> with data <var>regex_result</var>.</p>
         </ol>
        <dt><var>type</var> is the string "<code>set</code>" 
        <dd>
@@ -1766,7 +1769,7 @@ SetLocalValue = {
          <li data-md>
           <p>Let <var>iterable</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist⑤">CreateArrayFromList</a>(<var>deserialized key-value list</var>)</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②①">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-set-objects" id="ref-for-sec-set-objects">Set object</a>(<var>iterable</var>).</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⓪">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-set-objects" id="ref-for-sec-set-objects">Set object</a>(<var>iterable</var>).</p>
         </ol>
        <dt>otherwise 
        <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①①">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①①">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①③">invalid argument</a>. 
@@ -1779,34 +1782,63 @@ object, specified as <code>RemoteValue</code>. The value’s type is specified i
 the <code>type</code> property. In the case of JSON-representable primitive
 values, this contains the value in the <code>value</code> property; in the case
 of non-JSON-representable primitives, the <code>value</code> property contains a
-string representation of the value. For non-primitive objects, the <code>objectId</code> property contains a string id that provides a unique
-handle to the object, valid for its lifetime inside the engine. For some
-non-primitive types, the <code>value</code> property contains a representation
-of the data in the ECMAScript object; for container types this can contain
-further <code>RemoteValue</code> instances. The <code>value</code> property can
-be null if there is a duplicate object i.e. the object has already been
-serialized in the current <code>RemoteValue</code>, perhaps as part of a
-cycle, or otherwise when the maximum serialization depth is reached.</p>
+string representation of the value.
+For non-primitive objects, the <code>handle</code> property, when present, contains a
+unique string handle to the object. The handle is unique for each serialization. The
+remote end will keep objects with a corresponding handle alive until such a time that <code>script.disown</code> is called with that handle, or the realm itself is to be
+discarded (e.g. due to navigation).
+For some non-primitive types, the <code>value</code> property contains a
+representation of the data in the ECMAScript object; for container types this can
+contain further <code>RemoteValue</code> instances. The <code>value</code> property
+can be null or omitted if there is a duplicate object i.e. the object has already
+been serialized in the current <code>RemoteValue</code>, perhaps as part of a cycle,
+or otherwise when the maximum serialization depth is reached.
+In case of duplicated objects in the same <code>RemoteValue</code>, the value is
+provided only for one of the remote values, while the unique-per-ECMAScript-object <code>internalId</code> is provided for all the duplicated objects for a given
+serialization.</p>
    <p><a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-node" id="ref-for-concept-node">Nodes</a> are also represented by <code>RemoteValue</code> instances. These have
 a partial serialization of the node in the value property.</p>
    <p class="issue" id="issue-c8a585bd"><a class="self-link" href="#issue-c8a585bd"></a> reconsider mirror objects' lifecycle.</p>
    <p class="note" role="note"><span>Note:</span> mirror objects do not keep the original object alive in the runtime. If an
 object is discarded in the runtime, subsequent attempts to access it via the
 protocol will result in an error.</p>
-   <div class="algorithm" data-algorithm="object id for an object">
-     To get the <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="object-id-for-an-object">object id for an object</dfn> given <var>realm</var> and <var>object</var>: 
+   <div class="algorithm" data-algorithm="handle for an object">
+     To get the <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="handle-for-an-object">handle for an object</dfn> given <var>realm</var>, <var>ownership type</var> and <var>object</var>: 
     <ol>
      <li data-md>
-      <p>If the given <var>realm</var>’s <a data-link-type="dfn" href="#object-id-map" id="ref-for-object-id-map②">object id map</a> does not contain <var>object</var>, run the
- following steps:</p>
+      <p>If <var>ownership type</var> is equal "<code>none</code>", return <code>null</code>.</p>
+     <li data-md>
+      <p>Let <var>handle id</var> be a new, unique, string handle for <var>object</var>.</p>
+     <li data-md>
+      <p>Let <var>handle map</var> be <var>realm</var>’s <a data-link-type="dfn" href="#handle-object-map" id="ref-for-handle-object-map②">handle object map</a></p>
+     <li data-md>
+      <p>Set <var>handle map</var>[<var>handle id</var>] to <var>object</var>.</p>
+     <li data-md>
+      <p>Return <var>handle id</var> as a result.</p>
+    </ol>
+   </div>
+   <div class="algorithm" data-algorithm="set internal ids if needed">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="set-internal-ids-if-needed">set internal ids if needed</dfn> given <var>serialization internal map</var>, <var>remote value</var> and <var>object</var>: 
+    <ol>
+     <li data-md>
+      <p>If the <var>serialization internal map</var> does not contain <var>object</var>, set <var>serialization internal map</var>[<var>object</var>] to <var>remote value</var>.</p>
+     <li data-md>
+      <p>Otherwise, run the following steps:</p>
       <ol>
        <li data-md>
-        <p>Let <var>object id</var> be a new, unique, string identifier for <var>object</var>. If <var>object</var> is an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element" id="ref-for-concept-element">element</a> this must be the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-web-element-reference" id="ref-for-dfn-web-element-reference">web element reference</a> for <var>object</var>; if it’s a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy" id="ref-for-windowproxy①">WindowProxy</a></code> object, this must be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id">browsing context id</a> for <var>object</var>.</p>
+        <p>Let <var>previously serialized remote value</var> be <var>serialization internal map</var>[<var>object</var>].</p>
        <li data-md>
-        <p>Set the value of <var>object</var> in <var>realm</var>’s <a data-link-type="dfn" href="#object-id-map" id="ref-for-object-id-map③">object id map</a> to <var>object id</var>.</p>
+        <p>If <var>previously serialized remote value</var> does not have a field <code>internalId</code>, run the following steps:</p>
+        <ol>
+         <li data-md>
+          <p>Let <var>internal id</var> be a unique across the <code>internalId</code> fields of
+ the values of <var>serialization internal map</var> integer.</p>
+         <li data-md>
+          <p>Set the <code>internalId</code> field of <var>previously serialized remote value</var> to <var>internal id</var>.</p>
+        </ol>
+       <li data-md>
+        <p>Set the <code>internalId</code> field of <var>remote value</var> to a field <code>internalId</code> in <var>previously serialized remote value</var>.</p>
       </ol>
-     <li data-md>
-      <p>Return the result of getting the value for <var>object</var> in <var>realm</var>’s <a data-link-type="dfn" href="#object-id-map" id="ref-for-object-id-map④">object id map</a>.</p>
     </ol>
    </div>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑥">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑤">local end definition</a></p>
@@ -1833,102 +1865,122 @@ protocol will result in an error.</p>
   WindowProxyRemoteValue //
 }
 
+InternalId = uint;
+
 ListRemoteValue = [*RemoteValue];
 
 MappingRemoteValue = [*[(RemoteValue / text), RemoteValue]];
 
 SymbolRemoteValue = {
-   type: "symbol",
-   objectId: ObjectId,
+  type: "symbol",
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 ArrayRemoteValue = {
   type: "array",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
   ?value: ListRemoteValue,
 }
 
 ObjectRemoteValue = {
   type: "object",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
   ?value: MappingRemoteValue,
 }
 
 FunctionRemoteValue = {
-   type: "function",
-   objectId: ObjectId,
+  type: "function",
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 RegExpRemoteValue = {
-   RegExpLocalValue,
-   objectId: ObjectId,
+  RegExpLocalValue,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 DateRemoteValue = {
   DateLocalValue,
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 MapRemoteValue = {
   type: "map",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
   value: MappingRemoteValue,
 }
 
 SetRemoteValue = {
   type: "set",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
   value: ListRemoteValue
 }
 
 WeakMapRemoteValue = {
   type: "weakmap",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 WeakSetRemoteValue = {
   type: "weakset",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 IteratorRemoteValue = {
   type: "iterator",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 GeneratorRemoteValue = {
   type: "generator",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 ErrorRemoteValue = {
   type: "error",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 ProxyRemoteValue = {
   type: "proxy",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 PromiseRemoteValue = {
   type: "promise",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 TypedArrayRemoteValue = {
   type: "typedarray",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 ArrayBufferRemoteValue = {
   type: "arraybuffer",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 
 NodeRemoteValue = {
   type: "node",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
   ?value: NodeProperties,
 }
 
@@ -1945,7 +1997,8 @@ NodeProperties = {
 
 WindowProxyRemoteValue = {
   type: "window",
-  objectId: ObjectId,
+  ?handle: Handle,
+  ?internalId: InternalId,
 }
 </pre>
    <p class="issue" id="issue-14921645"><a class="self-link" href="#issue-14921645"></a> Add WASM types?</p>
@@ -1956,7 +2009,8 @@ WindowProxyRemoteValue = {
    <p class="issue" id="issue-daee5863"><a class="self-link" href="#issue-daee5863"></a> handle String / Number / etc. wrapper objects specially?</p>
    <h5 class="heading settled" data-level="6.2.3.1" id="data-types-protocolValue-RemoteValue-serialization"><span class="secno">6.2.3.1. </span><span class="content">Serialization</span><a class="self-link" href="#data-types-protocolValue-RemoteValue-serialization"></a></h5>
    <div class="algorithm" data-algorithm="serialize as a remote value">
-    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-remote-value">serialize as a remote value</dfn> given a <var>value</var>, a <var>max depth</var>, <var>node details</var>, a <var>set of known objects</var> and a <var>realm</var>:</p>
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-remote-value">serialize as a remote value</dfn> given a <var>value</var>, a <var>max depth</var>,
+an <var>ownership type</var>, a <var>serialization internal map</var> and a <var>realm</var>:</p>
     <ol>
      <li data-md>
       <p>Let <var>remote value</var> be a result of <a data-link-type="dfn" href="#serialize-primitive-protocol-value" id="ref-for-serialize-primitive-protocol-value">serialize primitive protocol value</a> given a <var>value</var>.</p>
@@ -1965,26 +2019,33 @@ WindowProxyRemoteValue = {
      <li data-md>
       <p>In the following list of conditions and associated steps, run the first set
  of steps for which the associated condition is true:</p>
+     <li data-md>
+      <p>Let <var>handle id</var> be the <a data-link-type="dfn" href="#handle-for-an-object" id="ref-for-handle-for-an-object">handle for an object</a> given <var>realm</var>, <var>ownership type</var> and <var>value</var>.</p>
+     <li data-md>
+      <p>Let <var>known object</var> be <code>true</code>, if <var>value</var> is in the <var>serialization internal map</var>, otherwise <code>false</code>.</p>
+     <li data-md>
+      <p>Let <var>child ownership</var> be "<code>none</code>".</p>
       <dl>
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑧">Type</a>(<var>value</var>) is Symbol 
-       <dd>Let <var>remote value</var> be a map matching the <code>SymbolRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑥">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>SymbolRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑥">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-isarray" id="ref-for-sec-isarray">IsArray</a>(<var>value</var>) 
        <dd>
         <ol>
          <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>ArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑦">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
+         <li data-md>
+          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
+         <li data-md>
           <p>Let <var>serialized</var> be null.</p>
          <li data-md>
-          <p>If <var>value</var> is not in the <var>set of known objects</var>, and <var>max depth</var> is not null and greater than 0, run the following steps:</p>
+          <p>If <var>known object</var> is <code>false</code>, and <var>max depth</var> is not null and
+ greater than 0, run the following steps:</p>
           <ol>
            <li data-md>
-            <p>Append <var>value</var> to the <var>set of known objects</var></p>
-           <li data-md>
-            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayiterator" id="ref-for-sec-createarrayiterator">CreateArrayIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>node details</var> and <var>set of known objects</var> and <var>realm</var>.</p>
+            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayiterator" id="ref-for-sec-createarrayiterator">CreateArrayIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
           </ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>ArrayRemoteValue</code> production
- in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑦">local end definition</a>, with the <code>objectId</code> property set
- to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①">object id for an object</a> given <var>realm</var> and <var>value</var>, and the <code>value</code> field set to <var>serialized</var> if it’s not null, or omitted otherwise.</p>
+          <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-isregexp" id="ref-for-sec-isregexp">IsRegExp</a>(<var>value</var>) 
        <dd>
@@ -1996,7 +2057,7 @@ WindowProxyRemoteValue = {
          <li data-md>
           <p>Let <var>value</var> be a map matching the <code>RegExpValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑧">local end definition</a>, with the <code>pattern</code> property set to the <var>pattern</var> and the the <code>flags</code> property set to the <var>flags</var>.</p>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>RegExpRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑨">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object②">object id for an object</a> given <var>realm</var> and <var>object</var>, and
+          <p>Let <var>remote value</var> be a map matching the <code>RegExpRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑨">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and
  the <code>value</code> property set to <var>value</var>.</p>
         </ol>
        <dt><var>value</var> has a [[DateValue]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots">internal slot</a>. 
@@ -2005,66 +2066,76 @@ WindowProxyRemoteValue = {
          <li data-md>
           <p>Let <var>serialized</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-todatestring" id="ref-for-sec-todatestring">Date.ToDateString</a>(<a data-link-type="dfn" href="https://tc39.es/ecma262/#thistimevalue" id="ref-for-thistimevalue">thisTimeValue</a>(<var>value</var>)).</p>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>DateRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⓪">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object③">object id for an object</a> given <var>realm</var> and <var>object</var>, and the
+          <p>Let <var>remote value</var> be a map matching the <code>DateRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and the
  value set to <var>serialized</var>.</p>
         </ol>
        <dt><var>value</var> has a [[MapData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots①">internal slot</a> 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>serialized</var> be null.</p>
+          <p>Let <var>remote value</var> be a map matching the <code>MapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
+ otherwise.</p>
          <li data-md>
-          <p>If <var>value</var> is not in the <var>set of known objects</var>, and <var>max depth</var> is not null and greater than 0, run the following steps:</p>
+          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed①">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
           <ol>
            <li data-md>
-            <p>Append <var>value</var> to the <var>set of known objects</var></p>
+            <p>Let <var>serialized</var> be null.</p>
            <li data-md>
-            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createmapiterator" id="ref-for-sec-createmapiterator">CreateMapIterator</a>(<var>value</var>, key+value), <var>max depth</var>, <var>node details</var>, <var>set of known objects</var> and <var>realm</var>.</p>
+            <p>If <var>known object</var> is <code>false</code>, and <var>max depth</var> is not null and
+ greater than 0, run the following steps:</p>
+            <ol>
+             <li data-md>
+              <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createmapiterator" id="ref-for-sec-createmapiterator">CreateMapIterator</a>(<var>value</var>, key+value), <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+            </ol>
           </ol>
-        </ol>
-        <ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>MapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②①">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object④">object id for an object</a> given <var>realm</var> and <var>value</var>, and the <code>value</code> field set to <var>serialized</var> if
- it’s not null, or omitted otherwise.</p>
+          <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
        <dt><var>value</var> has a [[SetData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots②">internal slot</a> 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>serialized</var> be null.</p>
+          <p>Let <var>remote value</var> be a map matching the <code>SetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
+  otherwise.</p>
          <li data-md>
-          <p>If <var>value</var> is not in the <var>set of known objects</var>, and <var>max depth</var> is not null and greater than 0, run the following steps:</p>
+          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed②">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
           <ol>
            <li data-md>
-            <p>Append <var>value</var> to the <var>set of known objects</var></p>
+            <p>Let <var>serialized</var> be null.</p>
            <li data-md>
-            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list①">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createsetiterator" id="ref-for-sec-createsetiterator">CreateSetIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>node details</var>, <var>set of known objects</var> and <var>realm</var>.</p>
+            <p>If <var>known object</var> is <code>false</code>, and <var>max depth</var> is not null and
+ greater than 0, run the following steps:</p>
+            <ol>
+             <li data-md>
+              <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list①">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createsetiterator" id="ref-for-sec-createsetiterator">CreateSetIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+            </ol>
           </ol>
-        </ol>
-        <ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>SetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②②">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑤">object id for an object</a> given <var>realm</var> and <var>value</var>, and the <code>value</code> field set to <var>serialized</var> if
-  it’s not null, or omitted otherwise.</p>
+          <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
        <dt><var>value</var> has a [[WeakMapData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots③">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>WeakMapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②③">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑥">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>WeakMapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②③">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has a [[WeakSetData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots④">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>WeakSetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②④">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑦">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>WeakSetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②④">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has an [[ErrorData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑤">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>ErrorRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑤">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑧">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>ErrorRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑤">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ispromise" id="ref-for-sec-ispromise">IsPromise</a>(<var>value</var>) 
-       <dd>Let <var>remote value</var> be a map matching the <code>PromiseRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑥">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object⑨">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>PromiseRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑥">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has a [[TypedArrayName]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑥">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>TypedArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑦">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①⓪">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>TypedArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑦">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has an [[ArrayBufferData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑦">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>ArrayBufferRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑧">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①①">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>ArrayBufferRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑧">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object">platform object</a> that implements <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#boundary-point-node" id="ref-for-boundary-point-node">Node</a> 
        <dd>
         <ol>
          <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>NodeRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑨">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
+         <li data-md>
+          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed③">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
+         <li data-md>
           <p>Let <var>serialized</var> be null.</p>
          <li data-md>
-          <p>If <var>node details</var> is true, run the following steps:</p>
+          <p>If <var>known object</var> is <code>false</code>, run the following steps:</p>
           <ol>
            <li data-md>
             <p>Let <var>serialized</var> be a map.</p>
@@ -2073,7 +2144,7 @@ WindowProxyRemoteValue = {
            <li data-md>
             <p>Set <var>serialized</var>["<code>nodeValue</code>"] to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get③">Get</a>(<var>value</var>, "nodeValue")</p>
            <li data-md>
-            <p>If <var>value</var> is an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element" id="ref-for-concept-element①">Element</a> or an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-attribute" id="ref-for-concept-attribute">Attribute</a>:</p>
+            <p>If <var>value</var> is an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element" id="ref-for-concept-element">Element</a> or an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-attribute" id="ref-for-concept-attribute">Attribute</a>:</p>
             <ol>
              <li data-md>
               <p>Set <var>serialized</var>["<code>localName</code>"] to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get④">Get</a>(<var>value</var>, "localName").</p>
@@ -2091,14 +2162,14 @@ WindowProxyRemoteValue = {
              <li data-md>
               <p>Let <var>child depth</var> be <var>max depth</var> - 1 if <var>max depth</var> is not null, or null otherwise.</p>
              <li data-md>
-              <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value">serialize as a remote value</a> with <var>child</var>, <var>child depth</var>, <var>node details</var>, <var>set of known objects</var> and <var>realm</var>.</p>
+              <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value">serialize as a remote value</a> with <var>child</var>, <var>child depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
              <li data-md>
               <p>Append <var>serialized</var> to <var>children</var>.</p>
             </ol>
            <li data-md>
             <p>Set <var>serialized</var>["<code>children</code>"] to <var>children</var>.</p>
            <li data-md>
-            <p>If <var>value</var> is an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element" id="ref-for-concept-element②">Element</a>:</p>
+            <p>If <var>value</var> is an <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-element" id="ref-for-concept-element①">Element</a>:</p>
             <ol>
              <li data-md>
               <p>Let <var>attributes</var> be a new map.</p>
@@ -2125,8 +2196,8 @@ WindowProxyRemoteValue = {
   null, or null otherwise.</p>
                <li data-md>
                 <p>Let <var>serialized shadow</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value①">serialize as a remote value</a> with <var>shadow root</var>, <var>child depth</var>,
-  false, <var>set of known objects</var> and <var>realm</var>.</p>
-                <p class="note" role="note"><span>Note:</span> this means the <code>objectId</code> for the shadow root
+  false, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+                <p class="note" role="note"><span>Note:</span> this means the <code>handle</code> for the shadow root
 will be serialized irrespective of whether the shadow is open or closed,
 but no properties of the node will be returned.</p>
               </ol>
@@ -2135,36 +2206,36 @@ but no properties of the node will be returned.</p>
             </ol>
           </ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>NodeRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑨">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①②">object id for an object</a> given <var>realm</var> and <var>value</var>,
- and <code>value</code> set to <var>serialized</var>, if <var>serialized</var> is not null.</p>
+          <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
-       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object①">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy" id="ref-for-windowproxy②">WindowProxy</a></code> 
-       <dd>1. Let <var>remote value</var> be a map matching the <code>WindowProxyValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⓪">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①③">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object①">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy" id="ref-for-windowproxy①">WindowProxy</a></code> 
+       <dd>1. Let <var>remote value</var> be a map matching the <code>WindowProxyValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object②">platform object</a> 
-       <dd>1. Let <var>remote value</var> be a map matching the <code>ObjectValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③①">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①④">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dd>1. Let <var>remote value</var> be a map matching the <code>ObjectValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-iscallable" id="ref-for-sec-iscallable">IsCallable</a>(<var>value</var>) 
-       <dd>Let <var>remote value</var> be a map matching the <code>FunctionValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③②">local end definition</a>, with the <code>objectId</code> property set to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①⑤">object id for an object</a> given <var>realm</var> and <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>FunctionValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt>Otherwise: 
        <dd>
         <ol>
          <li data-md>
           <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert③">Assert</a>: <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑨">type</a>(<var>value</var>) is Object</p>
          <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>ObjectValue</code> production
+ in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③③">local end definition</a>, with the <code>handle</code> property set
+ to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
+         <li data-md>
+          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed④">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
+         <li data-md>
           <p>Let <var>serialized</var> be null.</p>
          <li data-md>
-          <p>If <var>value</var> is not in the <var>set of known objects</var>, and <var>max depth</var> is greater than 0, run the following steps:</p>
+          <p>If <var>known object</var> is <code>false</code>, and <var>max depth</var> is greater than 0,
+ run the following steps:</p>
           <ol>
            <li data-md>
-            <p>Append <var>value</var> to the <var>set of known objects</var></p>
-           <li data-md>
-            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping①">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-enumerableownpropertynames" id="ref-for-sec-enumerableownpropertynames">EnumerableOwnPropertyNames</a>(<var>value</var>, key+value), <var>max depth</var>, <var>node
-  details</var>, <var>set of known objects</var> and <var>realm</var>.</p>
+            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping①">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-enumerableownpropertynames" id="ref-for-sec-enumerableownpropertynames">EnumerableOwnPropertyNames</a>(<var>value</var>, key+value), <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
           </ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>ObjectValue</code> production
- in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③③">local end definition</a>, with the <code>objectId</code> property set
- to the <a data-link-type="dfn" href="#object-id-for-an-object" id="ref-for-object-id-for-an-object①⑥">object id for an object</a> given <var>realm</var> and <var>value</var>, and the <code>value</code> field
- set to <var>serialized</var>.</p>
+          <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
       </dl>
      <li data-md>
@@ -2172,7 +2243,6 @@ but no properties of the node will be returned.</p>
     </ol>
     <p class="issue" id="issue-66909ae2"><a class="self-link" href="#issue-66909ae2"></a> Does it make sense to use the same depth parameter for nodes and objects
 in general?</p>
-    <p class="issue" id="issue-39ce50ec"><a class="self-link" href="#issue-39ce50ec"></a> consider deprecate <var>node details</var> in favour of <var>max depth</var>.</p>
     <p class="issue" id="issue-4a5a93fc"><a class="self-link" href="#issue-4a5a93fc"></a> <var>children</var> and child nodes are different things. Either <code>childNodeCount</code> should
 reference to <code>childNodes</code>, or it should be renamed to <code>childrenCount</code>.</p>
     <p class="issue" id="issue-1b44726c"><a class="self-link" href="#issue-1b44726c"></a> <code>nodeValue</code> can be null. Omit the field in such a case, or adjust type to allow
@@ -2181,7 +2251,7 @@ null value.</p>
 remove optional flag from the field.</p>
    </div>
    <div class="algorithm" data-algorithm="serialize as a list">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-list">serialize as a list</dfn> given <var>iterable</var>, <var>max depth</var>, <var>node details</var>, <var>set of known objects</var> and <var>realm</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-list">serialize as a list</dfn> given <var>iterable</var>, <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>: 
     <ol>
      <li data-md>
       <p>Let <var>serialized</var> be a new list.</p>
@@ -2192,7 +2262,7 @@ remove optional flag from the field.</p>
         <p>Let <var>child depth</var> be <var>max depth</var> - 1 if <var>max depth</var> is not null, or null
  otherwise.</p>
        <li data-md>
-        <p>Let <var>serialized child</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value②">serialize as a remote value</a> with arguments <var>child value</var>, <var>child depth</var>, <var>node details</var>, <var>set of known objects</var> and <var>realm</var>.</p>
+        <p>Let <var>serialized child</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value②">serialize as a remote value</a> with arguments <var>child value</var>, <var>child depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
        <li data-md>
         <p>Append <var>serialized child</var> to <var>serialized</var>.</p>
       </ol>
@@ -2202,7 +2272,7 @@ remove optional flag from the field.</p>
    </div>
    <p class="issue" id="issue-c12b3c7f"><a class="self-link" href="#issue-c12b3c7f"></a> this assumes for-in works on iterators</p>
    <div class="algorithm" data-algorithm="serialize as a mapping">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-mapping">serialize as a mapping</dfn> given <var>iterable</var>, <var>max depth</var>, <var>node details</var>, <var>set of known objects</var> and <var>realm</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-mapping">serialize as a mapping</dfn> given <var>iterable</var>, <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>: 
     <ol>
      <li data-md>
       <p>Let <var>serialized</var> be a new list.</p>
@@ -2222,10 +2292,9 @@ remove optional flag from the field.</p>
  otherwise.</p>
        <li data-md>
         <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values①⓪">Type</a>(<var>key</var>) is String, let <var>serialized key</var> be <var>child key</var>,
- otherwise let <var>serialized key</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value③">serialize as a remote
- value</a> with arguments <var>child key</var>, <var>child depth</var>, <var>node details</var> and <var>set of known objects</var>.</p>
+ otherwise let <var>serialized key</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value③">serialize as a remote value</a> with arguments <var>child key</var>, <var>child depth</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
        <li data-md>
-        <p>Let <var>serialized value</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value④">serialize as a remote value</a> with arguments <var>value</var>, <var>child depth</var>, <var>node details</var>, <var>set of known objects</var> and <var>realm</var>.</p>
+        <p>Let <var>serialized value</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value④">serialize as a remote value</a> with arguments <var>value</var>, <var>child depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
        <li data-md>
         <p>Let <var>serialized child</var> be («<var>serialized key</var>, <var>serialized value</var>»).</p>
        <li data-md>
@@ -2364,7 +2433,7 @@ events are disabled, the return value is always empty.</p>
      <li data-md>
       <p>Set the <a data-link-type="dfn" href="#event-browsing-context-event-map" id="ref-for-event-browsing-context-event-map③">browsing context event map</a> for <var>session</var> to <var>event map</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②②">success</a> with data <var>enabled events</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②①">success</a> with data <var>enabled events</var>.</p>
     </ol>
     <p class="note" role="note"><span>Note:</span> Implementations that do additional work when an event is enabled,
 e.g. subscribing to the relevant engine-internal events, will likely perform
@@ -2430,7 +2499,7 @@ to the implementation.</p>
        <dd>An implementation-defined string explaining the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends①⑥">remote end</a>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-readiness-state" id="ref-for-dfn-readiness-state①">readiness state</a>.
       </dl>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②③">success</a> with data <var>body</var></p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②②">success</a> with data <var>body</var></p>
     </ol>
     <h5 class="heading settled" data-level="7.1.3.2" id="command-session-new"><span class="secno">7.1.3.2. </span><span class="content">The session.new Command</span><a class="self-link" href="#command-session-new"></a></h5>
     <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-sessionnew">session.new<a class="self-link" href="#commands-sessionnew"></a></dfn> command allows creating a new <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①②">BiDi session</a>.</p>
@@ -2497,7 +2566,7 @@ CapabilitiesRequestParameters = {
  with the <code>sessionId</code> field set to <var>session</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-session-id" id="ref-for-dfn-session-id③">session ID</a>, and
  the <code>capabilities</code> field set to <var>capabilities</var>.</p>
       <li data-md>
-       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②④">success</a> with data <var>body</var>.</p>
+       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②③">success</a> with data <var>body</var>.</p>
      </ol>
      <h5 class="heading settled" data-level="7.1.3.3" id="command-session-subscribe"><span class="secno">7.1.3.3. </span><span class="content">The session.subscribe Command</span><a class="self-link" href="#command-session-subscribe"></a></h5>
      <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-sessionsubscribe">session.subscribe<a class="self-link" href="#commands-sessionsubscribe"></a></dfn> command enables certain events
@@ -2562,7 +2631,7 @@ SessionSubscribeParameters = {
           <p>Run the <a data-link-type="dfn" href="#remote-end-subscribe-steps" id="ref-for-remote-end-subscribe-steps①">remote end subscribe steps</a> for the <a data-link-type="dfn" href="#event" id="ref-for-event⑧">event</a> with <a data-link-type="dfn" href="#event-event-name" id="ref-for-event-event-name⑥">event name</a> <var>event name</var> given <var>session</var>, <var>contexts</var> and <var>include global</var>.</p>
         </ol>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑤">success</a> with data null.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②④">success</a> with data null.</p>
       </ol>
      </div>
      <h5 class="heading settled" data-level="7.1.3.4" id="command-session-unsubscribe"><span class="secno">7.1.3.4. </span><span class="content">The session.unsubscribe Command</span><a class="self-link" href="#command-session-unsubscribe"></a></h5>
@@ -2592,7 +2661,7 @@ either globally or for a set of browsing contexts</p>
        <li data-md>
         <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①②">Try</a> to <a data-link-type="dfn" href="#update-the-event-map" id="ref-for-update-the-event-map①">update the event map</a> with <var>session</var>, <var>list of event names</var>, <var>list of contexts</var> and enabled false.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑥">success</a> with data null.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑤">success</a> with data null.</p>
       </ol>
      </div>
      <h3 class="heading settled" data-level="7.2" id="module-browsingContext"><span class="secno">7.2. </span><span class="content">The browsingContext Module</span><a class="self-link" href="#module-browsingContext"></a></h3>
@@ -2650,19 +2719,19 @@ BrowsingContextEvent = (
      <p>Each <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context①">browsing context</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="browsing context id" id="browsing-context-id">browsing context
 id</dfn>, which is a string uniquely identifying that browsing context. This is
 implicitly set when the context is created. For browsing contexts with an
-associated WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-window-handle" id="ref-for-dfn-window-handle">window handle</a> the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①">browsing context id</a> must be the
+associated WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-window-handle" id="ref-for-dfn-window-handle">window handle</a> the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id">browsing context id</a> must be the
 same as the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-window-handle" id="ref-for-dfn-window-handle①">window handle</a>.</p>
      <div class="algorithm" data-algorithm="get a browsing context">
        To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-a-browsing-context">get a browsing context</dfn> given <var>context id</var>: 
       <ol>
        <li data-md>
-        <p>If <var>context id</var> is null, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑦">success</a> with data null.</p>
+        <p>If <var>context id</var> is null, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑥">success</a> with data null.</p>
        <li data-md>
-        <p>If there is no browsing context with <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id②">browsing context id</a> <var>context id</var> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-frame" id="ref-for-dfn-no-such-frame">no such frame</a></p>
+        <p>If there is no browsing context with <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①">browsing context id</a> <var>context id</var> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-frame" id="ref-for-dfn-no-such-frame">no such frame</a></p>
        <li data-md>
         <p>Let <var>context</var> be the browsing context with id <var>context id</var>.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑧">success</a> with data <var>context</var></p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑦">success</a> with data <var>context</var></p>
       </ol>
      </div>
      <h5 class="heading settled" data-level="7.2.2.2" id="type-browsingContext-BrowsingContextInfo"><span class="secno">7.2.2.2. </span><span class="content">The browsingContext.BrowsingContextInfo Type</span><a class="self-link" href="#type-browsingContext-BrowsingContextInfo"></a></h5>
@@ -2683,9 +2752,9 @@ browsing context.</p>
        To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-the-browsing-context-info">get the browsing context info</dfn> given <var>context</var>, <var>max depth</var> and <var>is root</var>: 
       <ol>
        <li data-md>
-        <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id③">browsing context id</a> for <var>context</var>.</p>
+        <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id②">browsing context id</a> for <var>context</var>.</p>
        <li data-md>
-        <p>If <var>context</var> has a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#parent-browsing-context" id="ref-for-parent-browsing-context">parent browsing context</a> let <var>parent id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id④">browsing context id</a> of that parent. Otherwise let <var>parent id</var> be null.</p>
+        <p>If <var>context</var> has a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#parent-browsing-context" id="ref-for-parent-browsing-context">parent browsing context</a> let <var>parent id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id③">browsing context id</a> of that parent. Otherwise let <var>parent id</var> be null.</p>
        <li data-md>
         <p>Let <var>document</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#active-document" id="ref-for-active-document">active document</a>.</p>
        <li data-md>
@@ -2742,7 +2811,7 @@ browsing context.</p>
          <li data-md>
           <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects③">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer①">URL serializer</a> given <var>navigate status</var>’s url.</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑨">success</a> with data <var>body</var>.</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑧">success</a> with data <var>body</var>.</p>
         </ol>
         <p class="note" role="note"><span>Note:</span> this is the case if the navigation only caused the fragment to
  change.</p>
@@ -2757,7 +2826,7 @@ browsing context.</p>
          <li data-md>
           <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects④">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer②">URL serializer</a> given <var>navigate status</var>’s url.</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⓪">success</a> with data <var>body</var>.</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑨">success</a> with data <var>body</var>.</p>
         </ol>
        <li data-md>
         <p>If <var>wait condition</var> is "<code>interactive</code>", let <var>event name</var> be
@@ -2777,7 +2846,7 @@ browsing context.</p>
        <li data-md>
         <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑤">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>status</var>’s id, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer③">URL serializer</a> given <var>status</var>’s url.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③①">success</a> with data <var>body</var>.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⓪">success</a> with data <var>body</var>.</p>
       </ol>
      </div>
      <h5 class="heading settled" data-level="7.2.2.3" id="type-browsingContext-Navigation"><span class="secno">7.2.2.3. </span><span class="content">The browsingContext.Navigation Type</span><a class="self-link" href="#type-browsingContext-Navigation"></a></h5>
@@ -2800,7 +2869,7 @@ navigation.</p>
        To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-the-navigation-info">get the navigation info</dfn>, given <var>context</var> and <var>navigation status</var>: 
       <ol>
        <li data-md>
-        <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑤">browsing context id</a> for <var>context</var>.</p>
+        <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id④">browsing context id</a> for <var>context</var>.</p>
        <li data-md>
         <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
        <li data-md>
@@ -2845,7 +2914,7 @@ when closing the last <a data-link-type="dfn" href="https://html.spec.whatwg.org
 the browser, close the session or leave this up to the implementation. <a href="https://github.com/w3c/webdriver-bidi/issues/170">[Issue #w3c/webdriver-bidi#170]</a></p>
      </div>
      <h5 class="heading settled" data-level="7.2.3.2" id="command-browsingContext-create"><span class="secno">7.2.3.2. </span><span class="content">The browsingContext.create Command</span><a class="self-link" href="#command-browsingContext-create"></a></h5>
-     <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextcreate">browsingContext.create<a class="self-link" href="#commands-browsingcontextcreate"></a></dfn> command creates a new <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context③">browsing context</a>, either in a new tab or in a new window, and returns its <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑥">browsing context id</a>.</p>
+     <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextcreate">browsingContext.create<a class="self-link" href="#commands-browsingcontextcreate"></a></dfn> command creates a new <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context③">browsing context</a>, either in a new tab or in a new window, and returns its <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑤">browsing context id</a>.</p>
      <dl>
       <dt>Command Type
       <dd>
@@ -2888,11 +2957,11 @@ BrowsingContextCreateParameters = {
  don’t have any such implicit context here, what OS window should new tabs
  be opened in?</p>
        <li data-md>
-        <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑦">browsing context id</a> of the newly created <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context④">browsing context</a>.</p>
+        <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑥">browsing context id</a> of the newly created <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context④">browsing context</a>.</p>
        <li data-md>
         <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑦">map</a> matching the <code>BrowsingContextCreateResult</code> production, with the <code>context</code> field set to <var>context id</var>.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③②">success</a> with data <var>body</var>.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③①">success</a> with data <var>body</var>.</p>
       </ol>
      </div>
      <h5 class="heading settled" data-level="7.2.3.3" id="command-browsingContext-getTree"><span class="secno">7.2.3.3. </span><span class="content">The browsingContext.getTree Command</span><a class="self-link" href="#command-browsingContext-getTree"></a></h5>
@@ -2945,7 +3014,7 @@ BrowsingContextGetTreeParameters = {
        <li data-md>
         <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑧">map</a> matching the <code>BrowsingContextGetTreeResult</code> production, with the <code>contexts</code> field set to <var>contexts info</var>.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③③">success</a> with data <var>body</var>.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③②">success</a> with data <var>body</var>.</p>
       </ol>
      </div>
      <h5 class="heading settled" data-level="7.2.3.4" id="command-browsingContext-navigate"><span class="secno">7.2.3.4. </span><span class="content">The browsingContext.navigate Command</span><a class="self-link" href="#command-browsingContext-navigate"></a></h5>
@@ -3412,7 +3481,7 @@ ScriptEvent = (
 </pre>
      <p>The <code>ExceptionDetails</code> type represents a JavaScript exception.</p>
      <div class="algorithm" data-algorithm="get exception details">
-      <p>!!@@## To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-exception-details">get exception details</dfn> given a <var>realm</var> and a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type">completion record</a> <var>record</var>:</p>
+      <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-exception-details">get exception details</dfn> given a <var>realm</var>, a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type">completion record</a> <var>record</var> and an <var>ownership type</var>:</p>
       <ol>
        <li data-md>
         <p class="assertion">Assert: <var>record</var>.[[Type]] is <code>throw</code>.</p>
@@ -3422,8 +3491,7 @@ ScriptEvent = (
         <p>TODO: Tighten up the requirements here; people will probably try to parse
  this data with regex or something equally bad.</p>
        <li data-md>
-        <p>Let <var>exception</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑤">serialize as a remote value</a> given <var>record</var>.[[Value]], <code>1</code> as <var>max depth</var>, <code>true</code> as <var>node details</var>,
- a <code>new set</code> as <var>set of known objects</var> and <var>realm</var>.</p>
+        <p>Let <var>exception</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑤">serialize as a remote value</a> given <var>record</var>.[[Value]], <code>1</code> as <var>max depth</var>, <var>ownership type</var>, <code>new map</code> as <var>serialization internal map</var> and <var>realm</var>.</p>
        <li data-md>
         <p>Let <var>stack trace</var> be the <a data-link-type="dfn" href="#stack-trace-for-an-exception" id="ref-for-stack-trace-for-an-exception">stack trace for an exception</a> given <var>record</var>.</p>
        <li data-md>
@@ -3447,13 +3515,13 @@ created.</p>
        To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-a-realm">get a realm</dfn> given <var>realm id</var>: 
       <ol>
        <li data-md>
-        <p>If <var>realm id</var> is null, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③④">success</a> with data null.</p>
+        <p>If <var>realm id</var> is null, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③③">success</a> with data null.</p>
        <li data-md>
         <p>If there is no <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms④">realm</a> with <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id">id</a> <var>realm id</var> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②①">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-frame" id="ref-for-dfn-no-such-frame①">no such frame</a></p>
        <li data-md>
         <p>Let <var>realm</var> be the <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms⑤">realm</a> with <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id①">id</a> <var>realm id</var>.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑤">success</a> with data <var>realm</var></p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③④">success</a> with data <var>realm</var></p>
       </ol>
       <p class="issue" id="issue-89e6b783"><a class="self-link" href="#issue-89e6b783"></a> This has the wrong error code</p>
      </div>
@@ -3539,7 +3607,7 @@ WorkletRealmInfo = {
            <li data-md>
             <p>Let <var>browsing context</var> be <var>document</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑤">browsing context</a>.</p>
            <li data-md>
-            <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑧">browsing context id</a> for <var>browsing context</var>.</p>
+            <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑦">browsing context id</a> for <var>browsing context</var>.</p>
            <li data-md>
             <p>Let <var>realm info</var> be a map matching the <code>WindowRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, the <code>origin</code> field set to <var>origin</var>, and the <code>context</code> field set to <var>context id</var>.</p>
@@ -3757,12 +3825,52 @@ associated with the context’s active document.</p>
           <p>Let <var>realm</var> be <a data-link-type="dfn" href="#get-a-realm" id="ref-for-get-a-realm">get a realm</a> given <var>realm id</var>.</p>
         </ol>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑥">success</a> with data <var>realm</var></p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑤">success</a> with data <var>realm</var></p>
       </ol>
       <p class="issue" id="issue-89e6b783①"><a class="self-link" href="#issue-89e6b783①"></a> This has the wrong error code</p>
      </div>
+     <h5 class="heading settled" data-level="7.3.2.8" id="type-script-Ownership"><span class="secno">7.3.2.8. </span><span class="content">The script.Ownership type</span><a class="self-link" href="#type-script-Ownership"></a></h5>
+<pre class="cddl local-cddl remote-cddl">SerializationOwnershipModel = "root" / "none"
+</pre>
+     <p>The <code>SerializationOwnershipModel</code> specifies how the serialized value
+ownership should be treated.</p>
      <h4 class="heading settled" data-level="7.3.3" id="module-script-commands"><span class="secno">7.3.3. </span><span class="content">Commands</span><a class="self-link" href="#module-script-commands"></a></h4>
-     <h5 class="heading settled" data-level="7.3.3.1" id="command-script-callFunction"><span class="secno">7.3.3.1. </span><span class="content">The script.callFunction Command</span><a class="self-link" href="#command-script-callFunction"></a></h5>
+     <h5 class="heading settled" data-level="7.3.3.1" id="command-script-disown"><span class="secno">7.3.3.1. </span><span class="content">The script.disown Command</span><a class="self-link" href="#command-script-disown"></a></h5>
+     <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptdisown">script.disown<a class="self-link" href="#commands-scriptdisown"></a></dfn> command disowns the given handles.
+This does not guarantee the handled object will be garbage collected, as there can be
+other handles or strong ECMAScript references.</p>
+     <dl>
+      <dt>Command Type
+      <dd>
+<pre class="cddl remote-cddl">ScriptDisownCommand = {
+  method: "script.disown",
+  params: DisownParameters
+}
+
+GetRealmsParameters = {
+  handles: [Handle]
+  target: Target;
+}
+</pre>
+     </dl>
+     <div class="algorithm" data-algorithm="remote end steps for script.disown">
+       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①①">remote end steps</a> with <var>command parameters</var> are: 
+      <ol>
+       <li data-md>
+        <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑧">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
+       <li data-md>
+        <p>Let <var>handles</var> the value of the <code>handles</code> field of <var>command parameters</var>.</p>
+       <li data-md>
+        <p>For each <var>handle id</var> of <var>handles</var>:</p>
+        <ol>
+         <li data-md>
+          <p>Let <var>handle map</var> be <var>realm</var>’s <a data-link-type="dfn" href="#handle-object-map" id="ref-for-handle-object-map③">handle object map</a></p>
+         <li data-md>
+          <p>If <var>handle map</var> contains <var>handle id</var>, remove <var>handle id</var> from the <var>handle map</var>.</p>
+        </ol>
+      </ol>
+     </div>
+     <h5 class="heading settled" data-level="7.3.3.2" id="command-script-callFunction"><span class="secno">7.3.3.2. </span><span class="content">The script.callFunction Command</span><a class="self-link" href="#command-script-callFunction"></a></h5>
      <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptcallfunction">script.callFunction<a class="self-link" href="#commands-scriptcallfunction"></a></dfn> command calls a provided
 function with given arguments in a given realm.</p>
      <p><code>RealmInfo</code> can be either a realm or a browsing context.</p>
@@ -3781,6 +3889,7 @@ ScriptCallFunctionParameters = {
   ?this: ArgumentValue;
   ?awaitPromise: bool;
   target: Target;
+  ?ownership: OwnershipModel;
 }
 
 ArgumentValue = (
@@ -3804,12 +3913,12 @@ ArgumentValue = (
         <p>For each <var>serialized argument</var> of <var>serialized arguments list</var>:</p>
         <ol>
          <li data-md>
-          <p>Let <var>deserialized argument</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑧">trying</a> to <a data-link-type="dfn" href="#deserialize-local-value" id="ref-for-deserialize-local-value③">deserialize local value</a> given <var>realm</var> and <var>serialized argument</var>.</p>
+          <p>Let <var>deserialized argument</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑨">trying</a> to <a data-link-type="dfn" href="#deserialize-local-value" id="ref-for-deserialize-local-value③">deserialize local value</a> given <var>realm</var> and <var>serialized argument</var>.</p>
          <li data-md>
           <p>Append <var>deserialized argument</var> to the <var>deserialized arguments list</var>.</p>
         </ol>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑦">success</a> with data <var>deserialized arguments list</var>.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑥">success</a> with data <var>deserialized arguments list</var>.</p>
       </ol>
      </div>
      <div class="algorithm" data-algorithm="evaluate function body">
@@ -3830,10 +3939,10 @@ ArgumentValue = (
         <p>Return <var>function body evaluation status</var>.</p>
       </ol>
      </div>
-     <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①①">remote end steps</a> with <var>command parameters</var> are:</p>
+     <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①②">remote end steps</a> with <var>command parameters</var> are:</p>
      <ol>
       <li data-md>
-       <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑨">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
+       <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②⓪">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target①">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
       <li data-md>
        <p>Let <var>realm id</var> be <var>realm</var>’s <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id③">realm id</a>.</p>
       <li data-md>
@@ -3844,16 +3953,20 @@ ArgumentValue = (
       <li data-md>
        <p>Let <var>deserialized arguments</var> be an empty list.</p>
       <li data-md>
-       <p>If <var>command arguments</var> is not null, set <var>deserialized arguments</var> to the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②⓪">trying</a> to <a data-link-type="dfn" href="#deserialize-arguments" id="ref-for-deserialize-arguments">deserialize arguments</a> given <var>realm</var> and <var>command arguments</var>.</p>
+       <p>If <var>command arguments</var> is not null, set <var>deserialized arguments</var> to the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②①">trying</a> to <a data-link-type="dfn" href="#deserialize-arguments" id="ref-for-deserialize-arguments">deserialize arguments</a> given <var>realm</var> and <var>command arguments</var>.</p>
       <li data-md>
        <p>Let <var>this parameter</var> be the value of the <code>this</code> field
  of <var>command parameters</var>.</p>
       <li data-md>
        <p>Let <var>this object</var> be null.</p>
       <li data-md>
-       <p>If <var>this parameter</var> is not null, set <var>this object</var> to the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②①">trying</a> to <a data-link-type="dfn" href="#deserialize-local-value" id="ref-for-deserialize-local-value④">deserialize local value</a> given <var>realm</var> and <var>this parameter</var>.</p>
+       <p>If <var>this parameter</var> is not null, set <var>this object</var> to the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②②">trying</a> to <a data-link-type="dfn" href="#deserialize-local-value" id="ref-for-deserialize-local-value④">deserialize local value</a> given <var>realm</var> and <var>this parameter</var>.</p>
       <li data-md>
        <p>Let <var>function declaration</var> be the value of the <code>functionDeclaration</code> field of <var>command parameters</var>.</p>
+      <li data-md>
+       <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>, if present, or <code>true</code> otherwise.</p>
+      <li data-md>
+       <p>Let <var>result ownership</var> be the value of the <code>resultOwnership</code> field of <var>command parameters</var>, if present, or <code>none</code> otherwise.</p>
       <li data-md>
        <p>Let <var>function body evaluation status</var> be the result of <a data-link-type="dfn" href="#evaluate-function-body" id="ref-for-evaluate-function-body">evaluate function body</a> (<var>function declaration</var>, <var>environment settings</var>, <var>base URL</var>, <var>options</var> and <var>realm</var>).</p>
       <li data-md>
@@ -3871,8 +3984,7 @@ ArgumentValue = (
       <li data-md>
        <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-call" id="ref-for-sec-call">Call</a>(<var>function object</var>, <var>this object</var>, <var>deserialized arguments</var>).</p>
       <li data-md>
-       <p>If <var>evaluation status</var>.[[Type]] is <code>normal</code>, and <var>await promise</var> is true,
- and <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ispromise" id="ref-for-sec-ispromise①">IsPromise</a>(<var>evaluation status</var>.[[Value]]):</p>
+       <p>If <var>evaluation status</var>.[[Type]] is <code>normal</code>, and <var>await promise</var> is <code>true</code>, and <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ispromise" id="ref-for-sec-ispromise①">IsPromise</a>(<var>evaluation status</var>.[[Value]]):</p>
        <ol>
         <li data-md>
          <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#await" id="ref-for-await">Await</a>(<var>evaluation status</var>.[[Value]]).</p>
@@ -3883,19 +3995,19 @@ ArgumentValue = (
        <p>If <var>evaluation status</var>.[[Type]] is <code>throw</code>:</p>
        <ol>
         <li data-md>
-         <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details">get exception details</a> given <var>realm</var> and <var>evaluation status</var>.</p>
+         <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details">get exception details</a> given <var>realm</var>, <var>evaluation status</var> and <var>result ownership</var> as <var>ownership type</var>.</p>
         <li data-md>
          <p>Return a new map matching the <code>ScriptResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
        </ol>
       <li data-md>
        <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
       <li data-md>
-       <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑥">serialize as a remote value</a> given <var>evaluation status</var>.[[Value]], <code>1</code> as <var>max depth</var>, <code>true</code> as <var>node details</var>, <code>new set</code> as <var>set of known objects</var> and <var>realm</var>.</p>
+       <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑥">serialize as a remote value</a> given <var>evaluation status</var>.[[Value]], <code>1</code> as <var>max depth</var>, <var>result ownership</var> as <var>ownership type</var>, <code>new map</code> as <var>serialization internal map</var> and <var>realm</var>.</p>
       <li data-md>
        <p>Return a new map matching the <code>ScriptResultSuccess</code> production, with the <code>realm</code> field set to <var>realm id</var>,
  and the <code>result</code> field set to <var>result</var>.</p>
      </ol>
-     <h5 class="heading settled" data-level="7.3.3.2" id="command-script-evaluate"><span class="secno">7.3.3.2. </span><span class="content">The script.evaluate Command</span><a class="self-link" href="#command-script-evaluate"></a></h5>
+     <h5 class="heading settled" data-level="7.3.3.3" id="command-script-evaluate"><span class="secno">7.3.3.3. </span><span class="content">The script.evaluate Command</span><a class="self-link" href="#command-script-evaluate"></a></h5>
      <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptevaluate">script.evaluate<a class="self-link" href="#commands-scriptevaluate"></a></dfn> command evaluates a provided
 script in a given realm. For convenience a browsing context can be provided in
 place of a realm, in which case the realm used is the realm of the browsing
@@ -3912,9 +4024,10 @@ case the resolved value of the promise is returned.</p>
 }
 
 ScriptEvaluateParameters = {
-  expression: text,
-  target: Target,
-  ?awaitPromise: bool,
+  expression: text;
+  target: Target;
+  ?awaitPromise: bool;
+  ?resultOwnership: OwnershipModel;
 }
 </pre>
       <dt>Return Type
@@ -3925,10 +4038,10 @@ ScriptEvaluateParameters = {
      <p>TODO: Add timeout argument. It’s not totally clear how this ought to work; in
 Chrome it seems like the timeout doesn’t apply to the promise resolve step, but
 that likely isn’t what clients want.</p>
-     <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①②">remote end steps</a> with <var>command parameters</var> are:</p>
+     <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①③">remote end steps</a> with <var>command parameters</var> are:</p>
      <ol>
       <li data-md>
-       <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②②">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target①">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
+       <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②③">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target②">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
       <li data-md>
        <p>Let <var>realm id</var> be <var>realm</var>’s <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id④">realm id</a>.</p>
       <li data-md>
@@ -3938,6 +4051,8 @@ that likely isn’t what clients want.</p>
  parameters</var>.</p>
       <li data-md>
        <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>, if present, or <code>true</code> otherwise.</p>
+      <li data-md>
+       <p>Let <var>result ownership</var> be the value of the <code>resultOwnership</code> field of <var>command parameters</var>, if present, or <code>none</code> otherwise.</p>
       <li data-md>
        <p>Let <var>options</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options" id="ref-for-default-classic-script-fetch-options">default classic script fetch options</a>.</p>
       <li data-md>
@@ -3961,19 +4076,19 @@ that likely isn’t what clients want.</p>
        <p>If <var>evaluation status</var>.[[Type]] is <code>throw</code>:</p>
        <ol>
         <li data-md>
-         <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details①">get exception details</a> given <var>realm</var> and <var>evaluation status</var>.</p>
+         <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details①">get exception details</a> given <var>realm</var>, <var>evaluation status</var> and <var>result ownership</var> as <var>ownership type</var>.</p>
         <li data-md>
          <p>Return a new map matching the <code>ScriptResultException</code> production, with the <code>realm</code> field set to <var>realm id</var>, and the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
        </ol>
       <li data-md>
        <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
       <li data-md>
-       <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑦">serialize as a remote value</a> given <var>evaluation status</var>.[[Value]], <code>1</code> as <var>max depth</var>, <code>true</code> as <var>node details</var>, <code>new set</code> as <var>set of known objects</var> and <var>realm</var>.</p>
+       <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑦">serialize as a remote value</a> given <var>evaluation status</var>.[[Value]], <code>1</code> as <var>max depth</var>, <var>result ownership</var> as <var>ownership type</var>, <code>new map</code> as <var>serialization internal map</var> and <var>realm</var>.</p>
       <li data-md>
        <p>Return a new map matching the <code>ScriptResultSuccess</code> production, with the with the <code>realm</code> field set to <var>realm id</var>, and
  the <code>result</code> field set to <var>result</var>.</p>
      </ol>
-     <h5 class="heading settled" data-level="7.3.3.3" id="command-script-getRealms"><span class="secno">7.3.3.3. </span><span class="content">The script.getRealms Command</span><a class="self-link" href="#command-script-getRealms"></a></h5>
+     <h5 class="heading settled" data-level="7.3.3.4" id="command-script-getRealms"><span class="secno">7.3.3.4. </span><span class="content">The script.getRealms Command</span><a class="self-link" href="#command-script-getRealms"></a></h5>
      <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptgetrealms">script.getRealms<a class="self-link" href="#commands-scriptgetrealms"></a></dfn> command returns a list of
 all realms, optionally filtered to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms⑥">realms</a> of a specific type, or to the
 realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document②">document</a> currently loaded in a specified <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑥">browsing context</a>.</p>
@@ -4000,7 +4115,7 @@ ScriptGetRealmsResult = {
 </pre>
      </dl>
      <div class="algorithm" data-algorithm="remote end steps for script.getRealms">
-       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①③">remote end steps</a> with <var>session</var> and <var>command parameters</var> are: 
+       The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①④">remote end steps</a> with <var>session</var> and <var>command parameters</var> are: 
       <ol>
        <li data-md>
         <p>Let <var>environment settings</var> be a list of all the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object③">environment settings objects</a> that have their <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-environment-execution-ready-flag" id="ref-for-concept-environment-execution-ready-flag">execution ready flag</a> set.</p>
@@ -4008,7 +4123,7 @@ ScriptGetRealmsResult = {
         <p>If <var>command parameters</var> contains <code>context</code>:</p>
         <ol>
          <li data-md>
-          <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②③">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑥">get a browsing context</a> with <var>command parameters</var>["<code>context</code>"].</p>
+          <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②④">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑥">get a browsing context</a> with <var>command parameters</var>["<code>context</code>"].</p>
          <li data-md>
           <p>Let <var>document</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#active-document" id="ref-for-active-document⑤">active document</a>.</p>
          <li data-md>
@@ -4047,7 +4162,7 @@ ScriptGetRealmsResult = {
         <p>Let <var>body</var> be a map matching the <code>GetRealmsResult</code> production,
  with the <code>realms</code> field set to <var>realms</var>.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑧">success</a> with data <var>body</var>.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑦">success</a> with data <var>body</var>.</p>
       </ol>
       <p class="issue" id="issue-ac9113ee"><a class="self-link" href="#issue-ac9113ee"></a> Extend this to also allow realm parents e.g. for nested workers? Or get all ancestor workers.</p>
       <p class="issue" id="issue-b6525c5d"><a class="self-link" href="#issue-b6525c5d"></a> We might want to have a more sophisticated filter system than just a
@@ -4207,7 +4322,7 @@ worker</a> algorithm:</p>
      <h3 class="heading settled" data-level="7.4" id="module-log"><span class="secno">7.4. </span><span class="content">Log</span><a class="self-link" href="#module-log"></a></h3>
      <p>The <dfn data-dfn-for="modules" data-dfn-type="dfn" data-export id="modules-log">log<a class="self-link" href="#modules-log"></a></dfn> module contains functionality and events
 related to logging.</p>
-     <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①③">BiDi Session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="log-event-buffer">log event buffer</dfn> which is a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑧">map</a> from <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑨">browsing context id</a> to a list of log events for that context that have not
+     <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①③">BiDi Session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="log-event-buffer">log event buffer</dfn> which is a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑧">map</a> from <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑧">browsing context id</a> to a list of log events for that context that have not
 been emitted. User agents may impose a maximum size on this buffer, subject to
 the condition that if events A and B happen in the same context with A occuring
 before B, and both are added to the buffer, the entry for B must not be removed
@@ -4223,7 +4338,7 @@ before the entry for A.</p>
         <p>For each <var>context</var> of <var>contexts</var>:</p>
         <ol>
          <li data-md>
-          <p>Append the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①⓪">browsing context id</a> for <var>context</var> to <var>context ids</var>.</p>
+          <p>Append the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑨">browsing context id</a> for <var>context</var> to <var>context ids</var>.</p>
         </ol>
        <li data-md>
         <p>For each <var>context id</var> in <var>context ids</var>:</p>
@@ -4322,8 +4437,8 @@ provide additional fields specific to the entry type.</p>
        <li data-md>
         <p>Let <var>text</var> be an empty string.</p>
        <li data-md>
-        <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values①①">Type</a>(|<var>args</var>[0]) is String, and <var>args</var>[0] contains a <a data-link-type="dfn" href="https://console.spec.whatwg.org#formatting-specifiers" id="ref-for-formatting-specifiers">formatting
- specifier</a>, let <var>formatted args</var> be <a data-link-type="dfn" href="https://console.spec.whatwg.org#formatter" id="ref-for-formatter">Formatter</a>(<var>args</var>). Otherwise let <var>formatted args</var> be <var>args</var>.</p>
+        <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values①①">Type</a>(|<var>args</var>[0]) is String, and <var>args</var>[0] contains a <a data-link-type="dfn" href="https://console.spec.whatwg.org#formatting-specifiers" id="ref-for-formatting-specifiers">formatting specifier</a>, let <var>formatted args</var> be <a data-link-type="dfn" href="https://console.spec.whatwg.org#formatter" id="ref-for-formatter">Formatter</a>(<var>args</var>). Otherwise
+ let <var>formatted args</var> be <var>args</var>.</p>
         <p class="issue" id="issue-b611588d"><a class="self-link" href="#issue-b611588d"></a> This is underdefined in the console spec, so it’s unclar if we can get
  interoperable behaviour here.</p>
        <li data-md>
@@ -4335,12 +4450,17 @@ provide additional fields specific to the entry type.</p>
           <p>If <var>arg</var> is a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-primitive-value" id="ref-for-sec-primitive-value">primitive ECMAScript value</a>, append <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-tostring" id="ref-for-sec-tostring③">ToString</a>(<var>arg</var>) to <var>text</var>. Otherwise append an implementation-defined string to <var>text</var>.</p>
         </ol>
        <li data-md>
+        <p>Let <var>realm</var> be the <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id⑧">realm id</a> of the <a data-link-type="dfn" href="https://tc39.es/ecma262/#current-realm" id="ref-for-current-realm">current Realm Record</a>.</p>
+       <li data-md>
         <p>Let <var>serialized args</var> be a new list.</p>
        <li data-md>
-        <p>For each <var>arg</var> of <var>args</var>, append the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑧">serialize as a remote
- value</a> given <var>arg</var>, null, true, and an empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-set" id="ref-for-ordered-set②">set</a> to <var>serialized args</var>.</p>
-       <li data-md>
-        <p>Let <var>realm</var> be the <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id⑧">realm id</a> of the <a data-link-type="dfn" href="https://tc39.es/ecma262/#current-realm" id="ref-for-current-realm">current Realm Record</a>.</p>
+        <p>For each <var>arg</var> of <var>args</var>:</p>
+        <ol>
+         <li data-md>
+          <p>Let <var>serialized arg</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑧">serialize as a remote value</a> given <var>arg</var> as <var>value</var>, <code>1</code> as <var>max depth</var>, <code>none</code> as <var>ownership type</var>, <code>new map</code> as <var>serialization internal map</var> and <var>realm</var>.</p>
+         <li data-md>
+          <p>Add <var>serialized arg</var> to <var>serialized args</var>.</p>
+        </ol>
        <li data-md>
         <p>If <var>method</var> is "<code>assert</code>", "<code>error</code>",
  "<code>trace</code>", or "<code>warn</code>", let <var>stack</var> be the <a data-link-type="dfn" href="#current-stack-trace" id="ref-for-current-stack-trace">current
@@ -4514,7 +4634,7 @@ end:</p>
    <li><a href="#context-sandbox-map">context sandbox map</a><span>, in § 5</span>
    <li><a href="#create-a-sandbox-realm">create a sandbox realm</a><span>, in § 5.1</span>
    <li><a href="#current-stack-trace">current stack trace</a><span>, in § 7.3.2.5</span>
-   <li><a href="#deserialize-arguments">deserialize arguments</a><span>, in § 7.3.3.1</span>
+   <li><a href="#deserialize-arguments">deserialize arguments</a><span>, in § 7.3.3.2</span>
    <li><a href="#deserialize-key-value-list">deserialize key-value list</a><span>, in § 6.2.2.1</span>
    <li><a href="#deserialize-local-value">deserialize local value</a><span>, in § 6.2.2.1</span>
    <li><a href="#deserialize-primitive-protocol-value">deserialize primitive protocol value</a><span>, in § 6.2.1.2</span>
@@ -4523,7 +4643,7 @@ end:</p>
    <li><a href="#emit-a-context-created-event">Emit a context created event</a><span>, in § 7.2.4.1</span>
    <li><a href="#emit-an-event">emit an event</a><span>, in § 4</span>
    <li><a href="#error-reporting-steps">error reporting steps</a><span>, in § 8.1</span>
-   <li><a href="#evaluate-function-body">evaluate function body</a><span>, in § 7.3.3.1</span>
+   <li><a href="#evaluate-function-body">evaluate function body</a><span>, in § 7.3.3.2</span>
    <li><a href="#event">event</a><span>, in § 3.5</span>
    <li><a href="#event-enabled-browsing-contexts">event enabled browsing contexts</a><span>, in § 3.5</span>
    <li><a href="#event-is-enabled">event is enabled</a><span>, in § 3.5</span>
@@ -4545,6 +4665,8 @@ end:</p>
    <li><a href="#event-global-event-set">global event set</a><span>, in § 3.5</span>
    <li><a href="#handle-a-connection-closing">handle a connection closing</a><span>, in § 4</span>
    <li><a href="#handle-an-incoming-message">handle an incoming message</a><span>, in § 4</span>
+   <li><a href="#handle-for-an-object">handle for an object</a><span>, in § 6.2.3</span>
+   <li><a href="#handle-object-map">handle object map</a><span>, in § 6.1</span>
    <li><a href="#listener-host">host</a><span>, in § 4</span>
    <li><a href="#navigation-status-id">id</a><span>, in § 7.2</span>
    <li><a href="#event-in-the-default-event-set">in the default event set</a><span>, in § 3.5</span>
@@ -4557,8 +4679,6 @@ end:</p>
    <li><a href="#log-event-buffer">log event buffer</a><span>, in § 7.4</span>
    <li><a href="#module">module</a><span>, in § 3.3</span>
    <li><a href="#module-name">module name</a><span>, in § 3.3</span>
-   <li><a href="#object-id-for-an-object">object id for an object</a><span>, in § 6.2.3</span>
-   <li><a href="#object-id-map">object id map</a><span>, in § 6.1</span>
    <li><a href="#obtain-a-set-of-event-names">obtain a set of event names</a><span>, in § 3.5</span>
    <li><a href="#navigation-status-pending">pending</a><span>, in § 7.2</span>
    <li><a href="#listener-port">port</a><span>, in § 4</span>
@@ -4575,9 +4695,10 @@ end:</p>
    <li><a href="#sandboxproxy">SandboxProxy</a><span>, in § 5.2</span>
    <li><a href="#sandboxwindowproxy">SandboxWindowProxy</a><span>, in § 5.3</span>
    <li><a href="#modules-script">script</a><span>, in § 7.3</span>
-   <li><a href="#commands-scriptcallfunction">script.callFunction</a><span>, in § 7.3.3.1</span>
-   <li><a href="#commands-scriptevaluate">script.evaluate</a><span>, in § 7.3.3.2</span>
-   <li><a href="#commands-scriptgetrealms">script.getRealms</a><span>, in § 7.3.3.3</span>
+   <li><a href="#commands-scriptcallfunction">script.callFunction</a><span>, in § 7.3.3.2</span>
+   <li><a href="#commands-scriptdisown">script.disown</a><span>, in § 7.3.3.1</span>
+   <li><a href="#commands-scriptevaluate">script.evaluate</a><span>, in § 7.3.3.3</span>
+   <li><a href="#commands-scriptgetrealms">script.getRealms</a><span>, in § 7.3.3.4</span>
    <li><a href="#stackframe-script-url">script url</a><span>, in § 7.3.2.5</span>
    <li><a href="#listener-secure-flag">secure flag</a><span>, in § 4</span>
    <li><a href="#serialize-as-a-list">serialize as a list</a><span>, in § 6.2.3.1</span>
@@ -4590,6 +4711,7 @@ end:</p>
    <li><a href="#commands-sessionsubscribe">session.subscribe</a><span>, in § 7.1.3.3</span>
    <li><a href="#commands-sessionunsubscribe">session.unsubscribe</a><span>, in § 7.1.3.4</span>
    <li><a href="#session-websocket-connections">session WebSocket connections</a><span>, in § 4</span>
+   <li><a href="#set-internal-ids-if-needed">set internal ids if needed</a><span>, in § 6.2.3</span>
    <li><a href="#command-set-of-all-command-names">set of all command names</a><span>, in § 3.4</span>
    <li><a href="#set-of-sessions-for-which-an-event-is-enabled">set of sessions for which an event is enabled</a><span>, in § 3.5</span>
    <li><a href="#stack-frame">stack frame</a><span>, in § 7.3.2.5</span>
@@ -4672,15 +4794,14 @@ end:</p>
    <a href="https://dom.spec.whatwg.org/#concept-document">https://dom.spec.whatwg.org/#concept-document</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-document">4. Transport</a> <a href="#ref-for-concept-document①">(2)</a>
-    <li><a href="#ref-for-concept-document②">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-concept-document②">7.3.3.4. The script.getRealms Command</a>
     <li><a href="#ref-for-concept-document③">7.3.4.1. The script.realmCreated Event</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-element">
    <a href="https://dom.spec.whatwg.org/#concept-element">https://dom.spec.whatwg.org/#concept-element</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-element">6.2.3. Remote Value</a>
-    <li><a href="#ref-for-concept-element①">6.2.3.1. Serialization</a> <a href="#ref-for-concept-element②">(2)</a>
+    <li><a href="#ref-for-concept-element">6.2.3.1. Serialization</a> <a href="#ref-for-concept-element①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-boundary-point-node">
@@ -4723,14 +4844,14 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-await">
    <a href="https://tc39.es/ecma262/#await">https://tc39.es/ecma262/#await</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-await">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-await①">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-await">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-await①">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-sec-call">
    <a href="https://tc39.es/ecma262/#sec-call">https://tc39.es/ecma262/#sec-call</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-sec-call">7.3.3.1. The script.callFunction Command</a>
+    <li><a href="#ref-for-sec-call">7.3.3.2. The script.callFunction Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-sec-completion-record-specification-type">
@@ -4822,15 +4943,15 @@ end:</p>
    <a href="https://tc39.es/ecma262/#sec-iscallable">https://tc39.es/ecma262/#sec-iscallable</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-sec-iscallable">6.2.3.1. Serialization</a>
-    <li><a href="#ref-for-sec-iscallable①">7.3.3.1. The script.callFunction Command</a>
+    <li><a href="#ref-for-sec-iscallable①">7.3.3.2. The script.callFunction Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-sec-ispromise">
    <a href="https://tc39.es/ecma262/#sec-ispromise">https://tc39.es/ecma262/#sec-ispromise</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-sec-ispromise">6.2.3.1. Serialization</a>
-    <li><a href="#ref-for-sec-ispromise①">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-sec-ispromise②">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-sec-ispromise①">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-sec-ispromise②">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-sec-isregexp">
@@ -4884,7 +5005,7 @@ end:</p>
     <li><a href="#ref-for-sec-code-realms">5.1. Sandbox Realms</a>
     <li><a href="#ref-for-sec-code-realms①">6.1. Reference</a> <a href="#ref-for-sec-code-realms②">(2)</a>
     <li><a href="#ref-for-sec-code-realms③">7.3.2.2. The script.Realm type</a> <a href="#ref-for-sec-code-realms④">(2)</a> <a href="#ref-for-sec-code-realms⑤">(3)</a>
-    <li><a href="#ref-for-sec-code-realms⑥">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-sec-code-realms⑥">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-sec-regexp-pattern-flags">
@@ -4902,8 +5023,8 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-sec-runtime-semantics-scriptevaluation">
    <a href="https://tc39.es/ecma262/#sec-runtime-semantics-scriptevaluation">https://tc39.es/ecma262/#sec-runtime-semantics-scriptevaluation</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-sec-runtime-semantics-scriptevaluation">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-sec-runtime-semantics-scriptevaluation①">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-sec-runtime-semantics-scriptevaluation">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-sec-runtime-semantics-scriptevaluation①">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-sec-set-objects">
@@ -5003,8 +5124,7 @@ end:</p>
    <a href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy">https://html.spec.whatwg.org/multipage/window-object.html#windowproxy</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-windowproxy">5.1. Sandbox Realms</a>
-    <li><a href="#ref-for-windowproxy①">6.2.3. Remote Value</a>
-    <li><a href="#ref-for-windowproxy②">6.2.3.1. Serialization</a>
+    <li><a href="#ref-for-windowproxy①">6.2.3.1. Serialization</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-workerglobalscope">
@@ -5012,7 +5132,7 @@ end:</p>
    <ul>
     <li><a href="#ref-for-workerglobalscope">4. Transport</a>
     <li><a href="#ref-for-workerglobalscope①">7.3.2.3. The script.RealmInfo type</a> <a href="#ref-for-workerglobalscope②">(2)</a>
-    <li><a href="#ref-for-workerglobalscope③">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-workerglobalscope③">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-workletglobalscope">
@@ -5035,13 +5155,13 @@ end:</p>
     <li><a href="#ref-for-active-document②">7.2.3.5. The browsingContext.reload Command</a>
     <li><a href="#ref-for-active-document③">7.2.4.1. The browsingContext.contextCreated Event</a>
     <li><a href="#ref-for-active-document④">7.3.2.7. The script.Target type</a>
-    <li><a href="#ref-for-active-document⑤">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-active-document⑤">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-api-base-url">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url">https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-api-base-url">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-api-base-url">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-script-base-url">
@@ -5067,8 +5187,8 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-clean-up-after-running-script">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#clean-up-after-running-script">https://html.spec.whatwg.org/multipage/webappapis.html#clean-up-after-running-script</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-clean-up-after-running-script">7.3.3.1. The script.callFunction Command</a> <a href="#ref-for-clean-up-after-running-script①">(2)</a>
-    <li><a href="#ref-for-clean-up-after-running-script②">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-clean-up-after-running-script">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-clean-up-after-running-script①">(2)</a>
+    <li><a href="#ref-for-clean-up-after-running-script②">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-close-a-browsing-context">
@@ -5080,8 +5200,8 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-creating-a-classic-script">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script">https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-creating-a-classic-script">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-creating-a-classic-script①">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-creating-a-classic-script">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-creating-a-classic-script①">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-creating-a-new-browsing-context">
@@ -5099,16 +5219,16 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-default-classic-script-fetch-options">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options">https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-default-classic-script-fetch-options">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-default-classic-script-fetch-options">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-environment-settings-object">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-environment-settings-object">7.3.2.7. The script.Target type</a>
-    <li><a href="#ref-for-environment-settings-object①">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-environment-settings-object②">7.3.3.2. The script.evaluate Command</a>
-    <li><a href="#ref-for-environment-settings-object③">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-environment-settings-object①">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-environment-settings-object②">7.3.3.3. The script.evaluate Command</a>
+    <li><a href="#ref-for-environment-settings-object③">7.3.3.4. The script.getRealms Command</a>
     <li><a href="#ref-for-environment-settings-object④">7.3.4.1. The script.realmCreated Event</a> <a href="#ref-for-environment-settings-object⑤">(2)</a>
     <li><a href="#ref-for-environment-settings-object⑥">7.3.4.2. The script.realmDestroyed Event</a> <a href="#ref-for-environment-settings-object⑦">(2)</a>
    </ul>
@@ -5122,7 +5242,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-concept-environment-execution-ready-flag">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-environment-execution-ready-flag">https://html.spec.whatwg.org/multipage/webappapis.html#concept-environment-execution-ready-flag</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-environment-execution-ready-flag">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-concept-environment-execution-ready-flag">7.3.3.4. The script.getRealms Command</a>
     <li><a href="#ref-for-concept-environment-execution-ready-flag①">7.3.4.1. The script.realmCreated Event</a>
    </ul>
   </aside>
@@ -5137,7 +5257,7 @@ end:</p>
    <ul>
     <li><a href="#ref-for-concept-realm-global">4. Transport</a> <a href="#ref-for-concept-realm-global①">(2)</a>
     <li><a href="#ref-for-concept-realm-global②">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-concept-realm-global③">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-concept-realm-global③">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-error-handled">
@@ -5175,7 +5295,7 @@ end:</p>
    <a href="https://html.spec.whatwg.org/multipage/workers.html#concept-WorkerGlobalScope-owner-set">https://html.spec.whatwg.org/multipage/workers.html#concept-WorkerGlobalScope-owner-set</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-WorkerGlobalScope-owner-set">4. Transport</a>
-    <li><a href="#ref-for-concept-WorkerGlobalScope-owner-set①">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-concept-WorkerGlobalScope-owner-set①">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-parent-browsing-context">
@@ -5188,8 +5308,8 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-prepare-to-run-script">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#prepare-to-run-script">https://html.spec.whatwg.org/multipage/webappapis.html#prepare-to-run-script</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-prepare-to-run-script">7.3.3.1. The script.callFunction Command</a> <a href="#ref-for-prepare-to-run-script①">(2)</a>
-    <li><a href="#ref-for-prepare-to-run-script②">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-prepare-to-run-script">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-prepare-to-run-script①">(2)</a>
+    <li><a href="#ref-for-prepare-to-run-script②">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-realm-execution-context">
@@ -5197,8 +5317,8 @@ end:</p>
    <ul>
     <li><a href="#ref-for-realm-execution-context">7.3.2.3. The script.RealmInfo type</a>
     <li><a href="#ref-for-realm-execution-context①">7.3.2.7. The script.Target type</a>
-    <li><a href="#ref-for-realm-execution-context②">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-realm-execution-context③">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-realm-execution-context②">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-realm-execution-context③">7.3.3.3. The script.evaluate Command</a>
     <li><a href="#ref-for-realm-execution-context④">7.3.4.2. The script.realmDestroyed Event</a>
    </ul>
   </aside>
@@ -5341,13 +5461,13 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-string-concatenate">
    <a href="https://infra.spec.whatwg.org/#string-concatenate">https://infra.spec.whatwg.org/#string-concatenate</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-string-concatenate">7.3.3.1. The script.callFunction Command</a>
+    <li><a href="#ref-for-string-concatenate">7.3.3.2. The script.callFunction Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-iteration-continue">
    <a href="https://infra.spec.whatwg.org/#iteration-continue">https://infra.spec.whatwg.org/#iteration-continue</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-iteration-continue">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-iteration-continue">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-implementation-defined">
@@ -5378,7 +5498,6 @@ end:</p>
    <a href="https://infra.spec.whatwg.org/#ordered-set">https://infra.spec.whatwg.org/#ordered-set</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-ordered-set">4. Transport</a> <a href="#ref-for-ordered-set①">(2)</a>
-    <li><a href="#ref-for-ordered-set②">7.4.3.1. The log.entryAdded Event</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-map-size">
@@ -5550,7 +5669,7 @@ end:</p>
     <li><a href="#ref-for-dfn-errors①⑨">7.2.3.1. The browsingContext.close Command</a>
     <li><a href="#ref-for-dfn-errors②⓪">7.2.3.4. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-errors②①">7.3.2.2. The script.Realm type</a>
-    <li><a href="#ref-for-dfn-errors②②">7.3.3.1. The script.callFunction Command</a> <a href="#ref-for-dfn-errors②③">(2)</a>
+    <li><a href="#ref-for-dfn-errors②②">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-dfn-errors②③">(2)</a>
     <li><a href="#ref-for-dfn-errors②④">7.4.3.1. The log.entryAdded Event</a>
    </ul>
   </aside>
@@ -5569,7 +5688,7 @@ end:</p>
     <li><a href="#ref-for-dfn-error-code①⑦">7.2.3.1. The browsingContext.close Command</a>
     <li><a href="#ref-for-dfn-error-code①⑧">7.2.3.4. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-error-code①⑨">7.3.2.2. The script.Realm type</a>
-    <li><a href="#ref-for-dfn-error-code②⓪">7.3.3.1. The script.callFunction Command</a> <a href="#ref-for-dfn-error-code②①">(2)</a>
+    <li><a href="#ref-for-dfn-error-code②⓪">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-dfn-error-code②①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-get-a-property">
@@ -5602,7 +5721,7 @@ end:</p>
     <li><a href="#ref-for-dfn-invalid-argument①④">7.1.1. Definition</a> <a href="#ref-for-dfn-invalid-argument①⑤">(2)</a>
     <li><a href="#ref-for-dfn-invalid-argument①⑥">7.2.3.1. The browsingContext.close Command</a>
     <li><a href="#ref-for-dfn-invalid-argument①⑦">7.2.3.4. The browsingContext.navigate Command</a>
-    <li><a href="#ref-for-dfn-invalid-argument①⑧">7.3.3.1. The script.callFunction Command</a> <a href="#ref-for-dfn-invalid-argument①⑨">(2)</a>
+    <li><a href="#ref-for-dfn-invalid-argument①⑧">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-dfn-invalid-argument①⑨">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-invalid-session-id">
@@ -5669,9 +5788,10 @@ end:</p>
     <li><a href="#ref-for-dfn-remote-end-steps⑧">7.2.3.3. The browsingContext.getTree Command</a>
     <li><a href="#ref-for-dfn-remote-end-steps⑨">7.2.3.4. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-remote-end-steps①⓪">7.2.3.5. The browsingContext.reload Command</a>
-    <li><a href="#ref-for-dfn-remote-end-steps①①">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-dfn-remote-end-steps①②">7.3.3.2. The script.evaluate Command</a>
-    <li><a href="#ref-for-dfn-remote-end-steps①③">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps①①">7.3.3.1. The script.disown Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps①②">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps①③">7.3.3.3. The script.evaluate Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps①④">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-sessions">
@@ -5705,22 +5825,21 @@ end:</p>
    <ul>
     <li><a href="#ref-for-dfn-success">3.5. Events</a> <a href="#ref-for-dfn-success①">(2)</a>
     <li><a href="#ref-for-dfn-success②">4.1. Establishing a Connection</a> <a href="#ref-for-dfn-success③">(2)</a> <a href="#ref-for-dfn-success④">(3)</a>
-    <li><a href="#ref-for-dfn-success⑤">6.1. Reference</a>
-    <li><a href="#ref-for-dfn-success⑥">6.2.1.2. Deserialization</a> <a href="#ref-for-dfn-success⑦">(2)</a> <a href="#ref-for-dfn-success⑧">(3)</a> <a href="#ref-for-dfn-success⑨">(4)</a> <a href="#ref-for-dfn-success①⓪">(5)</a> <a href="#ref-for-dfn-success①①">(6)</a> <a href="#ref-for-dfn-success①②">(7)</a> <a href="#ref-for-dfn-success①③">(8)</a>
-    <li><a href="#ref-for-dfn-success①④">6.2.2.1. Deserialization</a> <a href="#ref-for-dfn-success①⑤">(2)</a> <a href="#ref-for-dfn-success①⑥">(3)</a> <a href="#ref-for-dfn-success①⑦">(4)</a> <a href="#ref-for-dfn-success①⑧">(5)</a> <a href="#ref-for-dfn-success①⑨">(6)</a> <a href="#ref-for-dfn-success②⓪">(7)</a> <a href="#ref-for-dfn-success②①">(8)</a>
-    <li><a href="#ref-for-dfn-success②②">7.1.1. Definition</a>
-    <li><a href="#ref-for-dfn-success②③">7.1.3.1. The session.status Command</a>
-    <li><a href="#ref-for-dfn-success②④">7.1.3.2. The session.new Command</a>
-    <li><a href="#ref-for-dfn-success②⑤">7.1.3.3. The session.subscribe Command</a>
-    <li><a href="#ref-for-dfn-success②⑥">7.1.3.4. The session.unsubscribe Command</a>
-    <li><a href="#ref-for-dfn-success②⑦">7.2.2.1. The browsingContext.BrowsingContext Type</a> <a href="#ref-for-dfn-success②⑧">(2)</a>
-    <li><a href="#ref-for-dfn-success②⑨">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-success③⓪">(2)</a> <a href="#ref-for-dfn-success③①">(3)</a>
-    <li><a href="#ref-for-dfn-success③②">7.2.3.2. The browsingContext.create Command</a>
-    <li><a href="#ref-for-dfn-success③③">7.2.3.3. The browsingContext.getTree Command</a>
-    <li><a href="#ref-for-dfn-success③④">7.3.2.2. The script.Realm type</a> <a href="#ref-for-dfn-success③⑤">(2)</a>
-    <li><a href="#ref-for-dfn-success③⑥">7.3.2.7. The script.Target type</a>
-    <li><a href="#ref-for-dfn-success③⑦">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-dfn-success③⑧">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-success⑤">6.2.1.2. Deserialization</a> <a href="#ref-for-dfn-success⑥">(2)</a> <a href="#ref-for-dfn-success⑦">(3)</a> <a href="#ref-for-dfn-success⑧">(4)</a> <a href="#ref-for-dfn-success⑨">(5)</a> <a href="#ref-for-dfn-success①⓪">(6)</a> <a href="#ref-for-dfn-success①①">(7)</a> <a href="#ref-for-dfn-success①②">(8)</a>
+    <li><a href="#ref-for-dfn-success①③">6.2.2.1. Deserialization</a> <a href="#ref-for-dfn-success①④">(2)</a> <a href="#ref-for-dfn-success①⑤">(3)</a> <a href="#ref-for-dfn-success①⑥">(4)</a> <a href="#ref-for-dfn-success①⑦">(5)</a> <a href="#ref-for-dfn-success①⑧">(6)</a> <a href="#ref-for-dfn-success①⑨">(7)</a> <a href="#ref-for-dfn-success②⓪">(8)</a>
+    <li><a href="#ref-for-dfn-success②①">7.1.1. Definition</a>
+    <li><a href="#ref-for-dfn-success②②">7.1.3.1. The session.status Command</a>
+    <li><a href="#ref-for-dfn-success②③">7.1.3.2. The session.new Command</a>
+    <li><a href="#ref-for-dfn-success②④">7.1.3.3. The session.subscribe Command</a>
+    <li><a href="#ref-for-dfn-success②⑤">7.1.3.4. The session.unsubscribe Command</a>
+    <li><a href="#ref-for-dfn-success②⑥">7.2.2.1. The browsingContext.BrowsingContext Type</a> <a href="#ref-for-dfn-success②⑦">(2)</a>
+    <li><a href="#ref-for-dfn-success②⑧">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-success②⑨">(2)</a> <a href="#ref-for-dfn-success③⓪">(3)</a>
+    <li><a href="#ref-for-dfn-success③①">7.2.3.2. The browsingContext.create Command</a>
+    <li><a href="#ref-for-dfn-success③②">7.2.3.3. The browsingContext.getTree Command</a>
+    <li><a href="#ref-for-dfn-success③③">7.3.2.2. The script.Realm type</a> <a href="#ref-for-dfn-success③④">(2)</a>
+    <li><a href="#ref-for-dfn-success③⑤">7.3.2.7. The script.Target type</a>
+    <li><a href="#ref-for-dfn-success③⑥">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-dfn-success③⑦">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-try">
@@ -5736,9 +5855,10 @@ end:</p>
     <li><a href="#ref-for-dfn-try①⑤">7.2.3.4. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-try①⑥">7.2.3.5. The browsingContext.reload Command</a>
     <li><a href="#ref-for-dfn-try①⑦">7.3.2.7. The script.Target type</a>
-    <li><a href="#ref-for-dfn-try①⑧">7.3.3.1. The script.callFunction Command</a> <a href="#ref-for-dfn-try①⑨">(2)</a> <a href="#ref-for-dfn-try②⓪">(3)</a> <a href="#ref-for-dfn-try②①">(4)</a>
-    <li><a href="#ref-for-dfn-try②②">7.3.3.2. The script.evaluate Command</a>
-    <li><a href="#ref-for-dfn-try②③">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-try①⑧">7.3.3.1. The script.disown Command</a>
+    <li><a href="#ref-for-dfn-try①⑨">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-dfn-try②⓪">(2)</a> <a href="#ref-for-dfn-try②①">(3)</a> <a href="#ref-for-dfn-try②②">(4)</a>
+    <li><a href="#ref-for-dfn-try②③">7.3.3.3. The script.evaluate Command</a>
+    <li><a href="#ref-for-dfn-try②④">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-try">
@@ -5754,9 +5874,10 @@ end:</p>
     <li><a href="#ref-for-dfn-try①⑤">7.2.3.4. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-try①⑥">7.2.3.5. The browsingContext.reload Command</a>
     <li><a href="#ref-for-dfn-try①⑦">7.3.2.7. The script.Target type</a>
-    <li><a href="#ref-for-dfn-try①⑧">7.3.3.1. The script.callFunction Command</a> <a href="#ref-for-dfn-try①⑨">(2)</a> <a href="#ref-for-dfn-try②⓪">(3)</a> <a href="#ref-for-dfn-try②①">(4)</a>
-    <li><a href="#ref-for-dfn-try②②">7.3.3.2. The script.evaluate Command</a>
-    <li><a href="#ref-for-dfn-try②③">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-try①⑧">7.3.3.1. The script.disown Command</a>
+    <li><a href="#ref-for-dfn-try①⑨">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-dfn-try②⓪">(2)</a> <a href="#ref-for-dfn-try②①">(3)</a> <a href="#ref-for-dfn-try②②">(4)</a>
+    <li><a href="#ref-for-dfn-try②③">7.3.3.3. The script.evaluate Command</a>
+    <li><a href="#ref-for-dfn-try②④">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-unknown-command">
@@ -5769,12 +5890,6 @@ end:</p>
    <a href="https://w3c.github.io/webdriver/#dfn-unknown-error">https://w3c.github.io/webdriver/#dfn-unknown-error</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-unknown-error">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-unknown-error①">(2)</a>
-   </ul>
-  </aside>
-  <aside class="dfn-panel" data-for="term-for-dfn-web-element-reference">
-   <a href="https://w3c.github.io/webdriver/#dfn-web-element-reference">https://w3c.github.io/webdriver/#dfn-web-element-reference</a><b>Referenced in:</b>
-   <ul>
-    <li><a href="#ref-for-dfn-web-element-reference">6.2.3. Remote Value</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-webdriver-new-session-algorithm">
@@ -6013,7 +6128,6 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-dfn-try①">trying</span>
      <li><span class="dfn-paneled" id="term-for-dfn-unknown-command">unknown command</span>
      <li><span class="dfn-paneled" id="term-for-dfn-unknown-error">unknown error</span>
-     <li><span class="dfn-paneled" id="term-for-dfn-web-element-reference">web element reference</span>
      <li><span class="dfn-paneled" id="term-for-dfn-webdriver-new-session-algorithm">webdriver new session algorithm</span>
      <li><span class="dfn-paneled" id="term-for-dfn-window-handle">window handle</span>
     </ul>
@@ -6089,7 +6203,6 @@ context</var>. <a class="issue-return" href="#issue-b6590e38" title="Jump to sec
    <div class="issue"> handle String / Number / etc. wrapper objects specially? <a class="issue-return" href="#issue-daee5863" title="Jump to section">↵</a></div>
    <div class="issue"> Does it make sense to use the same depth parameter for nodes and objects
 in general? <a class="issue-return" href="#issue-66909ae2" title="Jump to section">↵</a></div>
-   <div class="issue"> consider deprecate <var>node details</var> in favour of <var>max depth</var>. <a class="issue-return" href="#issue-39ce50ec" title="Jump to section">↵</a></div>
    <div class="issue"> <var>children</var> and child nodes are different things. Either <code>childNodeCount</code> should
 reference to <code>childNodes</code>, or it should be renamed to <code>childrenCount</code>. <a class="issue-return" href="#issue-4a5a93fc" title="Jump to section">↵</a></div>
    <div class="issue"> <code>nodeValue</code> can be null. Omit the field in such a case, or adjust type to allow
@@ -6572,11 +6685,12 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-sandboxwindowproxy①">5.1. Sandbox Realms</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="object-id-map">
-   <b><a href="#object-id-map">#object-id-map</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="handle-object-map">
+   <b><a href="#handle-object-map">#handle-object-map</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-object-id-map">6.1. Reference</a> <a href="#ref-for-object-id-map①">(2)</a>
-    <li><a href="#ref-for-object-id-map②">6.2.3. Remote Value</a> <a href="#ref-for-object-id-map③">(2)</a> <a href="#ref-for-object-id-map④">(3)</a>
+    <li><a href="#ref-for-handle-object-map">6.1. Reference</a> <a href="#ref-for-handle-object-map①">(2)</a>
+    <li><a href="#ref-for-handle-object-map②">6.2.3. Remote Value</a>
+    <li><a href="#ref-for-handle-object-map③">7.3.3.1. The script.disown Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="remotereference">
@@ -6625,13 +6739,19 @@ to express as a patch to the specification since it requires changing multiple p
    <b><a href="#deserialize-local-value">#deserialize-local-value</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-deserialize-local-value">6.2.2.1. Deserialization</a> <a href="#ref-for-deserialize-local-value①">(2)</a> <a href="#ref-for-deserialize-local-value②">(3)</a>
-    <li><a href="#ref-for-deserialize-local-value③">7.3.3.1. The script.callFunction Command</a> <a href="#ref-for-deserialize-local-value④">(2)</a>
+    <li><a href="#ref-for-deserialize-local-value③">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-deserialize-local-value④">(2)</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="object-id-for-an-object">
-   <b><a href="#object-id-for-an-object">#object-id-for-an-object</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="handle-for-an-object">
+   <b><a href="#handle-for-an-object">#handle-for-an-object</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-object-id-for-an-object">6.2.3.1. Serialization</a> <a href="#ref-for-object-id-for-an-object①">(2)</a> <a href="#ref-for-object-id-for-an-object②">(3)</a> <a href="#ref-for-object-id-for-an-object③">(4)</a> <a href="#ref-for-object-id-for-an-object④">(5)</a> <a href="#ref-for-object-id-for-an-object⑤">(6)</a> <a href="#ref-for-object-id-for-an-object⑥">(7)</a> <a href="#ref-for-object-id-for-an-object⑦">(8)</a> <a href="#ref-for-object-id-for-an-object⑧">(9)</a> <a href="#ref-for-object-id-for-an-object⑨">(10)</a> <a href="#ref-for-object-id-for-an-object①⓪">(11)</a> <a href="#ref-for-object-id-for-an-object①①">(12)</a> <a href="#ref-for-object-id-for-an-object①②">(13)</a> <a href="#ref-for-object-id-for-an-object①③">(14)</a> <a href="#ref-for-object-id-for-an-object①④">(15)</a> <a href="#ref-for-object-id-for-an-object①⑤">(16)</a> <a href="#ref-for-object-id-for-an-object①⑥">(17)</a>
+    <li><a href="#ref-for-handle-for-an-object">6.2.3.1. Serialization</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="set-internal-ids-if-needed">
+   <b><a href="#set-internal-ids-if-needed">#set-internal-ids-if-needed</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-set-internal-ids-if-needed">6.2.3.1. Serialization</a> <a href="#ref-for-set-internal-ids-if-needed①">(2)</a> <a href="#ref-for-set-internal-ids-if-needed②">(3)</a> <a href="#ref-for-set-internal-ids-if-needed③">(4)</a> <a href="#ref-for-set-internal-ids-if-needed④">(5)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="serialize-as-a-remote-value">
@@ -6639,8 +6759,8 @@ to express as a patch to the specification since it requires changing multiple p
    <ul>
     <li><a href="#ref-for-serialize-as-a-remote-value">6.2.3.1. Serialization</a> <a href="#ref-for-serialize-as-a-remote-value①">(2)</a> <a href="#ref-for-serialize-as-a-remote-value②">(3)</a> <a href="#ref-for-serialize-as-a-remote-value③">(4)</a> <a href="#ref-for-serialize-as-a-remote-value④">(5)</a>
     <li><a href="#ref-for-serialize-as-a-remote-value⑤">7.3.2.1. The script.ExceptionDetails type</a>
-    <li><a href="#ref-for-serialize-as-a-remote-value⑥">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-serialize-as-a-remote-value⑦">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-serialize-as-a-remote-value⑥">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-serialize-as-a-remote-value⑦">7.3.3.3. The script.evaluate Command</a>
     <li><a href="#ref-for-serialize-as-a-remote-value⑧">7.4.3.1. The log.entryAdded Event</a>
    </ul>
   </aside>
@@ -6666,13 +6786,12 @@ to express as a patch to the specification since it requires changing multiple p
   <aside class="dfn-panel" data-for="browsing-context-id">
    <b><a href="#browsing-context-id">#browsing-context-id</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-browsing-context-id">6.2.3. Remote Value</a>
-    <li><a href="#ref-for-browsing-context-id①">7.2.2.1. The browsingContext.BrowsingContext Type</a> <a href="#ref-for-browsing-context-id②">(2)</a>
-    <li><a href="#ref-for-browsing-context-id③">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-browsing-context-id④">(2)</a>
-    <li><a href="#ref-for-browsing-context-id⑤">7.2.2.4. The browsingContext.NavigationInfo Type</a>
-    <li><a href="#ref-for-browsing-context-id⑥">7.2.3.2. The browsingContext.create Command</a> <a href="#ref-for-browsing-context-id⑦">(2)</a>
-    <li><a href="#ref-for-browsing-context-id⑧">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-browsing-context-id⑨">7.4. Log</a> <a href="#ref-for-browsing-context-id①⓪">(2)</a>
+    <li><a href="#ref-for-browsing-context-id">7.2.2.1. The browsingContext.BrowsingContext Type</a> <a href="#ref-for-browsing-context-id①">(2)</a>
+    <li><a href="#ref-for-browsing-context-id②">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-browsing-context-id③">(2)</a>
+    <li><a href="#ref-for-browsing-context-id④">7.2.2.4. The browsingContext.NavigationInfo Type</a>
+    <li><a href="#ref-for-browsing-context-id⑤">7.2.3.2. The browsingContext.create Command</a> <a href="#ref-for-browsing-context-id⑥">(2)</a>
+    <li><a href="#ref-for-browsing-context-id⑦">7.3.2.3. The script.RealmInfo type</a>
+    <li><a href="#ref-for-browsing-context-id⑧">7.4. Log</a> <a href="#ref-for-browsing-context-id⑨">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-a-browsing-context">
@@ -6684,7 +6803,7 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-get-a-browsing-context③">7.2.3.4. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-get-a-browsing-context④">7.2.3.5. The browsingContext.reload Command</a>
     <li><a href="#ref-for-get-a-browsing-context⑤">7.3.2.7. The script.Target type</a>
-    <li><a href="#ref-for-get-a-browsing-context⑥">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-get-a-browsing-context⑥">7.3.3.4. The script.getRealms Command</a>
     <li><a href="#ref-for-get-a-browsing-context⑦">7.4.3.1. The log.entryAdded Event</a>
    </ul>
   </aside>
@@ -6731,8 +6850,8 @@ to express as a patch to the specification since it requires changing multiple p
   <aside class="dfn-panel" data-for="get-exception-details">
    <b><a href="#get-exception-details">#get-exception-details</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-get-exception-details">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-get-exception-details①">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-get-exception-details">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-get-exception-details①">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="realm-id">
@@ -6740,8 +6859,8 @@ to express as a patch to the specification since it requires changing multiple p
    <ul>
     <li><a href="#ref-for-realm-id">7.3.2.2. The script.Realm type</a> <a href="#ref-for-realm-id①">(2)</a>
     <li><a href="#ref-for-realm-id②">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-realm-id③">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-realm-id④">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-realm-id③">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-realm-id④">7.3.3.3. The script.evaluate Command</a>
     <li><a href="#ref-for-realm-id⑤">7.3.4.2. The script.realmDestroyed Event</a> <a href="#ref-for-realm-id⑥">(2)</a> <a href="#ref-for-realm-id⑦">(3)</a>
     <li><a href="#ref-for-realm-id⑧">7.4.3.1. The log.entryAdded Event</a>
    </ul>
@@ -6755,7 +6874,7 @@ to express as a patch to the specification since it requires changing multiple p
   <aside class="dfn-panel" data-for="get-the-realm-info">
    <b><a href="#get-the-realm-info">#get-the-realm-info</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-get-the-realm-info">7.3.3.3. The script.getRealms Command</a>
+    <li><a href="#ref-for-get-the-realm-info">7.3.3.4. The script.getRealms Command</a>
     <li><a href="#ref-for-get-the-realm-info①">7.3.4.1. The script.realmCreated Event</a> <a href="#ref-for-get-the-realm-info②">(2)</a>
    </ul>
   </aside>
@@ -6817,20 +6936,21 @@ to express as a patch to the specification since it requires changing multiple p
   <aside class="dfn-panel" data-for="get-a-realm-from-a-target">
    <b><a href="#get-a-realm-from-a-target">#get-a-realm-from-a-target</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-get-a-realm-from-a-target">7.3.3.1. The script.callFunction Command</a>
-    <li><a href="#ref-for-get-a-realm-from-a-target①">7.3.3.2. The script.evaluate Command</a>
+    <li><a href="#ref-for-get-a-realm-from-a-target">7.3.3.1. The script.disown Command</a>
+    <li><a href="#ref-for-get-a-realm-from-a-target①">7.3.3.2. The script.callFunction Command</a>
+    <li><a href="#ref-for-get-a-realm-from-a-target②">7.3.3.3. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="deserialize-arguments">
    <b><a href="#deserialize-arguments">#deserialize-arguments</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-deserialize-arguments">7.3.3.1. The script.callFunction Command</a>
+    <li><a href="#ref-for-deserialize-arguments">7.3.3.2. The script.callFunction Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="evaluate-function-body">
    <b><a href="#evaluate-function-body">#evaluate-function-body</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-evaluate-function-body">7.3.3.1. The script.callFunction Command</a>
+    <li><a href="#ref-for-evaluate-function-body">7.3.3.2. The script.callFunction Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="log-event-buffer">
