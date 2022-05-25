@@ -1047,7 +1047,7 @@ To <dfn>deserialize remote reference</dfn> given |realm| and |remote reference|:
 
 1. Let |handle map| be |realm|'s [=handle object map=]
 
-1. If |handle map| does not contain |handle value|, then return [=error=] with
+1. If |handle map| does not contain |handle id|, then return [=error=] with
    [=error code=] [=invalid argument=].
 
 1. Return |handle map|[|handle id|].
@@ -3451,8 +3451,8 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
    this data with regex or something equally bad.
 
 1. Let |exception| be the result of [=serialize as a remote value=] given
-   |record|.\[[Value]], <code>1</code> as |max depth|, |ownership type|,
-   <code>new map</code> as |serialization internal map| and |realm|.
+   |record|.\[[Value]], <code>1</code> as max depth, |ownership type|,
+   a new [=Map=] as serialization internal map and |realm|.
 
 1. Let |stack trace| be the [=stack trace for an exception=] given |record|.
 
@@ -3580,7 +3580,7 @@ To <dfn>get the realm info</dfn> given |environment settings|:
     <dt>|global object| is a [=Window=] object
     <dd>
       1. Let |document| be |environment settings|' [=responsible document=].
-      1. Let |browsing context| be |document|'s [=browsing context=].
+      1. Let |browsing context| be |document|'s [=/browsing context=].
       1. Let |context id| be the [=browsing context id=] for |browsing context|.
       1. Let |realm info| be a map matching the <code>WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
@@ -3849,10 +3849,10 @@ other handles or strong ECMAScript references.
       <pre class="cddl remote-cddl">
       ScriptDisownCommand = {
         method: "script.disown",
-        params: DisownParameters
+        params: ScriptDisownParameters
       }
 
-      GetRealmsParameters = {
+      ScriptDisownParameters = {
         handles: [Handle]
         target: Target;
       }
@@ -3939,8 +3939,8 @@ To <dfn>deserialize arguments</dfn> given |realm| and |serialized arguments list
 </div>
 
 <div algorithm>
-To <dfn>evaluate function body</dfn> with a given |function declaration|,
-|environment settings|, |base URL|, |options| and |realm|:
+To <dfn>evaluate function body</dfn> given |function declaration|,
+|environment settings|, |base URL|, and |options|:
 
 Note: the |function declaration| is parenthesized and evaluated.
 
@@ -3997,7 +3997,7 @@ The [=remote end steps=] with |command parameters| are:
    |command parameters|, if present, or <code>none</code> otherwise.
 
 1. Let |function body evaluation status| be the result of [=evaluate function body=]
-   (|function declaration|, |environment settings|, |base URL|, |options| and |realm|).
+   (|function declaration|, |environment settings|, |base URL|, and |options|).
 
 1. If |function body evaluation status|.\[[Type]] is <code>throw</code>, return [=error=] with
    [=error code=] [=invalid argument=].
@@ -4554,8 +4554,8 @@ ignore>options</var>:
 
 1. For each |arg| of |args|:
    1. Let |serialized arg| be the result of [=serialize as a remote value=] given
-      |arg| as |value|, <code>1</code> as |max depth|, <code>none</code> as
-      |ownership type|, <code>new map</code> as |serialization internal map| and
+      |arg| as value, <code>1</code> as max depth, <code>none</code> as
+      ownership type, a new [=Map=] as serialization internal map, and
       |realm|.
 
    1. Add |serialized arg| to |serialized args|.
