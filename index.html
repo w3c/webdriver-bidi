@@ -8,7 +8,7 @@
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
   <meta content="Bikeshed version 37b7e7e68, updated Fri May 27 15:08:11 2022 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="bc6aea54425703a38e33e3c3bace269b5122c0f0" name="document-revision">
+  <meta content="007c9cf7ee29327c84f8c646e1b3582c9cab3c71" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -626,7 +626,7 @@ dfn > a.self-link::before      { content: "#"; }
           <li><a href="#type-script-RealmInfo"><span class="secno">7.3.2.3</span> <span class="content">The script.RealmInfo type</span></a>
           <li><a href="#types-script-StackFrame"><span class="secno">7.3.2.4</span> <span class="content">The script.StackFrame type</span></a>
           <li><a href="#types-script-StackTrace"><span class="secno">7.3.2.5</span> <span class="content">The script.StackTrace type</span></a>
-          <li><a href="#type-script-Result"><span class="secno">7.3.2.6</span> <span class="content">The script.Result type</span></a>
+          <li><a href="#type-script-ScriptEvaluateResult"><span class="secno">7.3.2.6</span> <span class="content">The script.ScriptEvaluateResult type</span></a>
           <li><a href="#type-script-Source"><span class="secno">7.3.2.7</span> <span class="content">The script.Source type</span></a>
           <li><a href="#type-script-Target"><span class="secno">7.3.2.8</span> <span class="content">The script.Target type</span></a>
           <li><a href="#type-script-Ownership"><span class="secno">7.3.2.9</span> <span class="content">The script.Ownership type</span></a>
@@ -3457,7 +3457,6 @@ relating to script realms and execution.</p>
 </pre>
      <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④①">local end definition</a></p>
 <pre class="cddl local-cddl">ScriptResult = (
-  ScriptCallFunctionResult //
   ScriptEvaluateResult //
   ScriptGetRealmsResult
 )
@@ -3756,26 +3755,27 @@ Record</a> of type <code>throw</code>, <var>exception</var>, is given by:</p>
         <p>Return <a data-link-type="dfn" href="#construct-a-stack-trace" id="ref-for-construct-a-stack-trace①">construct a stack trace</a> given <var>stack</var>.</p>
       </ol>
      </div>
-     <h5 class="heading settled" data-level="7.3.2.6" id="type-script-Result"><span class="secno">7.3.2.6. </span><span class="content">The script.Result type</span><a class="self-link" href="#type-script-Result"></a></h5>
+     <h5 class="heading settled" data-level="7.3.2.6" id="type-script-ScriptEvaluateResult"><span class="secno">7.3.2.6. </span><span class="content">The script.ScriptEvaluateResult type</span><a class="self-link" href="#type-script-ScriptEvaluateResult"></a></h5>
      <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑤">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑤">local end definition</a></p>
-<pre class="cddl local-cddl remote-cddl">ScriptResult = (
-  ScriptResultSuccess //
-  ScriptResultException
+<pre class="cddl local-cddl remote-cddl">ScriptEvaluateResult = (
+  ScriptEvaluateResultSuccess //
+  ScriptEvaluateResultException
 )
 
-ScriptResultSuccess = {
+ScriptEvaluateResultSuccess = {
   result: RemoteValue,
   realm: Realm
 }
 
-ScriptResultException = {
+ScriptEvaluateResultException = {
   exceptionDetails: ExceptionDetails
   realm: Realm
 }
 </pre>
-     <p>The <code>Result</code> type indicates the return value of a command that
-executes script. The <code>ScriptResultSuccess</code> variant is used in cases
-where the script completes normally and the <code>ScriptResultException</code> variant is used in cases where the script completes with a thrown exception.</p>
+     <p>The <code>ScriptEvaluateResult</code> type indicates the return value of a command
+that executes script. The <code>ScriptEvaluateResultSuccess</code> variant is used in
+cases where the script completes normally and the <code>ScriptEvaluateResultException</code> variant is used in cases where the script
+completes with a thrown exception.</p>
      <h5 class="heading settled" data-level="7.3.2.7" id="type-script-Source"><span class="secno">7.3.2.7. </span><span class="content">The script.Source type</span><a class="self-link" href="#type-script-Source"></a></h5>
      <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑥">Local end definition</a></p>
 <pre class="cddl local-cddl">Source = (
@@ -3936,7 +3936,7 @@ ArgumentValue = (
 </pre>
       <dt>Return Type
       <dd>
-<pre class="cddl local-cddl">ScriptCallFunctionResult = ScriptResult;
+<pre class="cddl local-cddl">ScriptEvaluateResult
 </pre>
      </dl>
      <p class="issue" id="issue-6eade172"><a class="self-link" href="#issue-6eade172"></a> TODO: Add timeout argument as described in the script.evaluate.</p>
@@ -4033,14 +4033,14 @@ ArgumentValue = (
         <li data-md>
          <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details">get exception details</a> given <var>realm</var>, <var>evaluation status</var> and <var>result ownership</var> as <var>ownership type</var>.</p>
         <li data-md>
-         <p>Return a new map matching the <code>ScriptResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
+         <p>Return a new map matching the <code>ScriptEvaluateResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
        </ol>
       <li data-md>
        <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
       <li data-md>
        <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑥">serialize as a remote value</a> given <var>evaluation status</var>.[[Value]], <code>1</code> as <var>max depth</var>, <var>result ownership</var> as <var>ownership type</var>, <code>new map</code> as <var>serialization internal map</var> and <var>realm</var>.</p>
       <li data-md>
-       <p>Return a new map matching the <code>ScriptResultSuccess</code> production, with the <code>realm</code> field set to <var>realm id</var>,
+       <p>Return a new map matching the <code>ScriptEvaluateResultSuccess</code> production, with the <code>realm</code> field set to <var>realm id</var>,
  and the <code>result</code> field set to <var>result</var>.</p>
      </ol>
      <h5 class="heading settled" data-level="7.3.3.3" id="command-script-evaluate"><span class="secno">7.3.3.3. </span><span class="content">The script.evaluate Command</span><a class="self-link" href="#command-script-evaluate"></a></h5>
@@ -4068,7 +4068,7 @@ ScriptEvaluateParameters = {
 </pre>
       <dt>Return Type
       <dd>
-<pre class="cddl local-cddl">ScriptEvaluateResult = ScriptResult;
+<pre class="cddl local-cddl">ScriptEvaluateResult
 </pre>
      </dl>
      <p>TODO: Add timeout argument. It’s not totally clear how this ought to work; in
@@ -4114,14 +4114,14 @@ that likely isn’t what clients want.</p>
         <li data-md>
          <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details①">get exception details</a> given <var>realm</var>, <var>evaluation status</var> and <var>result ownership</var> as <var>ownership type</var>.</p>
         <li data-md>
-         <p>Return a new map matching the <code>ScriptResultException</code> production, with the <code>realm</code> field set to <var>realm id</var>, and the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
+         <p>Return a new map matching the <code>ScriptEvaluateResultException</code> production, with the <code>realm</code> field set to <var>realm id</var>, and the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
        </ol>
       <li data-md>
        <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
       <li data-md>
        <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑦">serialize as a remote value</a> given <var>evaluation status</var>.[[Value]], <code>1</code> as <var>max depth</var>, <var>result ownership</var> as <var>ownership type</var>, <code>new map</code> as <var>serialization internal map</var> and <var>realm</var>.</p>
       <li data-md>
-       <p>Return a new map matching the <code>ScriptResultSuccess</code> production, with the with the <code>realm</code> field set to <var>realm id</var>, and
+       <p>Return a new map matching the <code>ScriptEvaluateResultSuccess</code> production, with the with the <code>realm</code> field set to <var>realm id</var>, and
  the <code>result</code> field set to <var>result</var>.</p>
      </ol>
      <h5 class="heading settled" data-level="7.3.3.4" id="command-script-getRealms"><span class="secno">7.3.3.4. </span><span class="content">The script.getRealms Command</span><a class="self-link" href="#command-script-getRealms"></a></h5>
@@ -6366,7 +6366,7 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-remote-end-definition①②">7.3.1. Definition</a>
     <li><a href="#ref-for-remote-end-definition①③">7.3.2.1. The script.ExceptionDetails type</a>
     <li><a href="#ref-for-remote-end-definition①④">7.3.2.2. The script.Realm type</a>
-    <li><a href="#ref-for-remote-end-definition①⑤">7.3.2.6. The script.Result type</a>
+    <li><a href="#ref-for-remote-end-definition①⑤">7.3.2.6. The script.ScriptEvaluateResult type</a>
     <li><a href="#ref-for-remote-end-definition①⑥">7.3.2.8. The script.Target type</a>
     <li><a href="#ref-for-remote-end-definition①⑦">7.4.1. Definition</a>
    </ul>
@@ -6393,7 +6393,7 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-local-end-definition④②">7.3.2.1. The script.ExceptionDetails type</a>
     <li><a href="#ref-for-local-end-definition④③">7.3.2.2. The script.Realm type</a>
     <li><a href="#ref-for-local-end-definition④④">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-local-end-definition④⑤">7.3.2.6. The script.Result type</a>
+    <li><a href="#ref-for-local-end-definition④⑤">7.3.2.6. The script.ScriptEvaluateResult type</a>
     <li><a href="#ref-for-local-end-definition④⑥">7.3.2.7. The script.Source type</a>
     <li><a href="#ref-for-local-end-definition④⑦">7.4.2.1. log.LogEntry</a>
    </ul>
