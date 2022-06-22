@@ -8,7 +8,7 @@
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
   <meta content="Bikeshed version 37b7e7e68, updated Fri May 27 15:08:11 2022 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="0825f8befd4cbaa1f0a6335086ba3eb4e0eb1fea" name="document-revision">
+  <meta content="50d5abeeb5536194b6da11ce8baddbf7b338a1af" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -469,7 +469,7 @@ dfn > a.self-link::before      { content: "#"; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-06-21">21 June 2022</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-06-22">22 June 2022</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -1919,16 +1919,16 @@ DateRemoteValue = {
 
 MapRemoteValue = {
   type: "map",
+  value: MappingRemoteValue,
   ?handle: Handle,
   ?internalId: InternalId,
-  value: MappingRemoteValue,
 }
 
 SetRemoteValue = {
   type: "set",
+  value: ListRemoteValue
   ?handle: Handle,
   ?internalId: InternalId,
-  value: ListRemoteValue
 }
 
 WeakMapRemoteValue = {
@@ -1995,9 +1995,9 @@ NodeRemoteValue = {
 NodeProperties = {
   nodeType: uint,
   nodeValue: text,
+  childNodeCount: uint,
   ?localName: text,
   ?namespaceURI: text,
-  childNodeCount: uint,
   ?children: [*NodeRemoteValue],
   ?attributes: {*text => text},
   ?shadowRoot: NodeRemoteValue / null,
@@ -2755,9 +2755,9 @@ same as the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-w
 
 BrowsingContextInfo = {
   context: BrowsingContext,
-  ?parent: BrowsingContext / null,
   url: text,
   children: BrowsingContextInfoList / null
+  ?parent: BrowsingContext / null,
 }
 
 </pre>
@@ -4113,10 +4113,10 @@ function with given arguments in a given realm.</p>
 
 ScriptCallFunctionParameters = {
   functionDeclaration: text;
+  awaitPromise: bool;
+  target: Target;
   ?arguments: [ArgumentValue];
   ?this: ArgumentValue;
-  ?awaitPromise: bool;
-  target: Target;
   ?resultOwnership: OwnershipModel;
 }
 
@@ -4192,7 +4192,7 @@ ArgumentValue = (
       <li data-md>
        <p>Let <var>function declaration</var> be the value of the <code>functionDeclaration</code> field of <var>command parameters</var>.</p>
       <li data-md>
-       <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>, if present, or <code>true</code> otherwise.</p>
+       <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>.</p>
       <li data-md>
        <p>Let <var>result ownership</var> be the value of the <code>resultOwnership</code> field of <var>command parameters</var>, if present, or <code>none</code> otherwise.</p>
       <li data-md>
@@ -4241,8 +4241,8 @@ script in a given realm. For convenience a browsing context can be provided in
 place of a realm, in which case the realm used is the realm of the browsing
 context’s active document.</p>
      <p>The method returns the value of executing the provided script, unless it returns
-a promise and <code>awaitPromise</code> is true (which is the default), in which
-case the resolved value of the promise is returned.</p>
+a promise and <code>awaitPromise</code> is true, in which case the resolved value of
+the promise is returned.</p>
      <dl>
       <dt>Command Type
       <dd>
@@ -4254,7 +4254,7 @@ case the resolved value of the promise is returned.</p>
 ScriptEvaluateParameters = {
   expression: text;
   target: Target;
-  ?awaitPromise: bool;
+  awaitPromise: bool;
   ?resultOwnership: OwnershipModel;
 }
 </pre>
@@ -4278,7 +4278,7 @@ that likely isn’t what clients want.</p>
        <p>Let <var>source</var> be the value of the <code>expression</code> field of <var>command
  parameters</var>.</p>
       <li data-md>
-       <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>, if present, or <code>true</code> otherwise.</p>
+       <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>.</p>
       <li data-md>
        <p>Let <var>result ownership</var> be the value of the <code>resultOwnership</code> field of <var>command parameters</var>, if present, or <code>none</code> otherwise.</p>
       <li data-md>
