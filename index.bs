@@ -4186,7 +4186,7 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
         functionDeclaration: text;
         ?arguments: [ArgumentValue];
         ?this: ArgumentValue;
-        ?sync: bool;
+        ?awaitPromise: bool;
         target: Target;
         ?resultOwnership: OwnershipModel;
       }
@@ -4277,8 +4277,8 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |function declaration| be the value of the
    <code>functionDeclaration</code> field of |command parameters|.
 
-1. Let |sync| be the value of the <code>sync</code> field of
-   |command parameters|, if present, or <code>false</code> otherwise.
+1. Let |await promise| be the value of the <code>awaitPromise</code> field of
+   |command parameters|, if present, or <code>true</code> otherwise.
 
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
@@ -4300,8 +4300,8 @@ The [=remote end steps=] with |command parameters| are:
 1. Set |evaluation status| to
    [=Call=](|function object|, |this object|, |deserialized arguments|).
 
-1. If |evaluation status|.\[[Type]] is <code>normal</code>, and |sync| is
-   <code>false</code>, and [=IsPromise=](|evaluation status|.\[[Value]]):
+1. If |evaluation status|.\[[Type]] is <code>normal</code>, and |await promise| is
+   <code>true</code>, and [=IsPromise=](|evaluation status|.\[[Value]]):
 
    1. Set |evaluation status| to
       <a spec=ECMASCRIPT>Await</a>(|evaluation status|.\[[Value]]).
@@ -4336,7 +4336,7 @@ place of a realm, in which case the realm used is the realm of the browsing
 context's active document.
 
 The method returns the value of executing the provided script, unless it returns
-a promise and <code>sync</code> is false (which is the default), in which
+a promise and <code>awaitPromise</code> is true (which is the default), in which
 case the resolved value of the promise is returned.
 
 <dl>
@@ -4351,7 +4351,7 @@ case the resolved value of the promise is returned.
       ScriptEvaluateParameters = {
         expression: text;
         target: Target;
-        ?sync: bool;
+        ?awaitPromise: bool;
         ?resultOwnership: OwnershipModel;
       }
       </pre>
@@ -4381,7 +4381,7 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |source| be the value of the <code>expression</code> field of |command
    parameters|.
 
-1. Let |sync| be the value of the <code>sync</code> field of
+1. Let |await promise| be the value of the <code>awaitPromise</code> field of
    |command parameters|, if present, or <code>true</code> otherwise.
 
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
@@ -4398,8 +4398,8 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Set |evaluation status| to [=ScriptEvaluation=](|script|'s record).
 
-1. If |evaluation status|.\[[Type]] is <code>normal</code>, |sync| is false, and
-   [=IsPromise=](|evaluation status|.\[[Value]]):
+1. If |evaluation status|.\[[Type]] is <code>normal</code>, |await promise| is
+   true, and [=IsPromise=](|evaluation status|.\[[Value]]):
 
    1. Set |evaluation status| to <a spec=ECMASCRIPT>Await</a>(|evaluation status|.\[[Value]]).
 
