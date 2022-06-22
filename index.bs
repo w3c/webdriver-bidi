@@ -1578,16 +1578,16 @@ DateRemoteValue = {
 
 MapRemoteValue = {
   type: "map",
+  value: MappingRemoteValue,
   ?handle: Handle,
   ?internalId: InternalId,
-  value: MappingRemoteValue,
 }
 
 SetRemoteValue = {
   type: "set",
+  value: ListRemoteValue
   ?handle: Handle,
   ?internalId: InternalId,
-  value: ListRemoteValue
 }
 
 WeakMapRemoteValue = {
@@ -1654,9 +1654,9 @@ NodeRemoteValue = {
 NodeProperties = {
   nodeType: uint,
   nodeValue: text,
+  childNodeCount: uint,
   ?localName: text,
   ?namespaceURI: text,
-  childNodeCount: uint,
   ?children: [*NodeRemoteValue],
   ?attributes: {*text => text},
   ?shadowRoot: NodeRemoteValue / null,
@@ -2540,9 +2540,9 @@ BrowsingContextInfoList = [* BrowsingContextInfo]
 
 BrowsingContextInfo = {
   context: BrowsingContext,
-  ?parent: BrowsingContext / null,
   url: text,
   children: BrowsingContextInfoList / null
+  ?parent: BrowsingContext / null,
 }
 
 </pre>
@@ -4184,10 +4184,10 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
 
       ScriptCallFunctionParameters = {
         functionDeclaration: text;
+        awaitPromise: bool;
+        target: Target;
         ?arguments: [ArgumentValue];
         ?this: ArgumentValue;
-        ?awaitPromise: bool;
-        target: Target;
         ?resultOwnership: OwnershipModel;
       }
 
@@ -4278,7 +4278,7 @@ The [=remote end steps=] with |command parameters| are:
    <code>functionDeclaration</code> field of |command parameters|.
 
 1. Let |await promise| be the value of the <code>awaitPromise</code> field of
-   |command parameters|, if present, or <code>true</code> otherwise.
+   |command parameters|.
 
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
@@ -4336,8 +4336,8 @@ place of a realm, in which case the realm used is the realm of the browsing
 context's active document.
 
 The method returns the value of executing the provided script, unless it returns
-a promise and <code>awaitPromise</code> is true (which is the default), in which
-case the resolved value of the promise is returned.
+a promise and <code>awaitPromise</code> is true, in which case the resolved value of
+the promise is returned.
 
 <dl>
    <dt>Command Type</dt>
@@ -4351,7 +4351,7 @@ case the resolved value of the promise is returned.
       ScriptEvaluateParameters = {
         expression: text;
         target: Target;
-        ?awaitPromise: bool;
+        awaitPromise: bool;
         ?resultOwnership: OwnershipModel;
       }
       </pre>
@@ -4382,7 +4382,7 @@ The [=remote end steps=] with |command parameters| are:
    parameters|.
 
 1. Let |await promise| be the value of the <code>awaitPromise</code> field of
-   |command parameters|, if present, or <code>true</code> otherwise.
+   |command parameters|.
 
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
