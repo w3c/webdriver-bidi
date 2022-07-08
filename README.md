@@ -25,7 +25,8 @@ Later on, you can omit `--install` argument to skip the installation step.
 
 ## How to generate CDDL locally
 
-Make sure you have `npm` and `rust` installed.
+Make sure you have [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
+and [rust](https://www.rust-lang.org/tools/install) installed.
 
 Now you can run in your terminal:
 ```
