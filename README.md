@@ -13,7 +13,7 @@ WebDriver BiDi is not ready. Here's what we have so far:
 
 We use [bikeshed](https://tabatkins.github.io/bikeshed/) to generate the specification.
 
-Make sure you have [a right version of python](https://tabatkins.github.io/bikeshed/#install-py3) installed.
+Make sure you have the [right version of python](https://tabatkins.github.io/bikeshed/#install-py3) installed.
 
 Now you can run in your terminal:
 ```
