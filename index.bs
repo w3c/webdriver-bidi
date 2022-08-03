@@ -956,9 +956,9 @@ access to the DOM of a document, but don't have information about any changes to
 the DOM APIs made by scripts running in the browsing context containing the
 document.
 
-A [=BiDi session=] has a <dfn>context sandbox map</dfn> which is a weak map
-in which the keys are [=/browsing contexts=] and the values are weak maps between
-strings and {{SandboxWindowProxy}} objects.
+A [=BiDi session=] has a <dfn>sandbox map</dfn> which is a weak map in which the
+keys are [=window=] objects, and the values are maps between strings and
+{{SandboxWindowProxy}} objects.
 
 Note: The definition of sandboxes here is an attempt to codify the behaviour of
 existing implementations. It exposes parts of the implementations that have
@@ -981,24 +981,25 @@ provides access to platform objects in an existing {{Window}} realm via
 <div algorithm>
 To <dfn>get or create a sandbox realm</dfn> given |name| and |browsing context|:
 
-1. If [=context sandbox map=] does not contain |browsing context|, set [=context
-   sandbox map=][|source browsing context|] to a new map.
+1. Let |window| be |browsing context|'s [=active window=].
 
-1. Let |sandboxes| be [=context sandbox map=][|source browsing context|].
+1. If [=sandbox map=] does not contain |window|, set [=sandbox map=][|window|]
+   to a new map.
+
+1. Let |sandboxes| be [=sandbox map=][|window|].
 
 1. If |sandboxes| does not contain |name|, set |sandboxes|[|name|] to [=create
-   a sandbox realm=] with |source browsing context|.
+   a sandbox realm=] with |browsing context|.
 
 1. Return |sandboxes|[|name|].
 
 </div>
 
 <div algorithm>
-To <dfn>create a sandbox realm</dfn> with |source browsing context|:
+To <dfn>create a sandbox realm</dfn> with |window|:
 
 Issue: Define creation of sandbox realm. This is going to return a
-{{SandboxWindowProxy}} wrapping the {{WindowProxy}} of |source browsing
-context|.
+{{SandboxWindowProxy}} wrapping |window|.
 
 </div>
 
