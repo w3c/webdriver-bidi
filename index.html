@@ -6,9 +6,9 @@
   <meta content="ED" name="w3c-status">
   <link href="https://www.w3.org/StyleSheets/TR/2021/W3C-ED" rel="stylesheet">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="Bikeshed version 37b7e7e68, updated Fri May 27 15:08:11 2022 -0700" name="generator">
+  <meta content="Bikeshed version 44af0bf3e, updated Fri Jul 29 17:05:16 2022 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="6f3901e0fe230aa9632b34d9d5a5f1dcda7d58bc" name="document-revision">
+  <meta content="eb950226d94472af33dfb1928dab22752f48d2bc" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -469,7 +469,7 @@ dfn > a.self-link::before      { content: "#"; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-07-13">13 July 2022</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-08-11">11 August 2022</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -1363,9 +1363,8 @@ requests to start a WebDriver session, it must:</p>
 access to the DOM of a document, but don’t have information about any changes to
 the DOM APIs made by scripts running in the browsing context containing the
 document.</p>
-   <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①①">BiDi session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="context-sandbox-map">context sandbox map</dfn> which is a weak map
-in which the keys are <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context">browsing contexts</a> and the values are weak maps between
-strings and <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy" id="ref-for-sandboxwindowproxy">SandboxWindowProxy</a></code> objects.</p>
+   <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①①">BiDi session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="sandbox-map">sandbox map</dfn> which is a weak map in which the
+keys are <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-window" id="ref-for-concept-request-window">window</a> objects, and the values are maps between strings and <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy" id="ref-for-sandboxwindowproxy">SandboxWindowProxy</a></code> objects.</p>
    <p class="note" role="note"><span>Note:</span> The definition of sandboxes here is an attempt to codify the behaviour of
 existing implementations. It exposes parts of the implementations that have
 previously been considered internal by specifications, in particular the
@@ -1384,21 +1383,22 @@ provides access to platform objects in an existing <code class="idl"><a data-lin
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-or-create-a-sandbox-realm">get or create a sandbox realm</dfn> given <var>name</var> and <var>browsing context</var>: 
     <ol>
      <li data-md>
-      <p>If <a data-link-type="dfn" href="#context-sandbox-map" id="ref-for-context-sandbox-map">context sandbox map</a> does not contain <var>browsing context</var>, set <a data-link-type="dfn" href="#context-sandbox-map" id="ref-for-context-sandbox-map①">context
- sandbox map</a>[<var>source browsing context</var>] to a new map.</p>
+      <p>Let <var>window</var> be <var>browsing context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#active-window" id="ref-for-active-window">active window</a>.</p>
      <li data-md>
-      <p>Let <var>sandboxes</var> be <a data-link-type="dfn" href="#context-sandbox-map" id="ref-for-context-sandbox-map②">context sandbox map</a>[<var>source browsing context</var>].</p>
+      <p>If <a data-link-type="dfn" href="#sandbox-map" id="ref-for-sandbox-map">sandbox map</a> does not contain <var>window</var>, set <a data-link-type="dfn" href="#sandbox-map" id="ref-for-sandbox-map①">sandbox map</a>[<var>window</var>]
+ to a new map.</p>
+     <li data-md>
+      <p>Let <var>sandboxes</var> be <a data-link-type="dfn" href="#sandbox-map" id="ref-for-sandbox-map②">sandbox map</a>[<var>window</var>].</p>
      <li data-md>
       <p>If <var>sandboxes</var> does not contain <var>name</var>, set <var>sandboxes</var>[<var>name</var>] to <a data-link-type="dfn" href="#create-a-sandbox-realm" id="ref-for-create-a-sandbox-realm">create
- a sandbox realm</a> with <var>source browsing context</var>.</p>
+ a sandbox realm</a> with <var>browsing context</var>.</p>
      <li data-md>
       <p>Return <var>sandboxes</var>[<var>name</var>].</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="create a sandbox realm">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="create-a-sandbox-realm">create a sandbox realm</dfn> with <var>source browsing context</var>: 
-    <p class="issue" id="issue-b6590e38"><a class="self-link" href="#issue-b6590e38"></a> Define creation of sandbox realm. This is going to return a <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy" id="ref-for-sandboxwindowproxy①">SandboxWindowProxy</a></code> wrapping the <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy" id="ref-for-windowproxy">WindowProxy</a></code> of <var>source browsing
-context</var>.</p>
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="create-a-sandbox-realm">create a sandbox realm</dfn> with <var>window</var>: 
+    <p class="issue" id="issue-cd353b2b"><a class="self-link" href="#issue-cd353b2b"></a> Define creation of sandbox realm. This is going to return a <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy" id="ref-for-sandboxwindowproxy①">SandboxWindowProxy</a></code> wrapping <var>window</var>.</p>
    </div>
    <h3 class="heading settled" data-level="5.2" id="sandbox-proxy"><span class="secno">5.2. </span><span class="content">Sandbox Proxy Objects</span><a class="self-link" href="#sandbox-proxy"></a></h3>
    <p>A <dfn class="dfn-paneled idl-code" data-dfn-type="interface" data-export id="sandboxproxy"><code>SandboxProxy</code></dfn> object is an exotic object that mediates sandboxed access to
@@ -2219,7 +2219,7 @@ but no properties of the node will be returned.</p>
          <li data-md>
           <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
-       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object①">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy" id="ref-for-windowproxy①">WindowProxy</a></code> 
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object①">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy" id="ref-for-windowproxy">WindowProxy</a></code> 
        <dd>1. Let <var>remote value</var> be a map matching the <code>WindowProxyValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object②">platform object</a> 
        <dd>1. Let <var>remote value</var> be a map matching the <code>ObjectValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
@@ -2734,7 +2734,7 @@ BrowsingContextEvent = (
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⓪">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑦">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">BrowsingContext = text;
 </pre>
-   <p>Each <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context①">browsing context</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="browsing context id" id="browsing-context-id">browsing context
+   <p>Each <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context">browsing context</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="browsing context id" id="browsing-context-id">browsing context
 id</dfn>, which is a string uniquely identifying that browsing context. This is
 implicitly set when the context is created. For browsing contexts with an
 associated WebDriver <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-window-handle" id="ref-for-dfn-window-handle">window handle</a> the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id">browsing context id</a> must be the
@@ -2784,7 +2784,7 @@ browsing context.</p>
       <p>If <var>max depth</var> is null, or <var>max depth</var> is greater than 0:</p>
       <ol>
        <li data-md>
-        <p>Let <var>child contexts</var> be a list containing all <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context②">browsing contexts</a> which are <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#child-browsing-context" id="ref-for-child-browsing-context">child browsing contexts</a> of <var>context</var>.</p>
+        <p>Let <var>child contexts</var> be a list containing all <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context①">browsing contexts</a> which are <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#child-browsing-context" id="ref-for-child-browsing-context">child browsing contexts</a> of <var>context</var>.</p>
        <li data-md>
         <p>Let <var>child depth</var> be <var>max depth</var> - 1 if <var>max depth</var> is not null, or null otherwise.</p>
        <li data-md>
@@ -2985,7 +2985,7 @@ when closing the last <a data-link-type="dfn" href="https://html.spec.whatwg.org
 the browser, close the session or leave this up to the implementation. <a href="https://github.com/w3c/webdriver-bidi/issues/170">[Issue #w3c/webdriver-bidi#170]</a></p>
    </div>
    <h5 class="heading settled" data-level="7.2.3.3" id="command-browsingContext-create"><span class="secno">7.2.3.3. </span><span class="content">The browsingContext.create Command</span><a class="self-link" href="#command-browsingContext-create"></a></h5>
-   <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextcreate">browsingContext.create<a class="self-link" href="#commands-browsingcontextcreate"></a></dfn> command creates a new <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context③">browsing context</a>, either in a new tab or in a new window, and returns its <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑤">browsing context id</a>.</p>
+   <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextcreate">browsingContext.create<a class="self-link" href="#commands-browsingcontextcreate"></a></dfn> command creates a new <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context②">browsing context</a>, either in a new tab or in a new window, and returns its <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑤">browsing context id</a>.</p>
    <dl>
     <dt>Command Type
     <dd>
@@ -3028,7 +3028,7 @@ BrowsingContextCreateParameters = {
  don’t have any such implicit context here, what OS window should new tabs
  be opened in?</p>
      <li data-md>
-      <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑥">browsing context id</a> of the newly created <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context④">browsing context</a>.</p>
+      <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑥">browsing context id</a> of the newly created <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context③">browsing context</a>.</p>
      <li data-md>
       <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑧">map</a> matching the <code>BrowsingContextCreateResult</code> production, with the <code>context</code> field set to <var>context id</var>.</p>
      <li data-md>
@@ -3582,7 +3582,7 @@ failed<a class="self-link" href="#webdriver-bidi-navigation-failed"></a></dfn> s
 closed<a class="self-link" href="#webdriver-bidi-user-prompt-closed"></a></dfn> steps given <var>window</var>, <var>accepted</var> and optional <var>user text</var> (default: null). 
     <ol>
      <li data-md>
-      <p>Let <var>context</var> be <var>window</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑤">browsing context</a>.</p>
+      <p>Let <var>context</var> be <var>window</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context④">browsing context</a>.</p>
      <li data-md>
       <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑦">browsing context id</a> for <var>context</var>.</p>
      <li data-md>
@@ -3620,7 +3620,7 @@ closed<a class="self-link" href="#webdriver-bidi-user-prompt-closed"></a></dfn> 
 opened<a class="self-link" href="#webdriver-bidi-user-prompt-opened"></a></dfn> steps given <var>window</var>, <var>type</var> and <var>message</var>. 
     <ol>
      <li data-md>
-      <p>Let <var>context</var> be <var>window</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑥">browsing context</a>.</p>
+      <p>Let <var>context</var> be <var>window</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑤">browsing context</a>.</p>
      <li data-md>
       <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑧">browsing context id</a> for <var>context</var>.</p>
      <li data-md>
@@ -3794,13 +3794,13 @@ WorkletRealmInfo = {
      <li data-md>
       <p>Run the steps under the first matching condition:</p>
       <dl>
-       <dt><var>global object</var> is a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-window" id="ref-for-concept-request-window">Window</a> object 
+       <dt><var>global object</var> is a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-window" id="ref-for-concept-request-window①">Window</a> object 
        <dd>
         <ol>
          <li data-md>
           <p>Let <var>document</var> be <var>environment settings</var>’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global②">relevant global object</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window①">associated <code>Document</code></a>.</p>
          <li data-md>
-          <p>Let <var>browsing context</var> be <var>document</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑦">browsing context</a>.</p>
+          <p>Let <var>browsing context</var> be <var>document</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑥">browsing context</a>.</p>
          <li data-md>
           <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑨">browsing context id</a> for <var>browsing context</var>.</p>
          <li data-md>
@@ -4330,7 +4330,7 @@ that likely isn’t what clients want.</p>
    <h5 class="heading settled" data-level="7.3.3.4" id="command-script-getRealms"><span class="secno">7.3.3.4. </span><span class="content">The script.getRealms Command</span><a class="self-link" href="#command-script-getRealms"></a></h5>
    <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptgetrealms">script.getRealms<a class="self-link" href="#commands-scriptgetrealms"></a></dfn> command returns a list of
 all realms, optionally filtered to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms⑥">realms</a> of a specific type, or to the
-realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document①">document</a> currently loaded in a specified <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑧">browsing context</a>.</p>
+realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document①">document</a> currently loaded in a specified <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑦">browsing context</a>.</p>
    <dl>
     <dt>Command Type
     <dd>
@@ -4876,7 +4876,6 @@ end:</p>
    <li><a href="#construct-a-websocket-url">construct a WebSocket URL</a><span>, in § 4</span>
    <li><a href="#construct-a-websocket-resource-name">constructing a WebSocket resource name</a><span>, in § 4</span>
    <li><a href="#construct-a-websocket-url">constructing a WebSocket URL</a><span>, in § 4</span>
-   <li><a href="#context-sandbox-map">context sandbox map</a><span>, in § 5</span>
    <li><a href="#create-a-sandbox-realm">create a sandbox realm</a><span>, in § 5.1</span>
    <li><a href="#current-stack-trace">current stack trace</a><span>, in § 7.3.2.5</span>
    <li><a href="#deserialize-arguments">deserialize arguments</a><span>, in § 7.3.3.2</span>
@@ -4938,6 +4937,7 @@ end:</p>
    <li><a href="#respond-with-an-error">respond with an error</a><span>, in § 4</span>
    <li><a href="#command-result-type">result type</a><span>, in § 3.4</span>
    <li><a href="#resume">resume</a><span>, in § 2</span>
+   <li><a href="#sandbox-map">sandbox map</a><span>, in § 5</span>
    <li><a href="#sandboxproxy">SandboxProxy</a><span>, in § 5.2</span>
    <li><a href="#sandboxwindowproxy">SandboxWindowProxy</a><span>, in § 5.3</span>
    <li><a href="#modules-script">script</a><span>, in § 7.3</span>
@@ -5379,7 +5379,8 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-concept-request-window">
    <a href="https://fetch.spec.whatwg.org/#concept-request-window">https://fetch.spec.whatwg.org/#concept-request-window</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-request-window">7.3.2.3. The script.RealmInfo type</a>
+    <li><a href="#ref-for-concept-request-window">5. Sandboxed Script Execution</a>
+    <li><a href="#ref-for-concept-request-window①">7.3.2.3. The script.RealmInfo type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-rectangle">
@@ -5411,8 +5412,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-windowproxy">
    <a href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy">https://html.spec.whatwg.org/multipage/window-object.html#windowproxy</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-windowproxy">5.1. Sandbox Realms</a>
-    <li><a href="#ref-for-windowproxy①">6.2.3.1. Serialization</a>
+    <li><a href="#ref-for-windowproxy">6.2.3.1. Serialization</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-workerglobalscope">
@@ -5445,6 +5445,12 @@ end:</p>
     <li><a href="#ref-for-active-document④">7.2.4.1. The browsingContext.contextCreated Event</a>
     <li><a href="#ref-for-active-document⑤">7.3.2.8. The script.Target type</a>
     <li><a href="#ref-for-active-document⑥">7.3.3.4. The script.getRealms Command</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-active-window">
+   <a href="https://html.spec.whatwg.org/multipage/browsers.html#active-window">https://html.spec.whatwg.org/multipage/browsers.html#active-window</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-active-window">5.1. Sandbox Realms</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dom-alert">
@@ -6309,7 +6315,7 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-printer">printer</span>
     </ul>
    <li>
-    <a data-link-type="biblio">[css-paint-api-1]</a> defines the following terms:
+    <a data-link-type="biblio">[CSS-PAINT-API-1]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="term-for-paintworkletglobalscope">PaintWorkletGlobalScope</span>
     </ul>
@@ -6394,6 +6400,7 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-workletglobalscope">WorkletGlobalScope</span>
      <li><span class="dfn-paneled" id="term-for-a-browsing-context-is-discarded">a browsing context is discarded</span>
      <li><span class="dfn-paneled" id="term-for-active-document">active document</span>
+     <li><span class="dfn-paneled" id="term-for-active-window">active window</span>
      <li><span class="dfn-paneled" id="term-for-dom-alert">alert</span>
      <li><span class="dfn-paneled" id="term-for-api-base-url">api base url</span>
      <li><span class="dfn-paneled" id="term-for-concept-document-window">associated document</span>
@@ -6477,7 +6484,7 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-section-3">websocket uri</span>
     </ul>
    <li>
-    <a data-link-type="biblio">[service-workers-1]</a> defines the following terms:
+    <a data-link-type="biblio">[SERVICE-WORKERS]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="term-for-serviceworkerglobalscope">ServiceWorkerGlobalScope</span>
     </ul>
@@ -6489,7 +6496,7 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-concept-url-serializer">url serializer</span>
     </ul>
    <li>
-    <a data-link-type="biblio">[webaudio]</a> defines the following terms:
+    <a data-link-type="biblio">[WEBAUDIO]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="term-for-AudioWorkletGlobalScope">AudioWorkletGlobalScope</span>
     </ul>
@@ -6562,8 +6569,8 @@ end:</p>
    <dd>I. Fette; A. Melnikov. <a href="https://www.rfc-editor.org/rfc/rfc6455"><cite>The WebSocket Protocol</cite></a>. December 2011. Proposed Standard. URL: <a href="https://www.rfc-editor.org/rfc/rfc6455">https://www.rfc-editor.org/rfc/rfc6455</a>
    <dt id="biblio-rfc8610">[RFC8610]
    <dd>H. Birkholz; C. Vigano; C. Bormann. <a href="https://www.rfc-editor.org/rfc/rfc8610"><cite>Concise Data Definition Language (CDDL): A Notational Convention to Express Concise Binary Object Representation (CBOR) and JSON Data Structures</cite></a>. June 2019. Proposed Standard. URL: <a href="https://www.rfc-editor.org/rfc/rfc8610">https://www.rfc-editor.org/rfc/rfc8610</a>
-   <dt id="biblio-service-workers-1">[SERVICE-WORKERS-1]
-   <dd>Alex Russell; et al. <a href="https://w3c.github.io/ServiceWorker/"><cite>Service Workers 1</cite></a>. URL: <a href="https://w3c.github.io/ServiceWorker/">https://w3c.github.io/ServiceWorker/</a>
+   <dt id="biblio-service-workers">[SERVICE-WORKERS]
+   <dd>Jake Archibald; Marijn Kruisselbrink. <a href="https://w3c.github.io/ServiceWorker/"><cite>Service Workers</cite></a>. URL: <a href="https://w3c.github.io/ServiceWorker/">https://w3c.github.io/ServiceWorker/</a>
    <dt id="biblio-url">[URL]
    <dd>Anne van Kesteren. <a href="https://url.spec.whatwg.org/"><cite>URL Standard</cite></a>. Living Standard. URL: <a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>
    <dt id="biblio-webaudio">[WEBAUDIO]
@@ -6588,8 +6595,7 @@ end:</p>
    <div class="issue"> Nothing seems to define what <a data-link-type="dfn" href="https://tools.ietf.org/html/rfc6455#section-7.4">status code</a> is used for UTF-8 errors. <a class="issue-return" href="#issue-449f8f30" title="Jump to section">↵</a></div>
    <div class="issue"> Need to hook in to the session ending to allow the UA to close
 the listener if it wants. <a class="issue-return" href="#issue-9f7aff26" title="Jump to section">↵</a></div>
-   <div class="issue"> Define creation of sandbox realm. This is going to return a <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy">SandboxWindowProxy</a></code> wrapping the <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy">WindowProxy</a></code> of <var>source browsing
-context</var>. <a class="issue-return" href="#issue-b6590e38" title="Jump to section">↵</a></div>
+   <div class="issue"> Define creation of sandbox realm. This is going to return a <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy">SandboxWindowProxy</a></code> wrapping <var>window</var>. <a class="issue-return" href="#issue-cd353b2b" title="Jump to section">↵</a></div>
    <div class="issue"> Define in detail how <code class="idl"><a data-link-type="idl" href="#sandboxproxy">SandboxProxy</a></code> works <a class="issue-return" href="#issue-de7468b6" title="Jump to section">↵</a></div>
    <div class="issue"> Define how this works. <a class="issue-return" href="#issue-5dc87d67" title="Jump to section">↵</a></div>
    <div class="issue"> handle "stale object reference" case. <a class="issue-return" href="#issue-718fbe53" title="Jump to section">↵</a></div>
@@ -7060,10 +7066,10 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-supports-bidi-only-sessions">4. Transport</a>
    </ul>
   </aside>
-  <aside class="dfn-panel" data-for="context-sandbox-map">
-   <b><a href="#context-sandbox-map">#context-sandbox-map</a></b><b>Referenced in:</b>
+  <aside class="dfn-panel" data-for="sandbox-map">
+   <b><a href="#sandbox-map">#sandbox-map</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-context-sandbox-map">5.1. Sandbox Realms</a> <a href="#ref-for-context-sandbox-map①">(2)</a> <a href="#ref-for-context-sandbox-map②">(3)</a>
+    <li><a href="#ref-for-sandbox-map">5.1. Sandbox Realms</a> <a href="#ref-for-sandbox-map①">(2)</a> <a href="#ref-for-sandbox-map②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-or-create-a-sandbox-realm">
