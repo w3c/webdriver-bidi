@@ -4,15 +4,16 @@
 
 This document presents an overview of real-world end-to-end user scenarios we aim to enable via the WebDriver BiDi protocol. Each scenario requires one or more WebDriver BiDi commands and events to be specified, tested, and implemented across browser engines.
 
-### A. Extracting headlines
+### A. Extracting content
 
-This scenario loads a web page and uses script evaluation to extract the headlines on the page. In spec terms, this involves:
+This scenario loads a web page and uses script evaluation to extract content on the page (e.g. the headlines). In spec terms, this involves:
 
 - [x] [handling sessions](https://w3c.github.io/webdriver-bidi/#module-session)
 - [x] [creating a new `browsingContext`](https://w3c.github.io/webdriver-bidi/#command-browsingContext-create)
 - [x] [navigating to a URL](https://w3c.github.io/webdriver-bidi/#command-browsingContext-navigate)
 - [x] [evaluating JavaScript in the page context](https://w3c.github.io/webdriver-bidi/#command-script-evaluate)
 - [x] [serialization/deserialization of JavaScript values](https://w3c.github.io/webdriver-bidi/#data-types-protocolValue)
+- [ ] [sandboxed script execution](https://github.com/w3c/webdriver-bidi/issues/144)
 
 ### B. Submitting forms
 
