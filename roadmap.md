@@ -43,3 +43,12 @@ This scenario loads a web page and uses request interception to block any images
 
 - [x] (some items from the previous milestones)
 - [ ] [intercepting requests](https://github.com/w3c/webdriver-bidi/issues/66)
+
+### F. Measuring performance
+
+This scenario measures the performance of a cold load of a web page (without any cookies, storage, or anything in the cache).
+
+- [x] (some items from the previous milestones)
+- [ ] manipulating cookies
+- [ ] managing the browser cache
+- [ ] [installing bootstrap scripts](https://github.com/w3c/webdriver-bidi/blob/master/proposals/bootstrap-scripts.md#record-navigation-performance)
