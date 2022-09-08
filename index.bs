@@ -252,8 +252,9 @@ Command = {
 }
 
 CommandData = (
-  SessionCommand //
-  BrowsingContextCommand
+  BrowsingContextCommand //
+  ScriptCommand //
+  SessionCommand
 )
 
 EmptyParams = { *text }
@@ -2038,16 +2039,18 @@ events for monitoring the status of the remote end.
 [=remote end definition=]
 
 <pre class="cddl remote-cddl">
-SessionCommand = (SessionStatusCommand //
-                  SessionSubscribeCommand)
+SessionCommand = (
+  SessionNewCommand //
+  SessionStatusCommand //
+  SessionSubscribeCommand //
+  SessionUnsubscribeCommand
+)
 </pre>
 
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-
 SessionResult = (StatusResult)
-
 </pre>
 
 <div algorithm>
@@ -2166,21 +2169,21 @@ filter only those that ought to be returned to the local end.
 
 <pre class="cddl remote-cddl local-cddl">
 CapabilitiesRequest = {
-    ?acceptInsecureCertificates: bool,
-    ?browserName: text,
-    ?browserVersion: text,
-    ?platformName: text,
-    ?proxy: {
-        ?proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
-        ?proxyAutoconfigUrl: text,
-        ?ftpProxy: text,
-        ?httpProxy: text,
-        ?noProxy: [*text],
-        ?sslProxy: text,
-        ?socksProxy: text,
-        ?socksVersion: int,
-    },
-    *text => any
+  ?acceptInsecureCertificates: bool,
+  ?browserName: text,
+  ?browserVersion: text,
+  ?platformName: text,
+  ?proxy: {
+    ?proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
+    ?proxyAutoconfigUrl: text,
+    ?ftpProxy: text,
+    ?httpProxy: text,
+    ?noProxy: [*text],
+    ?sslProxy: text,
+    ?socksProxy: text,
+    ?socksVersion: int,
+  },
+  *text => any
 };
 </pre>
 
@@ -2466,43 +2469,40 @@ navigation status</dfn> struct, which has the following items:
 [=remote end definition=]
 
 <pre class="cddl remote-cddl">
-
 BrowsingContextCommand = (
-    BrowsingContextCaptureScreenshotCommand //
-    BrowsingContextCloseCommand //
-    BrowsingContextCreateCommand //
-    BrowsingContextGetTreeCommand //
-    BrowsingContextHandleUserPromptCommand //
-    BrowsingContextNavigateCommand //
-    BrowsingContextReloadCommand
+  BrowsingContextCaptureScreenshotCommand //
+  BrowsingContextCloseCommand //
+  BrowsingContextCreateCommand //
+  BrowsingContextGetTreeCommand //
+  BrowsingContextHandleUserPromptCommand //
+  BrowsingContextNavigateCommand //
+  BrowsingContextReloadCommand
 )
 </pre>
 
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-
 BrowsingContextResult = (
-    BrowsingContextCaptureScreenshotResult //
-    BrowsingContextCreateResult //
-    BrowsingContextGetTreeResult //
-    BrowsingContextNavigateResult
+  BrowsingContextCaptureScreenshotResult //
+  BrowsingContextCreateResult //
+  BrowsingContextGetTreeResult //
+  BrowsingContextNavigateResult
 )
 
 BrowsingContextEvent = (
-    BrowsingContextCreatedEvent //
-    BrowsingContextDestroyedEvent //
-    BrowsingContextNavigationStartedEvent //
-    BrowsingContextFragmentNavigatedEvent //
-    BrowsingContextDomContentLoadedEvent //
-    BrowsingContextLoadEvent //
-    BrowsingContextDownloadWillBegin //
-    BrowsingContextNavigationAbortedEvent //
-    BrowsingContextNavigationFailedEvent //
-    BrowsingContextUserPromptClosedEvent //
-    BrowsingContextUserPromptOpenedEvent
+  BrowsingContextCreatedEvent //
+  BrowsingContextDestroyedEvent //
+  BrowsingContextNavigationStartedEvent //
+  BrowsingContextFragmentNavigatedEvent //
+  BrowsingContextDomContentLoadedEvent //
+  BrowsingContextLoadEvent //
+  BrowsingContextDownloadWillBegin //
+  BrowsingContextNavigationAbortedEvent //
+  BrowsingContextNavigationFailedEvent //
+  BrowsingContextUserPromptClosedEvent //
+  BrowsingContextUserPromptOpenedEvent
 )
-
 </pre>
 
 ### Types ### {#module-browsingcontext-types}
@@ -2540,7 +2540,6 @@ To <dfn>get a browsing context</dfn> given |context id|:
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-
 BrowsingContextInfoList = [* BrowsingContextInfo]
 
 BrowsingContextInfo = {
@@ -2549,7 +2548,6 @@ BrowsingContextInfo = {
   children: BrowsingContextInfoList / null
   ?parent: BrowsingContext / null,
 }
-
 </pre>
 
 The <code>BrowsingContextInfo</code> type represents the properties of a
@@ -3059,8 +3057,8 @@ browsing context to the given URL.
    <dd>
     <pre class="cddl local-cddl">
         BrowsingContextNavigateResult = {
-            navigation: Navigation / null,
-            url: text,
+          navigation: Navigation / null,
+          url: text,
         }
     </pre>
    </dd>
@@ -3596,11 +3594,12 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
          method: "browsingContext.userPromptOpened",
          params: UserPromptInfo
        }
+
        UserPromptInfo = {
          context: BrowsingContext,
          type: "alert" / "confirm" / "prompt" / "beforeunload",
          message: text
-      }
+       }
       </pre>
    </dd>
 </dl>
@@ -3641,29 +3640,26 @@ relating to script realms and execution.
 [=Remote end definition=]
 
 <pre class="cddl remote-cddl">
-
 ScriptCommand = (
   ScriptCallFunctionCommand //
+  ScriptDisownCommand //
   ScriptEvaluateCommand //
   ScriptGetRealmsCommand
 )
-
 </pre>
 
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-
 ScriptResult = (
   ScriptEvaluateResult //
   ScriptGetRealmsResult
 )
 
 ScriptEvent = (
-    ScriptRealmCreatedEvent //
-    ScriptRealmDestroyedEvent
+  ScriptRealmCreatedEvent //
+  ScriptRealmDestroyedEvent
 )
-
 </pre>
 
 
@@ -4072,13 +4068,13 @@ ContextTarget = {
   ?sandbox: text
 }
 
-Target = (
+ScriptTarget = (
   RealmTarget //
   ContextTarget
 );
 </pre>
 
-The <code>Target</code> type represents a value that is either a
+The <code>ScriptTarget</code> type represents a value that is either a
 <code>script.Realm</code> or a <code>browsingContext.BrowsingContext</code>. This
 is useful in cases where a context identifier can stand in for the realm
 associated with the context's active document.
@@ -4147,7 +4143,7 @@ other handles or strong ECMAScript references.
 
       ScriptDisownParameters = {
         handles: [Handle]
-        target: Target;
+        target: ScriptTarget;
       }
       </pre>
    </dd>
@@ -4191,7 +4187,7 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
       ScriptCallFunctionParameters = {
         functionDeclaration: text;
         awaitPromise: bool;
-        target: Target;
+        target: ScriptTarget;
         ?arguments: [ArgumentValue];
         ?this: ArgumentValue;
         ?resultOwnership: OwnershipModel;
@@ -4361,7 +4357,7 @@ the promise is returned.
 
       ScriptEvaluateParameters = {
         expression: text;
-        target: Target;
+        target: ScriptTarget;
         awaitPromise: bool;
         ?resultOwnership: OwnershipModel;
       }
@@ -4448,10 +4444,10 @@ realm associated with the [=document=] currently loaded in a specified
       <pre class="cddl remote-cddl">
       ScriptGetRealmsCommand = {
         method: "script.getRealms",
-        params: GetRealmsParameters
+        params: ScriptGetRealmsParameters
       }
 
-      GetRealmsParameters = {
+      ScriptGetRealmsParameters = {
         ?context: BrowsingContext,
         ?type: RealmType,
       }
@@ -4747,7 +4743,6 @@ level context.
 [=Local end definition=]
 
 <pre class="cddl local-cddl">
-
 LogEvent = (
   LogEntryAddedEvent
 )
@@ -4760,7 +4755,6 @@ LogEvent = (
 [=Local end definition=]
 
 <pre class="cddl local-cddl">
-
 LogLevel = "debug" / "info" / "warning" / "error"
 
 LogEntry = (
@@ -4793,7 +4787,6 @@ JavascriptLogEntry = {
   BaseLogEntry,
   type: "javascript",
 }
-
 </pre>
 
 Each log event is represented by a <code>LogEntry</code> object. This has a
