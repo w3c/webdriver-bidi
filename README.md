@@ -9,6 +9,10 @@ WebDriver BiDi is not ready. Here's what we have so far:
 - Detailed [proposals](./proposals/) for the initial protocol
 - A [unofficial spec draft](https://w3c.github.io/webdriver-bidi/) waiting to be fleshed out
 
+## Status
+
+[![test](https://github.com/w3c/webdriver-bidi/actions/workflows/test.yml/badge.svg)](https://github.com/w3c/webdriver-bidi/actions/workflows/test.yml)
+
 ## How to build the specification locally
 
 We use [bikeshed](https://tabatkins.github.io/bikeshed/) to generate the specification.
