@@ -24,7 +24,7 @@ Object.entries(cddl).forEach(([cddlName, entries]) => {
      */
     .map((entry) => {
       const preceedingSpace = entry.split('\n').reduce((prev, line) => {
-        if (line.length === 0) {
+        if (line.trim().length === 0) {
           return prev
         }
 
