@@ -1039,21 +1039,21 @@ Issue: Define how this works.
 Each EMCAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
 strong map from handle ids to their corresponding objects.
 
-```
+<pre class="cddl remote-cddl">
 OwnershipModel = "root" / "none";
-```
+</pre>
 
 <dfn>RemoteReference</dfn> represents a remote reference to an exising ECMAScript
 object in [=handle object map=] in the given [=Realm=].
 
-```
+<pre class="cddl remote-cddl local-cddl">
 Handle = text;
 
 RemoteReference = {
    handle: Handle,
    *text => any,
 }
-```
+</pre>
 
 Issue: handle "stale object reference" case.
 
@@ -1078,7 +1078,7 @@ To <dfn>deserialize remote reference</dfn> given |realm| and |remote reference|:
 <dfn>PrimitiveProtocolValue</dfn> represents values which can only be represented by value, never
 by reference.
 
-```
+<pre class="cddl remote-cddl local-cddl">
 PrimitiveProtocolValue = {
   UndefinedValue //
   NullValue //
@@ -1117,7 +1117,7 @@ BigIntValue = {
   type: "bigint",
   value: text,
 }
-```
+</pre>
 
 #### Serialization #### {#data-types-protocolValue-primitiveProtocolValue-serialization}
 
@@ -1248,7 +1248,7 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
 to ECMAScript without reference to existing objects.
 
 
-```
+<pre class="cddl remote-cddl local-cddl">
 LocalValue = {
   PrimitiveProtocolValue //
   ArrayLocalValue //
@@ -1297,7 +1297,7 @@ SetLocalValue = {
   type: "set",
   value: ListLocalValue,
 }
-```
+</pre>
 
 #### Deserialization #### {#data-types-protocolValue-LocalValue-deserialization}
 
@@ -1511,7 +1511,8 @@ To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
 </div>
 
 [=remote end definition=] and [=local end definition=]
-```
+
+<pre class="cddl remote-cddl local-cddl">
 RemoteValue = {
   PrimitiveProtocolValue //
   SymbolRemoteValue //
@@ -1670,7 +1671,7 @@ WindowProxyRemoteValue = {
   ?handle: Handle,
   ?internalId: InternalId,
 }
-```
+</pre>
 
 Issue: Add WASM types?
 
@@ -2052,7 +2053,7 @@ SessionCommand = (
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-SessionResult = (StatusResult)
+SessionResult = (SessionStatusResult)
 </pre>
 
 <div algorithm>
@@ -2499,7 +2500,7 @@ BrowsingContextEvent = (
   BrowsingContextFragmentNavigatedEvent //
   BrowsingContextDomContentLoadedEvent //
   BrowsingContextLoadEvent //
-  BrowsingContextDownloadWillBegin //
+  BrowsingContextDownloadWillBeginEvent //
   BrowsingContextNavigationAbortedEvent //
   BrowsingContextNavigationFailedEvent //
   BrowsingContextUserPromptClosedEvent //
@@ -3116,7 +3117,7 @@ browsing context.
 
       BrowsingContextReloadParameters = {
         context: BrowsingContext,
-        ?ignoreCache: boolean,
+        ?ignoreCache: bool,
         ?wait: ReadinessState,
       }
       </pre>
@@ -3431,7 +3432,7 @@ complete</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextDownloadWillBegin = {
+        BrowsingContextDownloadWillBeginEvent = {
          method: "browsingContext.downloadWillBegin",
          params: NavigationInfo
        }
@@ -3447,7 +3448,7 @@ started</dfn> steps given |context| and |navigation status|:
     and |navigation status|.
 
  1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextDownloadWillBegin</code> production, with the
+     <code>BrowsingContextDownloadWillBeginEvent</code> production, with the
      <code>params</code> field set to |params|.
 
  1. Let |navigation id| be |navigation status|'s id.
@@ -3469,7 +3470,7 @@ started</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextNavigationAborted = {
+        BrowsingContextNavigationAbortedEvent = {
          method: "browsingContext.navigationAborted",
          params: NavigationInfo
        }
@@ -3508,7 +3509,7 @@ aborted</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextNavigationFailed = {
+        BrowsingContextNavigationFailedEvent = {
          method: "browsingContext.navigationFailed",
          params: NavigationInfo
        }
@@ -3671,7 +3672,7 @@ ScriptEvent = (
 
 [=Remote end definition=] and [=local end definition=]
 
-<pre class="cddl local-cddl remote-cddl">
+<pre class="cddl remote-cddl local-cddl">
 ExceptionDetails = {
   columnNumber: uint,
   exception: RemoteValue,
@@ -3721,7 +3722,7 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
 
 [=Remote end definition=] and [=local end definition=]
 
-<pre class="cddl local-cddl remote-cddl">
+<pre class="cddl remote-cddl local-cddl">
 Realm = text;
 </pre>
 
@@ -3903,7 +3904,7 @@ Note: Future variations of this specification will retain the invariant that
 
 [=Local end definition=]
 
-<pre class="cddl local-cddl">
+<pre class="cddl remote-cddl local-cddl">
 RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" /
                        "worker" / "paint-worklet" / "audio-worklet" / "worklet"
 </pre>
@@ -3913,7 +3914,7 @@ The <code>RealmType</code> type represents the different types of Realm.
 
 #### The script.StackFrame type #### {#types-script-StackFrame}
 
-<pre class="cddl local-cddl">
+<pre class="cddl remote-cddl local-cddl">
 StackFrame = {
   columnNumber: int,
   functionName: text,
@@ -3930,7 +3931,7 @@ properties, which represent the line and column number of the executed code.
 
 #### The script.StackTrace type #### {#types-script-StackTrace}
 
-<pre class="cddl local-cddl">
+<pre class="cddl remote-cddl local-cddl">
 StackTrace = {
   callFrames: [*StackFrame],
 }
@@ -4014,7 +4015,7 @@ Record=] of type <code>throw</code>, |exception|, is given by:
 
 [=Remote end definition=] and [=local end definition=]
 
-<pre class="cddl local-cddl remote-cddl">
+<pre class="cddl remote-cddl local-cddl">
 ScriptEvaluateResult = (
   ScriptEvaluateResultSuccess //
   ScriptEvaluateResultException
@@ -4139,7 +4140,7 @@ Issue: This has the wrong error code
 
 #### The script.Ownership type #### {#type-script-Ownership}
 
-<pre class="cddl local-cddl remote-cddl">
+<pre class="cddl remote-cddl local-cddl">
 SerializationOwnershipModel = "root" / "none"
 </pre>
 
