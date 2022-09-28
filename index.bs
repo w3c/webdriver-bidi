@@ -992,6 +992,9 @@ provides access to platform objects in an existing {{Window}} realm via
 <div algorithm>
 To <dfn>get or create a sandbox realm</dfn> given |name| and |browsing context|:
 
+1. If |name| is an empty string, then return [=error=] with
+   [=error code=] [=invalid argument=].
+
 1. Let |window| be |browsing context|'s [=active window=].
 
 1. If [=sandbox map=] does not contain |window|, set [=sandbox map=][|window|]
@@ -1002,7 +1005,7 @@ To <dfn>get or create a sandbox realm</dfn> given |name| and |browsing context|:
 1. If |sandboxes| does not contain |name|, set |sandboxes|[|name|] to [=create
    a sandbox realm=] with |browsing context|.
 
-1. Return |sandboxes|[|name|].
+1. Return [=success=] with data |sandboxes|[|name|].
 
 </div>
 
@@ -4140,8 +4143,9 @@ To <dfn>get a realm from a target</dfn> given |target|:
     1. Let |realm| be |environment settings|' [=realm execution context=]'s
        Realm component.
 
-  1. Otherwise: let |realm| be [=get or create a sandbox realm=] given
-     |target|["<code>sandbox</code>"] and |context|.
+  1. Otherwise: let |realm| be result of [=trying=] to
+     [=get or create a sandbox realm=] given |target|["<code>sandbox</code>"] and
+     |context|.
 
 1. Otherwise:
 
