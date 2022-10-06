@@ -8,7 +8,7 @@
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
   <meta content="Bikeshed version 44af0bf3e, updated Fri Jul 29 17:05:16 2022 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="c995112a140b4573b887caf3e3ae98be04828f28" name="document-revision">
+  <meta content="36f7db6c169f9869ea3253cc8a86bcecfc23aea7" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -469,7 +469,7 @@ dfn > a.self-link::before      { content: "#"; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-10-05">5 October 2022</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-10-06">6 October 2022</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -753,7 +753,7 @@ end</a> and consumed on the <a data-link-type="dfn" href="https://w3c.github.io/
 the remainder of the specification.</p>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①">Remote end definition</a></p>
 <pre class="cddl remote-cddl">Command = {
-  id: uint,
+  id: js-uint,
   CommandData,
   *text => any,
 }
@@ -774,13 +774,13 @@ EmptyParams = { *text }
 )
 
 CommandResponse = {
-  id: uint,
+  id: js-uint,
   result: ResultData,
   *text => any
 }
 
 ErrorResponse = {
-  id: uint / null,
+  id: js-uint / null,
   error: ErrorCode,
   message: text,
   ?stacktrace: text,
@@ -817,6 +817,9 @@ EventData = (
   LogEvent
 )
 </pre>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition②">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②">Local end definition</a></p>
+<pre class="cddl remote-cddl local-cddl">js-uint = 0..9007199254740991
+</pre>
    <h3 class="heading settled" data-level="3.2" id="session"><span class="secno">3.2. </span><span class="content">Session</span><a class="self-link" href="#session"></a></h3>
    <p>WebDriver BiDi extends the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions">session</a> concept from <a data-link-type="biblio" href="#biblio-webdriver">WebDriver</a>.</p>
    <p>A <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-sessions" id="ref-for-dfn-sessions①">session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="bidi-flag">BiDi flag</dfn>, which is false unless otherwise
@@ -844,16 +847,16 @@ agent. For example, a module might contain functionality for inspecting and
 manipulating the DOM, or for script execution.</p>
    <p>Each module has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="module-name">module name</dfn> which is a string. The <a data-link-type="dfn" href="#command-command-name" id="ref-for-command-command-name">command name</a> and <a data-link-type="dfn" href="#event-event-name" id="ref-for-event-event-name">event name</a> for commands and events defined in the
 module start with the <a data-link-type="dfn" href="#module-name" id="ref-for-module-name">module name</a> followed by a period "<code>.</code>".</p>
-   <p>Modules which contain <a data-link-type="dfn" href="#command" id="ref-for-command①">commands</a> define <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition②">remote end definition</a> fragments. These provide choices in the <code>CommandData</code> group for the
+   <p>Modules which contain <a data-link-type="dfn" href="#command" id="ref-for-command①">commands</a> define <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition③">remote end definition</a> fragments. These provide choices in the <code>CommandData</code> group for the
 module’s <a data-link-type="dfn" href="#command" id="ref-for-command②">commands</a>, and can also define additional definition properties. They
-can also define <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②">local end definition</a> fragments that provide additional choices
+can also define <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③">local end definition</a> fragments that provide additional choices
 in the <code>ResultData</code> group for the results of commands in the module.</p>
-   <p>Modules which contain events define <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③">local end definition</a> fragments that are
+   <p>Modules which contain events define <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④">local end definition</a> fragments that are
 choices in the <code>Event</code> group for the module’s <a data-link-type="dfn" href="#event" id="ref-for-event①">events</a>.</p>
    <p>An implementation may define <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="extension-modules">extension modules</dfn>. These must have a <a data-link-type="dfn" href="#module-name" id="ref-for-module-name①">module name</a> that contains a single colon "<code>:</code>" character. The
 part before the colon is the prefix; this is typically the same for all
 extension modules specific to a given implementation and should be unique for a
-given implementation. Such modules extend the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④">local end definition</a> and <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition③">remote
+given implementation. Such modules extend the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑤">local end definition</a> and <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition④">remote
 end definition</a> providing additional groups as choices for the defined <a data-link-type="dfn" href="#command" id="ref-for-command③">commands</a> and <a data-link-type="dfn" href="#event" id="ref-for-event②">events</a>.</p>
    <h3 class="heading settled" data-level="3.4" id="commands"><span class="secno">3.4. </span><span class="content">Commands</span><a class="self-link" href="#commands"></a></h3>
    <p>A <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="command">command</dfn> is an asynchronous operation, requested by
@@ -864,7 +867,7 @@ long-running. As a consequence, commands can finish out-of-order.</p>
    <p>Each <a data-link-type="dfn" href="#command" id="ref-for-command④">command</a> is defined by:</p>
    <ul>
     <li data-md>
-     <p>A <dfn data-dfn-for="command" data-dfn-type="dfn" data-export id="command-command-type">command type<a class="self-link" href="#command-command-type"></a></dfn> which is defined by a <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition④">remote
+     <p>A <dfn data-dfn-for="command" data-dfn-type="dfn" data-export id="command-command-type">command type<a class="self-link" href="#command-command-type"></a></dfn> which is defined by a <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑤">remote
  end definition</a> fragment containing a group. Each such group has two fields:</p>
      <ul>
       <li data-md>
@@ -876,7 +879,7 @@ name</dfn>.</p>
 the command. The populated value of this map is the <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export id="command-command-parameters">command parameters</dfn>.</p>
      </ul>
     <li data-md>
-     <p>A <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export id="command-result-type">result type</dfn>, which is defined by a <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑤">local
+     <p>A <dfn class="dfn-paneled" data-dfn-for="command" data-dfn-type="dfn" data-export id="command-result-type">result type</dfn>, which is defined by a <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑥">local
 end definition</a> fragment.</p>
     <li data-md>
      <p>A set of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps">remote end steps</a> which define the actions to take for a command
@@ -901,7 +904,7 @@ end</a> to the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#df
 occurred on the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-ends" id="ref-for-dfn-remote-ends⑤">remote end</a>.</p>
    <ul>
     <li data-md>
-     <p>An <dfn class="dfn-paneled" data-dfn-for="event" data-dfn-type="dfn" data-export id="event-event-type">event type</dfn> is defined by a <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑥">local
+     <p>An <dfn class="dfn-paneled" data-dfn-for="event" data-dfn-type="dfn" data-export id="event-event-type">event type</dfn> is defined by a <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑦">local
  end definition</a> fragment containing a group. Each such group has two fields:</p>
      <ul>
       <li data-md>
@@ -1177,7 +1180,7 @@ typically be "<code>localhost</code>".</p>
  with an error</a> given <var>connection</var>, null, and <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③">invalid argument</a>, and
  finally return.</p>
      <li data-md>
-      <p>Match <var>parsed</var> against the <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑤">remote end definition</a>. If this results in a
+      <p>Match <var>parsed</var> against the <a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑥">remote end definition</a>. If this results in a
  match:</p>
       <ol>
        <li data-md>
@@ -1214,7 +1217,7 @@ typically be "<code>localhost</code>".</p>
   "<code>sessionId</code>" property of <var>value</var>, let <var>session</var>’s <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection⑤">WebSocket connection</a> be <var>connection</var>, and remove <var>connection</var> from
   the set of <a data-link-type="dfn" href="#websocket-connections-not-associated-with-a-session" id="ref-for-websocket-connections-not-associated-with-a-session②">WebSocket connections not associated with a session</a>.</p>
          <li data-md>
-          <p>Let <var>response</var> be a new map matching the <code>CommandResponse</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑦">local end definition</a> with the <code>id</code> field set to <var>command id</var> and the <code>value</code> field set to <var>value</var>.</p>
+          <p>Let <var>response</var> be a new map matching the <code>CommandResponse</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑧">local end definition</a> with the <code>id</code> field set to <var>command id</var> and the <code>value</code> field set to <var>value</var>.</p>
          <li data-md>
           <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#serialize-an-infra-value-to-json-bytes" id="ref-for-serialize-an-infra-value-to-json-bytes">serialize an infra value to JSON
   bytes</a> given <var>response</var>.</p>
@@ -1274,7 +1277,7 @@ typically be "<code>localhost</code>".</p>
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="respond-with-an-error">respond with an error</dfn> given a <a data-link-type="dfn" href="#websocket-connection" id="ref-for-websocket-connection⑦">WebSocket connection</a> <var>connection</var>, <var>command id</var>, and <var>error code</var>: 
     <ol>
      <li data-md>
-      <p>Let <var>error data</var> be a new map matching the <code>ErrorResponse</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑧">local end definition</a>, with the <code>id</code> field
+      <p>Let <var>error data</var> be a new map matching the <code>ErrorResponse</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑨">local end definition</a>, with the <code>id</code> field
  set to <var>command id</var>, the <code>error</code> field set to <var>error code</var>, the <code>message</code> field set to an implementation-defined string
  containing a human-readable definition of the error that occurred and the <code>stacktrace</code> field optionally set to an implementation-defined
  string containing a stack trace report of the active stack frames at the
@@ -1519,12 +1522,12 @@ BigIntValue = {
  of steps for which the associated condition is true, if any:</p>
       <dl>
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values">Type</a>(<var>value</var>) is undefined 
-       <dd>Let <var>remote value</var> be a map matching the <code>UndefinedValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑨">local end definition</a>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>UndefinedValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⓪">local end definition</a>. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values①">Type</a>(<var>value</var>) is Null 
-       <dd>Let <var>remote value</var> be a map matching the <code>NullValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⓪">local end definition</a>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>NullValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①①">local end definition</a>. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values②">Type</a>(<var>value</var>) is String 
        <dd>
-        Let <var>remote value</var> be a map matching the <code>StringValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①①">local end definition</a>, with the <code>value</code> property set to <var>value</var>. 
+        Let <var>remote value</var> be a map matching the <code>StringValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①②">local end definition</a>, with the <code>value</code> property set to <var>value</var>. 
         <p class="issue" id="issue-d33a79cf"><a class="self-link" href="#issue-d33a79cf"></a> This doesn’t handle lone surrogates</p>
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values③">Type</a>(<var>value</var>) is Number 
        <dd>
@@ -1544,12 +1547,12 @@ BigIntValue = {
            <dd>Let <var>serialized</var> be <var>value</var> 
           </dl>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>NumberValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①②">local end definition</a>, with the <code>value</code> property set to <var>serialized</var>.</p>
+          <p>Let <var>remote value</var> be a map matching the <code>NumberValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①③">local end definition</a>, with the <code>value</code> property set to <var>serialized</var>.</p>
         </ol>
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values④">Type</a>(<var>value</var>) is Boolean 
-       <dd>Let <var>remote value</var> be a map matching the <code>BooleanValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①③">local end definition</a>, with the <code>value</code> property set to <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>BooleanValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①④">local end definition</a>, with the <code>value</code> property set to <var>value</var>. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑤">Type</a>(<var>value</var>) is BigInt 
-       <dd>Let <var>remote value</var> be a map matching the <code>BigIntValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①④">local end definition</a>, with the <code>value</code> property set to the result of running the <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-tostring" id="ref-for-sec-tostring">ToString</a> operation on <var>value</var>. 
+       <dd>Let <var>remote value</var> be a map matching the <code>BigIntValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑤">local end definition</a>, with the <code>value</code> property set to the result of running the <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-tostring" id="ref-for-sec-tostring">ToString</a> operation on <var>value</var>. 
       </dl>
      <li data-md>
       <p>Return <var>remote value</var></p>
@@ -1864,7 +1867,7 @@ protocol will result in an error.</p>
       </ol>
     </ol>
    </div>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑥">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑤">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑦">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑥">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">RemoteValue = {
   PrimitiveProtocolValue //
   SymbolRemoteValue //
@@ -1888,7 +1891,7 @@ protocol will result in an error.</p>
   WindowProxyRemoteValue //
 }
 
-InternalId = uint;
+InternalId = js-uint;
 
 ListRemoteValue = [*RemoteValue];
 
@@ -1934,16 +1937,16 @@ DateRemoteValue = {
 
 MapRemoteValue = {
   type: "map",
-  value: MappingRemoteValue,
   ?handle: Handle,
   ?internalId: InternalId,
+  ?value: MappingRemoteValue,
 }
 
 SetRemoteValue = {
   type: "set",
-  value: ListRemoteValue
   ?handle: Handle,
   ?internalId: InternalId,
+  ?value: ListRemoteValue
 }
 
 WeakMapRemoteValue = {
@@ -2008,9 +2011,9 @@ NodeRemoteValue = {
 }
 
 NodeProperties = {
-  nodeType: uint,
+  nodeType: js-uint,
   nodeValue: text,
-  childNodeCount: uint,
+  childNodeCount: js-uint,
   ?localName: text,
   ?namespaceURI: text,
   ?children: [*NodeRemoteValue],
@@ -2050,12 +2053,12 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
       <p>Let <var>child ownership</var> be "<code>none</code>".</p>
       <dl>
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑧">Type</a>(<var>value</var>) is Symbol 
-       <dd>Let <var>remote value</var> be a map matching the <code>SymbolRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑥">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>SymbolRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑦">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-isarray" id="ref-for-sec-isarray">IsArray</a>(<var>value</var>) 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>ArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑦">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
+          <p>Let <var>remote value</var> be a map matching the <code>ArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑧">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
          <li data-md>
           <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
          <li data-md>
@@ -2078,9 +2081,9 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
          <li data-md>
           <p>Let <var>flags</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-tostring" id="ref-for-sec-tostring②">ToString</a>(<a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get①">Get</a>(<var>value</var>, "flags")).</p>
          <li data-md>
-          <p>Let <var>value</var> be a map matching the <code>RegExpValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑧">local end definition</a>, with the <code>pattern</code> property set to the <var>pattern</var> and the the <code>flags</code> property set to the <var>flags</var>.</p>
+          <p>Let <var>value</var> be a map matching the <code>RegExpValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑨">local end definition</a>, with the <code>pattern</code> property set to the <var>pattern</var> and the the <code>flags</code> property set to the <var>flags</var>.</p>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>RegExpRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑨">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and
+          <p>Let <var>remote value</var> be a map matching the <code>RegExpRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and
  the <code>value</code> property set to <var>value</var>.</p>
         </ol>
        <dt><var>value</var> has a [[DateValue]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots">internal slot</a>. 
@@ -2091,14 +2094,14 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
          <li data-md>
           <p class="assertion">Assert: <var>serialized</var> is not a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type①">throw completion</a>.</p>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>DateRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and the
+          <p>Let <var>remote value</var> be a map matching the <code>DateRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and the
  value set to <var>serialized</var>.</p>
         </ol>
        <dt><var>value</var> has a [[MapData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots①">internal slot</a> 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>MapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
+          <p>Let <var>remote value</var> be a map matching the <code>MapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
  otherwise.</p>
          <li data-md>
           <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed①">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
@@ -2118,7 +2121,7 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>SetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
+          <p>Let <var>remote value</var> be a map matching the <code>SetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②③">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
  otherwise.</p>
          <li data-md>
           <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed②">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
@@ -2135,22 +2138,22 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
           <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
        <dt><var>value</var> has a [[WeakMapData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots③">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>WeakMapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②③">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>WeakMapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②④">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has a [[WeakSetData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots④">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>WeakSetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②④">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>WeakSetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑤">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has an [[ErrorData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑤">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>ErrorRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑤">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>ErrorRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑥">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ispromise" id="ref-for-sec-ispromise">IsPromise</a>(<var>value</var>) 
-       <dd>Let <var>remote value</var> be a map matching the <code>PromiseRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑥">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>PromiseRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑦">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has a [[TypedArrayName]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑥">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>TypedArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑦">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>TypedArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑧">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has an [[ArrayBufferData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑦">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>ArrayBufferRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑧">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>ArrayBufferRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑨">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object">platform object</a> that implements <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#boundary-point-node" id="ref-for-boundary-point-node">Node</a> 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>NodeRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑨">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
+          <p>Let <var>remote value</var> be a map matching the <code>NodeRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
          <li data-md>
           <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed③">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
          <li data-md>
@@ -2230,11 +2233,11 @@ but no properties of the node will be returned.</p>
           <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
        <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object①">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#windowproxy" id="ref-for-windowproxy">WindowProxy</a></code> 
-       <dd>1. Let <var>remote value</var> be a map matching the <code>WindowProxyRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>1. Let <var>remote value</var> be a map matching the <code>WindowProxyRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object②">platform object</a> 
-       <dd>1. Let <var>remote value</var> be a map matching the <code>ObjectRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>1. Let <var>remote value</var> be a map matching the <code>ObjectRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-iscallable" id="ref-for-sec-iscallable">IsCallable</a>(<var>value</var>) 
-       <dd>Let <var>remote value</var> be a map matching the <code>FunctionRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>FunctionRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③③">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt>Otherwise: 
        <dd>
         <ol>
@@ -2242,7 +2245,7 @@ but no properties of the node will be returned.</p>
           <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert③">Assert</a>: <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑨">type</a>(<var>value</var>) is Object</p>
          <li data-md>
           <p>Let <var>remote value</var> be a map matching the <code>ObjectRemoteValue</code> production
- in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③③">local end definition</a>, with the <code>handle</code> property set
+ in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③④">local end definition</a>, with the <code>handle</code> property set
  to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
          <li data-md>
           <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed④">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
@@ -2330,7 +2333,7 @@ remove optional flag from the field.</p>
    <p>The <dfn data-dfn-for="modules" data-dfn-type="dfn" data-export id="modules-session">session<a class="self-link" href="#modules-session"></a></dfn> module contains commands and
 events for monitoring the status of the remote end.</p>
    <h4 class="heading settled" data-level="7.1.1" id="module-session-definition"><span class="secno">7.1.1. </span><span class="content">Definition</span><a class="self-link" href="#module-session-definition"></a></h4>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑦">remote end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑧">remote end definition</a></p>
 <pre class="cddl remote-cddl">SessionCommand = (
   SessionNewCommand //
   SessionStatusCommand //
@@ -2338,7 +2341,7 @@ events for monitoring the status of the remote end.</p>
   SessionUnsubscribeCommand
 )
 </pre>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③④">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑤">local end definition</a></p>
 <pre class="cddl local-cddl">SessionResult = (SessionStatusResult)
 </pre>
    <div class="algorithm" data-algorithm="update the event map">
@@ -2467,7 +2470,7 @@ filter only those that ought to be returned to the local end.</p>
    </div>
    <h4 class="heading settled" data-level="7.1.2" id="module-session-types"><span class="secno">7.1.2. </span><span class="content">Types</span><a class="self-link" href="#module-session-types"></a></h4>
    <h5 class="heading settled" data-level="7.1.2.1" id="type-session-capabilitiesRequest"><span class="secno">7.1.2.1. </span><span class="content">The session.CapabilitiesRequest Type</span><a class="self-link" href="#type-session-capabilitiesRequest"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑧">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑤">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑨">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑥">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">CapabilitiesRequest = {
   ?acceptInsecureCertificates: bool,
   ?browserName: text,
@@ -2481,7 +2484,7 @@ filter only those that ought to be returned to the local end.</p>
     ?noProxy: [*text],
     ?sslProxy: text,
     ?socksProxy: text,
-    ?socksVersion: int,
+    ?socksVersion: 0..255,
   },
   *text => any
 };
@@ -2560,7 +2563,7 @@ CapabilitiesRequestParameters = {
       ?noProxy: [*text],
       ?sslProxy: text,
       ?socksProxy: text,
-      ?socksVersion: int,
+      ?socksVersion: 0..255,
     },
     setWindowRect: bool,
     *text => any
@@ -2708,7 +2711,7 @@ navigation status<a class="self-link" href="#webdriver-navigation-status"></a></
     <dd>The URL which is being loaded in the navigation
    </dl>
    <h4 class="heading settled" data-level="7.2.1" id="module-browsingContext-definition"><span class="secno">7.2.1. </span><span class="content">Definition</span><a class="self-link" href="#module-browsingContext-definition"></a></h4>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑨">remote end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⓪">remote end definition</a></p>
 <pre class="cddl remote-cddl">BrowsingContextCommand = (
   BrowsingContextCaptureScreenshotCommand //
   BrowsingContextCloseCommand //
@@ -2719,7 +2722,7 @@ navigation status<a class="self-link" href="#webdriver-navigation-status"></a></
   BrowsingContextReloadCommand
 )
 </pre>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑥">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑦">local end definition</a></p>
 <pre class="cddl local-cddl">BrowsingContextResult = (
   BrowsingContextCaptureScreenshotResult //
   BrowsingContextCreateResult //
@@ -2743,7 +2746,7 @@ BrowsingContextEvent = (
 </pre>
    <h4 class="heading settled" data-level="7.2.2" id="module-browsingcontext-types"><span class="secno">7.2.2. </span><span class="content">Types</span><a class="self-link" href="#module-browsingcontext-types"></a></h4>
    <h5 class="heading settled" data-level="7.2.2.1" id="type-browsingContext-Browsingcontext"><span class="secno">7.2.2.1. </span><span class="content">The browsingContext.BrowsingContext Type</span><a class="self-link" href="#type-browsingContext-Browsingcontext"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⓪">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑦">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①①">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑧">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">BrowsingContext = text;
 </pre>
    <p>Each <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context">browsing context</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="browsing context id" id="browsing-context-id">browsing context
@@ -2765,7 +2768,7 @@ same as the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-w
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.2.2.2" id="type-browsingContext-BrowsingContextInfo"><span class="secno">7.2.2.2. </span><span class="content">The browsingContext.BrowsingContextInfo Type</span><a class="self-link" href="#type-browsingContext-BrowsingContextInfo"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑧">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑨">local end definition</a></p>
 <pre class="cddl local-cddl">BrowsingContextInfoList = [* BrowsingContextInfo]
 
 BrowsingContextInfo = {
@@ -2879,14 +2882,14 @@ browsing context.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.2.2.3" id="type-browsingContext-Navigation"><span class="secno">7.2.2.3. </span><span class="content">The browsingContext.Navigation Type</span><a class="self-link" href="#type-browsingContext-Navigation"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①①">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑨">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①②">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⓪">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">Navigation = text;
 </pre>
    <p>The <code>Navigation</code> type is a unique string identifying an ongoing
 navigation.</p>
    <p>TODO: Link to the definition in the HTML spec.</p>
    <h5 class="heading settled" data-level="7.2.2.4" id="type-browsingContext-NavigationInfo"><span class="secno">7.2.2.4. </span><span class="content">The browsingContext.NavigationInfo Type</span><a class="self-link" href="#type-browsingContext-NavigationInfo"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⓪">local end definition</a>:</p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④①">local end definition</a>:</p>
 <pre class="cddl local-cddl">NavigationInfo = {
   context: BrowsingContext,
   navigation: Navigation / null,
@@ -3091,7 +3094,7 @@ or all top-level contexts when no parent is provided.</p>
 }
 
 BrowsingContextGetTreeParameters = {
-  ?maxDepth: uint,
+  ?maxDepth: js-uint,
   ?root: BrowsingContext,
 }
 </pre>
@@ -3687,7 +3690,7 @@ opened<a class="self-link" href="#webdriver-bidi-user-prompt-opened"></a></dfn> 
    <p>The <dfn data-dfn-for="modules" data-dfn-type="dfn" data-export id="modules-script">script<a class="self-link" href="#modules-script"></a></dfn> module contains commands and events
 relating to script realms and execution.</p>
    <h4 class="heading settled" data-level="7.3.1" id="module-script-definition"><span class="secno">7.3.1. </span><span class="content">Definition</span><a class="self-link" href="#module-script-definition"></a></h4>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①②">Remote end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①③">Remote end definition</a></p>
 <pre class="cddl remote-cddl">ScriptCommand = (
   ScriptCallFunctionCommand //
   ScriptDisownCommand //
@@ -3695,7 +3698,7 @@ relating to script realms and execution.</p>
   ScriptGetRealmsCommand
 )
 </pre>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④①">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④②">local end definition</a></p>
 <pre class="cddl local-cddl">ScriptResult = (
   ScriptEvaluateResult //
   ScriptGetRealmsResult
@@ -3708,11 +3711,11 @@ ScriptEvent = (
 </pre>
    <h4 class="heading settled" data-level="7.3.2" id="module-script-types"><span class="secno">7.3.2. </span><span class="content">Types</span><a class="self-link" href="#module-script-types"></a></h4>
    <h5 class="heading settled" data-level="7.3.2.1" id="type-script-ExceptionDetails"><span class="secno">7.3.2.1. </span><span class="content">The script.ExceptionDetails type</span><a class="self-link" href="#type-script-ExceptionDetails"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①③">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④②">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①④">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④③">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">ExceptionDetails = {
-  columnNumber: uint,
+  columnNumber: js-uint,
   exception: RemoteValue,
-  lineNumber: uint,
+  lineNumber: js-uint,
   stackTrace: StackTrace,
   text: text,
 };
@@ -3744,7 +3747,7 @@ ScriptEvent = (
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.3.2.2" id="type-script-Realm"><span class="secno">7.3.2.2. </span><span class="content">The script.Realm type</span><a class="self-link" href="#type-script-Realm"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①④">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④③">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑤">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④④">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">Realm = text;
 </pre>
    <p>Each <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms③">realm</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="realm-id">realm id</dfn>, which is a string
@@ -3770,7 +3773,7 @@ relationships between different ids.</p>
     <p class="issue" id="issue-89e6b783"><a class="self-link" href="#issue-89e6b783"></a> This has the wrong error code</p>
    </div>
    <h5 class="heading settled" data-level="7.3.2.3" id="type-script-RealmInfo"><span class="secno">7.3.2.3. </span><span class="content">The script.RealmInfo type</span><a class="self-link" href="#type-script-RealmInfo"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④④">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑤">Local end definition</a></p>
 <pre class="cddl local-cddl">RealmInfo = {
   WindowRealmInfo //
   DedicatedWorkerRealmInfo //
@@ -3924,16 +3927,16 @@ WorkletRealmInfo = {
          implementing <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/worklets.html#workletglobalscope" id="ref-for-workletglobalscope①">WorkletGlobalScope</a></code>.</p>
    </div>
    <h5 class="heading settled" data-level="7.3.2.4" id="type-script-RealmType"><span class="secno">7.3.2.4. </span><span class="content">The script.RealmType type</span><a class="self-link" href="#type-script-RealmType"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑤">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑥">Local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" /
                        "worker" / "paint-worklet" / "audio-worklet" / "worklet"
 </pre>
    <p>The <code>RealmType</code> type represents the different types of Realm.</p>
    <h5 class="heading settled" data-level="7.3.2.5" id="types-script-StackFrame"><span class="secno">7.3.2.5. </span><span class="content">The script.StackFrame type</span><a class="self-link" href="#types-script-StackFrame"></a></h5>
 <pre class="cddl remote-cddl local-cddl">StackFrame = {
-  columnNumber: int,
+  columnNumber: js-uint,
   functionName: text,
-  lineNumber: int,
+  lineNumber: js-uint,
   url: text,
 }
 </pre>
@@ -4007,7 +4010,7 @@ Record</a> of type <code>throw</code>, <var>exception</var>, is given by:</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.3.2.7" id="type-script-ScriptEvaluateResult"><span class="secno">7.3.2.7. </span><span class="content">The script.ScriptEvaluateResult type</span><a class="self-link" href="#type-script-ScriptEvaluateResult"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑤">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑥">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑥">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑦">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">ScriptEvaluateResult = (
   ScriptEvaluateResultSuccess //
   ScriptEvaluateResultException
@@ -4028,7 +4031,7 @@ that executes script. The <code>ScriptEvaluateResultSuccess</code> variant is us
 cases where the script completes normally and the <code>ScriptEvaluateResultException</code> variant is used in cases where the script
 completes with a thrown exception.</p>
    <h5 class="heading settled" data-level="7.3.2.8" id="type-script-Source"><span class="secno">7.3.2.8. </span><span class="content">The script.Source type</span><a class="self-link" href="#type-script-Source"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑦">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑧">Local end definition</a></p>
 <pre class="cddl local-cddl">Source = (
   realm: Realm,
   ?context: BrowsingContext
@@ -4063,7 +4066,7 @@ script related event occured.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.3.2.9" id="type-script-Target"><span class="secno">7.3.2.9. </span><span class="content">The script.Target type</span><a class="self-link" href="#type-script-Target"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑥">Remote end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑦">Remote end definition</a></p>
 <pre class="cddl remote-cddl">RealmTarget = {realm: Realm};
 
 ContextTarget = {
@@ -4662,14 +4665,14 @@ is then navigated before the local end subscribes to log events for the top
 level context.</p>
    </div>
    <h4 class="heading settled" data-level="7.4.1" id="module-log-definition"><span class="secno">7.4.1. </span><span class="content">Definition</span><a class="self-link" href="#module-log-definition"></a></h4>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑧">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑨">Local end definition</a></p>
 <pre class="cddl local-cddl">LogEvent = (
   LogEntryAddedEvent
 )
 </pre>
    <h4 class="heading settled" data-level="7.4.2" id="module-log-types"><span class="secno">7.4.2. </span><span class="content">Types</span><a class="self-link" href="#module-log-types"></a></h4>
    <h5 class="heading settled" data-level="7.4.2.1" id="types-log-logentry"><span class="secno">7.4.2.1. </span><span class="content">log.LogEntry</span><a class="self-link" href="#types-log-logentry"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑨">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑤⓪">Local end definition</a></p>
 <pre class="cddl local-cddl">LogLevel = "debug" / "info" / "warning" / "error"
 
 LogEntry = (
@@ -4682,7 +4685,7 @@ BaseLogEntry = {
   level: LogLevel,
   source: Source,
   text: text / null,
-  timestamp: int,
+  timestamp: js-uint,
   ?stackTrace: StackTrace,
 }
 
@@ -6752,50 +6755,50 @@ to express as a patch to the specification since it requires changing multiple p
   <aside class="dfn-panel" data-for="remote-end-definition">
    <b><a href="#remote-end-definition">#remote-end-definition</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-remote-end-definition">3.1. Definition</a> <a href="#ref-for-remote-end-definition①">(2)</a>
-    <li><a href="#ref-for-remote-end-definition②">3.3. Modules</a> <a href="#ref-for-remote-end-definition③">(2)</a>
-    <li><a href="#ref-for-remote-end-definition④">3.4. Commands</a>
-    <li><a href="#ref-for-remote-end-definition⑤">4. Transport</a>
-    <li><a href="#ref-for-remote-end-definition⑥">6.2.3. Remote Value</a>
-    <li><a href="#ref-for-remote-end-definition⑦">7.1.1. Definition</a>
-    <li><a href="#ref-for-remote-end-definition⑧">7.1.2.1. The session.CapabilitiesRequest Type</a>
-    <li><a href="#ref-for-remote-end-definition⑨">7.2.1. Definition</a>
-    <li><a href="#ref-for-remote-end-definition①⓪">7.2.2.1. The browsingContext.BrowsingContext Type</a>
-    <li><a href="#ref-for-remote-end-definition①①">7.2.2.3. The browsingContext.Navigation Type</a>
-    <li><a href="#ref-for-remote-end-definition①②">7.3.1. Definition</a>
-    <li><a href="#ref-for-remote-end-definition①③">7.3.2.1. The script.ExceptionDetails type</a>
-    <li><a href="#ref-for-remote-end-definition①④">7.3.2.2. The script.Realm type</a>
-    <li><a href="#ref-for-remote-end-definition①⑤">7.3.2.7. The script.ScriptEvaluateResult type</a>
-    <li><a href="#ref-for-remote-end-definition①⑥">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-remote-end-definition">3.1. Definition</a> <a href="#ref-for-remote-end-definition①">(2)</a> <a href="#ref-for-remote-end-definition②">(3)</a>
+    <li><a href="#ref-for-remote-end-definition③">3.3. Modules</a> <a href="#ref-for-remote-end-definition④">(2)</a>
+    <li><a href="#ref-for-remote-end-definition⑤">3.4. Commands</a>
+    <li><a href="#ref-for-remote-end-definition⑥">4. Transport</a>
+    <li><a href="#ref-for-remote-end-definition⑦">6.2.3. Remote Value</a>
+    <li><a href="#ref-for-remote-end-definition⑧">7.1.1. Definition</a>
+    <li><a href="#ref-for-remote-end-definition⑨">7.1.2.1. The session.CapabilitiesRequest Type</a>
+    <li><a href="#ref-for-remote-end-definition①⓪">7.2.1. Definition</a>
+    <li><a href="#ref-for-remote-end-definition①①">7.2.2.1. The browsingContext.BrowsingContext Type</a>
+    <li><a href="#ref-for-remote-end-definition①②">7.2.2.3. The browsingContext.Navigation Type</a>
+    <li><a href="#ref-for-remote-end-definition①③">7.3.1. Definition</a>
+    <li><a href="#ref-for-remote-end-definition①④">7.3.2.1. The script.ExceptionDetails type</a>
+    <li><a href="#ref-for-remote-end-definition①⑤">7.3.2.2. The script.Realm type</a>
+    <li><a href="#ref-for-remote-end-definition①⑥">7.3.2.7. The script.ScriptEvaluateResult type</a>
+    <li><a href="#ref-for-remote-end-definition①⑦">7.3.2.9. The script.Target type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="local-end-definition">
    <b><a href="#local-end-definition">#local-end-definition</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-local-end-definition">3.1. Definition</a> <a href="#ref-for-local-end-definition①">(2)</a>
-    <li><a href="#ref-for-local-end-definition②">3.3. Modules</a> <a href="#ref-for-local-end-definition③">(2)</a> <a href="#ref-for-local-end-definition④">(3)</a>
-    <li><a href="#ref-for-local-end-definition⑤">3.4. Commands</a>
-    <li><a href="#ref-for-local-end-definition⑥">3.5. Events</a>
-    <li><a href="#ref-for-local-end-definition⑦">4. Transport</a> <a href="#ref-for-local-end-definition⑧">(2)</a>
-    <li><a href="#ref-for-local-end-definition⑨">6.2.1.1. Serialization</a> <a href="#ref-for-local-end-definition①⓪">(2)</a> <a href="#ref-for-local-end-definition①①">(3)</a> <a href="#ref-for-local-end-definition①②">(4)</a> <a href="#ref-for-local-end-definition①③">(5)</a> <a href="#ref-for-local-end-definition①④">(6)</a>
-    <li><a href="#ref-for-local-end-definition①⑤">6.2.3. Remote Value</a>
-    <li><a href="#ref-for-local-end-definition①⑥">6.2.3.1. Serialization</a> <a href="#ref-for-local-end-definition①⑦">(2)</a> <a href="#ref-for-local-end-definition①⑧">(3)</a> <a href="#ref-for-local-end-definition①⑨">(4)</a> <a href="#ref-for-local-end-definition②⓪">(5)</a> <a href="#ref-for-local-end-definition②①">(6)</a> <a href="#ref-for-local-end-definition②②">(7)</a> <a href="#ref-for-local-end-definition②③">(8)</a> <a href="#ref-for-local-end-definition②④">(9)</a> <a href="#ref-for-local-end-definition②⑤">(10)</a> <a href="#ref-for-local-end-definition②⑥">(11)</a> <a href="#ref-for-local-end-definition②⑦">(12)</a> <a href="#ref-for-local-end-definition②⑧">(13)</a> <a href="#ref-for-local-end-definition②⑨">(14)</a> <a href="#ref-for-local-end-definition③⓪">(15)</a> <a href="#ref-for-local-end-definition③①">(16)</a> <a href="#ref-for-local-end-definition③②">(17)</a> <a href="#ref-for-local-end-definition③③">(18)</a>
-    <li><a href="#ref-for-local-end-definition③④">7.1.1. Definition</a>
-    <li><a href="#ref-for-local-end-definition③⑤">7.1.2.1. The session.CapabilitiesRequest Type</a>
-    <li><a href="#ref-for-local-end-definition③⑥">7.2.1. Definition</a>
-    <li><a href="#ref-for-local-end-definition③⑦">7.2.2.1. The browsingContext.BrowsingContext Type</a>
-    <li><a href="#ref-for-local-end-definition③⑧">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
-    <li><a href="#ref-for-local-end-definition③⑨">7.2.2.3. The browsingContext.Navigation Type</a>
-    <li><a href="#ref-for-local-end-definition④⓪">7.2.2.4. The browsingContext.NavigationInfo Type</a>
-    <li><a href="#ref-for-local-end-definition④①">7.3.1. Definition</a>
-    <li><a href="#ref-for-local-end-definition④②">7.3.2.1. The script.ExceptionDetails type</a>
-    <li><a href="#ref-for-local-end-definition④③">7.3.2.2. The script.Realm type</a>
-    <li><a href="#ref-for-local-end-definition④④">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-local-end-definition④⑤">7.3.2.4. The script.RealmType type</a>
-    <li><a href="#ref-for-local-end-definition④⑥">7.3.2.7. The script.ScriptEvaluateResult type</a>
-    <li><a href="#ref-for-local-end-definition④⑦">7.3.2.8. The script.Source type</a>
-    <li><a href="#ref-for-local-end-definition④⑧">7.4.1. Definition</a>
-    <li><a href="#ref-for-local-end-definition④⑨">7.4.2.1. log.LogEntry</a>
+    <li><a href="#ref-for-local-end-definition">3.1. Definition</a> <a href="#ref-for-local-end-definition①">(2)</a> <a href="#ref-for-local-end-definition②">(3)</a>
+    <li><a href="#ref-for-local-end-definition③">3.3. Modules</a> <a href="#ref-for-local-end-definition④">(2)</a> <a href="#ref-for-local-end-definition⑤">(3)</a>
+    <li><a href="#ref-for-local-end-definition⑥">3.4. Commands</a>
+    <li><a href="#ref-for-local-end-definition⑦">3.5. Events</a>
+    <li><a href="#ref-for-local-end-definition⑧">4. Transport</a> <a href="#ref-for-local-end-definition⑨">(2)</a>
+    <li><a href="#ref-for-local-end-definition①⓪">6.2.1.1. Serialization</a> <a href="#ref-for-local-end-definition①①">(2)</a> <a href="#ref-for-local-end-definition①②">(3)</a> <a href="#ref-for-local-end-definition①③">(4)</a> <a href="#ref-for-local-end-definition①④">(5)</a> <a href="#ref-for-local-end-definition①⑤">(6)</a>
+    <li><a href="#ref-for-local-end-definition①⑥">6.2.3. Remote Value</a>
+    <li><a href="#ref-for-local-end-definition①⑦">6.2.3.1. Serialization</a> <a href="#ref-for-local-end-definition①⑧">(2)</a> <a href="#ref-for-local-end-definition①⑨">(3)</a> <a href="#ref-for-local-end-definition②⓪">(4)</a> <a href="#ref-for-local-end-definition②①">(5)</a> <a href="#ref-for-local-end-definition②②">(6)</a> <a href="#ref-for-local-end-definition②③">(7)</a> <a href="#ref-for-local-end-definition②④">(8)</a> <a href="#ref-for-local-end-definition②⑤">(9)</a> <a href="#ref-for-local-end-definition②⑥">(10)</a> <a href="#ref-for-local-end-definition②⑦">(11)</a> <a href="#ref-for-local-end-definition②⑧">(12)</a> <a href="#ref-for-local-end-definition②⑨">(13)</a> <a href="#ref-for-local-end-definition③⓪">(14)</a> <a href="#ref-for-local-end-definition③①">(15)</a> <a href="#ref-for-local-end-definition③②">(16)</a> <a href="#ref-for-local-end-definition③③">(17)</a> <a href="#ref-for-local-end-definition③④">(18)</a>
+    <li><a href="#ref-for-local-end-definition③⑤">7.1.1. Definition</a>
+    <li><a href="#ref-for-local-end-definition③⑥">7.1.2.1. The session.CapabilitiesRequest Type</a>
+    <li><a href="#ref-for-local-end-definition③⑦">7.2.1. Definition</a>
+    <li><a href="#ref-for-local-end-definition③⑧">7.2.2.1. The browsingContext.BrowsingContext Type</a>
+    <li><a href="#ref-for-local-end-definition③⑨">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-local-end-definition④⓪">7.2.2.3. The browsingContext.Navigation Type</a>
+    <li><a href="#ref-for-local-end-definition④①">7.2.2.4. The browsingContext.NavigationInfo Type</a>
+    <li><a href="#ref-for-local-end-definition④②">7.3.1. Definition</a>
+    <li><a href="#ref-for-local-end-definition④③">7.3.2.1. The script.ExceptionDetails type</a>
+    <li><a href="#ref-for-local-end-definition④④">7.3.2.2. The script.Realm type</a>
+    <li><a href="#ref-for-local-end-definition④⑤">7.3.2.3. The script.RealmInfo type</a>
+    <li><a href="#ref-for-local-end-definition④⑥">7.3.2.4. The script.RealmType type</a>
+    <li><a href="#ref-for-local-end-definition④⑦">7.3.2.7. The script.ScriptEvaluateResult type</a>
+    <li><a href="#ref-for-local-end-definition④⑧">7.3.2.8. The script.Source type</a>
+    <li><a href="#ref-for-local-end-definition④⑨">7.4.1. Definition</a>
+    <li><a href="#ref-for-local-end-definition⑤⓪">7.4.2.1. log.LogEntry</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="bidi-flag">
