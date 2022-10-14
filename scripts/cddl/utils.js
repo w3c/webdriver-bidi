@@ -2,35 +2,41 @@
  * Helper function to iterate through the parsed spec document and
  * filter out all `<pre>` nodes with class `cddl`, e.g.
  * ```
- * <pre class="cddl remote-cddl">...</pre>
- * <pre class="cddl local-cddl">...</pre>
+ * <pre class='cddl remote-cddl'>...</pre>
+ * <pre class='cddl local-cddl'>...</pre>
  * ```
- * 
+ *
  * @param {[Document] | DefaultTreeNode[]} nodes tree nodes
- * @return {
- *   {
- *     nodeClass: string,
- *     content: string[]
- *   }[]
- * } a list of pre texts
+ * @param {Array<string>} local Array to fill with local CDDL definitions.
+ * @param {Array<string>} remote Array to fill with remote CDDL definitions.
  */
-function getCDDLNodes (nodes) {
-    return nodes.map((node) => {
-        if (node.nodeName === 'pre') {
-            const nodeClass = node.attrs.find((attr) => attr.name === 'class')
-            const content = node.childNodes.map((child) => child.value).join('')
+function getCDDLNodes(nodes) {
+  const entries = { local: [], remote: [] };
 
-            if (nodeClass && nodeClass.value.includes('cddl')) {
-                return { nodeClass: nodeClass.value.split(' ').pop(), content }
-            }
+  nodes.forEach((node) => {
+    if (node.nodeName === 'pre') {
+      const nodeClass = node.attrs.find((attr) => attr.name === 'class')
+      if (nodeClass && nodeClass.value.includes('cddl')) {
+        const content = node.childNodes.map((child) => child.value).join('');
+
+        if (nodeClass.value.includes("local-cddl")) {
+          entries.local.push(content);
         }
 
-        if (!node.childNodes) {
-            return
+        if (nodeClass.value.includes("remote-cddl")) {
+          entries.remote.push(content);
         }
+      }
+    }
 
-        return getCDDLNodes(node.childNodes)
-    }).flat().filter(Boolean)
+    if (node.childNodes) {
+      const { local, remote } = getCDDLNodes(node.childNodes);
+      entries.local.push(...local);
+      entries.remote.push(...remote);
+    }
+  });
+
+  return entries;
 }
 
 module.exports = { getCDDLNodes }
