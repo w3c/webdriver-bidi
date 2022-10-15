@@ -6,9 +6,9 @@
   <meta content="ED" name="w3c-status">
   <link href="https://www.w3.org/StyleSheets/TR/2021/W3C-ED" rel="stylesheet">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="Bikeshed version 07caf056f, updated Wed Oct 12 12:03:55 2022 -0700" name="generator">
+  <meta content="Bikeshed version b0de3432c, updated Thu Oct 13 09:16:59 2022 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="582eed0f8e7d7ae7013e9c011e5716996cbffc75" name="document-revision">
+  <meta content="9062b1d89669903cfdd067fcf95aa1ab7f5daaed" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -469,7 +469,7 @@ dfn > a.self-link::before      { content: "#"; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-10-13">13 October 2022</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2022-10-15">15 October 2022</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -1420,6 +1420,25 @@ provides access to platform objects in an existing <code class="idl"><a data-lin
    <div class="algorithm" data-algorithm="create a sandbox realm">
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="create-a-sandbox-realm">create a sandbox realm</dfn> with <var>window</var>: 
     <p class="issue" id="issue-cd353b2b"><a class="self-link" href="#issue-cd353b2b"></a> Define creation of sandbox realm. This is going to return a <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy" id="ref-for-sandboxwindowproxy①">SandboxWindowProxy</a></code> wrapping <var>window</var>.</p>
+   </div>
+   <div class="algorithm" data-algorithm="get a sandbox name">
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-a-sandbox-name">get a sandbox name</dfn> given <var>target realm</var>:</p>
+    <ol>
+     <li data-md>
+      <p>Let <var>realms maps</var> be <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-getting-the-values" id="ref-for-map-getting-the-values">get the values</a> of <a data-link-type="dfn" href="#sandbox-map" id="ref-for-sandbox-map③">sandbox map</a>.</p>
+     <li data-md>
+      <p>For each <var>realms map</var> in <var>realms maps</var>:</p>
+      <ol>
+       <li data-md>
+        <p>For each <var>name</var> → <var>realm</var> in <var>realms map</var>:</p>
+        <ol>
+         <li data-md>
+          <p>If <var>realm</var> is <var>target realm</var>, return <var>name</var>.</p>
+        </ol>
+      </ol>
+     <li data-md>
+      <p>Return null.</p>
+    </ol>
    </div>
    <h3 class="heading settled" data-level="5.2" id="sandbox-proxy"><span class="secno">5.2. </span><span class="content">Sandbox Proxy Objects</span><a class="self-link" href="#sandbox-proxy"></a></h3>
    <p>A <dfn class="dfn-paneled idl-code" data-dfn-type="interface" data-export id="sandboxproxy"><code>SandboxProxy</code></dfn> object is an exotic object that mediates sandboxed access to
@@ -3793,7 +3812,8 @@ BaseRealmInfo = {
 WindowRealmInfo = {
   BaseRealmInfo,
   type: "window",
-  context: BrowsingContext
+  context: BrowsingContext,
+  ?sandbox: text
 }
 
 DedicatedWorkerRealmInfo = {
@@ -3859,6 +3879,25 @@ WorkletRealmInfo = {
          <li data-md>
           <p>Let <var>realm info</var> be a map matching the <code>WindowRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, the <code>origin</code> field set to <var>origin</var>, and the <code>context</code> field set to <var>context id</var>.</p>
+        </ol>
+       <dt><var>global object</var> is <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy" id="ref-for-sandboxwindowproxy②">SandboxWindowProxy</a></code> object 
+       <dd>
+         TODO: Unclear if this is the right formulation for handling sandboxes. 
+        <ol>
+         <li data-md>
+          <p>Let <var>document</var> be <var>global object</var>’s wrapped <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/window-object.html#window" id="ref-for-window④">Window</a></code>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window②">associated <code>Document</code></a>.</p>
+         <li data-md>
+          <p>Let <var>browsing context</var> be <var>document</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑨">browsing context</a>.</p>
+         <li data-md>
+          <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①①">browsing context id</a> for <var>browsing context</var>.</p>
+         <li data-md>
+          <p>Let <var>sandbox name</var> be the result of <a data-link-type="dfn" href="#get-a-sandbox-name" id="ref-for-get-a-sandbox-name">get a sandbox name</a> given <var>realm</var>.</p>
+         <li data-md>
+          <p class="assertion">Assert: <var>sandbox name</var> is not null.</p>
+         <li data-md>
+          <p>Let <var>realm info</var> be a map matching the <code>WindowRealmInfo</code> production,
+ with the <code>realm</code> field set to <var>realm id</var>, the <code>origin</code> field set to <var>origin</var>, the <code>context</code> field set to <var>context id</var>,
+ and the <code>sandbox</code> field set to <var>sandbox name</var>.</p>
         </ol>
        <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#dedicatedworkerglobalscope" id="ref-for-dedicatedworkerglobalscope">DedicatedWorkerGlobalScope</a></code> object 
        <dd>
@@ -4048,14 +4087,14 @@ script related event occured.</p>
      <li data-md>
       <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context" id="ref-for-realm-execution-context①">realm execution context</a>'s Realm component is <var>source realm</var>.</p>
      <li data-md>
-      <p>If <var>environment settings</var> has a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window②">associated <code>Document</code></a>:</p>
+      <p>If <var>environment settings</var> has a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window③">associated <code>Document</code></a>:</p>
       <ol>
        <li data-md>
-        <p>Let <var>document</var> be environment settings’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window③">associated <code>Document</code></a>.</p>
+        <p>Let <var>document</var> be environment settings’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window④">associated <code>Document</code></a>.</p>
        <li data-md>
         <p>Let <var>browsing context</var> be <var>document</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#concept-document-bc" id="ref-for-concept-document-bc②">browsing context</a>.</p>
        <li data-md>
-        <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①①">browsing context id</a> for <var>browsing context</var>.</p>
+        <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①②">browsing context id</a> for <var>browsing context</var>.</p>
       </ol>
       <p>Otherwise let <var>browsing context</var> be null.</p>
      <li data-md>
@@ -4097,7 +4136,7 @@ associated with the context’s active document.</p>
          <li data-md>
           <p>Let <var>document</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#active-document" id="ref-for-active-document⑤">active document</a>.</p>
          <li data-md>
-          <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object①">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global③">relevant global object</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window④">associated <code>Document</code></a> is <var>document</var>.</p>
+          <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object①">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global③">relevant global object</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window⑤">associated <code>Document</code></a> is <var>document</var>.</p>
          <li data-md>
           <p>Let <var>realm</var> be <var>environment settings</var>’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context" id="ref-for-realm-execution-context②">realm execution context</a>'s
  Realm component.</p>
@@ -4390,7 +4429,7 @@ that likely isn’t what clients want.</p>
    <h5 class="heading settled" data-level="7.3.3.4" id="command-script-getRealms"><span class="secno">7.3.3.4. </span><span class="content">The script.getRealms Command</span><a class="self-link" href="#command-script-getRealms"></a></h5>
    <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptgetrealms">script.getRealms<a class="self-link" href="#commands-scriptgetrealms"></a></dfn> command returns a list of
 all realms, optionally filtered to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms⑥">realms</a> of a specific type, or to the
-realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document①">document</a> currently loaded in a specified <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context⑨">browsing context</a>.</p>
+realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document①">document</a> currently loaded in a specified <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#browsing-context" id="ref-for-browsing-context①⓪">browsing context</a>.</p>
    <dl>
     <dt>Command Type
     <dd>
@@ -4434,7 +4473,7 @@ ScriptGetRealmsResult = {
           <p>If any of the following conditions hold:</p>
           <ul>
            <li data-md>
-            <p>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window⑤">associated <code>Document</code></a> of <var>settings</var>’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global④">relevant global object</a> is <var>document</var></p>
+            <p>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window⑥">associated <code>Document</code></a> of <var>settings</var>’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global④">relevant global object</a> is <var>document</var></p>
            <li data-md>
             <p>The <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-realm-global" id="ref-for-concept-realm-global③">global object</a> specified by <var>settings</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/workers.html#workerglobalscope" id="ref-for-workerglobalscope③">WorkerGlobalScope</a></code> with <var>document</var> in its <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/workers.html#concept-WorkerGlobalScope-owner-set" id="ref-for-concept-WorkerGlobalScope-owner-set①">owner set</a></p>
           </ul>
@@ -4516,10 +4555,10 @@ object:</p>
        <li data-md>
         <p>Let <var>related browsing contexts</var> be a new set.</p>
        <li data-md>
-        <p>If the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window⑥">associated <code>Document</code></a> of <var>settings</var>’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global⑤">relevant global object</a> is a <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document②">Document</a>:</p>
+        <p>If the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window⑦">associated <code>Document</code></a> of <var>settings</var>’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global⑤">relevant global object</a> is a <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#concept-document" id="ref-for-concept-document②">Document</a>:</p>
         <ol>
          <li data-md>
-          <p>Let <var>context</var> be <var>settings</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global⑥">relevant global object</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window⑦">associated <code>Document</code></a>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#concept-document-bc" id="ref-for-concept-document-bc③">browsing context</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①①">top-level browsing context</a>.</p>
+          <p>Let <var>context</var> be <var>settings</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global⑥">relevant global object</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window⑧">associated <code>Document</code></a>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#concept-document-bc" id="ref-for-concept-document-bc③">browsing context</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①①">top-level browsing context</a>.</p>
          <li data-md>
           <p>If <var>context</var> is not in <var>contexts</var>, continue.</p>
          <li data-md>
@@ -4583,7 +4622,7 @@ ScriptRealmDestroyedEvent = {
         </ol>
       </ol>
      <li data-md>
-      <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object⑦">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global⑦">relevant global object</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window⑧">associated <code>Document</code></a> is <var>document</var>.</p>
+      <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object⑦">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global⑦">relevant global object</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window" id="ref-for-concept-document-window⑨">associated <code>Document</code></a> is <var>document</var>.</p>
      <li data-md>
       <p>Let <var>realm</var> be <var>environment settings</var>’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context" id="ref-for-realm-execution-context⑤">realm execution context</a>'s Realm component.</p>
      <li data-md>
@@ -4621,7 +4660,7 @@ worker</a> algorithm:</p>
    <h3 class="heading settled" data-level="7.4" id="module-log"><span class="secno">7.4. </span><span class="content">The log Module</span><a class="self-link" href="#module-log"></a></h3>
    <p>The <dfn data-dfn-for="modules" data-dfn-type="dfn" data-export id="modules-log">log<a class="self-link" href="#modules-log"></a></dfn> module contains functionality and events
 related to logging.</p>
-   <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①③">BiDi Session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="log-event-buffer">log event buffer</dfn> which is a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②⑤">map</a> from <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①②">browsing context id</a> to a list of log events for that context that have not
+   <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①③">BiDi Session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="log-event-buffer">log event buffer</dfn> which is a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②⑤">map</a> from <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①③">browsing context id</a> to a list of log events for that context that have not
 been emitted. User agents may impose a maximum size on this buffer, subject to
 the condition that if events A and B happen in the same context with A occuring
 before B, and both are added to the buffer, the entry for B must not be removed
@@ -4637,7 +4676,7 @@ before the entry for A.</p>
       <p>For each <var>context</var> of <var>contexts</var>:</p>
       <ol>
        <li data-md>
-        <p>Append the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①③">browsing context id</a> for <var>context</var> to <var>context ids</var>.</p>
+        <p>Append the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①④">browsing context id</a> for <var>context</var> to <var>context ids</var>.</p>
       </ol>
      <li data-md>
       <p>For each <var>context id</var> in <var>context ids</var>:</p>
@@ -4959,6 +4998,7 @@ end:</p>
    <li><a href="#get-a-browsing-context">get a browsing context</a><span>, in § 7.2.2.1</span>
    <li><a href="#get-a-realm">get a realm</a><span>, in § 7.3.2.2</span>
    <li><a href="#get-a-realm-from-a-target">get a realm from a target</a><span>, in § 7.3.2.9</span>
+   <li><a href="#get-a-sandbox-name">get a sandbox name</a><span>, in § 5.1</span>
    <li><a href="#get-a-session-id-for-a-websocket-resource">get a session ID for a WebSocket resource</a><span>, in § 4</span>
    <li><a href="#get-exception-details">get exception details</a><span>, in § 7.3.2.1</span>
    <li><a href="#get-or-create-a-sandbox-realm">get or create a sandbox realm</a><span>, in § 5.1</span>
@@ -5467,6 +5507,7 @@ end:</p>
     <li><a href="#ref-for-window">4. Transport</a>
     <li><a href="#ref-for-window①">5.1. Sandbox Realms</a>
     <li><a href="#ref-for-window②">5.3. SandboxWindowProxy</a> <a href="#ref-for-window③">(2)</a>
+    <li><a href="#ref-for-window④">7.3.2.3. The script.RealmInfo type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-windowproxy">
@@ -5529,12 +5570,12 @@ end:</p>
    <a href="https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window">https://html.spec.whatwg.org/multipage/window-object.html#concept-document-window</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-document-window">4. Transport</a>
-    <li><a href="#ref-for-concept-document-window①">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-concept-document-window②">7.3.2.8. The script.Source type</a> <a href="#ref-for-concept-document-window③">(2)</a>
-    <li><a href="#ref-for-concept-document-window④">7.3.2.9. The script.Target type</a>
-    <li><a href="#ref-for-concept-document-window⑤">7.3.3.4. The script.getRealms Command</a>
-    <li><a href="#ref-for-concept-document-window⑥">7.3.4.1. The script.realmCreated Event</a> <a href="#ref-for-concept-document-window⑦">(2)</a>
-    <li><a href="#ref-for-concept-document-window⑧">7.3.4.2. The script.realmDestroyed Event</a>
+    <li><a href="#ref-for-concept-document-window①">7.3.2.3. The script.RealmInfo type</a> <a href="#ref-for-concept-document-window②">(2)</a>
+    <li><a href="#ref-for-concept-document-window③">7.3.2.8. The script.Source type</a> <a href="#ref-for-concept-document-window④">(2)</a>
+    <li><a href="#ref-for-concept-document-window⑤">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-concept-document-window⑥">7.3.3.4. The script.getRealms Command</a>
+    <li><a href="#ref-for-concept-document-window⑦">7.3.4.1. The script.realmCreated Event</a> <a href="#ref-for-concept-document-window⑧">(2)</a>
+    <li><a href="#ref-for-concept-document-window⑨">7.3.4.2. The script.realmDestroyed Event</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-script-base-url">
@@ -5552,8 +5593,8 @@ end:</p>
     <li><a href="#ref-for-browsing-context⑤">7.2.4.10. The browsingContext.userPromptClosed Event</a>
     <li><a href="#ref-for-browsing-context⑥">7.2.4.11. The browsingContext.userPromptOpened Event</a>
     <li><a href="#ref-for-browsing-context⑦">7.3.2.2. The script.Realm type</a>
-    <li><a href="#ref-for-browsing-context⑧">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-browsing-context⑨">7.3.3.4. The script.getRealms Command</a>
+    <li><a href="#ref-for-browsing-context⑧">7.3.2.3. The script.RealmInfo type</a> <a href="#ref-for-browsing-context⑨">(2)</a>
+    <li><a href="#ref-for-browsing-context①⓪">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-document-bc">
@@ -5892,6 +5933,12 @@ end:</p>
    <a href="https://infra.spec.whatwg.org/#iteration-continue">https://infra.spec.whatwg.org/#iteration-continue</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-iteration-continue">7.3.3.4. The script.getRealms Command</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-map-getting-the-values">
+   <a href="https://infra.spec.whatwg.org/#map-getting-the-values">https://infra.spec.whatwg.org/#map-getting-the-values</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-map-getting-the-values">5.1. Sandbox Realms</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-implementation-defined">
@@ -6550,6 +6597,7 @@ end:</p>
      <li><span class="dfn-paneled" id="term-for-list-clone">clone</span>
      <li><span class="dfn-paneled" id="term-for-string-concatenate">concatenate</span>
      <li><span class="dfn-paneled" id="term-for-iteration-continue">continue</span>
+     <li><span class="dfn-paneled" id="term-for-map-getting-the-values">get the values</span>
      <li><span class="dfn-paneled" id="term-for-implementation-defined">implementation-defined</span>
      <li><span class="dfn-paneled" id="term-for-parse-a-json-string-to-an-infra-value">parse json into infra values</span>
      <li><span class="dfn-paneled" id="term-for-scalar-value-string">scalar value string</span>
@@ -7157,7 +7205,7 @@ to express as a patch to the specification since it requires changing multiple p
   <aside class="dfn-panel" data-for="sandbox-map">
    <b><a href="#sandbox-map">#sandbox-map</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-sandbox-map">5.1. Sandbox Realms</a> <a href="#ref-for-sandbox-map①">(2)</a> <a href="#ref-for-sandbox-map②">(3)</a>
+    <li><a href="#ref-for-sandbox-map">5.1. Sandbox Realms</a> <a href="#ref-for-sandbox-map①">(2)</a> <a href="#ref-for-sandbox-map②">(3)</a> <a href="#ref-for-sandbox-map③">(4)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-or-create-a-sandbox-realm">
@@ -7170,6 +7218,12 @@ to express as a patch to the specification since it requires changing multiple p
    <b><a href="#create-a-sandbox-realm">#create-a-sandbox-realm</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-create-a-sandbox-realm">5.1. Sandbox Realms</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="get-a-sandbox-name">
+   <b><a href="#get-a-sandbox-name">#get-a-sandbox-name</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-get-a-sandbox-name">7.3.2.3. The script.RealmInfo type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="sandboxproxy">
@@ -7185,6 +7239,7 @@ to express as a patch to the specification since it requires changing multiple p
    <ul>
     <li><a href="#ref-for-sandboxwindowproxy">5. Sandboxed Script Execution</a>
     <li><a href="#ref-for-sandboxwindowproxy①">5.1. Sandbox Realms</a>
+    <li><a href="#ref-for-sandboxwindowproxy②">7.3.2.3. The script.RealmInfo type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="handle-object-map">
@@ -7296,9 +7351,9 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-browsing-context-id⑦">7.2.4.10. The browsingContext.userPromptClosed Event</a>
     <li><a href="#ref-for-browsing-context-id⑧">7.2.4.11. The browsingContext.userPromptOpened Event</a>
     <li><a href="#ref-for-browsing-context-id⑨">7.3.2.2. The script.Realm type</a>
-    <li><a href="#ref-for-browsing-context-id①⓪">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-browsing-context-id①①">7.3.2.8. The script.Source type</a>
-    <li><a href="#ref-for-browsing-context-id①②">7.4. The log Module</a> <a href="#ref-for-browsing-context-id①③">(2)</a>
+    <li><a href="#ref-for-browsing-context-id①⓪">7.3.2.3. The script.RealmInfo type</a> <a href="#ref-for-browsing-context-id①①">(2)</a>
+    <li><a href="#ref-for-browsing-context-id①②">7.3.2.8. The script.Source type</a>
+    <li><a href="#ref-for-browsing-context-id①③">7.4. The log Module</a> <a href="#ref-for-browsing-context-id①④">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-a-browsing-context">
