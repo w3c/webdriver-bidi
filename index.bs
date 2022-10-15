@@ -1027,6 +1027,22 @@ Issue: Define creation of sandbox realm. This is going to return a
 
 </div>
 
+<div algorithm>
+
+To <dfn>get a sandbox name</dfn> given |target realm|:
+
+1. Let |realms maps| be [=get the values=] of [=sandbox map=].
+
+1. For each |realms map| in |realms maps|:
+
+  1. For each |name| → |realm| in |realms map|:
+
+    1. If |realm| is |target realm|, return |name|.
+
+1. Return null.
+
+</div>
+
 ## Sandbox Proxy Objects ## {#sandbox-proxy}
 
 A <dfn interface>SandboxProxy</dfn> object is an exotic object that mediates sandboxed access to
@@ -3828,7 +3844,8 @@ BaseRealmInfo = {
 WindowRealmInfo = {
   BaseRealmInfo,
   type: "window",
-  context: BrowsingContext
+  context: BrowsingContext,
+  ?sandbox: text
 }
 
 DedicatedWorkerRealmInfo = {
@@ -3895,6 +3912,23 @@ To <dfn>get the realm info</dfn> given |environment settings|:
       1. Let |realm info| be a map matching the <code>WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
          field set to |origin|, and the <code>context</code> field set to |context id|.
+
+    <dt>|global object| is {{SandboxWindowProxy}} object
+    <dd>
+      TODO: Unclear if this is the right formulation for handling sandboxes.
+
+      1. Let |document| be |global object|'s wrapped {{Window}}'s
+         <a>associated <code>Document</code></a>.
+      1. Let |browsing context| be |document|'s [=/browsing context=].
+      1. Let |context id| be the [=browsing context id=] for |browsing context|.
+      1. Let |sandbox name| be the result of [=get a sandbox name=] given
+         |realm|.
+      1. Assert: |sandbox name| is not null.
+      1. Let |realm info| be a map matching the <code>WindowRealmInfo</code> production,
+         with the <code>realm</code> field set to |realm id|, the <code>origin</code>
+         field set to |origin|, the <code>context</code> field set to |context id|,
+         and the <code>sandbox</code> field set to |sandbox name|.
+
 
     <dt>|global object| is a {{DedicatedWorkerGlobalScope}} object
     <dd>
