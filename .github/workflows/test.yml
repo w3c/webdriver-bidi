@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-python@v3
@@ -17,17 +17,32 @@ jobs:
       - name: Build spec without warnings
         run: ./scripts/build.sh --install
   cddl:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: 14.x
+      - name: Get cddl version
+        run: curl -s https://crates.io/api/v1/crates/cddl | python3 -c "import sys, json; print(json.load(sys.stdin)['crate']['max_stable_version'])" | tee cddl.txt
+      - name: "Cache rust binaries"
+        uses: actions/cache@v3
+        id: cache-cddl
+        env:
+          cache-name: cache-cddl
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            ~/.cargo/registry/cache/
+            ~/.cargo/registry/index/
+            ./target/
+          key: cddl-${{ hashFiles('cddl.txt') }}
       - uses: actions-rs/toolchain@v1
         with:
           toolchain: stable
       - name: Validate CDDL files
-        run: ./scripts/test.sh --install
+        run: ./scripts/test.sh
       - name: Archive CDDL files
         uses: actions/upload-artifact@v3
         with:

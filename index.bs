@@ -150,7 +150,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: set up a window environment settings object; url: window-object.html#set-up-a-window-environment-settings-object
     text: set up a worker environment settings object; url: workers.html#set-up-a-worker-environment-settings-object
     text: set up a worklet environment settings object; url: worklets.html#set-up-a-worklet-environment-settings-object
-    text: window open steps; url: multipage/window-object.html#window-open-steps
+    text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url: worklets.html#concept-document-worklet-global-scopes
 </pre>
@@ -246,17 +246,20 @@ the remainder of the specification.
 
 <pre class="cddl remote-cddl">
 Command = {
-  id: uint,
+  id: js-uint,
   CommandData,
-  *text => any,
+  Extensible,
 }
 
 CommandData = (
-  SessionCommand //
-  BrowsingContextCommand
+  BrowsingContextCommand //
+  ScriptCommand //
+  SessionCommand
 )
 
-EmptyParams = { *text }
+EmptyParams = {
+   Extensible
+}
 </pre>
 
 [=Local end definition=]
@@ -269,17 +272,27 @@ Message = (
 )
 
 CommandResponse = {
-  id: uint,
+  id: js-uint,
   result: ResultData,
-  *text => any
+  Extensible
 }
 
 ErrorResponse = {
-  id: uint / null,
-  error: "unknown error" / "unknown command" / "invalid argument",
+  id: js-uint / null,
+  error: ErrorCode,
   message: text,
   ?stacktrace: text,
-  *text => any
+  Extensible
+}
+
+ErrorCode = {
+   "invalid argument" //
+   "no such alert" //
+   "no such frame" //
+   "session not created" //
+   "unknown command" //
+   "unknown error" //
+   "unsupported operation"
 }
 
 ResultData = (
@@ -293,7 +306,7 @@ EmptyResult = {}
 
 Event = {
   EventData,
-  *text => any
+  Extensible
 }
 
 EventData = (
@@ -301,6 +314,14 @@ EventData = (
   ScriptEvent //
   LogEvent
 )
+</pre>
+
+[=Remote end definition=] and [=Local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+Extensible = (*text => any)
+
+js-uint = 0..9007199254740991
 </pre>
 
 ## Session ## {#session}
@@ -502,11 +523,11 @@ To <dfn>obtain a set of event names</dfn> given an |name|:
   1. If |name| is the [=event name=] for an event, append |name| to |events|
      and return [=success=] with data |events|.
 
-  1. Return an [=error=] with [=error code=] [=Invalid Argument=]
+  1. Return an [=error=] with [=error code=] [=invalid argument=]
 
 1. Otherwise |name| is interpreted as representing all the events in a
    module. If |name| is not a [=module name=] return an [=error=] with
-   [=error code=] [=Invalid Argument=].
+   [=error code=] [=invalid argument=].
 
 1. Append the [=event name=] for each [=event=] in the module with name |name| to
    |events|.
@@ -807,8 +828,8 @@ To <dfn>get related browsing contexts</dfn> given an [=script/settings object=]
    [=relevant global object=]'s <a>associated <code>Document</code></a>'s
    [=Document/browsing context=] to |related browsing contexts|.
 
-   Otherwise if the [=Realm/global object=] specified by |settings| is a
-   {{WorkerGlobalScope}}, for each |owner| in the [=Realm/global object=]'s
+   Otherwise if the [=realm/global object=] specified by |settings| is a
+   {{WorkerGlobalScope}}, for each |owner| in the [=realm/global object=]'s
    [=owner set=], if |owner| is a [=Document=], append |owner|'s
    [=Document/browsing context=] to |related browsing contexts|.
 
@@ -981,6 +1002,9 @@ provides access to platform objects in an existing {{Window}} realm via
 <div algorithm>
 To <dfn>get or create a sandbox realm</dfn> given |name| and |browsing context|:
 
+1. If |name| is an empty string, then return [=error=] with
+   [=error code=] [=invalid argument=].
+
 1. Let |window| be |browsing context|'s [=active window=].
 
 1. If [=sandbox map=] does not contain |window|, set [=sandbox map=][|window|]
@@ -991,7 +1015,7 @@ To <dfn>get or create a sandbox realm</dfn> given |name| and |browsing context|:
 1. If |sandboxes| does not contain |name|, set |sandboxes|[|name|] to [=create
    a sandbox realm=] with |browsing context|.
 
-1. Return |sandboxes|[|name|].
+1. Return [=success=] with data |sandboxes|[|name|].
 
 </div>
 
@@ -1000,6 +1024,22 @@ To <dfn>create a sandbox realm</dfn> with |window|:
 
 Issue: Define creation of sandbox realm. This is going to return a
 {{SandboxWindowProxy}} wrapping |window|.
+
+</div>
+
+<div algorithm>
+
+To <dfn>get a sandbox name</dfn> given |target realm|:
+
+1. Let |realms maps| be [=get the values=] of [=sandbox map=].
+
+1. For each |realms map| in |realms maps|:
+
+  1. For each |name| → |realm| in |realms map|:
+
+    1. If |realm| is |target realm|, return |name|.
+
+1. Return null.
 
 </div>
 
@@ -1038,21 +1078,21 @@ Issue: Define how this works.
 Each EMCAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
 strong map from handle ids to their corresponding objects.
 
-```
+<pre class="cddl remote-cddl">
 OwnershipModel = "root" / "none";
-```
+</pre>
 
 <dfn>RemoteReference</dfn> represents a remote reference to an exising ECMAScript
 object in [=handle object map=] in the given [=Realm=].
 
-```
+<pre class="cddl remote-cddl local-cddl">
 Handle = text;
 
 RemoteReference = {
    handle: Handle,
-   *text => any,
+   Extensible
 }
-```
+</pre>
 
 Issue: handle "stale object reference" case.
 
@@ -1077,7 +1117,7 @@ To <dfn>deserialize remote reference</dfn> given |realm| and |remote reference|:
 <dfn>PrimitiveProtocolValue</dfn> represents values which can only be represented by value, never
 by reference.
 
-```
+<pre class="cddl remote-cddl local-cddl">
 PrimitiveProtocolValue = {
   UndefinedValue //
   NullValue //
@@ -1116,7 +1156,7 @@ BigIntValue = {
   type: "bigint",
   value: text,
 }
-```
+</pre>
 
 #### Serialization #### {#data-types-protocolValue-primitiveProtocolValue-serialization}
 
@@ -1247,7 +1287,7 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
 to ECMAScript without reference to existing objects.
 
 
-```
+<pre class="cddl remote-cddl local-cddl">
 LocalValue = {
   PrimitiveProtocolValue //
   ArrayLocalValue //
@@ -1296,7 +1336,7 @@ SetLocalValue = {
   type: "set",
   value: ListLocalValue,
 }
-```
+</pre>
 
 #### Deserialization #### {#data-types-protocolValue-LocalValue-deserialization}
 
@@ -1510,7 +1550,8 @@ To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
 </div>
 
 [=remote end definition=] and [=local end definition=]
-```
+
+<pre class="cddl remote-cddl local-cddl">
 RemoteValue = {
   PrimitiveProtocolValue //
   SymbolRemoteValue //
@@ -1534,7 +1575,7 @@ RemoteValue = {
   WindowProxyRemoteValue //
 }
 
-InternalId = uint;
+InternalId = js-uint;
 
 ListRemoteValue = [*RemoteValue];
 
@@ -1580,16 +1621,16 @@ DateRemoteValue = {
 
 MapRemoteValue = {
   type: "map",
-  value: MappingRemoteValue,
   ?handle: Handle,
   ?internalId: InternalId,
+  ?value: MappingRemoteValue,
 }
 
 SetRemoteValue = {
   type: "set",
-  value: ListRemoteValue
   ?handle: Handle,
   ?internalId: InternalId,
+  ?value: ListRemoteValue
 }
 
 WeakMapRemoteValue = {
@@ -1654,9 +1695,9 @@ NodeRemoteValue = {
 }
 
 NodeProperties = {
-  nodeType: uint,
+  nodeType: js-uint,
   nodeValue: text,
-  childNodeCount: uint,
+  childNodeCount: js-uint,
   ?localName: text,
   ?namespaceURI: text,
   ?children: [*NodeRemoteValue],
@@ -1669,7 +1710,7 @@ WindowProxyRemoteValue = {
   ?handle: Handle,
   ?internalId: InternalId,
 }
-```
+</pre>
 
 Issue: Add WASM types?
 
@@ -1736,29 +1777,29 @@ an |ownership type|, a |serialization internal map| and a |realm|:
 
     <dt>[=IsRegExp=](|value|)
     <dd>
-        1. Let |pattern| be [=ToString=]([=Get=](|value|, "source")).
+    1. Let |pattern| be [=ToString=]([=Get=](|value|, "source")).
 
-        1. Let |flags| be [=ToString=]([=Get=](|value|, "flags")).
+    1. Let |flags| be [=ToString=]([=Get=](|value|, "flags")).
 
-        1. Let |value| be a map matching the <code>RegExpValue</code> production in the
-           [=local end definition=], with the <code>pattern</code> property set to the
-           |pattern| and the the <code>flags</code> property set to the |flags|.
+    1. Let |value| be a map matching the <code>RegExpValue</code> production in the
+       [=local end definition=], with the <code>pattern</code> property set to the
+       |pattern| and the the <code>flags</code> property set to the |flags|.
 
-        1. Let |remote value| be a map matching the <code>RegExpRemoteValue</code>
-           production in the [=local end definition=], with the <code>handle</code>
-           property set to |handle id| if it's not null, or omitted otherwise, and
-           the <code>value</code> property set to |value|.
+    1. Let |remote value| be a map matching the <code>RegExpRemoteValue</code>
+       production in the [=local end definition=], with the <code>handle</code>
+       property set to |handle id| if it's not null, or omitted otherwise, and
+       the <code>value</code> property set to |value|.
 
     <dt>|value| has a \[[DateValue]] [=internal slot=].
     <dd>
-      1. Set |serialized| to [=Call=]([=Date.toISOString=], |value|).
+    1. Set |serialized| to [=Call=]([=Date.toISOString=], |value|).
 
-      1. Assert: |serialized| is not a [=throw completion=].
+    1. Assert: |serialized| is not a [=throw completion=].
 
-      1. Let |remote value| be a map matching the <code>DateRemoteValue</code>
-         production in the [=local end definition=], with the <code>handle</code>
-         property set to |handle id| if it's not null, or omitted otherwise, and the
-         value set to |serialized|.
+    1. Let |remote value| be a map matching the <code>DateRemoteValue</code>
+       production in the [=local end definition=], with the <code>handle</code>
+       property set to |handle id| if it's not null, or omitted otherwise, and the
+       value set to |serialized|.
 
     <dt>|value| has a \[[MapData]] [=internal slot=]
     <dd>
@@ -1771,35 +1812,36 @@ an |ownership type|, a |serialization internal map| and a |realm|:
     1. [=Set internal ids if needed=] given |serialization internal map|,
        |remote value| and |value|.
 
-      1. Let |serialized| be null.
+    1. Let |serialized| be null.
 
-      1. If |known object| is <code>false</code>, and |max depth| is not null and
-         greater than 0, run the following steps:
+    1. If |known object| is <code>false</code>, and |max depth| is not null and
+       greater than 0, run the following steps:
 
-           1. Let |serialized| be the result of [=serialize as a mapping=] given
-              [=CreateMapIterator=](|value|, key+value), |max depth|,
-              |child ownership|, |serialization internal map| and |realm|.
+       1. Let |serialized| be the result of [=serialize as a mapping=] given
+          [=CreateMapIterator=](|value|, key+value), |max depth|,
+          |child ownership|, |serialization internal map| and |realm|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
        |serialized|.
 
     <dt>|value| has a \[[SetData]] [=internal slot=]
     <dd>
-     1. Let |remote value| be a map matching the <code>SetRemoteValue</code>
-        production in the [=local end definition=], with the
-        <code>handle</code> property set to |handle id| if it's not null, or omitted
-        otherwise.
+    1. Let |remote value| be a map matching the <code>SetRemoteValue</code>
+       production in the [=local end definition=], with the
+       <code>handle</code> property set to |handle id| if it's not null, or omitted
+       otherwise.
 
     1. [=Set internal ids if needed=] given |serialization internal map|,
        |remote value| and |value|.
 
-      1. Let |serialized| be null.
+    1. Let |serialized| be null.
 
-      1. If |known object| is <code>false</code>, and |max depth| is not null and
-         greater than 0, run the following steps:
-           1. Let |serialized| be the result of [=serialize as a list=] given
-              [=CreateSetIterator=](|value|, value), |max depth|, |child ownership|,
-              |serialization internal map| and |realm|.
+    1. If |known object| is <code>false</code>, and |max depth| is not null and
+       greater than 0, run the following steps:
+
+       1. Let |serialized| be the result of [=serialize as a list=] given
+          [=CreateSetIterator=](|value|, value), |max depth|, |child ownership|,
+          |serialization internal map| and |realm|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
        |serialized|.
@@ -1913,17 +1955,17 @@ an |ownership type|, a |serialization internal map| and a |realm|:
          |serialized|.
 
     <dt>|value| is a [=platform object=] that implements {{WindowProxy}}
-    <dd>1. Let |remote value| be a map matching the <code>WindowProxyValue</code>
+    <dd>1. Let |remote value| be a map matching the <code>WindowProxyRemoteValue</code>
            production in the [=local end definition=], with the <code>handle</code>
            property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>|value| is a [=platform object=]
-    <dd>1. Let |remote value| be a map matching the <code>ObjectValue</code>
+    <dd>1. Let |remote value| be a map matching the <code>ObjectRemoteValue</code>
            production in the [=local end definition=], with the <code>handle</code>
            property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>[=IsCallable=](|value|)
-    <dd>Let |remote value| be a map matching the <code>FunctionValue</code>
+    <dd>Let |remote value| be a map matching the <code>FunctionRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
@@ -1931,7 +1973,7 @@ an |ownership type|, a |serialization internal map| and a |realm|:
     <dd>
     1. [=Assert=]: [=type=](|value|) is Object
 
-    1. Let |remote value| be a map matching the <code>ObjectValue</code> production
+    1. Let |remote value| be a map matching the <code>ObjectRemoteValue</code> production
        in the [=local end definition=], with the <code>handle</code> property set
        to |handle id| if it's not null, or omitted otherwise.
 
@@ -2039,16 +2081,18 @@ events for monitoring the status of the remote end.
 [=remote end definition=]
 
 <pre class="cddl remote-cddl">
-SessionCommand = (SessionStatusCommand //
-                  SessionSubscribeCommand)
+SessionCommand = (
+  SessionNewCommand //
+  SessionStatusCommand //
+  SessionSubscribeCommand //
+  SessionUnsubscribeCommand
+)
 </pre>
 
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-
-SessionResult = (StatusResult)
-
+SessionResult = (SessionStatusResult)
 </pre>
 
 <div algorithm>
@@ -2167,21 +2211,21 @@ filter only those that ought to be returned to the local end.
 
 <pre class="cddl remote-cddl local-cddl">
 CapabilitiesRequest = {
-    ?acceptInsecureCertificates: bool,
-    ?browserName: text,
-    ?browserVersion: text,
-    ?platformName: text,
-    ?proxy: {
-        ?proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
-        ?proxyAutoconfigUrl: text,
-        ?ftpProxy: text,
-        ?httpProxy: text,
-        ?noProxy: [*text],
-        ?sslProxy: text,
-        ?socksProxy: text,
-        ?socksVersion: int,
-    },
-    *text => any
+  ?acceptInsecureCertificates: bool,
+  ?browserName: text,
+  ?browserVersion: text,
+  ?platformName: text,
+  ?proxy: {
+    ?proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
+    ?proxyAutoconfigUrl: text,
+    ?ftpProxy: text,
+    ?httpProxy: text,
+    ?noProxy: [*text],
+    ?sslProxy: text,
+    ?socksProxy: text,
+    ?socksVersion: 0..255,
+  },
+  Extensible
 };
 </pre>
 
@@ -2283,10 +2327,10 @@ This is a [=static command=].
             ?noProxy: [*text],
             ?sslProxy: text,
             ?socksProxy: text,
-            ?socksVersion: int,
+            ?socksVersion: 0..255,
           },
           setWindowRect: bool,
-          *text => any
+          Extensible
         }
       }
       </pre>
@@ -2347,9 +2391,9 @@ Issue: This needs to be generalized to work with realms too
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <pre class="cddl local-cddl">
-        EmptyResult
-    </pre>
+      <pre class="cddl">
+      EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2415,8 +2459,8 @@ Issue: This needs to be generalised to work with realms too
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <pre class="cddl local-cddl">
-        EmptyResult
+      <pre class="cddl">
+      EmptyResult
       </pre>
    </dd>
 </dl>
@@ -2467,43 +2511,40 @@ navigation status</dfn> struct, which has the following items:
 [=remote end definition=]
 
 <pre class="cddl remote-cddl">
-
 BrowsingContextCommand = (
-    BrowsingContextCaptureScreenshotCommand //
-    BrowsingContextCloseCommand //
-    BrowsingContextCreateCommand //
-    BrowsingContextGetTreeCommand //
-    BrowsingContextHandleUserPromptCommand //
-    BrowsingContextNavigateCommand //
-    BrowsingContextReloadCommand
+  BrowsingContextCaptureScreenshotCommand //
+  BrowsingContextCloseCommand //
+  BrowsingContextCreateCommand //
+  BrowsingContextGetTreeCommand //
+  BrowsingContextHandleUserPromptCommand //
+  BrowsingContextNavigateCommand //
+  BrowsingContextReloadCommand
 )
 </pre>
 
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-
 BrowsingContextResult = (
-    BrowsingContextCaptureScreenshotResult //
-    BrowsingContextCreateResult //
-    BrowsingContextGetTreeResult //
-    BrowsingContextNavigateResult
+  BrowsingContextCaptureScreenshotResult //
+  BrowsingContextCreateResult //
+  BrowsingContextGetTreeResult //
+  BrowsingContextNavigateResult
 )
 
 BrowsingContextEvent = (
-    BrowsingContextCreatedEvent //
-    BrowsingContextDestroyedEvent //
-    BrowsingContextNavigationStartedEvent //
-    BrowsingContextFragmentNavigatedEvent //
-    BrowsingContextDomContentLoadedEvent //
-    BrowsingContextLoadEvent //
-    BrowsingContextDownloadWillBegin //
-    BrowsingContextNavigationAbortedEvent //
-    BrowsingContextNavigationFailedEvent //
-    BrowsingContextUserPromptClosedEvent //
-    BrowsingContextUserPromptOpenedEvent
+  BrowsingContextCreatedEvent //
+  BrowsingContextDestroyedEvent //
+  BrowsingContextNavigationStartedEvent //
+  BrowsingContextFragmentNavigatedEvent //
+  BrowsingContextDomContentLoadedEvent //
+  BrowsingContextLoadEvent //
+  BrowsingContextDownloadWillBeginEvent //
+  BrowsingContextNavigationAbortedEvent //
+  BrowsingContextNavigationFailedEvent //
+  BrowsingContextUserPromptClosedEvent //
+  BrowsingContextUserPromptOpenedEvent
 )
-
 </pre>
 
 ### Types ### {#module-browsingcontext-types}
@@ -2541,7 +2582,6 @@ To <dfn>get a browsing context</dfn> given |context id|:
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-
 BrowsingContextInfoList = [* BrowsingContextInfo]
 
 BrowsingContextInfo = {
@@ -2550,7 +2590,6 @@ BrowsingContextInfo = {
   children: BrowsingContextInfoList / null
   ?parent: BrowsingContext / null,
 }
-
 </pre>
 
 The <code>BrowsingContextInfo</code> type represents the properties of a
@@ -2814,6 +2853,13 @@ The <dfn export for=commands>browsingContext.close</dfn> command closes a
       }
       </pre>
    </dd>
+
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl">
+      EmptyResult
+      </pre>
+   </dd>
 </dl>
 
 <div algorithm="remote end steps for browsingContext.close">
@@ -2856,7 +2902,8 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
       BrowsingContextCreateType = "tab" / "window"
 
       BrowsingContextCreateParameters = {
-        type: BrowsingContextCreateType
+        type: BrowsingContextCreateType,
+        ?referenceContext: BrowsingContext
       }
       </pre>
    </dd>
@@ -2876,6 +2923,19 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |type| be the value of the <code>type</code> field of
      |command parameters|.
 
+  1. Let |reference context id| be the value of the <code>referenceContext</code>
+     field of |command parameters|, if present, or null otherwise.
+
+  1. If |reference context id| is not null, let |reference context| be the
+     result of [=trying=] to [=get a browsing context=] with
+     |reference context id|. Otherwise let |reference context| be null.
+
+  1. If |reference context| is not null and is not a [=top-level browsing context=],
+    return [=error=] with [=error code=] [=invalid argument=].
+
+  1. If the implementation is unable to create a new browsing context for any
+     reason then return [=error=] with [=error code=] [=unsupported operation=].
+
   <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
        but without using the "current browsing context" concept. -->
   1. Create a new [=top-level browsing context=] by running the [=window open
@@ -2883,19 +2943,26 @@ The [=remote end steps=] with |command parameters| are:
      <var ignore>target</var> set to the empty string, and
      <var ignore>features</var> set to "<code>noopener</code>". This must be
      done without invoking the [=/focusing steps=] for the created browsing
-     context. If |type| is "<code>tab</code>", and the implementation supports
-     multiple browsing contexts in the same OS window, the new browsing context
-     should share an OS window with any other [=top-level browsing context=]. If
-     |type| is "<code>window</code>", and the implementation supports multiple
-     browsing contexts in separate OS windows, the created browsing context
-     should be in a new OS window. In all other cases the details of how the
-     browsing context is presented to the user are implementation defined.
+     context. Which OS window the new [=/browsing context=] is created in
+     depends on |type| and |reference context|:
 
-     Issue: HTML's [=window open steps=] depend on the "entry global object"
-     and WebDriver's <a href="https://w3c.github.io/webdriver/#new-window">New
-     Window</a> command depends on the "current browsing context". Given that we
-     don't have any such implicit context here, what OS window should new tabs
-     be opened in?
+     * If |type| is "<code>tab</code>" and the implementation supports
+       multiple browsing contexts in the same OS window:
+
+       * The new browsing context should reuse an existing OS window, if any.
+
+       * If |reference context| is not null, the new browsing context should
+         reuse the window containing |reference context|, if any. If the
+         top-level browsing contexts inside an OS window have a definite ordering,
+         the new browsing context should be immediately after
+         |reference context|'s [=top-level browsing context=] in that ordering.
+
+     * If |type| is "<code>window</code>", and the implementation supports
+       multiple browsing contexts in separate OS windows, the created browsing
+       context should be in a new OS window.
+
+     * Otherwise, the details of how the browsing context is presented to the
+       user are implementation defined.
 
   1. Let |context id| be the [=browsing context id=] of the newly created
      [=/browsing context=].
@@ -2923,7 +2990,7 @@ or all top-level contexts when no parent is provided.
       }
 
       BrowsingContextGetTreeParameters = {
-        ?maxDepth: uint,
+        ?maxDepth: js-uint,
         ?root: BrowsingContext,
       }
       </pre>
@@ -2992,9 +3059,9 @@ command allows closing an open prompt
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <pre class="cddl local-cddl">
+      <pre class="cddl">
       EmptyResult
-    </pre>
+      </pre>
    </dd>
 </dl>
 
@@ -3060,8 +3127,8 @@ browsing context to the given URL.
    <dd>
     <pre class="cddl local-cddl">
         BrowsingContextNavigateResult = {
-            navigation: Navigation / null,
-            url: text,
+          navigation: Navigation / null,
+          url: text,
         }
     </pre>
    </dd>
@@ -3117,7 +3184,7 @@ browsing context.
 
       BrowsingContextReloadParameters = {
         context: BrowsingContext,
-        ?ignoreCache: boolean,
+        ?ignoreCache: bool,
         ?wait: ReadinessState,
       }
       </pre>
@@ -3432,7 +3499,7 @@ complete</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextDownloadWillBegin = {
+        BrowsingContextDownloadWillBeginEvent = {
          method: "browsingContext.downloadWillBegin",
          params: NavigationInfo
        }
@@ -3448,7 +3515,7 @@ started</dfn> steps given |context| and |navigation status|:
     and |navigation status|.
 
  1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextDownloadWillBegin</code> production, with the
+     <code>BrowsingContextDownloadWillBeginEvent</code> production, with the
      <code>params</code> field set to |params|.
 
  1. Let |navigation id| be |navigation status|'s id.
@@ -3470,7 +3537,7 @@ started</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextNavigationAborted = {
+        BrowsingContextNavigationAbortedEvent = {
          method: "browsingContext.navigationAborted",
          params: NavigationInfo
        }
@@ -3509,7 +3576,7 @@ aborted</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextNavigationFailed = {
+        BrowsingContextNavigationFailedEvent = {
          method: "browsingContext.navigationFailed",
          params: NavigationInfo
        }
@@ -3548,14 +3615,15 @@ failed</dfn> steps given |context| and |navigation status|:
    <dd>
       <pre class="cddl local-cddl">
         BrowsingContextUserPromptClosedEvent = {
-         method: "browsingContext.userPromptClosed",
-         params: UserPromptInfo
-       }
-       UserPromptResult = {
-         context: BrowsingContext,
-         accepted: bool,
-         ? userText: text
-      }
+          method: "browsingContext.userPromptClosed",
+          params: UserPromptClosedInfo
+        }
+
+        UserPromptClosedInfo = {
+          context: BrowsingContext,
+          accepted: bool,
+          ? userText: text
+        }
       </pre>
    </dd>
 </dl>
@@ -3569,13 +3637,13 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
-1. Let |params| be a [=map=] matching the <code>UserPromptResult</code>
+1. Let |params| be a [=map=] matching the <code>UserPromptClosedInfo</code>
    production with the <code>context</code> field set to |context id|, the
    <code>accepted</code> field set to |accepted|, and the <code>userText</code> field set
    to |user text| if |user text| is not null or omitted otherwise.
 
 1. Let |body| be a [=map=] matching the
-   <code>BrowsingContextUserPromptClosed</code> production, with the
+   <code>BrowsingContextUserPromptClosedEvent</code> production, with the
    <code>params</code> field set to |params|.
 
 1. Let |related browsing contexts| be a [=set=] containing |context|.
@@ -3594,14 +3662,15 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
    <dd>
       <pre class="cddl local-cddl">
         BrowsingContextUserPromptOpenedEvent = {
-         method: "browsingContext.userPromptOpened",
-         params: UserPromptInfo
-       }
-       UserPromptInfo = {
-         context: BrowsingContext,
-         type: "alert" / "confirm" / "prompt" / "beforeunload",
-         message: text
-      }
+          method: "browsingContext.userPromptOpened",
+          params: UserPromptOpenedInfo
+        }
+
+        UserPromptOpenedInfo = {
+          context: BrowsingContext,
+          type: "alert" / "confirm" / "prompt" / "beforeunload",
+          message: text
+        }
       </pre>
    </dd>
 </dl>
@@ -3614,13 +3683,13 @@ opened</dfn> steps given |window|, |type| and |message|.
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
-1. Let |params| be a [=map=] matching the <code>UserPromptInfo</code>
+1. Let |params| be a [=map=] matching the <code>UserPromptOpenedInfo</code>
    production with the <code>context</code> field set to |context id|, the
    <code>type</code> field set to |type|, and the <code>message</code> field set
    to |message|.
 
 1. Let |body| be a [=map=] matching the
-   <code>BrowsingContextUserPromptOpened</code> production, with the
+   <code>BrowsingContextUserPromptOpenedEvent</code> production, with the
    <code>params</code> field set to |params|.
 
 1. Let |related browsing contexts| be a [=set=] containing |context|.
@@ -3642,29 +3711,26 @@ relating to script realms and execution.
 [=Remote end definition=]
 
 <pre class="cddl remote-cddl">
-
 ScriptCommand = (
   ScriptCallFunctionCommand //
+  ScriptDisownCommand //
   ScriptEvaluateCommand //
   ScriptGetRealmsCommand
 )
-
 </pre>
 
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-
 ScriptResult = (
   ScriptEvaluateResult //
   ScriptGetRealmsResult
 )
 
 ScriptEvent = (
-    ScriptRealmCreatedEvent //
-    ScriptRealmDestroyedEvent
+  ScriptRealmCreatedEvent //
+  ScriptRealmDestroyedEvent
 )
-
 </pre>
 
 
@@ -3674,11 +3740,11 @@ ScriptEvent = (
 
 [=Remote end definition=] and [=local end definition=]
 
-<pre class="cddl local-cddl remote-cddl">
+<pre class="cddl remote-cddl local-cddl">
 ExceptionDetails = {
-  columnNumber: uint,
+  columnNumber: js-uint,
   exception: RemoteValue,
-  lineNumber: uint,
+  lineNumber: js-uint,
   stackTrace: StackTrace,
   text: text,
 };
@@ -3724,7 +3790,7 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
 
 [=Remote end definition=] and [=local end definition=]
 
-<pre class="cddl local-cddl remote-cddl">
+<pre class="cddl remote-cddl local-cddl">
 Realm = text;
 </pre>
 
@@ -3778,7 +3844,8 @@ BaseRealmInfo = {
 WindowRealmInfo = {
   BaseRealmInfo,
   type: "window",
-  context: BrowsingContext
+  context: BrowsingContext,
+  ?sandbox: text
 }
 
 DedicatedWorkerRealmInfo = {
@@ -3817,6 +3884,9 @@ WorkletRealmInfo = {
 }
 </pre>
 
+Note: there's a 1:1 relationship between the <code>RealmInfo</code> variants and values of
+      <a href="#type-script-RealmType"><code>RealmType</code></a>.
+
 The <code>RealmInfo</code> type represents the properties of a realm.
 
 <div algorithm>
@@ -3828,7 +3898,7 @@ To <dfn>get the realm info</dfn> given |environment settings|:
 
 1. Let |origin| be the [=serialization of an origin=] given |environment settings|'s |origin|.
 
-1. Let |global object| be the [=Realm/global object=] specified by |environment settings|
+1. Let |global object| be the [=realm/global object=] specified by |environment settings|
 
 1. Run the steps under the first matching condition:
 
@@ -3842,6 +3912,23 @@ To <dfn>get the realm info</dfn> given |environment settings|:
       1. Let |realm info| be a map matching the <code>WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
          field set to |origin|, and the <code>context</code> field set to |context id|.
+
+    <dt>|global object| is {{SandboxWindowProxy}} object
+    <dd>
+      TODO: Unclear if this is the right formulation for handling sandboxes.
+
+      1. Let |document| be |global object|'s wrapped {{Window}}'s
+         <a>associated <code>Document</code></a>.
+      1. Let |browsing context| be |document|'s [=/browsing context=].
+      1. Let |context id| be the [=browsing context id=] for |browsing context|.
+      1. Let |sandbox name| be the result of [=get a sandbox name=] given
+         |realm|.
+      1. Assert: |sandbox name| is not null.
+      1. Let |realm info| be a map matching the <code>WindowRealmInfo</code> production,
+         with the <code>realm</code> field set to |realm id|, the <code>origin</code>
+         field set to |origin|, the <code>context</code> field set to |context id|,
+         and the <code>sandbox</code> field set to |sandbox name|.
+
 
     <dt>|global object| is a {{DedicatedWorkerGlobalScope}} object
     <dd>
@@ -3897,16 +3984,27 @@ Note: Future variations of this specification will retain the invariant that
          will always be "<code>worker</code>" for globals implementing
          {{WorkerGlobalScope}}, and "<code>worklet</code>" for globals
          implementing {{WorkletGlobalScope}}.
-
 </div>
+
+#### The script.RealmType type ####  {#type-script-RealmType}
+
+[=Local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" /
+                       "worker" / "paint-worklet" / "audio-worklet" / "worklet"
+</pre>
+
+The <code>RealmType</code> type represents the different types of Realm.
+
 
 #### The script.StackFrame type #### {#types-script-StackFrame}
 
-<pre class="cddl local-cddl">
+<pre class="cddl remote-cddl local-cddl">
 StackFrame = {
-  columnNumber: int,
+  columnNumber: js-uint,
   functionName: text,
-  lineNumber: int,
+  lineNumber: js-uint,
   url: text,
 }
 </pre>
@@ -3919,7 +4017,7 @@ properties, which represent the line and column number of the executed code.
 
 #### The script.StackTrace type #### {#types-script-StackTrace}
 
-<pre class="cddl local-cddl">
+<pre class="cddl remote-cddl local-cddl">
 StackTrace = {
   callFrames: [*StackFrame],
 }
@@ -4003,7 +4101,7 @@ Record=] of type <code>throw</code>, |exception|, is given by:
 
 [=Remote end definition=] and [=local end definition=]
 
-<pre class="cddl local-cddl remote-cddl">
+<pre class="cddl remote-cddl local-cddl">
 ScriptEvaluateResult = (
   ScriptEvaluateResultSuccess //
   ScriptEvaluateResultException
@@ -4080,13 +4178,13 @@ ContextTarget = {
   ?sandbox: text
 }
 
-Target = (
+ScriptTarget = (
   RealmTarget //
   ContextTarget
 );
 </pre>
 
-The <code>Target</code> type represents a value that is either a
+The <code>ScriptTarget</code> type represents a value that is either a
 <code>script.Realm</code> or a <code>browsingContext.BrowsingContext</code>. This
 is useful in cases where a context identifier can stand in for the realm
 associated with the context's active document.
@@ -4099,7 +4197,8 @@ To <dfn>get a realm from a target</dfn> given |target|:
   1. Let |context| be the result of [=trying=] to [=get a browsing context=]
      with |target|["<code>context</code>"].
 
-  1. If |target| does not contain a field named "<code>sandbox</code>":
+  1. If |target| does not contain a field named "<code>sandbox</code>", or
+     target|["<code>sandbox</code>"] is an empty string:
 
     1. Let |document| be |context|'s [=active document=].
 
@@ -4110,8 +4209,9 @@ To <dfn>get a realm from a target</dfn> given |target|:
     1. Let |realm| be |environment settings|' [=realm execution context=]'s
        Realm component.
 
-  1. Otherwise: let |realm| be [=get or create a sandbox realm=] given
-     |target|["<code>sandbox</code>"] and |context|.
+  1. Otherwise: let |realm| be result of [=trying=] to
+     [=get or create a sandbox realm=] given |target|["<code>sandbox</code>"] and
+     |context|.
 
 1. Otherwise:
 
@@ -4128,7 +4228,7 @@ Issue: This has the wrong error code
 
 #### The script.Ownership type #### {#type-script-Ownership}
 
-<pre class="cddl local-cddl remote-cddl">
+<pre class="cddl remote-cddl local-cddl">
 SerializationOwnershipModel = "root" / "none"
 </pre>
 
@@ -4155,7 +4255,7 @@ other handles or strong ECMAScript references.
 
       ScriptDisownParameters = {
         handles: [Handle]
-        target: Target;
+        target: ScriptTarget;
       }
       </pre>
    </dd>
@@ -4199,7 +4299,7 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
       ScriptCallFunctionParameters = {
         functionDeclaration: text;
         awaitPromise: bool;
-        target: Target;
+        target: ScriptTarget;
         ?arguments: [ArgumentValue];
         ?this: ArgumentValue;
         ?resultOwnership: OwnershipModel;
@@ -4214,7 +4314,7 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <pre class="cddl local-cddl">
+    <pre class="cddl">
       ScriptEvaluateResult
     </pre>
    </dd>
@@ -4313,7 +4413,7 @@ The [=remote end steps=] with |command parameters| are:
 
 1. If [=IsCallable=](|function object|) is <code>false</code>:
 
-   1. Return an [=error=] with [=error code=] [=Invalid Argument=]
+   1. Return an [=error=] with [=error code=] [=invalid argument=]
 
 1. [=Prepare to run script=] with |environment settings|.
 
@@ -4369,7 +4469,7 @@ the promise is returned.
 
       ScriptEvaluateParameters = {
         expression: text;
-        target: Target;
+        target: ScriptTarget;
         awaitPromise: bool;
         ?resultOwnership: OwnershipModel;
       }
@@ -4377,7 +4477,7 @@ the promise is returned.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <pre class="cddl local-cddl">
+    <pre class="cddl">
     ScriptEvaluateResult
    </pre>
    </dd>
@@ -4456,10 +4556,10 @@ realm associated with the [=document=] currently loaded in a specified
       <pre class="cddl remote-cddl">
       ScriptGetRealmsCommand = {
         method: "script.getRealms",
-        params: GetRealmsParameters
+        params: ScriptGetRealmsParameters
       }
 
-      GetRealmsParameters = {
+      ScriptGetRealmsParameters = {
         ?context: BrowsingContext,
         ?type: RealmType,
       }
@@ -4499,7 +4599,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
       * The <a>associated <code>Document</code></a> of |settings|'
         [=relevant global object=] is |document|
 
-      * The [=Realm/global object=] specified by |settings| is a
+      * The [=realm/global object=] specified by |settings| is a
         {{WorkerGlobalScope}} with |document| in its [=owner set=]
 
       Append |settings| to |context environment settings|.
@@ -4755,7 +4855,6 @@ level context.
 [=Local end definition=]
 
 <pre class="cddl local-cddl">
-
 LogEvent = (
   LogEntryAddedEvent
 )
@@ -4768,7 +4867,6 @@ LogEvent = (
 [=Local end definition=]
 
 <pre class="cddl local-cddl">
-
 LogLevel = "debug" / "info" / "warn" / "error"
 
 LogEntry = (
@@ -4781,7 +4879,7 @@ BaseLogEntry = {
   level: LogLevel,
   source: Source,
   text: text / null,
-  timestamp: int,
+  timestamp: js-uint,
   ?stackTrace: StackTrace,
 }
 
@@ -4801,7 +4899,6 @@ JavascriptLogEntry = {
   BaseLogEntry,
   type: "javascript",
 }
-
 </pre>
 
 Each log event is represented by a <code>LogEntry</code> object. This has a
@@ -4845,7 +4942,7 @@ ignore>options</var>:
 
 1. Let |text| be an empty string.
 
-1. If [=Type=](||args|[0]) is String, and |args|[0] contains a
+1. If [=Type=](|args|[0]) is String, and |args|[0] contains a
    [=formatting specifier=], let |formatted args| be [=Formatter=](|args|). Otherwise
    let |formatted args| be |args|.
 
@@ -5016,8 +5113,8 @@ Other specifications can define <dfn>console steps</dfn>. When any method of the
 |method| and argument |args|:
 
 1. If that method does not call the [=Printer=] operation, call any [=console
-   steps=] defined in external specification with arguments |method|, |args|
-   and, undefined.
+   steps=] defined in external specification with arguments |method|, |args|,
+   and undefined.
 
    Otherwise, at the point when the [=Printer=] operation is called with
    arguments |name|, |printerArgs| and |options| (which is undefined if the
