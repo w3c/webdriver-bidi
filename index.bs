@@ -290,12 +290,12 @@ ErrorResponse = {
 }
 
 ErrorCode = {
-   "invalid argument" //
-   "no such alert" //
-   "no such frame" //
-   "session not created" //
-   "unknown command" //
-   "unknown error" //
+   "invalid argument" /
+   "no such alert" /
+   "no such frame" /
+   "session not created" /
+   "unknown command" /
+   "unknown error" /
    "unsupported operation"
 }
 
@@ -306,7 +306,9 @@ ResultData = (
   ScriptResult
 )
 
-EmptyResult = {}
+EmptyResult = {
+  Extensible
+}
 
 Event = {
   EventData,
@@ -2089,17 +2091,17 @@ events for monitoring the status of the remote end.
 
 <pre class="cddl remote-cddl">
 SessionCommand = (
-  SessionNewCommand //
-  SessionStatusCommand //
-  SessionSubscribeCommand //
-  SessionUnsubscribeCommand
+  session.New //
+  session.Status //
+  session.Subscribe //
+  session.Unsubscribe
 )
 </pre>
 
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-SessionResult = (SessionStatusResult)
+SessionResult = (session.StatusResult)
 </pre>
 
 <div algorithm>
@@ -2212,12 +2214,24 @@ filter only those that ought to be returned to the local end.
 
 ### Types ### {#module-session-types}
 
-#### The session.CapabilitiesRequest Type #### {#type-session-capabilitiesRequest}
+#### The session.CapabilitiesRequest Type #### {#type-session-CapabilitiesRequest}
+
+<pre class="cddl remote-cddl local-cddl">
+session.CapabilitiesRequest = {
+  ?alwaysMatch: session.CapabilityRequest,
+  ?firstMatch: [*session.CapabilityRequest]
+}
+</pre>
+
+The <code>session.CapabilitiesRequest</code> type represents the capabilities requested
+for a session.
+
+#### The session.CapabilityRequest Type #### {#type-session-CapabilityRequest}
 
 [=remote end definition=] and [=local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-CapabilitiesRequest = {
+session.CapabilityRequest = {
   ?acceptInsecureCerts: bool,
   ?browserName: text,
   ?browserVersion: text,
@@ -2236,9 +2250,20 @@ CapabilitiesRequest = {
 };
 </pre>
 
-The <code>CapabilitiesRequest</code> type represents the capabilities requested
-for a session.
+The <code>session.CapabilityRequest</code> type represents a sepecific set of
+requested capabilities.
 
+#### The session.SubscriptionRequest type #### {#type-session-SubscriptionRequest}
+
+<pre class="cddl remote-cddl">
+session.SubscriptionRequest = {
+  events: [*text],
+  ?contexts: [*browsingContext.BrowsingContext],
+}
+</pre>
+
+The <code>session.SubscriptionRequest</code> type represents a request to
+subscribe to or unsubscribe from a specific set of events.
 
 ### Commands ### {#module-session-commands}
 
@@ -2255,7 +2280,7 @@ This is a [=static command=].
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      SessionStatusCommand = {
+      session.Status = {
         method: "session.status",
         params: EmptyParams,
       }
@@ -2264,7 +2289,7 @@ This is a [=static command=].
    <dt>Result Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-      SessionStatusResult = {
+      session.StatusResult = {
         ready: bool,
         message: text,
       }
@@ -2305,21 +2330,20 @@ This is a [=static command=].
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      SessionNewCommand = {
+      session.New = {
         method: "session.new",
-        params: {capabilities: CapabilitiesRequestParameters},
+        params: session.NewParameters
       }
 
-      CapabilitiesRequestParameters = {
-        ?alwaysMatch: CapabilitiesRequest,
-        ?firstMatch: [*CapabilitiesRequest]
+      session.NewParameters = {
+        capabilities: session.CapabilitiesRequest
       }
       </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-      SessionNewResult = {
+      session.NewResult = {
         sessionId: text,
         capabilities: {
           acceptInsecureCerts: bool,
@@ -2366,7 +2390,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
    Note: the connection for this session will be set to the current connection
    by the caller.
 
-1. Let |body| be a new map matching the <code>SessionNewResult</code> production,
+1. Let |body| be a new map matching the <code>session.NewResult</code> production,
    with the <code>sessionId</code> field set to |session|'s [=session ID=], and
    the <code>capabilities</code> field set to |capabilities|.
 
@@ -2385,14 +2409,9 @@ Issue: This needs to be generalized to work with realms too
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      SessionSubscribeCommand = {
+      session.Subscribe = {
         method: "session.subscribe",
-        params: SessionSubscribeParameters
-      }
-
-      SessionSubscribeParameters = {
-        events: [*text],
-        ?contexts: [*BrowsingContext],
+        params: session.SubscriptionRequest
       }
       </pre>
    </dd>
@@ -2458,9 +2477,9 @@ Issue: This needs to be generalised to work with realms too
    <dt>Command Type</dt>
    <dd>
      <pre class="cddl remote-cddl">
-     SessionUnsubscribeCommand = {
+     session.Unsubscribe = {
        method: "session.unsubscribe",
-       params: SessionSubscribeParameters
+       params: session.SubscriptionRequest
      }
      </pre>
    </dd>
@@ -2519,13 +2538,13 @@ navigation status</dfn> struct, which has the following items:
 
 <pre class="cddl remote-cddl">
 BrowsingContextCommand = (
-  BrowsingContextCaptureScreenshotCommand //
-  BrowsingContextCloseCommand //
-  BrowsingContextCreateCommand //
-  BrowsingContextGetTreeCommand //
-  BrowsingContextHandleUserPromptCommand //
-  BrowsingContextNavigateCommand //
-  BrowsingContextReloadCommand
+  browsingContext.CaptureScreenshot //
+  browsingContext.Close //
+  browsingContext.Create //
+  browsingContext.GetTree //
+  browsingContext.HandleUserPrompt //
+  browsingContext.Navigate //
+  browsingContext.Reload
 )
 </pre>
 
@@ -2533,24 +2552,24 @@ BrowsingContextCommand = (
 
 <pre class="cddl local-cddl">
 BrowsingContextResult = (
-  BrowsingContextCaptureScreenshotResult //
-  BrowsingContextCreateResult //
-  BrowsingContextGetTreeResult //
-  BrowsingContextNavigateResult
+  browsingContext.CaptureScreenshotResult //
+  browsingContext.CreateResult //
+  browsingContext.GetTreeResult //
+  browsingContext.NavigateResult
 )
 
 BrowsingContextEvent = (
-  BrowsingContextCreatedEvent //
-  BrowsingContextDestroyedEvent //
-  BrowsingContextNavigationStartedEvent //
-  BrowsingContextFragmentNavigatedEvent //
-  BrowsingContextDomContentLoadedEvent //
-  BrowsingContextLoadEvent //
-  BrowsingContextDownloadWillBeginEvent //
-  BrowsingContextNavigationAbortedEvent //
-  BrowsingContextNavigationFailedEvent //
-  BrowsingContextUserPromptClosedEvent //
-  BrowsingContextUserPromptOpenedEvent
+  browsingContext.ContextCreated //
+  browsingContext.ContextDestroyed //
+  browsingContext.NavigationStarted //
+  browsingContext.FragmentNavigated //
+  browsingContext.DomContentLoaded //
+  browsingContext.Load //
+  browsingContext.DownloadWillBegin //
+  browsingContext.NavigationAborted //
+  browsingContext.NavigationFailed //
+  browsingContext.UserPromptClosed //
+  browsingContext.UserPromptOpened
 )
 </pre>
 
@@ -2561,7 +2580,7 @@ BrowsingContextEvent = (
 [=remote end definition=] and [=local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-BrowsingContext = text;
+browsingContext.BrowsingContext = text;
 </pre>
 
 Each [=/browsing context=] has an associated <dfn export>browsing context
@@ -2584,22 +2603,22 @@ To <dfn>get a browsing context</dfn> given |context id|:
 
 </div>
 
-#### The browsingContext.BrowsingContextInfo Type #### {#type-browsingContext-BrowsingContextInfo}
+#### The browsingContext.Info Type #### {#type-browsingContext-Info}
 
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-BrowsingContextInfoList = [* BrowsingContextInfo]
+browsingContext.InfoList = [*browsingContext.Info]
 
-BrowsingContextInfo = {
-  context: BrowsingContext,
+browsingContext.Info = {
+  context: browsingContext.BrowsingContext,
   url: text,
-  children: BrowsingContextInfoList / null
-  ?parent: BrowsingContext / null,
+  children: browsingContext.InfoList / null
+  ?parent: browsingContext.BrowsingContext / null,
 }
 </pre>
 
-The <code>BrowsingContextInfo</code> type represents the properties of a
+The <code>browsingContext.Info</code> type represents the properties of a
 browsing context.
 
 <div algorithm>
@@ -2677,7 +2696,7 @@ To <dfn>get the browsing context info</dfn> given |context|,
     1. Append |info| to |child infos|
 
 1. Let |context info| be a [=map=] matching the
-   <code>BrowsingContextInfo</code> production with the <code>context</code>
+   <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
    if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
    field set to |url|, and the <code>children</code> field set to |child infos|.
@@ -2717,7 +2736,7 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 1. If |navigate status|'s status is "<code>complete</code>":
 
   1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextNavigateResult</code> production, with the
+     <code>browsingContext.NavigateResult</code> production, with the
      <code>navigation</code> field set to |navigation id|, and the
      <code>url</code> field set to the result of the [=URL serializer=] given
      |navigate status|'s url.
@@ -2738,7 +2757,7 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 1. If |wait condition| is "<code>none</code>":
 
   1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextNavigateResult</code> production, with the
+     <code>browsingContext.NavigateResult</code> production, with the
      <code>navigation</code> field set to |navigation id|, and the
      <code>url</code> field set to the result of the [=URL serializer=] given
      |navigate status|'s url.
@@ -2762,13 +2781,12 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
    what actually went wrong?
 
 1. Let |body| be a [=map=] matching the
-   <code>BrowsingContextNavigateResult</code> production, with the
+   <code>browsingContext.NavigateResult</code> production, with the
    <code>navigation</code> field set to |status|'s id, and the
    <code>url</code> field set to the result of the [=URL serializer=] given
    |status|'s url.
 
 1. Return [=success=] with data |body|.
-
 
 </div>
 
@@ -2777,10 +2795,10 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 [=remote end definition=] and [=local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-Navigation = text;
+browsingContext.Navigation = text;
 </pre>
 
-The <code>Navigation</code> type is a unique string identifying an ongoing
+The <code>browsingContext.Navigation</code> type is a unique string identifying an ongoing
 navigation.
 
 TODO: Link to the definition in the HTML spec.
@@ -2791,14 +2809,14 @@ TODO: Link to the definition in the HTML spec.
 [=local end definition=]:
 
 <pre class="cddl local-cddl">
-NavigationInfo = {
-  context: BrowsingContext,
-  navigation: Navigation / null,
+browsingContext.NavigationInfo = {
+  context: browsingContext.BrowsingContext,
+  navigation: browsingContext.Navigation / null,
   url: text,
 }
 </pre>
 
-The <code>NavigationInfo</code> type provides details of an ongoing navigation.
+The <code>browsingContext.NavigationInfo</code> type provides details of an ongoing navigation.
 
 <div algorithm>
 To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
@@ -2810,12 +2828,21 @@ To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
 1. Let |url| be |navigation status|'s url.
 
 1. Return a [=map=] matching the
-   <code>NavigationInfo</code> production, with the
+   <code>browsingContext.NavigationInfo</code> production, with the
    <code>context</code> field set to |context id|, the <code>navigation</code>
    field set to |navigation id|, and the <code>url</code> field set to the
    result of the [=URL serializer=] given |url|.
 
 </div>
+
+#### The browsingContext.ReadinessState Type #### {#type-browsingContext-ReadinessState}
+
+<pre class="cddl remote-cddl">
+browsingContext.ReadinessState = "none" / "interactive" / "complete"
+</pre>
+
+The <code>browsingContext.ReadinessState</code> type represents the stage of
+document loading at which a navigation command will return.
 
 ### Commands ### {#module-browsingContext-commands}
 
@@ -2830,20 +2857,20 @@ Base64-encoded string.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      BrowsingContextCaptureScreenshotCommand = {
+      browsingContext.CaptureScreenshot = {
         method: "browsingContext.captureScreenshot",
-        params: BrowsingContextCaptureScreenshotParameters
+        params: browsingContext.CaptureScreenshotParameters
       }
 
-      BrowsingContextCaptureScreenshotParameters = {
-        context: BrowsingContext
+      browsingContext.CaptureScreenshotParameters = {
+        context: browsingContext.BrowsingContext
       }
       </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-        BrowsingContextCaptureScreenshotResult = {
+        browsingContext.CaptureScreenshotResult = {
           data: text
         }
     </pre>
@@ -2880,7 +2907,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
     Base64=] with |canvas|.
 
  1. Let |body| be a [=map=] matching the
-    <code>BrowsingContextCaptureScreenshotResult</code> production, with the
+    <code>browsingContext.CaptureScreenshotResult</code> production, with the
     <code>data</code> field set to |encoding result|.
 
  1. Return [=success=] with data |body|.
@@ -2894,13 +2921,13 @@ The <dfn export for=commands>browsingContext.close</dfn> command closes a
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      BrowsingContextCloseCommand = {
+      browsingContext.Close = {
         method: "browsingContext.close",
-        params: BrowsingContextCloseParameters
+        params: browsingContext.CloseParameters
       }
 
-      BrowsingContextCloseParameters = {
-        context: BrowsingContext
+      browsingContext.CloseParameters = {
+        context: browsingContext.BrowsingContext
       }
       </pre>
    </dd>
@@ -2945,24 +2972,24 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      BrowsingContextCreateCommand = {
+      browsingContext.Create = {
         method: "browsingContext.create",
-        params: BrowsingContextCreateParameters
+        params: browsingContext.CreateParameters
       }
 
-      BrowsingContextCreateType = "tab" / "window"
+      browsingContext.CreateType = "tab" / "window"
 
-      BrowsingContextCreateParameters = {
-        type: BrowsingContextCreateType,
-        ?referenceContext: BrowsingContext
+      browsingContext.CreateParameters = {
+        type: browsingContext.CreateType,
+        ?referenceContext: browsingContext.BrowsingContext
       }
       </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-        BrowsingContextCreateResult = {
-          context: BrowsingContext
+        browsingContext.CreateResult = {
+          context: browsingContext.BrowsingContext
         }
     </pre>
    </dd>
@@ -3018,7 +3045,7 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |context id| be the [=browsing context id=] of the newly created
      [=/browsing context=].
 
-  1. Let |body| be a [=map=] matching the <code>BrowsingContextCreateResult</code>
+  1. Let |body| be a [=map=] matching the <code>browsingContext.CreateResult</code>
      production, with the <code>context</code> field set to |context id|.
 
   1. Return [=success=] with data |body|.
@@ -3035,22 +3062,22 @@ or all top-level contexts when no parent is provided.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      BrowsingContextGetTreeCommand = {
+      browsingContext.GetTree = {
         method: "browsingContext.getTree",
-        params: BrowsingContextGetTreeParameters
+        params: browsingContext.GetTreeParameters
       }
 
-      BrowsingContextGetTreeParameters = {
+      browsingContext.GetTreeParameters = {
         ?maxDepth: js-uint,
-        ?root: BrowsingContext,
+        ?root: browsingContext.BrowsingContext,
       }
       </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-        BrowsingContextGetTreeResult = {
-          contexts: BrowsingContextInfoList
+        browsingContext.GetTreeResult = {
+          contexts: browsingContext.Info
         }
     </pre>
    </dd>
@@ -3080,7 +3107,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
   1. Append |info| to |contexts info|
 
-1. Let |body| be a [=map=] matching the <code>BrowsingContextGetTreeResult</code>
+1. Let |body| be a [=map=] matching the <code>browsingContext.GetTreeResult</code>
    production, with the <code>contexts</code> field set to |contexts info|.
 
 1. Return [=success=] with data |body|.
@@ -3096,13 +3123,13 @@ command allows closing an open prompt
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      BrowsingContextHandleUserPromptCommand = {
+      browsingContext.HandleUserPrompt = {
         method: "browsingContext.handleUserPrompt",
-        params: BrowsingContextHandleUserPromptParameters
+        params: browsingContext.HandleUserPromptParameters
       }
 
-      BrowsingContextHandleUserPromptParameters = {
-        context: BrowsingContext,
+      browsingContext.HandleUserPromptParameters = {
+        context: browsingContext.BrowsingContext,
         ? accept: bool,
         ? userText: text,
       }
@@ -3162,25 +3189,23 @@ browsing context to the given URL.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      BrowsingContextNavigateCommand = {
+      browsingContext.Navigate = {
         method: "browsingContext.navigate",
-        params: BrowsingContextNavigateParameters
+        params: browsingContext.NavigateParameters
       }
 
-      BrowsingContextNavigateParameters = {
-        context: BrowsingContext,
+      browsingContext.NavigateParameters = {
+        context: browsingContext.BrowsingContext,
         url: text,
-        ?wait: ReadinessState,
+        ?wait: browsingContext.ReadinessState,
       }
-
-       ReadinessState = "none" / "interactive" / "complete"
       </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-        BrowsingContextNavigateResult = {
-          navigation: Navigation / null,
+        browsingContext.NavigateResult = {
+          navigation: browsingContext.Navigation / null,
           url: text,
         }
     </pre>
@@ -3230,15 +3255,15 @@ browsing context.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      BrowsingContextReloadCommand = {
+      browsingContext.Reload = {
         method: "browsingContext.reload",
-        params: BrowsingContextReloadParameters
+        params: browsingContext.ReloadParameters
       }
 
-      BrowsingContextReloadParameters = {
-        context: BrowsingContext,
+      browsingContext.ReloadParameters = {
+        context: browsingContext.BrowsingContext,
         ?ignoreCache: bool,
-        ?wait: ReadinessState,
+        ?wait: browsingContext.ReadinessState,
       }
       </pre>
    </dd>
@@ -3282,9 +3307,9 @@ The [=remote end steps=] with |command parameters| are:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextCreatedEvent = {
+        browsingContext.ContextCreated = {
          method: "browsingContext.contextCreated",
-         params: BrowsingContextInfo
+         params: browsingContext.Info
        }
       </pre>
    </dd>
@@ -3310,7 +3335,7 @@ To <dfn>Emit a context created event</dfn> given |session| and |context|:
    |context|, 0, and true.
 
 1. Let |body| be a [=map=] matching the
-   <code>BrowsingContextCreatedEvent</code> production, with the
+   <code>browsingContext.ContextCreated</code> production, with the
    <code>params</code> field set to |params|.
 
 1. [=Emit an event=] with |session| and |body|.
@@ -3353,9 +3378,9 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 1, given
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextDestroyedEvent = {
+        browsingContext.ContextDestroyed = {
          method: "browsingContext.contextDestroyed",
-         params: BrowsingContextInfo
+         params: browsingContext.Info
        }
       </pre>
    </dd>
@@ -3372,7 +3397,7 @@ Define the following [=browsing context tree discarded=] steps:
    |context|, 0, and true.
 
 1. Let |body| be a [=map=] matching the
-    <code>BrowsingContextDestroyedEvent</code> production, with the
+    <code>browsingContext.ContextDestroyed</code> production, with the
     <code>params</code> field set to |params|.
 
 1. Let |related browsing contexts| be a set containing the result of
@@ -3398,9 +3423,9 @@ become inaccessible but not yet get discarded because bfcache.
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextNavigationStartedEvent = {
+        browsingContext.NavigationStarted = {
          method: "browsingContext.navigationStarted",
-         params: NavigationInfo
+         params: browsingContext.NavigationInfo
        }
       </pre>
    </dd>
@@ -3414,7 +3439,7 @@ started</dfn> steps given |context| and |navigation status|:
    and |navigation status|.
 
  1. Let |body| be a [=map=] matching the
-    <code>BrowsingContextNavigationStarted</code> production, with the
+    <code>browsingContext.NavigationStarted</code> production, with the
     <code>params</code> field set to |params|.
 
 1. Let |navigation id| be |navigation status|'s id.
@@ -3437,9 +3462,9 @@ started</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextFragmentNavigatedEvent = {
+        browsingContext.FragmentNavigated = {
          method: "browsingContext.fragmentNavigated",
-         params: NavigationInfo
+         params: browsingContext.NavigationInfo
        }
       </pre>
    </dd>
@@ -3453,7 +3478,7 @@ navigated</dfn> steps given |context| and |navigation status|:
    and |navigation status|.
 
 1. Let |body| be a [=map=] matching the
-    <code>BrowsingContextFragmentNavigatedEvent</code> production, with the
+    <code>browsingContext.FragmentNavigated</code> production, with the
     <code>params</code> field set to |params|.
 
 1. Let |navigation id| be |navigation status|'s id.
@@ -3476,9 +3501,9 @@ navigated</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextDomContentLoadedEvent = {
+        browsingContext.DomContentLoaded = {
          method: "browsingContext.domContentLoaded",
-         params: NavigationInfo
+         params: browsingContext.NavigationInfo
        }
       </pre>
    </dd>
@@ -3492,7 +3517,7 @@ loaded</dfn> steps given |context| and |navigation status|:
    and |navigation status|.
 
 1. Let |body| be a [=map=] matching the
-   <code>BrowsingContextDomContentLoadedEvent</code> production, with the
+   <code>browsingContext.DomContentLoaded</code> production, with the
    <code>params</code> field set to |params|.
 
 1. Let |related browsing contexts| be a set containing |context|.
@@ -3515,9 +3540,9 @@ loaded</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextLoadEvent = {
+        browsingContext.Load = {
          method: "browsingContext.load",
-         params: NavigationInfo
+         params: browsingContext.NavigationInfo
        }
       </pre>
    </dd>
@@ -3530,7 +3555,7 @@ complete</dfn> steps given |context| and |navigation status|:
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
 
-1. Let |body| be a [=map=] matching the <code>BrowsingContextLoadEvent</code>
+1. Let |body| be a [=map=] matching the <code>browsingContext.Load</code>
    production, with the <code>params</code> field set to |params|.
 
 1. Let |related browsing contexts| be a set containing |context|.
@@ -3553,9 +3578,9 @@ complete</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextDownloadWillBeginEvent = {
+        browsingContext.DownloadWillBegin = {
          method: "browsingContext.downloadWillBegin",
-         params: NavigationInfo
+         params: browsingContext.NavigationInfo
        }
       </pre>
    </dd>
@@ -3569,7 +3594,7 @@ started</dfn> steps given |context| and |navigation status|:
     and |navigation status|.
 
  1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextDownloadWillBeginEvent</code> production, with the
+     <code>browsingContext.DownloadWillBegin</code> production, with the
      <code>params</code> field set to |params|.
 
  1. Let |navigation id| be |navigation status|'s id.
@@ -3591,9 +3616,9 @@ started</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextNavigationAbortedEvent = {
+        browsingContext.NavigationAborted = {
          method: "browsingContext.navigationAborted",
-         params: NavigationInfo
+         params: browsingContext.NavigationInfo
        }
       </pre>
    </dd>
@@ -3607,7 +3632,7 @@ aborted</dfn> steps given |context| and |navigation status|:
    and |navigation status|.
 
 1. Let |body| be a [=map=] matching the
-    <code>BrowsingContextNavigationAborted</code> production, with the
+    <code>browsingContext.NavigationAborted</code> production, with the
     <code>params</code> field set to |params|.
 
 1. Let |navigation id| be |navigation status|'s id.
@@ -3630,9 +3655,9 @@ aborted</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextNavigationFailedEvent = {
+        browsingContext.NavigationFailed = {
          method: "browsingContext.navigationFailed",
-         params: NavigationInfo
+         params: browsingContext.NavigationInfo
        }
       </pre>
    </dd>
@@ -3646,7 +3671,7 @@ failed</dfn> steps given |context| and |navigation status|:
    and |navigation status|.
 
 1. Let |body| be a [=map=] matching the
-    <code>BrowsingContextNavigationFailed</code> production, with the
+    <code>browsingContext.NavigationFailed</code> production, with the
     <code>params</code> field set to |params|.
 
 1. Let |navigation id| be |navigation status|'s id.
@@ -3668,13 +3693,13 @@ failed</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextUserPromptClosedEvent = {
+        browsingContext.UserPromptClosed = {
           method: "browsingContext.userPromptClosed",
-          params: UserPromptClosedInfo
+          params: browsingContext.UserPromptClosedParameters
         }
 
-        UserPromptClosedInfo = {
-          context: BrowsingContext,
+        browsingContext.UserPromptClosedParameters = {
+          context: browsingContext.BrowsingContext,
           accepted: bool,
           ? userText: text
         }
@@ -3691,10 +3716,11 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
-1. Let |params| be a [=map=] matching the <code>UserPromptClosedInfo</code>
-   production with the <code>context</code> field set to |context id|, the
-   <code>accepted</code> field set to |accepted|, and the <code>userText</code> field set
-   to |user text| if |user text| is not null or omitted otherwise.
+1. Let |params| be a [=map=] matching the
+   <code>browsingContext.UserPromptClosedParameters</code> production with the
+   <code>context</code> field set to |context id|, the <code>accepted</code>
+   field set to |accepted|, and the <code>userText</code> field set to |user
+   text| if |user text| is not null or omitted otherwise.
 
 1. Let |body| be a [=map=] matching the
    <code>BrowsingContextUserPromptClosedEvent</code> production, with the
@@ -3715,13 +3741,13 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        BrowsingContextUserPromptOpenedEvent = {
+        browsingContext.UserPromptOpened = {
           method: "browsingContext.userPromptOpened",
-          params: UserPromptOpenedInfo
+          params: browsingContext.UserPromptOpenedParameters
         }
 
-        UserPromptOpenedInfo = {
-          context: BrowsingContext,
+        browsingContext.UserPromptOpenedParameters = {
+          context: browsingContext.BrowsingContext,
           type: "alert" / "confirm" / "prompt" / "beforeunload",
           message: text
         }
@@ -3737,13 +3763,13 @@ opened</dfn> steps given |window|, |type| and |message|.
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
-1. Let |params| be a [=map=] matching the <code>UserPromptOpenedInfo</code>
-   production with the <code>context</code> field set to |context id|, the
-   <code>type</code> field set to |type|, and the <code>message</code> field set
-   to |message|.
+1. Let |params| be a [=map=] matching the
+   <code>browsingContext.UserPromptOpenedParameters</code> production with the
+   <code>context</code> field set to |context id|, the <code>type</code> field
+   set to |type|, and the <code>message</code> field set to |message|.
 
 1. Let |body| be a [=map=] matching the
-   <code>BrowsingContextUserPromptOpenedEvent</code> production, with the
+   <code>browsingContext.UserPromptOpened</code> production, with the
    <code>params</code> field set to |params|.
 
 1. Let |related browsing contexts| be a [=set=] containing |context|.
@@ -3766,10 +3792,10 @@ relating to script realms and execution.
 
 <pre class="cddl remote-cddl">
 ScriptCommand = (
-  ScriptCallFunctionCommand //
-  ScriptDisownCommand //
-  ScriptEvaluateCommand //
-  ScriptGetRealmsCommand
+  script.CallFunction //
+  script.Disown //
+  script.Evaluate //
+  script.GetRealms
 )
 </pre>
 
@@ -3777,13 +3803,13 @@ ScriptCommand = (
 
 <pre class="cddl local-cddl">
 ScriptResult = (
-  ScriptEvaluateResult //
-  ScriptGetRealmsResult
+  script.EvaluateResult //
+  script.GetRealmsResult
 )
 
 ScriptEvent = (
-  ScriptRealmCreatedEvent //
-  ScriptRealmDestroyedEvent
+  script.RealmCreated //
+  script.RealmDestroyed
 )
 </pre>
 
@@ -3795,16 +3821,16 @@ ScriptEvent = (
 [=Remote end definition=] and [=local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-ExceptionDetails = {
+script.ExceptionDetails = {
   columnNumber: js-uint,
   exception: RemoteValue,
   lineNumber: js-uint,
-  stackTrace: StackTrace,
+  stackTrace: script.StackTrace,
   text: text,
 };
 </pre>
 
-The <code>ExceptionDetails</code> type represents a JavaScript exception.
+The <code>script.ExceptionDetails</code> type represents a JavaScript exception.
 
 <div algorithm>
 
@@ -3830,11 +3856,12 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
    the value of the <code>columnNumber</code> field |stack trace|[0]. Otherwise
    let |line number| and |column number| be 0.
 
-1. Let |exception details| be a map matching the <code>ExceptionDetails</code>
-   production, with the <code>text</code> field set to |text|, the
-   <code>exception</code> field set to |exception|, the <code>lineNumber</code>
-   field set to |line number|, the <code>columnNumber</code> field set to
-   |column number|, and the <code>stackTrace</code> field set to |stack trace|.
+1. Let |exception details| be a map matching the
+   <code>script.ExceptionDetails</code> production, with the <code>text</code>
+   field set to |text|, the <code>exception</code> field set to |exception|, the
+   <code>lineNumber</code> field set to |line number|, the
+   <code>columnNumber</code> field set to |column number|, and the
+   <code>stackTrace</code> field set to |stack trace|.
 
 1. Return |exception details|.
 
@@ -3845,7 +3872,7 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
 [=Remote end definition=] and [=local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-Realm = text;
+script.Realm = text;
 </pre>
 
 Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
@@ -3879,69 +3906,70 @@ Issue: This has the wrong error code
 [=Local end definition=]
 
 <pre class="cddl local-cddl">
-RealmInfo = {
-  WindowRealmInfo //
-  DedicatedWorkerRealmInfo //
-  SharedWorkerRealmInfo //
-  ServiceWorkerRealmInfo //
-  WorkerRealmInfo //
-  PaintWorkletRealmInfo //
-  AudioWorkletRealmInfo //
-  WorkletRealmInfo //
+script.RealmInfo = {
+  script.WindowRealmInfo //
+  script.DedicatedWorkerRealmInfo //
+  script.SharedWorkerRealmInfo //
+  script.ServiceWorkerRealmInfo //
+  script.WorkerRealmInfo //
+  script.PaintWorkletRealmInfo //
+  script.AudioWorkletRealmInfo //
+  script.WorkletRealmInfo //
 }
 
-BaseRealmInfo = {
-  realm: Realm,
+script.BaseRealmInfo = {
+  realm: script.Realm,
   origin: text
 }
 
-WindowRealmInfo = {
-  BaseRealmInfo,
+script.WindowRealmInfo = {
+  script.BaseRealmInfo,
   type: "window",
-  context: BrowsingContext,
+  context: browsingContext.BrowsingContext,
   ?sandbox: text
 }
 
-DedicatedWorkerRealmInfo = {
-  BaseRealmInfo,
+script.DedicatedWorkerRealmInfo = {
+  script.BaseRealmInfo,
   type: "dedicated-worker"
 }
 
-SharedWorkerRealmInfo = {
-  BaseRealmInfo,
+script.SharedWorkerRealmInfo = {
+  script.BaseRealmInfo,
   type: "shared-worker"
 }
 
-ServiceWorkerRealmInfo = {
-  BaseRealmInfo,
+script.ServiceWorkerRealmInfo = {
+  script.BaseRealmInfo,
   type: "service-worker"
 }
 
-WorkerRealmInfo = {
-  BaseRealmInfo,
+script.WorkerRealmInfo = {
+  script.BaseRealmInfo,
   type: "worker"
 }
 
-PaintWorkletRealmInfo = {
-  BaseRealmInfo,
+script.PaintWorkletRealmInfo = {
+  script.BaseRealmInfo,
   type: "paint-worklet"
 }
 
-AudioWorkletRealmInfo = {
-  BaseRealmInfo,
+script.AudioWorkletRealmInfo = {
+  script.BaseRealmInfo,
   type: "audio-worklet"
 }
 
-WorkletRealmInfo = {
-  BaseRealmInfo,
+script.WorkletRealmInfo = {
+  script.BaseRealmInfo,
   type: "worklet"
 }
 </pre>
 
-Note: there's a 1:1 relationship between the <code>RealmInfo</code> variants and values of
-      <a href="#type-script-RealmType"><code>RealmType</code></a>.
+Note: there's a 1:1 relationship between the <code>script.RealmInfo</code>
+      variants and values of
+      <a href="#type-script-RealmType"><code>script.RealmType</code></a>.
 
-The <code>RealmInfo</code> type represents the properties of a realm.
+The <code>script.RealmInfo</code> type represents the properties of a realm.
 
 <div algorithm>
 To <dfn>get the realm info</dfn> given |environment settings|:
@@ -3963,7 +3991,7 @@ To <dfn>get the realm info</dfn> given |environment settings|:
          <a>associated <code>Document</code></a>.
       1. Let |browsing context| be |document|'s [=/browsing context=].
       1. Let |context id| be the [=browsing context id=] for |browsing context|.
-      1. Let |realm info| be a map matching the <code>WindowRealmInfo</code> production,
+      1. Let |realm info| be a map matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
          field set to |origin|, and the <code>context</code> field set to |context id|.
 
@@ -3978,7 +4006,7 @@ To <dfn>get the realm info</dfn> given |environment settings|:
       1. Let |sandbox name| be the result of [=get a sandbox name=] given
          |realm|.
       1. Assert: |sandbox name| is not null.
-      1. Let |realm info| be a map matching the <code>WindowRealmInfo</code> production,
+      1. Let |realm info| be a map matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
          field set to |origin|, the <code>context</code> field set to |context id|,
          and the <code>sandbox</code> field set to |sandbox name|.
@@ -3986,43 +4014,43 @@ To <dfn>get the realm info</dfn> given |environment settings|:
 
     <dt>|global object| is a {{DedicatedWorkerGlobalScope}} object
     <dd>
-      1. Let |realm info| be a map matching the <code>DedicatedWorkerRealmInfo</code> production,
+      1. Let |realm info| be a map matching the <code>script.DedicatedWorkerRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code> field
          set to |origin|.
 
     <dt>|global object| is a {{SharedWorkerGlobalScope}} object
     <dd>
-      1. Let |realm info| be a map matching the <code>SharedWorkerRealmInfo</code> production,
+      1. Let |realm info| be a map matching the <code>script.SharedWorkerRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
     <dt>|global object| is a {{ServiceWorkerGlobalScope}} object
     <dd>
-      1. Let |realm info| be a map matching the <code>ServiceWorkerRealmInfo</code> production,
+      1. Let |realm info| be a map matching the <code>script.ServiceWorkerRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code> field
          set to |origin|.
 
    <dt>|global object| is a {{WorkerGlobalScope}} object
    <dd>
-      1. Let |realm info| be a map matching the <code>WorkerRealmInfo</code> production,
+      1. Let |realm info| be a map matching the <code>script.WorkerRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
    <dt>|global object| is a {{PaintWorkletGlobalScope}} object
    <dd>
-      1. Let |realm info| be a map matching the <code>PaintWorkletRealmInfo</code> production,
+      1. Let |realm info| be a map matching the <code>script.PaintWorkletRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
    <dt>|global object| is a {{AudioWorkletGlobalScope}} object
    <dd>
-      1. Let |realm info| be a map matching the <code>AudioWorkletRealmInfo</code> production,
+      1. Let |realm info| be a map matching the <code>script.AudioWorkletRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
    <dt>|global object| is a {{WorkletGlobalScope}} object
    <dd>
-      1. Let |realm info| be a map matching the <code>WorkletRealmInfo</code> production,
+      1. Let |realm info| be a map matching the <code>script.WorkletRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
@@ -4045,17 +4073,17 @@ Note: Future variations of this specification will retain the invariant that
 [=Local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" /
-                       "worker" / "paint-worklet" / "audio-worklet" / "worklet"
+script.RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" /
+                   "worker" / "paint-worklet" / "audio-worklet" / "worklet"
 </pre>
 
-The <code>RealmType</code> type represents the different types of Realm.
+The <code>script.RealmType</code> type represents the different types of Realm.
 
 
 #### The script.StackFrame type #### {#types-script-StackFrame}
 
 <pre class="cddl remote-cddl local-cddl">
-StackFrame = {
+script.StackFrame = {
   columnNumber: js-uint,
   functionName: text,
   lineNumber: js-uint,
@@ -4072,12 +4100,12 @@ properties, which represent the line and column number of the executed code.
 #### The script.StackTrace type #### {#types-script-StackTrace}
 
 <pre class="cddl remote-cddl local-cddl">
-StackTrace = {
-  callFrames: [*StackFrame],
+script.StackTrace = {
+  callFrames: [*script.StackFrame],
 }
 </pre>
 
-The <code>StackTrace</code> type represents the javascript stack at a point in
+The <code>script.StackTrace</code> type represents the javascript stack at a point in
 script execution.
 
 Note: The details of how to get a list of stack frames, and the properties of
@@ -4115,7 +4143,7 @@ To <dfn>construct a stack trace</dfn>, with a list of stack frames |stack|:
    1. Let |url| be the result of running the [=URL serializer=], given
       the <a spec=url for=/>URL</a> of |frame|'s [=stackframe/script url=].
 
-   1. Let |frame info| be a new map matching the <code>StackFrame</code>
+   1. Let |frame info| be a new map matching the <code>script.StackFrame</code>
       production, with the <code>url</code> field set to |url|, the
       <code>functionName</code> field set to |frame|'s [=stackframe/function=],
       the <code>lineNumber</code> field set to |frame|'s [=stackframe/line
@@ -4124,7 +4152,7 @@ To <dfn>construct a stack trace</dfn>, with a list of stack frames |stack|:
 
 1. Append |frame info| to |call frames|.
 
-1. Let |stack trace| be a new map matching the <code>StackTrace</code>
+1. Let |stack trace| be a new map matching the <code>script.StackTrace</code>
    production, with the <code>callFrames</code> property set to |call frames|.
 
 1. Return |stack trace|.
@@ -4151,47 +4179,56 @@ Record=] of type <code>throw</code>, |exception|, is given by:
 
 </div>
 
-#### The script.ScriptEvaluateResult type #### {#type-script-ScriptEvaluateResult}
+#### The script.EvaluateResult type #### {#type-script-EvaluateResult}
 
 [=Remote end definition=] and [=local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-ScriptEvaluateResult = (
-  ScriptEvaluateResultSuccess //
-  ScriptEvaluateResultException
+script.EvaluateResult = (
+  script.EvaluateResultSuccess //
+  script.EvaluateResultException
 )
 
-ScriptEvaluateResultSuccess = {
+script.EvaluateResultSuccess = {
   type: "success",
   result: RemoteValue,
-  realm: Realm
+  realm: script.Realm
 }
 
-ScriptEvaluateResultException = {
+script.EvaluateResultException = {
   type: "exception",
-  exceptionDetails: ExceptionDetails,
-  realm: Realm
+  exceptionDetails: script.ExceptionDetails
+  realm: script.Realm
 }
 </pre>
 
-The <code>ScriptEvaluateResult</code> type indicates the return value of a command
-that executes script. The <code>ScriptEvaluateResultSuccess</code> variant is used in
+The <code>script.EvaluateResult</code> type indicates the return value of a command
+that executes script. The <code>script.EvaluateResultSuccess</code> variant is used in
 cases where the script completes normally and the
-<code>ScriptEvaluateResultException</code> variant is used in cases where the script
+<code>script.EvaluateResultException</code> variant is used in cases where the script
 completes with a thrown exception.
+
+#### The script.ResultOwnership type #### {#type-script-ResultOwnership}
+
+<pre class="cddl remote-cddl local-cddl">
+script.ResultOwnership = "root" / "none"
+</pre>
+
+The <code>script.ResultOwnership</code> specifies how the serialized value
+ownership will be treated.
 
 #### The script.Source type #### {#type-script-Source}
 
 [=Local end definition=]
 
 <pre class="cddl local-cddl">
-Source = (
-  realm: Realm,
-  ?context: BrowsingContext
+script.Source = (
+  realm: script.Realm,
+  ?context: browsingContext.BrowsingContext
 );
 </pre>
 
-The <code>Source</code> type represents a <code>script.Realm</code> with
+The <code>script.Source</code> type represents a <code>script.Realm</code> with
 an optional <code>browsingContext.BrowsingContext</code> in which a
 script related event occurred.
 
@@ -4214,7 +4251,7 @@ To <dfn>get the source</dfn> given |source realm|:
   Otherwise let |browsing context| be null.
 
 1. Let |source| be a [=map=] matching the
-   <code>Source</code> production with the <code>realm</code>
+   <code>script.Source</code> production with the <code>realm</code>
    field set to |realm|, and the <code>context</code> field set
    to |context id| if |browsing context| is not null, or unset otherwise.
 
@@ -4227,28 +4264,30 @@ To <dfn>get the source</dfn> given |source realm|:
 [=Remote end definition=]
 
 <pre class="cddl remote-cddl">
-RealmTarget = {realm: Realm};
+script.RealmTarget = {
+  realm: script.Realm
+};
 
-ContextTarget = {
-  context: BrowsingContext,
+script.ContextTarget = {
+  context: browsingContext.BrowsingContext,
   ?sandbox: text
 }
 
-ScriptTarget = (
-  RealmTarget //
-  ContextTarget
+script.Target = (
+  script.RealmTarget //
+  script.ContextTarget
 );
 </pre>
 
-The <code>ScriptTarget</code> type represents a value that is either a
-<code>script.Realm</code> or a <code>browsingContext.BrowsingContext</code>. This
-is useful in cases where a context identifier can stand in for the realm
+The <code>script.Target</code> type represents a value that is either a
+<code>script.Realm</code> or a <code>browsingContext.BrowsingContext</code>.
+This is useful in cases where a context identifier can stand in for the realm
 associated with the context's active document.
 
 <div algorithm>
 To <dfn>get a realm from a target</dfn> given |target|:
 
-1. If |target| matches the <code>ContextTarget</code> production:
+1. If |target| matches the <code>script.ContextTarget</code> production:
 
   1. Let |context| be the result of [=trying=] to [=get a browsing context=]
      with |target|["<code>context</code>"].
@@ -4271,7 +4310,7 @@ To <dfn>get a realm from a target</dfn> given |target|:
 
 1. Otherwise:
 
-  1. Assert: |target| matches the <code>RealmTarget</code> production.
+  1. Assert: |target| matches the <code>script.RealmTarget</code> production.
 
   1. Let |realm id| be the value of the <code>realm</code> field of |target|.
 
@@ -4281,16 +4320,6 @@ To <dfn>get a realm from a target</dfn> given |target|:
 
 Issue: This has the wrong error code
 </div>
-
-#### The script.Ownership type #### {#type-script-Ownership}
-
-<pre class="cddl remote-cddl local-cddl">
-SerializationOwnershipModel = "root" / "none"
-</pre>
-
-The <code>SerializationOwnershipModel</code> specifies how the serialized value
-ownership should be treated.
-
 
 ### Commands ### {#module-script-commands}
 
@@ -4304,14 +4333,14 @@ other handles or strong ECMAScript references.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      ScriptDisownCommand = {
+      script.Disown = {
         method: "script.disown",
-        params: ScriptDisownParameters
+        params: script.DisownParameters
       }
 
-      ScriptDisownParameters = {
+      script.DisownParameters = {
         handles: [Handle]
-        target: ScriptTarget;
+        target: script.Target;
       }
       </pre>
    </dd>
@@ -4347,21 +4376,21 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      ScriptCallFunctionCommand = {
+      script.CallFunction = {
         method: "script.callFunction",
-        params: ScriptCallFunctionParameters
+        params: script.CallFunctionParameters
       }
 
-      ScriptCallFunctionParameters = {
+      script.CallFunctionParameters = {
         functionDeclaration: text;
         awaitPromise: bool;
-        target: ScriptTarget;
-        ?arguments: [ArgumentValue];
-        ?this: ArgumentValue;
-        ?resultOwnership: OwnershipModel;
+        target: script.Target;
+        ?arguments: [*script.ArgumentValue];
+        ?this: script.ArgumentValue;
+        ?resultOwnership: script.ResultOwnership;
       }
 
-      ArgumentValue = (
+      script.ArgumentValue = (
         RemoteReference //
         LocalValue
       );
@@ -4371,7 +4400,7 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
    <dt>Result Type</dt>
    <dd>
     <pre class="cddl">
-      ScriptEvaluateResult
+      script.EvaluateResult
     </pre>
    </dd>
 </dl>
@@ -4461,7 +4490,7 @@ The [=remote end steps=] with |command parameters| are:
    1. Let |exception details| be the result of [=get exception details=] given
       |realm|, |function body evaluation status| and |result ownership|.
 
-   1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+   1. Return a new map matching the <code>script.EvaluateResultException</code>
       production, with the <code>exceptionDetails</code> field set to
       |exception details|.
 
@@ -4489,7 +4518,7 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |exception details| be the result of [=get exception details=] given
      |realm|, |evaluation status| and |result ownership|.
 
-  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+  1. Return a new map matching the <code>script.EvaluateResultException</code>
      production, with the <code>exceptionDetails</code> field set to
      |exception details|.
 
@@ -4499,7 +4528,7 @@ The [=remote end steps=] with |command parameters| are:
    |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result
    ownership|, <code>new map</code> as |serialization internal map| and |realm|.
 
-1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
+1. Return a new map matching the <code>script.EvaluateResultSuccess</code>
    production, with the <code>realm</code> field set to |realm id|,
    and the <code>result</code> field set to |result|.
 
@@ -4518,16 +4547,16 @@ the promise is returned.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      ScriptEvaluateCommand = {
+      script.Evaluate = {
         method: "script.evaluate",
-        params: ScriptEvaluateParameters
+        params: script.EvaluateParameters
       }
 
-      ScriptEvaluateParameters = {
+      script.EvaluateParameters = {
         expression: text;
-        target: ScriptTarget;
+        target: script.Target;
         awaitPromise: bool;
-        ?resultOwnership: OwnershipModel;
+        ?resultOwnership: script.ResultOwnership;
       }
       </pre>
    </dd>
@@ -4585,7 +4614,7 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |exception details| be the result of [=get exception details=] given
      |realm|, |evaluation status| and |result ownership|.
 
-  1. Return a new map matching the <code>ScriptEvaluateResultException</code>
+  1. Return a new map matching the <code>script.EvaluateResultException</code>
      production, with the <code>realm</code> field set to |realm id|, and the
      <code>exceptionDetails</code> field set to |exception details|.
 
@@ -4595,7 +4624,7 @@ The [=remote end steps=] with |command parameters| are:
    |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result
    ownership|, <code>new map</code> as |serialization internal map| and |realm|.
 
-1. Return a new map matching the <code>ScriptEvaluateResultSuccess</code>
+1. Return a new map matching the <code>script.EvaluateResultSuccess</code>
    production, with the with the <code>realm</code> field set to |realm id|, and
    the <code>result</code> field set to |result|.
 
@@ -4610,24 +4639,22 @@ realm associated with the [=document=] currently loaded in a specified
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      ScriptGetRealmsCommand = {
+      script.GetRealms = {
         method: "script.getRealms",
-        params: ScriptGetRealmsParameters
+        params: script.GetRealmsParameters
       }
 
-      ScriptGetRealmsParameters = {
-        ?context: BrowsingContext,
-        ?type: RealmType,
+      script.GetRealmsParameters = {
+        ?context: browsingContext.BrowsingContext,
+        ?type: script.RealmType,
       }
       </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      RealmInfoList = [* RealmInfo]
-
-      ScriptGetRealmsResult = {
-        realms: RealmInfoList
+      script.GetRealmsResult = {
+        realms: [*script.RealmInfo]
       }
     </pre>
    </dd>
@@ -4674,7 +4701,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
   1. If |realm info| is not null, append |realm info| to |realms|.
 
-1. Let |body| be a map matching the <code>GetRealmsResult</code> production,
+1. Let |body| be a map matching the <code>script.GetRealmsResult</code> production,
    with the <code>realms</code> field set to |realms|.
 
 1. Return [=success=] with data |body|.
@@ -4695,9 +4722,9 @@ Issue: We might want to have a more sophisticated filter system than just a
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        ScriptRealmCreatedEvent = {
+        script.RealmCreated = {
          method: "script.realmCreated",
-         params: RealmInfo
+         params: script.RealmInfo
        }
       </pre>
    </dd>
@@ -4722,7 +4749,7 @@ object:
 1. Let |related browsing contexts| be the result of [=get related browsing
    contexts=] given |environment settings|.
 
-1. Let |body| be a map matching the <code>RealmCreatedEvent</code>
+1. Let |body| be a map matching the <code>script.RealmCreated</code>
    production, with the <code>params</code> field set to |realm info|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
@@ -4759,7 +4786,7 @@ The [=remote end subscribe steps=] with [=subscribe priority=] 2, given
 
   1. Let |realm info| be the result of [=get the realm info=] given |settings|
 
-  1. Let |body| be a map matching the <code>RealmCreatedEvent</code>
+  1. Let |body| be a map matching the <code>script.RealmCreated</code>
      production, with the <code>params</code> field set to |realm info|.
 
   1. If [=event is enabled=] given |session|,
@@ -4777,14 +4804,15 @@ Issue: Should the order here be better defined?
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-       RealmDestroyedParameters = {
-         realm: Realm
+       script.RealmDestroyed = {
+         method: "script.realmDestoyed",
+         params: script.RealmDestroyedParameters
        }
 
-       ScriptRealmDestroyedEvent = {
-         method: "script.realmDestoyed",
-         params: RealmDestroyedParameters
+       script.RealmDestroyedParameters = {
+         realm: script.Realm
        }
+
       </pre>
    </dd>
 </dl>
@@ -4804,10 +4832,10 @@ Define the following [=unloading document cleanup steps=] with |document|:
 
   1. Let |realm id| be the [=realm id=] for |realm|.
 
-  1. Let |params| be a map matching the <code>RealmDestroyedParameters</code>
+  1. Let |params| be a map matching the <code>script.RealmDestroyedParameters</code>
      production, with the <code>realm</code> field set of |realm id|.
 
-  1. Let |body| be a map matching the <code>RealmDestroyedEvent</code>
+  1. Let |body| be a map matching the <code>script.RealmDestroyed</code>
      production, with the <code>params</code> field set to |params|.
 
   1. For each |session| in the [=set of sessions for which an event is enabled=]
@@ -4824,10 +4852,11 @@ Define the following [=unloading document cleanup steps=] with |document|:
 
 1. Let |realm id| be the [=realm id=] for |realm|.
 
-1. Let |params| be a map matching the <code>RealmDestroyedParameters</code>
-   production, with the <code>realm</code> field set to |realm id|.
+1. Let |params| be a map matching the
+   <code>script.RealmDestroyedParameters</code> production, with the
+   <code>realm</code> field set to |realm id|.
 
-1. Let |body| be a map matching the <code>RealmDestroyedEvent</code>
+1. Let |body| be a map matching the <code>script.RealmDestroyed</code>
    production, with the <code>params</code> field set to |params|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
@@ -4849,10 +4878,10 @@ worker=] algorithm:
 
 1. Let |realm id| be the [=realm id=] for |realm|.
 
-1. Let |params| be a map matching the <code>RealmDestroyedParameters</code>
+1. Let |params| be a map matching the <code>script.RealmDestroyedParameters</code>
    production, with the <code>realm</code> field set of |realm id|.
 
-1. Let |body| be a map matching the <code>RealmDestroyedEvent</code>
+1. Let |body| be a map matching the <code>script.RealmDestroyed</code>
    production, with the <code>params</code> field set to |params|.
 
 </div>
@@ -4912,7 +4941,7 @@ level context.
 
 <pre class="cddl local-cddl">
 LogEvent = (
-  LogEntryAddedEvent
+  log.EntryAdded
 )
 </pre>
 
@@ -4923,47 +4952,47 @@ LogEvent = (
 [=Local end definition=]
 
 <pre class="cddl local-cddl">
-LogLevel = "debug" / "info" / "warn" / "error"
+log.Level = "debug" / "info" / "warn" / "error"
 
-LogEntry = (
-  GenericLogEntry //
-  ConsoleLogEntry //
-  JavascriptLogEntry
+log.Entry = (
+  log.GenericLogEntry //
+  log.ConsoleLogEntry //
+  log.JavascriptLogEntry
 )
 
-BaseLogEntry = {
-  level: LogLevel,
-  source: Source,
+log.BaseLogEntry = {
+  level: log.Level,
+  source: script.Source,
   text: text / null,
   timestamp: js-uint,
-  ?stackTrace: StackTrace,
+  ?stackTrace: script.StackTrace,
 }
 
-GenericLogEntry = {
-  BaseLogEntry,
+log.GenericLogEntry = {
+  log.BaseLogEntry,
   type: text,
 }
 
-ConsoleLogEntry = {
-  BaseLogEntry,
+log.ConsoleLogEntry = {
+  log.BaseLogEntry,
   type: "console",
   method: text,
   args: [*RemoteValue],
 }
 
-JavascriptLogEntry = {
-  BaseLogEntry,
+log.JavascriptLogEntry = {
+  log.BaseLogEntry,
   type: "javascript",
 }
 </pre>
 
-Each log event is represented by a <code>LogEntry</code> object. This has a
+Each log event is represented by a <code>log.Entry</code> object. This has a
 <code>type</code> property which represents the type of log entry added, a
 <code>level</code> property representing severity, a <code>source</code>
 property representing the origin of the log entry, a <code>text</code> property
 with the log message string itself, and a <code>timestamp</code> property
 corresponding to the time the log entry was generated. Specific variants of the
-<code>LogEntry</code> are used to represent logs from different sources, and
+<code>log.Entry</code> are used to represent logs from different sources, and
 provide additional fields specific to the entry type.
 
 ### Events ### {#module-log-events}
@@ -4974,9 +5003,9 @@ provide additional fields specific to the entry type.
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        LogEntryAddedEvent = {
+        log.EntryAdded = {
          method: "log.entryAdded",
-         params: LogEntry,
+         params: log.Entry,
        }
       </pre>
    </dd>
@@ -5030,7 +5059,7 @@ ignore>options</var>:
    "<code>trace</code>", or "<code>warn</code>", let |stack| be the [=current
    stack trace=]. Otherwise let |stack| be null.
 
-1. Let |entry| be a map matching the <code>ConsoleLogEntry</code> production,
+1. Let |entry| be a map matching the <code>log.ConsoleLogEntry</code> production,
    with the the <code>level</code> field set to |level|, the <code>text</code>
    field set to |text|, the <code>timestamp</code> field set to |timestamp|, the
    <code>stackTrace</code> field set to |stack| if |stack| is not null, or
@@ -5038,7 +5067,7 @@ ignore>options</var>:
    field set to |source| and the <code>args</code> field set to |serialized
    args|.
 
-1. Let |body| be a map matching the <code>LogEntryAddedEvent</code> production, with
+1. Let |body| be a map matching the <code>log.EntryAdded</code> production, with
    the <code>params</code> field set to |entry|.
 
 1. Let |settings| be the [=current settings object=]
@@ -5067,7 +5096,7 @@ ignore>line number</var>, <var ignore>column number</var>, |message| and
 
 1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
 
-1. Let |entry| be a map matching the <code>JavascriptLogEntry</code> production,
+1. Let |entry| be a map matching the <code>log.JavascriptLogEntry</code> production,
    with <code>level</code> set to "<code>error</code>", <code>text</code> set to
    |message|, <code>source</code> set to |source|, and the <code>timestamp</code>
    field set to |timestamp|.
