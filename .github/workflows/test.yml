@@ -7,22 +7,45 @@ on:
   pull_request:
 
 jobs:
+  build:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v3
+        with:
+          # Python 3.11 is broken: https://github.com/tabatkins/bikeshed/issues/2386
+          python-version: "3.10"
+      - name: Build spec without warnings
+        run: ./scripts/build.sh --install
   cddl:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v1
         with:
           node-version: 14.x
-      - name: Install Dependencies
-        run: npm install cddl parse5
-      - name: Extract CDDL content from spec into files
-        run: ./scripts/cddl/generate.js
-      - name: Print remote.cddl
-        run: cat remote.cddl
-      - name: Print local.cddl
-        run: cat local.cddl
+      - name: Get cddl version
+        run: curl -s https://crates.io/api/v1/crates/cddl | python3 -c "import sys, json; print(json.load(sys.stdin)['crate']['max_stable_version'])" | tee cddl.txt
+      - name: "Cache rust binaries"
+        uses: actions/cache@v3
+        id: cache-cddl
+        env:
+          cache-name: cache-cddl
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/git/db/
+            ~/.cargo/registry/cache/
+            ~/.cargo/registry/index/
+            ./target/
+          key: cddl-${{ hashFiles('cddl.txt') }}
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
       - name: Validate CDDL files
-        run: |
-          npx cddl validate local.cddl
-          npx cddl validate remote.cddl
+        run: ./scripts/test.sh
+      - name: Archive CDDL files
+        uses: actions/upload-artifact@v3
+        with:
+          name: cddl
+          path: "*.cddl"
