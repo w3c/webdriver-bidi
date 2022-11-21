@@ -9,4 +9,4 @@ if ! [ -x "$(command -v bikeshed)" ] || [ "$1" = "--upgrade" ]; then
     pip install bikeshed
 fi
 
-bikeshed --die-on=warning spec index.bs
+bikeshed --die-on=fatal spec index.bs
