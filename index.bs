@@ -761,43 +761,43 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 
    1. Let |method| be |matched|["<code>method</code>"]
 
-    1. Let |command| be the command with [=command name=] |method|.
+   1. Let |command| be the command with [=command name=] |method|.
 
-    1. If |session| is null and |command| is not a [=static command=], then
-       [=respond with an error=] given |connection|, |command id|, and [=invalid
-       session id=], and return.
+   1. If |session| is null and |command| is not a [=static command=], then
+      [=respond with an error=] given |connection|, |command id|, and [=invalid
+      session id=], and return.
 
-    1. Run the following steps in parallel:
+   1. Run the following steps in parallel:
 
-      1. Let |result| be the result of running the [=remote end steps=] for
-         |command| given |session| and [=command parameters=]
-         |matched|["<code>params</code>"]
+     1. Let |result| be the result of running the [=remote end steps=] for
+        |command| given |session| and [=command parameters=]
+        |matched|["<code>params</code>"]
 
-     1. If |result| is an [=error=], then [=respond with an error=] given
-        |connection|, |command id|, and |result|'s [=error code=], and finally
-        return.
+    1. If |result| is an [=error=], then [=respond with an error=] given
+       |connection|, |command id|, and |result|'s [=error code=], and finally
+       return.
 
-     1. Let |value| be |result|'s data.
+    1. Let |value| be |result|'s data.
 
-     1. Assert: |value| matches the definition for the [=result type=]
-        corresponding to the command with [=command name=] |method|.
+    1. Assert: |value| matches the definition for the [=result type=]
+       corresponding to the command with [=command name=] |method|.
 
-     1. If |method| is "<code>session.new</code>", let |session| be the entry in
-        the list of [=active sessions=] whose [=session ID=] is equal to the
-        "<code>sessionId</code>" property of |value|, let |session|'s
-        [=WebSocket connection=] be |connection|, and remove |connection| from
-        the set of [=WebSocket connections not associated with a session=].
+    1. If |method| is "<code>session.new</code>", let |session| be the entry in
+       the list of [=active sessions=] whose [=session ID=] is equal to the
+       "<code>sessionId</code>" property of |value|, let |session|'s
+       [=WebSocket connection=] be |connection|, and remove |connection| from
+       the set of [=WebSocket connections not associated with a session=].
 
-     1. Let |response| be a new map matching the <code>CommandResponse</code>
-        production in the [=local end definition=] with the <code>id</code>
-        field set to |command id| and the <code>value</code> field set to
-        |value|.
+    1. Let |response| be a new map matching the <code>CommandResponse</code>
+       production in the [=local end definition=] with the <code>id</code>
+       field set to |command id| and the <code>value</code> field set to
+       |value|.
 
-     1. Let |serialized| be the result of [=serialize an infra value to JSON
-        bytes=] given |response|.
+    1. Let |serialized| be the result of [=serialize an infra value to JSON
+       bytes=] given |response|.
 
-     1. [=Send a WebSocket message=] comprised of |serialized| over
-        |connection|.
+    1. [=Send a WebSocket message=] comprised of |serialized| over
+       |connection|.
 
 1. Otherwise:
 
