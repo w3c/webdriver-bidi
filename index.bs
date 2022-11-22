@@ -727,8 +727,8 @@ typically be "<code>localhost</code>".
 To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 |connection|, type |type| and data |data|:
 
-1. If |type| is not [=%x1 denotes a text frame|text=], [=respond with an
-   error=] given |connection|, null, and [=invalid argument=], and finally
+1. If |type| is not [=%x1 denotes a text frame|text=], [=send an error
+   response=] given |connection|, null, and [=invalid argument=], and finally
    return.
 
 1. [=Assert=]: |data| is a [=scalar value string=], because the
@@ -745,8 +745,8 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
    null. Otherwise, return.
 
 1. Let |parsed| be the result of [=parse JSON into Infra values|parsing JSON
-   into Infra values=] given |data|. If this throws an exception, then [=respond
-   with an error=] given |connection|, null, and [=invalid argument=], and
+   into Infra values=] given |data|. If this throws an exception, then [=send
+   an error response=] given |connection|, null, and [=invalid argument=], and
    finally return.
 
 1. Match |parsed| against the [=remote end definition=]. If this results in a
@@ -764,7 +764,7 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
     1. Let |command| be the command with [=command name=] |method|.
 
     1. If |session| is null and |command| is not a [=static command=], then
-       [=respond with an error=] given |connection|, |command id|, and [=invalid
+       [=send an error response=] given |connection|, |command id|, and [=invalid
        session id=], and return.
 
     1. Run the following steps in parallel:
@@ -773,7 +773,7 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
          |command| given |session| and [=command parameters=]
          |matched|["<code>params</code>"]
 
-     1. If |result| is an [=error=], then [=respond with an error=] given
+     1. If |result| is an [=error=], then [=send an error response=] given
         |connection|, |command id|, and |result|'s [=error code=], and finally
         return.
 
@@ -812,7 +812,7 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
       string, but |parsed|["<code>method</code>"] is not in the [=set of all
       command names=], set |error code| to [=unknown command=].
 
-   1. [=Respond with an error=] given |connection|, |command id|, and
+   1. [=Send an error response=] given |connection|, |command id|, and
       |error code|.
 
 </div>
@@ -854,7 +854,7 @@ To <dfn>get related browsing contexts</dfn> given an [=script/settings object=]
 </div>
 
 <div algorithm>
-To <dfn>respond with an error</dfn> given a [=WebSocket connection=]
+To <dfn>send an error response</dfn> given a [=WebSocket connection=]
 |connection|, |command id|, and |error code|:
 
 1. Let |error data| be a new map matching the <code>ErrorResponse</code>
