@@ -1570,7 +1570,7 @@ To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
 [=remote end definition=] and [=local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-RemoteValue = {
+RemoteValue = (
   PrimitiveProtocolValue //
   SymbolRemoteValue //
   ArrayRemoteValue //
@@ -1589,9 +1589,11 @@ RemoteValue = {
   PromiseRemoteValue //
   TypedArrayRemoteValue //
   ArrayBufferRemoteValue //
+  NodeListRemoteValue //
+  HTMLCollectionRemoteValue //
   NodeRemoteValue //
   WindowProxyRemoteValue //
-}
+)
 
 InternalId = js-uint;
 
@@ -1705,6 +1707,20 @@ ArrayBufferRemoteValue = {
   ?internalId: InternalId,
 }
 
+NodeListRemoteValue = {
+  type: "nodelist",
+  ?handle: Handle,
+  ?internalId: InternalId,
+  ?value: ListRemoteValue,
+}
+
+HTMLCollectionRemoteValue = {
+  type: "htmlcollection",
+  ?handle: Handle,
+  ?internalId: InternalId,
+  ?value: ListRemoteValue,
+}
+
 NodeRemoteValue = {
   type: "node",
   ?handle: Handle,
@@ -1772,26 +1788,9 @@ an |ownership type|, a |serialization internal map| and a |realm|:
         property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>[=IsArray=](|value|)
-    <dd>
-
-    1. Let |remote value| be a map matching the <code>ArrayRemoteValue</code>
-       production in the [=local end definition=], with the <code>handle</code>
-       property set to |handle id| if it's not null, or omitted otherwise.
-
-    1. [=Set internal ids if needed=] given |serialization internal map|,
-       |remote value| and |value|.
-
-    1. Let |serialized| be null.
-
-    1. If |known object| is <code>false</code>, and |max depth| is not 0, run
-       the following steps:
-
-           1. Let |serialized| be the result of [=serialize as a list=] given
-              [=CreateArrayIterator=](|value|, value), |max depth|, |child ownership|,
-              |serialization internal map| and |realm|.
-
-    1. If |serialized| is not null, set field <code>value</code> of |remote value| to
-       |serialized|.
+    <dd>Let |remote value| be [=serialize an Array-like=] with
+        <code>ArrayRemoteValue</code>, |handle id|, |value|, |max depth|,
+        |ownership type|, |known object|, |serialization internal map|, and |realm|.
 
     <dt>[=IsRegExp=](|value|)
     <dd>
@@ -1893,6 +1892,17 @@ an |ownership type|, a |serialization internal map| and a |realm|:
     <dd>Let |remote value| be a map matching the <code>ArrayBufferRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
+
+    <dt>|value| is a [=platform object=] that implements {{NodeList}}
+    <dd>Let |remote value| be [=serialize an Array-like=] with
+        <code>NodeListRemoteValue</code>,|handle id|, |value|, |max depth|,
+        |ownership type|, |known object|, |serialization internal map|, and |realm|.
+
+    <dt>|value| is a [=platform object=] that implements {{HTMLCollection}}
+    <dd>Let |remote value| be [=serialize an Array-like=] with
+        <code>HTMLCollectionRemoteValue</code>, |value|, |handle id|, |value|, |max
+        depth|, |ownership type|, |known object|, |serialization internal map|, and
+        |realm|.
 
     <dt>|value| is a [=platform object=] that implements [=Node=]
     <dd>
@@ -2029,6 +2039,30 @@ null value.
 
 Issue: <code>shadowRoot</code> field is optional. Omit it in case of |shadow root| is null, or
 remove optional flag from the field.
+
+</div>
+
+<div algorithm>
+To <dfn>serialize an Array-like</dfn> given |production|, |handle id|, |value|,
+|max depth|, |ownership type|, |known object|, |serialization internal map|, and |realm|:
+
+1. Let |remote value| be a map matching |production|, with the
+   <code>handle</code> property set to |handle id| if it's not null, or omitted
+   otherwise.
+
+1. [=Set internal ids if needed=] given |serialization internal map|,
+   |remote value| and |value|.
+
+1. If |known object| is <code>false</code>, and |max depth| is not 0:
+
+  1. Let |serialized| be the result of [=serialize as a list=] given
+     [=CreateArrayIterator=](|value|, value), |max depth|, |ownership type|,
+     |serialization internal map| and |realm|.
+
+  1. If |serialized| is not null, set field <code>value</code> of |remote value| to
+     |serialized|.
+
+1. Return |remote value|
 
 </div>
 
