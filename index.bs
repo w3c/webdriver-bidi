@@ -1082,6 +1082,16 @@ There is no {{SandboxProxy}} interface object.
 
 Issue: Define in detail how {{SandboxProxy}} works
 
+<div algorithm>
+To get <dfn>unwrapped</dfn> |object|, get the result of the following steps:
+
+1. While |object| is {{SandboxProxy}}, set |object| to it's wrapped object.
+
+1. Return |object|.
+
+</div>
+
+
 ## SandboxWindowProxy ## {#sandbox-sandboxwindowproxy}
 
 A <dfn interface>SandboxWindowProxy</dfn> is an exotic object that represents a
@@ -1097,37 +1107,107 @@ Issue: Define how this works.
 Each EMCAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
 strong map from handle ids to their corresponding objects.
 
+Each {{Window}} has a corresponding <dfn>platform objects map</dfn>. This is a strong
+map from shared ids to their corresponding [=platform object=].
+
 <pre class="cddl remote-cddl">
 OwnershipModel = "root" / "none";
 </pre>
 
-<dfn>RemoteReference</dfn> represents a remote reference to an existing ECMAScript
-object in [=handle object map=] in the given [=Realm=].
+<dfn>RemoteReference</dfn> is either a <code>RemoteObjectReference</code>
+representing a remote reference to an existing ECMAScript object in
+[=handle object map=] in the given [=Realm=], or is a <code>SharedReference</code>
+representing a reference to a [=platform object=] in [=platform objects map=] in the
+given {{Window}}.
+
+In [=BiDi session=]:
+ * Each realm has an <dfn>object id map</dfn>, a weak map from objects to their
+   corresponding id. The [=object id map=] is unique per realm.
+ * Each {{Window}} has a <dfn>shared id map</dfn>, a weak map from
+   [=platform object=] to their corresponding shared id. The [=shared id map=] is
+   shared among all of the realms of the {{Window}}.
 
 <pre class="cddl remote-cddl local-cddl">
+RemoteReference = {
+  RemoteObjectReference //
+  SharedReference
+}
+
 Handle = text;
 
-RemoteReference = {
+RemoteObjectReference = {
    handle: Handle,
    Extensible
+}
+
+SharedId = text;
+
+SharedReference = {
+   sharedId: SharedId,
+   *text => any,
 }
 </pre>
 
 Issue: handle "stale object reference" case.
 
+Note: if the provided reference has both <code>handle</code> and
+<code>sharedId</code>, the algorithm will first try to resolve <code>handle</code>,
+then <code>sharedId</code>, and if non of that succeeded, return a error.
+
 <div algorithm>
 To <dfn>deserialize remote reference</dfn> given |realm| and |remote reference|:
 
-1. Let |handle id| be the value of the <code>handle</code> field of |remote reference|.
+1. Let |remote value| be <code>null</code>.
+
+1. If |remote reference| matches the <code>RemoteObjectReference</code>
+   production, set |remote value| to the result of
+   [=deserialize remote object reference=] given |realm| and |remote reference|.
+
+1. If |remote value| is <code>null</code> and |remote reference| matches the
+  <code>SharedReference</code> production, set |remote value| to the result of
+  [=deserialize shared reference=] given |realm| and |remote reference|.
+
+1. If |remote value| is <code>null</code>, return [=error=] with [=error code=]
+   [=invalid argument=].
+
+1. Return [=success=] with data |remote value|.
+
+</div>
+
+<div algorithm>
+To <dfn>deserialize remote object reference</dfn> given |realm| and
+|remote object reference|:
+
+1. Let |handle id| be the value of the <code>handle</code> field of
+   |remote object reference|.
 
 1. Let |handle map| be |realm|'s [=handle object map=]
 
-1. If |handle map| does not contain |handle id|, then return [=error=] with
-   [=error code=] [=invalid argument=].
+1. If |handle map| does not contain |handle id|, then return <code>null</code>.
 
 1. Return |handle map|[|handle id|].
 
 </div>
+
+<div algorithm>
+To <dfn>deserialize shared reference</dfn> given |realm| and |shared reference|:
+
+1. Let |window| be the result of [=get the window=] of the |realm|.
+
+1. If |window| is <code>null</code>, return <code>null</code>.
+
+1. Let |shared id| be the value of the <code>sharedId</code> field of
+   |shared reference|.
+
+1. Let |platform objects map| be |window|'s [=platform objects map=].
+
+1. If |platform objects map| does not contain key |shared id|, then return
+   <code>null</code>.
+
+1. Return |platform objects map|[|shared id|].
+
+</div>
+
 
 ## Protocol Value ## {#data-types-protocolValue}
 
@@ -1543,6 +1623,32 @@ To get the <dfn>handle for an object</dfn> given |realm|, |ownership type| and
 </div>
 
 <div algorithm>
+To get the <dfn>shared id for an object</dfn> given a |realm|, |ownership type|  and
+|object|:
+
+1. If |ownership type| is equal "<code>none</code>", return <code>null</code>.
+
+1. If |object| is not a [=platform object=], return <code>null</code>.
+
+1. Let |window| be the result of [=get the window=] of the |realm|.
+
+1. If |window| is <code>null</code>, return <code>null</code>.
+
+1. Let |platform objects map| be |window|'s [=platform objects map=].
+
+1. If |platform objects map| contains value |object|, then return |object|'s key in
+   |platform objects map| as a result.
+
+1. Let |shared id| be a new, unique, string handle for |object|.
+
+1. Set |platform objects map|[|shared id|] to |object|.
+
+1. Return |shared id| as a result.
+
+</div>
+
+
+<div algorithm>
 To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
 |remote value| and |object|:
 
@@ -1905,11 +2011,16 @@ an |ownership type|, a |serialization internal map| and a |realm|:
         |max depth|, |ownership type|, |known object|, |serialization internal map|,
         and |realm|.
 
-    <dt>|value| is a [=platform object=] that implements [=Node=]
+    <dt>[=unwrapped=] |value| is a [=platform object=] that implements [=Node=]
     <dd>
+      1. Let |shared id| be the [=shared id for an object=] given |realm|,
+         |ownership type| and |value|.
+
       1. Let |remote value| be a map matching the <code>NodeRemoteValue</code>
          production in the [=local end definition=], with the <code>handle</code>
-         property set to |handle id| if it's not null, or omitted otherwise.
+         property set to |handle id| if it's not null, or omitted otherwise, and with
+         the <code>sharedId</code> property set to |shared id| if it's not null, or
+         omitted otherwise.
 
       1. [=Set internal ids if needed=] given |serialization internal map|,
          |remote value| and |value|.
@@ -4083,6 +4194,19 @@ Note: there's a 1:1 relationship between the <code>script.RealmInfo</code>
       <a href="#type-script-RealmType"><code>script.RealmType</code></a>.
 
 The <code>script.RealmInfo</code> type represents the properties of a realm.
+
+<div algorithm>
+To <dfn>get the window</dfn> of the given |realm|:
+
+1. Let |global object| be the [=realm/global object=] of the |realm|.
+
+1. Let |global object| be [=unwrapped=] |global object|.
+
+1. If |global object| is a {{Window}} object, return |global object|.
+
+1. Return <code>null</code>.
+
+</div
 
 <div algorithm>
 To <dfn>get the realm info</dfn> given |environment settings|:
