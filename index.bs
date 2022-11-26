@@ -1700,12 +1700,12 @@ NodeRemoteValue = {
 
 NodeProperties = {
   nodeType: js-uint,
-  nodeValue: text,
   childNodeCount: js-uint,
+  ?attributes: {*text => text},
+  ?children: [*NodeRemoteValue],
   ?localName: text,
   ?namespaceURI: text,
-  ?children: [*NodeRemoteValue],
-  ?attributes: {*text => text},
+  ?nodeValue: text,
   ?shadowRoot: NodeRemoteValue / null,
 }
 
@@ -1897,7 +1897,10 @@ an |ownership type|, a |serialization internal map| and a |realm|:
 
           1. Set |serialized|["<code>nodeType</code>"] to [=Get=](|value|, "nodeType").
 
-          1. Set |serialized|["<code>nodeValue</code>"] to [=Get=](|value|, "nodeValue")
+          1. Set |node value| to [=Get=](|value|, "nodeValue").
+
+          1. If |node value| is not null set
+             |serialized|["<code>nodeValue</code>"] to |node value|.
 
           1. If |value| is an [=/Element=] or an <a spec=dom>Attribute</a>:
 
@@ -1905,7 +1908,7 @@ an |ownership type|, a |serialization internal map| and a |realm|:
 
             1. Set |serialized|["<code>namespaceURI</code>"] to [=Get=](|value|, "namespaceURI")
 
-          1. Let |child node count| be the [=list/size=] of |serialized|'s [=children=].
+          1. Let |child node count| be the [=list/size=] of |value|'s [=children=].
 
           1. Set |serialized|["<code>childNodeCount</code>"] to |child node count|.
 
