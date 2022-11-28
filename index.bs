@@ -1085,7 +1085,8 @@ Issue: Define in detail how {{SandboxProxy}} works
 <div algorithm>
 To get <dfn>unwrapped</dfn> |object|, get the result of the following steps:
 
-1. While |object| is {{SandboxProxy}}, set |object| to it's wrapped object.
+1. While |object| is {{SandboxProxy}} or {{SandboxWindowProxy}}, set |object| to it's
+   wrapped object.
 
 1. Return |object|.
 
@@ -1204,9 +1205,21 @@ To <dfn>deserialize shared reference</dfn> given |realm| and |shared reference|:
 1. If |platform objects map| does not contain key |shared id|, then return
    <code>null</code>.
 
-1. Return |platform objects map|[|shared id|].
+1. Let |platform object| be the |platform objects map|[|shared id|].
+
+1. Assert |platform object| is a [=platform object=].
+
+1. Let |realm global object| be the [=realm/global object=] of the |realm|.
+
+1. If the |realm global object| is {{SandboxWindowProxy}} object, set
+   |platform object| to the {{SandboxProxy}} wrapping |platform object| in the
+   |realm|.
+
+1. Return |platform object|.
 
 </div>
+
+Issue: return existing {{SandboxProxy}} if exists.
 
 
 ## Protocol Value ## {#data-types-protocolValue}
