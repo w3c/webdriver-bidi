@@ -15,7 +15,14 @@ This scenario loads a web page and uses script evaluation to extract content on 
 - [x] [serialization/deserialization of JavaScript values](https://w3c.github.io/webdriver-bidi/#data-types-protocolValue)
 - [ ] [sandboxed script execution](https://github.com/w3c/webdriver-bidi/issues/144)
 
-### B. Submitting forms
+### B. Logging
+
+This scenario loads a web page and uses BiDi event subscription to efficiently get notified about each `console.log` entry. **This is not possible with classic WebDriver.** In spec terms, this involves:
+
+- [x] (some items from the previous milestone)
+- [x] [the `log` module](https://w3c.github.io/webdriver-bidi/#module-log)
+
+### C. Submitting forms
 
 This scenario loads a web page, enter text into a form field via the keyboard, and submits the form via a mouse click before extracting the results from the page. In spec terms, this involves:
 
@@ -23,28 +30,14 @@ This scenario loads a web page, enter text into a form field via the keyboard, a
 - [ ] [emulating keyboard input](https://github.com/w3c/webdriver-bidi/pull/175)
 - [ ] [emulating mouse input](https://github.com/w3c/webdriver-bidi/pull/175)
 
-### C. Capturing screenshots
-
-This scenario loads a web page and captures a screenshot. In spec terms, this involves:
-
-- [x] (some items from the previous milestones)
-- [ ] [capturing a screenshot via a command](https://w3c.github.io/webdriver-bidi/#command-browsingContext-captureScreenshot)
-
-### D. Printing to PDF
-
-This scenario loads a web page and prints it as a PDF. In spec terms, this involves:
-
-- [x] (some items from the previous milestones)
-- [ ] [printing to PDF via a command](https://github.com/w3c/webdriver-bidi/issues/210)
-
-### E. Blocking images
+### D. Blocking images
 
 This scenario loads a web page and uses request interception to block any images from loading. In spec terms, this involves:
 
 - [x] (some items from the previous milestones)
 - [ ] [intercepting requests](https://github.com/w3c/webdriver-bidi/issues/66)
 
-### F. Measuring performance
+### E. Measuring performance
 
 This scenario measures the performance of a cold load of a web page (without any cookies, storage, or anything in the cache).
 
@@ -52,3 +45,17 @@ This scenario measures the performance of a cold load of a web page (without any
 - [ ] manipulating cookies
 - [ ] managing the browser cache
 - [ ] [installing bootstrap scripts](https://github.com/w3c/webdriver-bidi/blob/master/proposals/bootstrap-scripts.md#record-navigation-performance)
+
+### F. Capturing screenshots
+
+This scenario loads a web page and captures a screenshot. In spec terms, this involves:
+
+- [x] (some items from the previous milestones)
+- [ ] [capturing a screenshot via a command](https://w3c.github.io/webdriver-bidi/#command-browsingContext-captureScreenshot)
+
+### G. Printing to PDF
+
+This scenario loads a web page and prints it as a PDF. In spec terms, this involves:
+
+- [x] (some items from the previous milestones)
+- [ ] [printing to PDF via a command](https://github.com/w3c/webdriver-bidi/issues/210)
