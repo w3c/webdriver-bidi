@@ -8,7 +8,8 @@ const specLines = fs.readFileSync(specPath, 'utf-8')
     .split('\n');
 
 let failed = [];
-const openClosePairs = [["[=", "=]"], ["<dfn", "</dfn"], ["<var", "</var"], ["[", "]"], ["<code", "</code"]];
+const openClosePairs = [["[=", "=]"], ["<dfn", "</dfn"], ["<var", "</var"],
+  ["[", "]"], ["<code", "</code"]];
 
 for (let i = 0; i < specLines.length; i++) {
   const line = specLines[i];
