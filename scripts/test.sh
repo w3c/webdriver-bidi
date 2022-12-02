@@ -19,3 +19,6 @@ $ROOT/scripts/cddl/generate.js
 
 cddl compile-cddl --cddl local.cddl
 cddl compile-cddl --cddl remote.cddl
+
+# Check break lines inside blocks.
+$ROOT/scripts/formatter/no_split_var.js
