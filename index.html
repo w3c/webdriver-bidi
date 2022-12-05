@@ -8,7 +8,7 @@
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
   <meta content="Bikeshed version 63e66730b, updated Tue Oct 25 12:35:05 2022 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="7dd07b6e06adc3a1850d0c693e8c37cde8364e95" name="document-revision">
+  <meta content="14731dbc335634088194fbaa0755b45a505df85e" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -576,7 +576,9 @@ dfn > a.self-link::before      { content: "#"; }
         <li>
          <a href="#module-session-types"><span class="secno">7.1.2</span> <span class="content">Types</span></a>
          <ol class="toc">
-          <li><a href="#type-session-capabilitiesRequest"><span class="secno">7.1.2.1</span> <span class="content">The session.CapabilitiesRequest Type</span></a>
+          <li><a href="#type-session-CapabilitiesRequest"><span class="secno">7.1.2.1</span> <span class="content">The session.CapabilitiesRequest Type</span></a>
+          <li><a href="#type-session-CapabilityRequest"><span class="secno">7.1.2.2</span> <span class="content">The session.CapabilityRequest Type</span></a>
+          <li><a href="#type-session-SubscriptionRequest"><span class="secno">7.1.2.3</span> <span class="content">The session.SubscriptionRequest type</span></a>
          </ol>
         <li>
          <a href="#module-session-commands"><span class="secno">7.1.3</span> <span class="content">Commands</span></a>
@@ -595,9 +597,10 @@ dfn > a.self-link::before      { content: "#"; }
          <a href="#module-browsingcontext-types"><span class="secno">7.2.2</span> <span class="content">Types</span></a>
          <ol class="toc">
           <li><a href="#type-browsingContext-Browsingcontext"><span class="secno">7.2.2.1</span> <span class="content">The browsingContext.BrowsingContext Type</span></a>
-          <li><a href="#type-browsingContext-BrowsingContextInfo"><span class="secno">7.2.2.2</span> <span class="content">The browsingContext.BrowsingContextInfo Type</span></a>
+          <li><a href="#type-browsingContext-Info"><span class="secno">7.2.2.2</span> <span class="content">The browsingContext.Info Type</span></a>
           <li><a href="#type-browsingContext-Navigation"><span class="secno">7.2.2.3</span> <span class="content">The browsingContext.Navigation Type</span></a>
           <li><a href="#type-browsingContext-NavigationInfo"><span class="secno">7.2.2.4</span> <span class="content">The browsingContext.NavigationInfo Type</span></a>
+          <li><a href="#type-browsingContext-ReadinessState"><span class="secno">7.2.2.5</span> <span class="content">The browsingContext.ReadinessState Type</span></a>
          </ol>
         <li>
          <a href="#module-browsingContext-commands"><span class="secno">7.2.3</span> <span class="content">Commands</span></a>
@@ -639,10 +642,10 @@ dfn > a.self-link::before      { content: "#"; }
           <li><a href="#type-script-RealmType"><span class="secno">7.3.2.4</span> <span class="content">The script.RealmType type</span></a>
           <li><a href="#types-script-StackFrame"><span class="secno">7.3.2.5</span> <span class="content">The script.StackFrame type</span></a>
           <li><a href="#types-script-StackTrace"><span class="secno">7.3.2.6</span> <span class="content">The script.StackTrace type</span></a>
-          <li><a href="#type-script-ScriptEvaluateResult"><span class="secno">7.3.2.7</span> <span class="content">The script.ScriptEvaluateResult type</span></a>
-          <li><a href="#type-script-Source"><span class="secno">7.3.2.8</span> <span class="content">The script.Source type</span></a>
-          <li><a href="#type-script-Target"><span class="secno">7.3.2.9</span> <span class="content">The script.Target type</span></a>
-          <li><a href="#type-script-Ownership"><span class="secno">7.3.2.10</span> <span class="content">The script.Ownership type</span></a>
+          <li><a href="#type-script-EvaluateResult"><span class="secno">7.3.2.7</span> <span class="content">The script.EvaluateResult type</span></a>
+          <li><a href="#type-script-ResultOwnership"><span class="secno">7.3.2.8</span> <span class="content">The script.ResultOwnership type</span></a>
+          <li><a href="#type-script-Source"><span class="secno">7.3.2.9</span> <span class="content">The script.Source type</span></a>
+          <li><a href="#type-script-Target"><span class="secno">7.3.2.10</span> <span class="content">The script.Target type</span></a>
          </ol>
         <li>
          <a href="#module-script-commands"><span class="secno">7.3.3</span> <span class="content">Commands</span></a>
@@ -798,12 +801,12 @@ ErrorResponse = {
 }
 
 ErrorCode = {
-   "invalid argument" //
-   "no such alert" //
-   "no such frame" //
-   "session not created" //
-   "unknown command" //
-   "unknown error" //
+   "invalid argument" /
+   "no such alert" /
+   "no such frame" /
+   "session not created" /
+   "unknown command" /
+   "unknown error" /
    "unsupported operation"
 }
 
@@ -814,7 +817,9 @@ ResultData = (
   ScriptResult
 )
 
-EmptyResult = {}
+EmptyResult = {
+  Extensible
+}
 
 Event = {
   EventData,
@@ -2366,14 +2371,14 @@ events for monitoring the status of the remote end.</p>
    <h4 class="heading settled" data-level="7.1.1" id="module-session-definition"><span class="secno">7.1.1. </span><span class="content">Definition</span><a class="self-link" href="#module-session-definition"></a></h4>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑧">remote end definition</a></p>
 <pre class="cddl remote-cddl">SessionCommand = (
-  SessionNewCommand //
-  SessionStatusCommand //
-  SessionSubscribeCommand //
-  SessionUnsubscribeCommand
+  session.New //
+  session.Status //
+  session.Subscribe //
+  session.Unsubscribe
 )
 </pre>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑤">local end definition</a></p>
-<pre class="cddl local-cddl">SessionResult = (SessionStatusResult)
+<pre class="cddl local-cddl">SessionResult = (session.StatusResult)
 </pre>
    <div class="algorithm" data-algorithm="update the event map">
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="update-the-event-map">update the event map</dfn>, given <var>session</var>, <var>requested event names</var>, <var>browsing contexts</var>, and <var>enabled</var>:</p>
@@ -2500,9 +2505,17 @@ a model where hooks are always called and then the event map is used to
 filter only those that ought to be returned to the local end.</p>
    </div>
    <h4 class="heading settled" data-level="7.1.2" id="module-session-types"><span class="secno">7.1.2. </span><span class="content">Types</span><a class="self-link" href="#module-session-types"></a></h4>
-   <h5 class="heading settled" data-level="7.1.2.1" id="type-session-capabilitiesRequest"><span class="secno">7.1.2.1. </span><span class="content">The session.CapabilitiesRequest Type</span><a class="self-link" href="#type-session-capabilitiesRequest"></a></h5>
+   <h5 class="heading settled" data-level="7.1.2.1" id="type-session-CapabilitiesRequest"><span class="secno">7.1.2.1. </span><span class="content">The session.CapabilitiesRequest Type</span><a class="self-link" href="#type-session-CapabilitiesRequest"></a></h5>
+<pre class="cddl remote-cddl local-cddl">session.CapabilitiesRequest = {
+  ?alwaysMatch: session.CapabilityRequest,
+  ?firstMatch: [*session.CapabilityRequest]
+}
+</pre>
+   <p>The <code>session.CapabilitiesRequest</code> type represents the capabilities requested
+for a session.</p>
+   <h5 class="heading settled" data-level="7.1.2.2" id="type-session-CapabilityRequest"><span class="secno">7.1.2.2. </span><span class="content">The session.CapabilityRequest Type</span><a class="self-link" href="#type-session-CapabilityRequest"></a></h5>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑨">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑥">local end definition</a></p>
-<pre class="cddl remote-cddl local-cddl">CapabilitiesRequest = {
+<pre class="cddl remote-cddl local-cddl">session.CapabilityRequest = {
   ?acceptInsecureCerts: bool,
   ?browserName: text,
   ?browserVersion: text,
@@ -2520,8 +2533,16 @@ filter only those that ought to be returned to the local end.</p>
   Extensible
 };
 </pre>
-   <p>The <code>CapabilitiesRequest</code> type represents the capabilities requested
-for a session.</p>
+   <p>The <code>session.CapabilityRequest</code> type represents a sepecific set of
+requested capabilities.</p>
+   <h5 class="heading settled" data-level="7.1.2.3" id="type-session-SubscriptionRequest"><span class="secno">7.1.2.3. </span><span class="content">The session.SubscriptionRequest type</span><a class="self-link" href="#type-session-SubscriptionRequest"></a></h5>
+<pre class="cddl remote-cddl">session.SubscriptionRequest = {
+  events: [*text],
+  ?contexts: [*browsingContext.BrowsingContext],
+}
+</pre>
+   <p>The <code>session.SubscriptionRequest</code> type represents a request to
+subscribe to or unsubscribe from a specific set of events.</p>
    <h4 class="heading settled" data-level="7.1.3" id="module-session-commands"><span class="secno">7.1.3. </span><span class="content">Commands</span><a class="self-link" href="#module-session-commands"></a></h4>
    <h5 class="heading settled" data-level="7.1.3.1" id="command-session-status"><span class="secno">7.1.3.1. </span><span class="content">The session.status Command</span><a class="self-link" href="#command-session-status"></a></h5>
    <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-sessionstatus">session.status<a class="self-link" href="#commands-sessionstatus"></a></dfn> command returns information about
@@ -2532,14 +2553,14 @@ to the implementation.</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">SessionStatusCommand = {
+<pre class="cddl remote-cddl">session.Status = {
   method: "session.status",
   params: EmptyParams,
 }
 </pre>
     <dt>Result Type
     <dd>
-<pre class="cddl local-cddl">SessionStatusResult = {
+<pre class="cddl local-cddl">session.StatusResult = {
   ready: bool,
   message: text,
 }
@@ -2567,19 +2588,18 @@ to the implementation.</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">SessionNewCommand = {
+<pre class="cddl remote-cddl">session.New = {
   method: "session.new",
-  params: {capabilities: CapabilitiesRequestParameters},
+  params: session.NewParameters
 }
 
-CapabilitiesRequestParameters = {
-  ?alwaysMatch: CapabilitiesRequest,
-  ?firstMatch: [*CapabilitiesRequest]
+session.NewParameters = {
+  capabilities: session.CapabilitiesRequest
 }
 </pre>
     <dt>Result Type
     <dd>
-<pre class="cddl local-cddl">SessionNewResult = {
+<pre class="cddl local-cddl">session.NewResult = {
   sessionId: text,
   capabilities: {
     acceptInsecureCerts: bool,
@@ -2621,7 +2641,7 @@ CapabilitiesRequestParameters = {
       <p class="note" role="note"><span>Note:</span> the connection for this session will be set to the current connection
  by the caller.</p>
      <li data-md>
-      <p>Let <var>body</var> be a new map matching the <code>SessionNewResult</code> production,
+      <p>Let <var>body</var> be a new map matching the <code>session.NewResult</code> production,
  with the <code>sessionId</code> field set to <var>session</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-session-id" id="ref-for-dfn-session-id③">session ID</a>, and
  the <code>capabilities</code> field set to <var>capabilities</var>.</p>
      <li data-md>
@@ -2635,14 +2655,9 @@ either globally or for a set of browsing contexts</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">SessionSubscribeCommand = {
+<pre class="cddl remote-cddl">session.Subscribe = {
   method: "session.subscribe",
-  params: SessionSubscribeParameters
-}
-
-SessionSubscribeParameters = {
-  events: [*text],
-  ?contexts: [*BrowsingContext],
+  params: session.SubscriptionRequest
 }
 </pre>
     <dt>Result Type
@@ -2701,9 +2716,9 @@ either globally or for a set of browsing contexts</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">SessionUnsubscribeCommand = {
+<pre class="cddl remote-cddl">session.Unsubscribe = {
   method: "session.unsubscribe",
-  params: SessionSubscribeParameters
+  params: session.SubscriptionRequest
 }
 </pre>
     <dt>Result Type
@@ -2744,41 +2759,41 @@ navigation status<a class="self-link" href="#webdriver-navigation-status"></a></
    <h4 class="heading settled" data-level="7.2.1" id="module-browsingContext-definition"><span class="secno">7.2.1. </span><span class="content">Definition</span><a class="self-link" href="#module-browsingContext-definition"></a></h4>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⓪">remote end definition</a></p>
 <pre class="cddl remote-cddl">BrowsingContextCommand = (
-  BrowsingContextCaptureScreenshotCommand //
-  BrowsingContextCloseCommand //
-  BrowsingContextCreateCommand //
-  BrowsingContextGetTreeCommand //
-  BrowsingContextHandleUserPromptCommand //
-  BrowsingContextNavigateCommand //
-  BrowsingContextReloadCommand
+  browsingContext.CaptureScreenshot //
+  browsingContext.Close //
+  browsingContext.Create //
+  browsingContext.GetTree //
+  browsingContext.HandleUserPrompt //
+  browsingContext.Navigate //
+  browsingContext.Reload
 )
 </pre>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑦">local end definition</a></p>
 <pre class="cddl local-cddl">BrowsingContextResult = (
-  BrowsingContextCaptureScreenshotResult //
-  BrowsingContextCreateResult //
-  BrowsingContextGetTreeResult //
-  BrowsingContextNavigateResult
+  browsingContext.CaptureScreenshotResult //
+  browsingContext.CreateResult //
+  browsingContext.GetTreeResult //
+  browsingContext.NavigateResult
 )
 
 BrowsingContextEvent = (
-  BrowsingContextCreatedEvent //
-  BrowsingContextDestroyedEvent //
-  BrowsingContextNavigationStartedEvent //
-  BrowsingContextFragmentNavigatedEvent //
-  BrowsingContextDomContentLoadedEvent //
-  BrowsingContextLoadEvent //
-  BrowsingContextDownloadWillBeginEvent //
-  BrowsingContextNavigationAbortedEvent //
-  BrowsingContextNavigationFailedEvent //
-  BrowsingContextUserPromptClosedEvent //
-  BrowsingContextUserPromptOpenedEvent
+  browsingContext.ContextCreated //
+  browsingContext.ContextDestroyed //
+  browsingContext.NavigationStarted //
+  browsingContext.FragmentNavigated //
+  browsingContext.DomContentLoaded //
+  browsingContext.Load //
+  browsingContext.DownloadWillBegin //
+  browsingContext.NavigationAborted //
+  browsingContext.NavigationFailed //
+  browsingContext.UserPromptClosed //
+  browsingContext.UserPromptOpened
 )
 </pre>
    <h4 class="heading settled" data-level="7.2.2" id="module-browsingcontext-types"><span class="secno">7.2.2. </span><span class="content">Types</span><a class="self-link" href="#module-browsingcontext-types"></a></h4>
    <h5 class="heading settled" data-level="7.2.2.1" id="type-browsingContext-Browsingcontext"><span class="secno">7.2.2.1. </span><span class="content">The browsingContext.BrowsingContext Type</span><a class="self-link" href="#type-browsingContext-Browsingcontext"></a></h5>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①①">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑧">local end definition</a></p>
-<pre class="cddl remote-cddl local-cddl">BrowsingContext = text;
+<pre class="cddl remote-cddl local-cddl">browsingContext.BrowsingContext = text;
 </pre>
    <p>Each <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#browsing-context" id="ref-for-browsing-context">browsing context</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="browsing context id" id="browsing-context-id">browsing context
 id</dfn>, which is a string uniquely identifying that browsing context. This is
@@ -2798,18 +2813,18 @@ same as the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-w
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑧">success</a> with data <var>context</var></p>
     </ol>
    </div>
-   <h5 class="heading settled" data-level="7.2.2.2" id="type-browsingContext-BrowsingContextInfo"><span class="secno">7.2.2.2. </span><span class="content">The browsingContext.BrowsingContextInfo Type</span><a class="self-link" href="#type-browsingContext-BrowsingContextInfo"></a></h5>
+   <h5 class="heading settled" data-level="7.2.2.2" id="type-browsingContext-Info"><span class="secno">7.2.2.2. </span><span class="content">The browsingContext.Info Type</span><a class="self-link" href="#type-browsingContext-Info"></a></h5>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑨">local end definition</a></p>
-<pre class="cddl local-cddl">BrowsingContextInfoList = [* BrowsingContextInfo]
+<pre class="cddl local-cddl">browsingContext.InfoList = [*browsingContext.Info]
 
-BrowsingContextInfo = {
-  context: BrowsingContext,
+browsingContext.Info = {
+  context: browsingContext.BrowsingContext,
   url: text,
-  children: BrowsingContextInfoList / null
-  ?parent: BrowsingContext / null,
+  children: browsingContext.InfoList / null
+  ?parent: browsingContext.BrowsingContext / null,
 }
 </pre>
-   <p>The <code>BrowsingContextInfo</code> type represents the properties of a
+   <p>The <code>browsingContext.Info</code> type represents the properties of a
 browsing context.</p>
    <div class="algorithm" data-algorithm="get the parent browsing context">
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-the-parent-browsing-context">get the parent browsing context</dfn> given <var>browsing context</var>: 
@@ -2884,7 +2899,7 @@ browsing context.</p>
         </ol>
       </ol>
      <li data-md>
-      <p>Let <var>context info</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②">map</a> matching the <code>BrowsingContextInfo</code> production with the <code>context</code> field set to <var>context id</var>, the <code>parent</code> field set to <var>parent id</var> if <var>is root</var> is <code>true</code>, or unset otherwise, the <code>url</code> field set to <var>url</var>, and the <code>children</code> field set to <var>child infos</var>.</p>
+      <p>Let <var>context info</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②">map</a> matching the <code>browsingContext.Info</code> production with the <code>context</code> field set to <var>context id</var>, the <code>parent</code> field set to <var>parent id</var> if <var>is root</var> is <code>true</code>, or unset otherwise, the <code>url</code> field set to <var>url</var>, and the <code>children</code> field set to <var>child infos</var>.</p>
      <li data-md>
       <p>Return <var>context info</var>.</p>
     </ol>
@@ -2916,7 +2931,7 @@ browsing context.</p>
       <p>If <var>navigate status</var>’s status is "<code>complete</code>":</p>
       <ol>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects③">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer①">URL serializer</a> given <var>navigate status</var>’s url.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects③">map</a> matching the <code>browsingContext.NavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer①">URL serializer</a> given <var>navigate status</var>’s url.</p>
        <li data-md>
         <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑨">success</a> with data <var>body</var>.</p>
       </ol>
@@ -2931,7 +2946,7 @@ browsing context.</p>
       <p>If <var>wait condition</var> is "<code>none</code>":</p>
       <ol>
        <li data-md>
-        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects④">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer②">URL serializer</a> given <var>navigate status</var>’s url.</p>
+        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects④">map</a> matching the <code>browsingContext.NavigateResult</code> production, with the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer②">URL serializer</a> given <var>navigate status</var>’s url.</p>
        <li data-md>
         <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⓪">success</a> with data <var>body</var>.</p>
       </ol>
@@ -2951,27 +2966,27 @@ browsing context.</p>
  where local ends parse the implementation-defined strings to figure out
  what actually went wrong?</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑤">map</a> matching the <code>BrowsingContextNavigateResult</code> production, with the <code>navigation</code> field set to <var>status</var>’s id, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer③">URL serializer</a> given <var>status</var>’s url.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑤">map</a> matching the <code>browsingContext.NavigateResult</code> production, with the <code>navigation</code> field set to <var>status</var>’s id, and the <code>url</code> field set to the result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer③">URL serializer</a> given <var>status</var>’s url.</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③①">success</a> with data <var>body</var>.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.2.2.3" id="type-browsingContext-Navigation"><span class="secno">7.2.2.3. </span><span class="content">The browsingContext.Navigation Type</span><a class="self-link" href="#type-browsingContext-Navigation"></a></h5>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①②">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⓪">local end definition</a></p>
-<pre class="cddl remote-cddl local-cddl">Navigation = text;
+<pre class="cddl remote-cddl local-cddl">browsingContext.Navigation = text;
 </pre>
-   <p>The <code>Navigation</code> type is a unique string identifying an ongoing
+   <p>The <code>browsingContext.Navigation</code> type is a unique string identifying an ongoing
 navigation.</p>
    <p>TODO: Link to the definition in the HTML spec.</p>
    <h5 class="heading settled" data-level="7.2.2.4" id="type-browsingContext-NavigationInfo"><span class="secno">7.2.2.4. </span><span class="content">The browsingContext.NavigationInfo Type</span><a class="self-link" href="#type-browsingContext-NavigationInfo"></a></h5>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④①">local end definition</a>:</p>
-<pre class="cddl local-cddl">NavigationInfo = {
-  context: BrowsingContext,
-  navigation: Navigation / null,
+<pre class="cddl local-cddl">browsingContext.NavigationInfo = {
+  context: browsingContext.BrowsingContext,
+  navigation: browsingContext.Navigation / null,
   url: text,
 }
 </pre>
-   <p>The <code>NavigationInfo</code> type provides details of an ongoing navigation.</p>
+   <p>The <code>browsingContext.NavigationInfo</code> type provides details of an ongoing navigation.</p>
    <div class="algorithm" data-algorithm="get the navigation info">
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-the-navigation-info">get the navigation info</dfn>, given <var>context</var> and <var>navigation status</var>: 
     <ol>
@@ -2982,10 +2997,15 @@ navigation.</p>
      <li data-md>
       <p>Let <var>url</var> be <var>navigation status</var>’s url.</p>
      <li data-md>
-      <p>Return a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑥">map</a> matching the <code>NavigationInfo</code> production, with the <code>context</code> field set to <var>context id</var>, the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the
+      <p>Return a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑥">map</a> matching the <code>browsingContext.NavigationInfo</code> production, with the <code>context</code> field set to <var>context id</var>, the <code>navigation</code> field set to <var>navigation id</var>, and the <code>url</code> field set to the
  result of the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer④">URL serializer</a> given <var>url</var>.</p>
     </ol>
    </div>
+   <h5 class="heading settled" data-level="7.2.2.5" id="type-browsingContext-ReadinessState"><span class="secno">7.2.2.5. </span><span class="content">The browsingContext.ReadinessState Type</span><a class="self-link" href="#type-browsingContext-ReadinessState"></a></h5>
+<pre class="cddl remote-cddl">browsingContext.ReadinessState = "none" / "interactive" / "complete"
+</pre>
+   <p>The <code>browsingContext.ReadinessState</code> type represents the stage of
+document loading at which a navigation command will return.</p>
    <h4 class="heading settled" data-level="7.2.3" id="module-browsingContext-commands"><span class="secno">7.2.3. </span><span class="content">Commands</span><a class="self-link" href="#module-browsingContext-commands"></a></h4>
    <h5 class="heading settled" data-level="7.2.3.1" id="command-browsingContext-captureScreenshot"><span class="secno">7.2.3.1. </span><span class="content">The browsingContext.captureScreenshot Command</span><a class="self-link" href="#command-browsingContext-captureScreenshot"></a></h5>
    <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextcapturescreenshot">browsingContext.captureScreenshot<a class="self-link" href="#commands-browsingcontextcapturescreenshot"></a></dfn> command
@@ -2994,18 +3014,18 @@ Base64-encoded string.</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">BrowsingContextCaptureScreenshotCommand = {
+<pre class="cddl remote-cddl">browsingContext.CaptureScreenshot = {
   method: "browsingContext.captureScreenshot",
-  params: BrowsingContextCaptureScreenshotParameters
+  params: browsingContext.CaptureScreenshotParameters
 }
 
-BrowsingContextCaptureScreenshotParameters = {
-  context: BrowsingContext
+browsingContext.CaptureScreenshotParameters = {
+  context: browsingContext.BrowsingContext
 }
 </pre>
     <dt>Result Type
     <dd>
-<pre class="cddl local-cddl">BrowsingContextCaptureScreenshotResult = {
+<pre class="cddl local-cddl">browsingContext.CaptureScreenshotResult = {
   data: text
 }
 </pre>
@@ -3036,7 +3056,7 @@ BrowsingContextCaptureScreenshotParameters = {
      <p>Let <var>encoding result</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑤">trying</a> to <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-encoding-a-canvas-as-base64" id="ref-for-dfn-encoding-a-canvas-as-base64">encode a canvas as
   Base64</a> with <var>canvas</var>.</p>
     <li data-md>
-     <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑦">map</a> matching the <code>BrowsingContextCaptureScreenshotResult</code> production, with the <code>data</code> field set to <var>encoding result</var>.</p>
+     <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑦">map</a> matching the <code>browsingContext.CaptureScreenshotResult</code> production, with the <code>data</code> field set to <var>encoding result</var>.</p>
     <li data-md>
      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③②">success</a> with data <var>body</var>.</p>
    </ol>
@@ -3045,13 +3065,13 @@ BrowsingContextCaptureScreenshotParameters = {
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">BrowsingContextCloseCommand = {
+<pre class="cddl remote-cddl">browsingContext.Close = {
   method: "browsingContext.close",
-  params: BrowsingContextCloseParameters
+  params: browsingContext.CloseParameters
 }
 
-BrowsingContextCloseParameters = {
-  context: BrowsingContext
+browsingContext.CloseParameters = {
+  context: browsingContext.BrowsingContext
 }
 </pre>
     <dt>Result Type
@@ -3082,22 +3102,22 @@ the browser, close the session or leave this up to the implementation. <a href="
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">BrowsingContextCreateCommand = {
+<pre class="cddl remote-cddl">browsingContext.Create = {
   method: "browsingContext.create",
-  params: BrowsingContextCreateParameters
+  params: browsingContext.CreateParameters
 }
 
-BrowsingContextCreateType = "tab" / "window"
+browsingContext.CreateType = "tab" / "window"
 
-BrowsingContextCreateParameters = {
-  type: BrowsingContextCreateType,
-  ?referenceContext: BrowsingContext
+browsingContext.CreateParameters = {
+  type: browsingContext.CreateType,
+  ?referenceContext: browsingContext.BrowsingContext
 }
 </pre>
     <dt>Result Type
     <dd>
-<pre class="cddl local-cddl">BrowsingContextCreateResult = {
-  context: BrowsingContext
+<pre class="cddl local-cddl">browsingContext.CreateResult = {
+  context: browsingContext.BrowsingContext
 }
 </pre>
    </dl>
@@ -3147,7 +3167,7 @@ return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors
      <li data-md>
       <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑥">browsing context id</a> of the newly created <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#browsing-context" id="ref-for-browsing-context③">browsing context</a>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑧">map</a> matching the <code>BrowsingContextCreateResult</code> production, with the <code>context</code> field set to <var>context id</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑧">map</a> matching the <code>browsingContext.CreateResult</code> production, with the <code>context</code> field set to <var>context id</var>.</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③③">success</a> with data <var>body</var>.</p>
     </ol>
@@ -3159,20 +3179,20 @@ or all top-level contexts when no parent is provided.</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">BrowsingContextGetTreeCommand = {
+<pre class="cddl remote-cddl">browsingContext.GetTree = {
   method: "browsingContext.getTree",
-  params: BrowsingContextGetTreeParameters
+  params: browsingContext.GetTreeParameters
 }
 
-BrowsingContextGetTreeParameters = {
+browsingContext.GetTreeParameters = {
   ?maxDepth: js-uint,
-  ?root: BrowsingContext,
+  ?root: browsingContext.BrowsingContext,
 }
 </pre>
     <dt>Result Type
     <dd>
-<pre class="cddl local-cddl">BrowsingContextGetTreeResult = {
-  contexts: BrowsingContextInfoList
+<pre class="cddl local-cddl">browsingContext.GetTreeResult = {
+  contexts: browsingContext.Info
 }
 </pre>
    </dl>
@@ -3200,7 +3220,7 @@ BrowsingContextGetTreeParameters = {
         <p>Append <var>info</var> to <var>contexts info</var></p>
       </ol>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑨">map</a> matching the <code>BrowsingContextGetTreeResult</code> production, with the <code>contexts</code> field set to <var>contexts info</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects⑨">map</a> matching the <code>browsingContext.GetTreeResult</code> production, with the <code>contexts</code> field set to <var>contexts info</var>.</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③④">success</a> with data <var>body</var>.</p>
     </ol>
@@ -3210,13 +3230,13 @@ BrowsingContextGetTreeParameters = {
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">BrowsingContextHandleUserPromptCommand = {
+<pre class="cddl remote-cddl">browsingContext.HandleUserPrompt = {
   method: "browsingContext.handleUserPrompt",
-  params: BrowsingContextHandleUserPromptParameters
+  params: browsingContext.HandleUserPromptParameters
 }
 
-BrowsingContextHandleUserPromptParameters = {
-  context: BrowsingContext,
+browsingContext.HandleUserPromptParameters = {
+  context: browsingContext.BrowsingContext,
   ? accept: bool,
   ? userText: text,
 }
@@ -3260,23 +3280,21 @@ browsing context to the given URL.</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">BrowsingContextNavigateCommand = {
+<pre class="cddl remote-cddl">browsingContext.Navigate = {
   method: "browsingContext.navigate",
-  params: BrowsingContextNavigateParameters
+  params: browsingContext.NavigateParameters
 }
 
-BrowsingContextNavigateParameters = {
-  context: BrowsingContext,
+browsingContext.NavigateParameters = {
+  context: browsingContext.BrowsingContext,
   url: text,
-  ?wait: ReadinessState,
+  ?wait: browsingContext.ReadinessState,
 }
-
- ReadinessState = "none" / "interactive" / "complete"
 </pre>
     <dt>Result Type
     <dd>
-<pre class="cddl local-cddl">BrowsingContextNavigateResult = {
-  navigation: Navigation / null,
+<pre class="cddl local-cddl">browsingContext.NavigateResult = {
+  navigation: browsingContext.Navigation / null,
   url: text,
 }
 </pre>
@@ -3318,15 +3336,15 @@ browsing context.</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">BrowsingContextReloadCommand = {
+<pre class="cddl remote-cddl">browsingContext.Reload = {
   method: "browsingContext.reload",
-  params: BrowsingContextReloadParameters
+  params: browsingContext.ReloadParameters
 }
 
-BrowsingContextReloadParameters = {
-  context: BrowsingContext,
+browsingContext.ReloadParameters = {
+  context: browsingContext.BrowsingContext,
   ?ignoreCache: bool,
-  ?wait: ReadinessState,
+  ?wait: browsingContext.ReadinessState,
 }
 </pre>
    </dl>
@@ -3362,9 +3380,9 @@ BrowsingContextReloadParameters = {
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> BrowsingContextCreatedEvent = {
+<pre class="cddl local-cddl"> browsingContext.ContextCreated = {
   method: "browsingContext.contextCreated",
-  params: BrowsingContextInfo
+  params: browsingContext.Info
 }
 </pre>
    </dl>
@@ -3387,7 +3405,7 @@ BrowsingContextReloadParameters = {
      <li data-md>
       <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-browsing-context-info" id="ref-for-get-the-browsing-context-info②">get the browsing context info</a> given <var>context</var>, 0, and true.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⓪">map</a> matching the <code>BrowsingContextCreatedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⓪">map</a> matching the <code>browsingContext.ContextCreated</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p><a data-link-type="dfn" href="#emit-an-event" id="ref-for-emit-an-event">Emit an event</a> with <var>session</var> and <var>body</var>.</p>
     </ol>
@@ -3424,9 +3442,9 @@ BrowsingContextReloadParameters = {
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> BrowsingContextDestroyedEvent = {
+<pre class="cddl local-cddl"> browsingContext.ContextDestroyed = {
   method: "browsingContext.contextDestroyed",
-  params: BrowsingContextInfo
+  params: browsingContext.Info
 }
 </pre>
    </dl>
@@ -3439,7 +3457,7 @@ BrowsingContextReloadParameters = {
      <li data-md>
       <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-browsing-context-info" id="ref-for-get-the-browsing-context-info③">get the browsing context info</a>, given <var>context</var>, 0, and true.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①①">map</a> matching the <code>BrowsingContextDestroyedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①①">map</a> matching the <code>browsingContext.ContextDestroyed</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>Let <var>related browsing contexts</var> be a set containing the result of <a data-link-type="dfn" href="#get-the-parent-browsing-context" id="ref-for-get-the-parent-browsing-context①">get the parent browsing context</a> with <var>context</var>, if that is not
  null, or an empty set otherwise.</p>
@@ -3460,9 +3478,9 @@ become inaccessible but not yet get discarded because bfcache.</p>
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> BrowsingContextNavigationStartedEvent = {
+<pre class="cddl local-cddl"> browsingContext.NavigationStarted = {
   method: "browsingContext.navigationStarted",
-  params: NavigationInfo
+  params: browsingContext.NavigationInfo
 }
 </pre>
    </dl>
@@ -3473,7 +3491,7 @@ started<a class="self-link" href="#webdriver-bidi-navigation-started"></a></dfn>
      <li data-md>
       <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①②">map</a> matching the <code>BrowsingContextNavigationStarted</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①②">map</a> matching the <code>browsingContext.NavigationStarted</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
      <li data-md>
@@ -3492,9 +3510,9 @@ started<a class="self-link" href="#webdriver-bidi-navigation-started"></a></dfn>
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> BrowsingContextFragmentNavigatedEvent = {
+<pre class="cddl local-cddl"> browsingContext.FragmentNavigated = {
   method: "browsingContext.fragmentNavigated",
-  params: NavigationInfo
+  params: browsingContext.NavigationInfo
 }
 </pre>
    </dl>
@@ -3505,7 +3523,7 @@ navigated<a class="self-link" href="#webdriver-bidi-fragment-navigated"></a></df
      <li data-md>
       <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info①">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①③">map</a> matching the <code>BrowsingContextFragmentNavigatedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①③">map</a> matching the <code>browsingContext.FragmentNavigated</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
      <li data-md>
@@ -3524,9 +3542,9 @@ navigated<a class="self-link" href="#webdriver-bidi-fragment-navigated"></a></df
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> BrowsingContextDomContentLoadedEvent = {
+<pre class="cddl local-cddl"> browsingContext.DomContentLoaded = {
   method: "browsingContext.domContentLoaded",
-  params: NavigationInfo
+  params: browsingContext.NavigationInfo
 }
 </pre>
    </dl>
@@ -3537,7 +3555,7 @@ loaded<a class="self-link" href="#webdriver-bidi-dom-content-loaded"></a></dfn> 
      <li data-md>
       <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info②">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①④">map</a> matching the <code>BrowsingContextDomContentLoadedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①④">map</a> matching the <code>browsingContext.DomContentLoaded</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>Let <var>related browsing contexts</var> be a set containing <var>context</var>.</p>
      <li data-md>
@@ -3556,9 +3574,9 @@ loaded<a class="self-link" href="#webdriver-bidi-dom-content-loaded"></a></dfn> 
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> BrowsingContextLoadEvent = {
+<pre class="cddl local-cddl"> browsingContext.Load = {
   method: "browsingContext.load",
-  params: NavigationInfo
+  params: browsingContext.NavigationInfo
 }
 </pre>
    </dl>
@@ -3569,7 +3587,7 @@ complete<a class="self-link" href="#webdriver-bidi-load-complete"></a></dfn> ste
      <li data-md>
       <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info③">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑤">map</a> matching the <code>BrowsingContextLoadEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑤">map</a> matching the <code>browsingContext.Load</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>Let <var>related browsing contexts</var> be a set containing <var>context</var>.</p>
      <li data-md>
@@ -3588,9 +3606,9 @@ complete<a class="self-link" href="#webdriver-bidi-load-complete"></a></dfn> ste
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> BrowsingContextDownloadWillBeginEvent = {
+<pre class="cddl local-cddl"> browsingContext.DownloadWillBegin = {
   method: "browsingContext.downloadWillBegin",
-  params: NavigationInfo
+  params: browsingContext.NavigationInfo
 }
 </pre>
    </dl>
@@ -3601,7 +3619,7 @@ started<a class="self-link" href="#webdriver-bidi-download-started"></a></dfn> s
      <li data-md>
       <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info④">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑥">map</a> matching the <code>BrowsingContextDownloadWillBeginEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑥">map</a> matching the <code>browsingContext.DownloadWillBegin</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
      <li data-md>
@@ -3620,9 +3638,9 @@ started<a class="self-link" href="#webdriver-bidi-download-started"></a></dfn> s
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> BrowsingContextNavigationAbortedEvent = {
+<pre class="cddl local-cddl"> browsingContext.NavigationAborted = {
   method: "browsingContext.navigationAborted",
-  params: NavigationInfo
+  params: browsingContext.NavigationInfo
 }
 </pre>
    </dl>
@@ -3633,7 +3651,7 @@ aborted<a class="self-link" href="#webdriver-bidi-navigation-aborted"></a></dfn>
      <li data-md>
       <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info⑤">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑦">map</a> matching the <code>BrowsingContextNavigationAborted</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑦">map</a> matching the <code>browsingContext.NavigationAborted</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
      <li data-md>
@@ -3652,9 +3670,9 @@ aborted<a class="self-link" href="#webdriver-bidi-navigation-aborted"></a></dfn>
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> BrowsingContextNavigationFailedEvent = {
+<pre class="cddl local-cddl"> browsingContext.NavigationFailed = {
   method: "browsingContext.navigationFailed",
-  params: NavigationInfo
+  params: browsingContext.NavigationInfo
 }
 </pre>
    </dl>
@@ -3665,7 +3683,7 @@ failed<a class="self-link" href="#webdriver-bidi-navigation-failed"></a></dfn> s
      <li data-md>
       <p>Let <var>params</var> be the result of <a data-link-type="dfn" href="#get-the-navigation-info" id="ref-for-get-the-navigation-info⑥">get the navigation info</a> given <var>context</var> and <var>navigation status</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑧">map</a> matching the <code>BrowsingContextNavigationFailed</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑧">map</a> matching the <code>browsingContext.NavigationFailed</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>Let <var>navigation id</var> be <var>navigation status</var>’s id.</p>
      <li data-md>
@@ -3684,13 +3702,13 @@ failed<a class="self-link" href="#webdriver-bidi-navigation-failed"></a></dfn> s
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl">BrowsingContextUserPromptClosedEvent = {
+<pre class="cddl local-cddl">browsingContext.UserPromptClosed = {
   method: "browsingContext.userPromptClosed",
-  params: UserPromptClosedInfo
+  params: browsingContext.UserPromptClosedParameters
 }
 
-UserPromptClosedInfo = {
-  context: BrowsingContext,
+browsingContext.UserPromptClosedParameters = {
+  context: browsingContext.BrowsingContext,
   accepted: bool,
   ? userText: text
 }
@@ -3705,8 +3723,8 @@ closed<a class="self-link" href="#webdriver-bidi-user-prompt-closed"></a></dfn> 
      <li data-md>
       <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑦">browsing context id</a> for <var>context</var>.</p>
      <li data-md>
-      <p>Let <var>params</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑨">map</a> matching the <code>UserPromptClosedInfo</code> production with the <code>context</code> field set to <var>context id</var>, the <code>accepted</code> field set to <var>accepted</var>, and the <code>userText</code> field set
- to <var>user text</var> if <var>user text</var> is not null or omitted otherwise.</p>
+      <p>Let <var>params</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects①⑨">map</a> matching the <code>browsingContext.UserPromptClosedParameters</code> production with the <code>context</code> field set to <var>context id</var>, the <code>accepted</code> field set to <var>accepted</var>, and the <code>userText</code> field set to <var>user
+ text</var> if <var>user text</var> is not null or omitted otherwise.</p>
      <li data-md>
       <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②⓪">map</a> matching the <code>BrowsingContextUserPromptClosedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
@@ -3723,13 +3741,13 @@ closed<a class="self-link" href="#webdriver-bidi-user-prompt-closed"></a></dfn> 
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl">BrowsingContextUserPromptOpenedEvent = {
+<pre class="cddl local-cddl">browsingContext.UserPromptOpened = {
   method: "browsingContext.userPromptOpened",
-  params: UserPromptOpenedInfo
+  params: browsingContext.UserPromptOpenedParameters
 }
 
-UserPromptOpenedInfo = {
-  context: BrowsingContext,
+browsingContext.UserPromptOpenedParameters = {
+  context: browsingContext.BrowsingContext,
   type: "alert" / "confirm" / "prompt" / "beforeunload",
   message: text
 }
@@ -3744,10 +3762,10 @@ opened<a class="self-link" href="#webdriver-bidi-user-prompt-opened"></a></dfn> 
      <li data-md>
       <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id⑧">browsing context id</a> for <var>context</var>.</p>
      <li data-md>
-      <p>Let <var>params</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②①">map</a> matching the <code>UserPromptOpenedInfo</code> production with the <code>context</code> field set to <var>context id</var>, the <code>type</code> field set to <var>type</var>, and the <code>message</code> field set
- to <var>message</var>.</p>
+      <p>Let <var>params</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②①">map</a> matching the <code>browsingContext.UserPromptOpenedParameters</code> production with the <code>context</code> field set to <var>context id</var>, the <code>type</code> field
+ set to <var>type</var>, and the <code>message</code> field set to <var>message</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②②">map</a> matching the <code>BrowsingContextUserPromptOpenedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②②">map</a> matching the <code>browsingContext.UserPromptOpened</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>Let <var>related browsing contexts</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-set" id="ref-for-ordered-set③">set</a> containing <var>context</var>.</p>
      <li data-md>
@@ -3764,35 +3782,35 @@ relating to script realms and execution.</p>
    <h4 class="heading settled" data-level="7.3.1" id="module-script-definition"><span class="secno">7.3.1. </span><span class="content">Definition</span><a class="self-link" href="#module-script-definition"></a></h4>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①③">Remote end definition</a></p>
 <pre class="cddl remote-cddl">ScriptCommand = (
-  ScriptCallFunctionCommand //
-  ScriptDisownCommand //
-  ScriptEvaluateCommand //
-  ScriptGetRealmsCommand
+  script.CallFunction //
+  script.Disown //
+  script.Evaluate //
+  script.GetRealms
 )
 </pre>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④②">local end definition</a></p>
 <pre class="cddl local-cddl">ScriptResult = (
-  ScriptEvaluateResult //
-  ScriptGetRealmsResult
+  script.EvaluateResult //
+  script.GetRealmsResult
 )
 
 ScriptEvent = (
-  ScriptRealmCreatedEvent //
-  ScriptRealmDestroyedEvent
+  script.RealmCreated //
+  script.RealmDestroyed
 )
 </pre>
    <h4 class="heading settled" data-level="7.3.2" id="module-script-types"><span class="secno">7.3.2. </span><span class="content">Types</span><a class="self-link" href="#module-script-types"></a></h4>
    <h5 class="heading settled" data-level="7.3.2.1" id="type-script-ExceptionDetails"><span class="secno">7.3.2.1. </span><span class="content">The script.ExceptionDetails type</span><a class="self-link" href="#type-script-ExceptionDetails"></a></h5>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①④">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④③">local end definition</a></p>
-<pre class="cddl remote-cddl local-cddl">ExceptionDetails = {
+<pre class="cddl remote-cddl local-cddl">script.ExceptionDetails = {
   columnNumber: js-uint,
   exception: RemoteValue,
   lineNumber: js-uint,
-  stackTrace: StackTrace,
+  stackTrace: script.StackTrace,
   text: text,
 };
 </pre>
-   <p>The <code>ExceptionDetails</code> type represents a JavaScript exception.</p>
+   <p>The <code>script.ExceptionDetails</code> type represents a JavaScript exception.</p>
    <div class="algorithm" data-algorithm="get exception details">
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-exception-details">get exception details</dfn> given a <var>realm</var>, a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type②">completion record</a> <var>record</var> and an <var>ownership type</var>:</p>
     <ol>
@@ -3813,14 +3831,14 @@ ScriptEvent = (
  the value of the <code>columnNumber</code> field <var>stack trace</var>[0]. Otherwise
  let <var>line number</var> and <var>column number</var> be 0.</p>
      <li data-md>
-      <p>Let <var>exception details</var> be a map matching the <code>ExceptionDetails</code> production, with the <code>text</code> field set to <var>text</var>, the <code>exception</code> field set to <var>exception</var>, the <code>lineNumber</code> field set to <var>line number</var>, the <code>columnNumber</code> field set to <var>column number</var>, and the <code>stackTrace</code> field set to <var>stack trace</var>.</p>
+      <p>Let <var>exception details</var> be a map matching the <code>script.ExceptionDetails</code> production, with the <code>text</code> field set to <var>text</var>, the <code>exception</code> field set to <var>exception</var>, the <code>lineNumber</code> field set to <var>line number</var>, the <code>columnNumber</code> field set to <var>column number</var>, and the <code>stackTrace</code> field set to <var>stack trace</var>.</p>
      <li data-md>
       <p>Return <var>exception details</var>.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.3.2.2" id="type-script-Realm"><span class="secno">7.3.2.2. </span><span class="content">The script.Realm type</span><a class="self-link" href="#type-script-Realm"></a></h5>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑤">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④④">local end definition</a></p>
-<pre class="cddl remote-cddl local-cddl">Realm = text;
+<pre class="cddl remote-cddl local-cddl">script.Realm = text;
 </pre>
    <p>Each <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms③">realm</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="realm-id">realm id</dfn>, which is a string
 uniquely identifying that realm. This is implicitly set when the realm is
@@ -3846,66 +3864,66 @@ relationships between different ids.</p>
    </div>
    <h5 class="heading settled" data-level="7.3.2.3" id="type-script-RealmInfo"><span class="secno">7.3.2.3. </span><span class="content">The script.RealmInfo type</span><a class="self-link" href="#type-script-RealmInfo"></a></h5>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑤">Local end definition</a></p>
-<pre class="cddl local-cddl">RealmInfo = {
-  WindowRealmInfo //
-  DedicatedWorkerRealmInfo //
-  SharedWorkerRealmInfo //
-  ServiceWorkerRealmInfo //
-  WorkerRealmInfo //
-  PaintWorkletRealmInfo //
-  AudioWorkletRealmInfo //
-  WorkletRealmInfo //
+<pre class="cddl local-cddl">script.RealmInfo = {
+  script.WindowRealmInfo //
+  script.DedicatedWorkerRealmInfo //
+  script.SharedWorkerRealmInfo //
+  script.ServiceWorkerRealmInfo //
+  script.WorkerRealmInfo //
+  script.PaintWorkletRealmInfo //
+  script.AudioWorkletRealmInfo //
+  script.WorkletRealmInfo //
 }
 
-BaseRealmInfo = {
-  realm: Realm,
+script.BaseRealmInfo = {
+  realm: script.Realm,
   origin: text
 }
 
-WindowRealmInfo = {
-  BaseRealmInfo,
+script.WindowRealmInfo = {
+  script.BaseRealmInfo,
   type: "window",
-  context: BrowsingContext,
+  context: browsingContext.BrowsingContext,
   ?sandbox: text
 }
 
-DedicatedWorkerRealmInfo = {
-  BaseRealmInfo,
+script.DedicatedWorkerRealmInfo = {
+  script.BaseRealmInfo,
   type: "dedicated-worker"
 }
 
-SharedWorkerRealmInfo = {
-  BaseRealmInfo,
+script.SharedWorkerRealmInfo = {
+  script.BaseRealmInfo,
   type: "shared-worker"
 }
 
-ServiceWorkerRealmInfo = {
-  BaseRealmInfo,
+script.ServiceWorkerRealmInfo = {
+  script.BaseRealmInfo,
   type: "service-worker"
 }
 
-WorkerRealmInfo = {
-  BaseRealmInfo,
+script.WorkerRealmInfo = {
+  script.BaseRealmInfo,
   type: "worker"
 }
 
-PaintWorkletRealmInfo = {
-  BaseRealmInfo,
+script.PaintWorkletRealmInfo = {
+  script.BaseRealmInfo,
   type: "paint-worklet"
 }
 
-AudioWorkletRealmInfo = {
-  BaseRealmInfo,
+script.AudioWorkletRealmInfo = {
+  script.BaseRealmInfo,
   type: "audio-worklet"
 }
 
-WorkletRealmInfo = {
-  BaseRealmInfo,
+script.WorkletRealmInfo = {
+  script.BaseRealmInfo,
   type: "worklet"
 }
 </pre>
-   <p class="note" role="note"><span>Note:</span> there’s a 1:1 relationship between the <code>RealmInfo</code> variants and values of <a href="#type-script-RealmType"><code>RealmType</code></a>.</p>
-   <p>The <code>RealmInfo</code> type represents the properties of a realm.</p>
+   <p class="note" role="note"><span>Note:</span> there’s a 1:1 relationship between the <code>script.RealmInfo</code> variants and values of <a href="#type-script-RealmType"><code>script.RealmType</code></a>.</p>
+   <p>The <code>script.RealmInfo</code> type represents the properties of a realm.</p>
    <div class="algorithm" data-algorithm="get the realm info">
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-the-realm-info">get the realm info</dfn> given <var>environment settings</var>: 
     <ol>
@@ -3930,7 +3948,7 @@ WorkletRealmInfo = {
          <li data-md>
           <p>Let <var>context id</var> be the <a data-link-type="dfn" href="#browsing-context-id" id="ref-for-browsing-context-id①⓪">browsing context id</a> for <var>browsing context</var>.</p>
          <li data-md>
-          <p>Let <var>realm info</var> be a map matching the <code>WindowRealmInfo</code> production,
+          <p>Let <var>realm info</var> be a map matching the <code>script.WindowRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, the <code>origin</code> field set to <var>origin</var>, and the <code>context</code> field set to <var>context id</var>.</p>
         </ol>
        <dt><var>global object</var> is <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy" id="ref-for-sandboxwindowproxy②">SandboxWindowProxy</a></code> object 
@@ -3948,7 +3966,7 @@ WorkletRealmInfo = {
          <li data-md>
           <p class="assertion">Assert: <var>sandbox name</var> is not null.</p>
          <li data-md>
-          <p>Let <var>realm info</var> be a map matching the <code>WindowRealmInfo</code> production,
+          <p>Let <var>realm info</var> be a map matching the <code>script.WindowRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, the <code>origin</code> field set to <var>origin</var>, the <code>context</code> field set to <var>context id</var>,
  and the <code>sandbox</code> field set to <var>sandbox name</var>.</p>
         </ol>
@@ -3956,7 +3974,7 @@ WorkletRealmInfo = {
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>realm info</var> be a map matching the <code>DedicatedWorkerRealmInfo</code> production,
+          <p>Let <var>realm info</var> be a map matching the <code>script.DedicatedWorkerRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field
  set to <var>origin</var>.</p>
         </ol>
@@ -3964,14 +3982,14 @@ WorkletRealmInfo = {
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>realm info</var> be a map matching the <code>SharedWorkerRealmInfo</code> production,
+          <p>Let <var>realm info</var> be a map matching the <code>script.SharedWorkerRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
         </ol>
        <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://w3c.github.io/ServiceWorker/#serviceworkerglobalscope" id="ref-for-serviceworkerglobalscope">ServiceWorkerGlobalScope</a></code> object 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>realm info</var> be a map matching the <code>ServiceWorkerRealmInfo</code> production,
+          <p>Let <var>realm info</var> be a map matching the <code>script.ServiceWorkerRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field
  set to <var>origin</var>.</p>
         </ol>
@@ -3979,28 +3997,28 @@ WorkletRealmInfo = {
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>realm info</var> be a map matching the <code>WorkerRealmInfo</code> production,
+          <p>Let <var>realm info</var> be a map matching the <code>script.WorkerRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
         </ol>
        <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://drafts.css-houdini.org/css-paint-api-1/#paintworkletglobalscope" id="ref-for-paintworkletglobalscope">PaintWorkletGlobalScope</a></code> object 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>realm info</var> be a map matching the <code>PaintWorkletRealmInfo</code> production,
+          <p>Let <var>realm info</var> be a map matching the <code>script.PaintWorkletRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
         </ol>
        <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://webaudio.github.io/web-audio-api/#AudioWorkletGlobalScope" id="ref-for-AudioWorkletGlobalScope">AudioWorkletGlobalScope</a></code> object 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>realm info</var> be a map matching the <code>AudioWorkletRealmInfo</code> production,
+          <p>Let <var>realm info</var> be a map matching the <code>script.AudioWorkletRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
         </ol>
        <dt><var>global object</var> is a <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/worklets.html#workletglobalscope" id="ref-for-workletglobalscope">WorkletGlobalScope</a></code> object 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>realm info</var> be a map matching the <code>WorkletRealmInfo</code> production,
+          <p>Let <var>realm info</var> be a map matching the <code>script.WorkletRealmInfo</code> production,
  with the <code>realm</code> field set to <var>realm id</var>, and the <code>origin</code> field set to <var>origin</var>.</p>
         </ol>
        <dt>Otherwise: 
@@ -4020,12 +4038,12 @@ WorkletRealmInfo = {
    </div>
    <h5 class="heading settled" data-level="7.3.2.4" id="type-script-RealmType"><span class="secno">7.3.2.4. </span><span class="content">The script.RealmType type</span><a class="self-link" href="#type-script-RealmType"></a></h5>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑥">Local end definition</a></p>
-<pre class="cddl remote-cddl local-cddl">RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" /
-                       "worker" / "paint-worklet" / "audio-worklet" / "worklet"
+<pre class="cddl remote-cddl local-cddl">script.RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" /
+                   "worker" / "paint-worklet" / "audio-worklet" / "worklet"
 </pre>
-   <p>The <code>RealmType</code> type represents the different types of Realm.</p>
+   <p>The <code>script.RealmType</code> type represents the different types of Realm.</p>
    <h5 class="heading settled" data-level="7.3.2.5" id="types-script-StackFrame"><span class="secno">7.3.2.5. </span><span class="content">The script.StackFrame type</span><a class="self-link" href="#types-script-StackFrame"></a></h5>
-<pre class="cddl remote-cddl local-cddl">StackFrame = {
+<pre class="cddl remote-cddl local-cddl">script.StackFrame = {
   columnNumber: js-uint,
   functionName: text,
   lineNumber: js-uint,
@@ -4036,11 +4054,11 @@ WorkletRealmInfo = {
 script, a <code>functionName</code> property which represents the name of the
 executing function, and <code>lineNumber</code> and <code>columnNumber</code> properties, which represent the line and column number of the executed code.</p>
    <h5 class="heading settled" data-level="7.3.2.6" id="types-script-StackTrace"><span class="secno">7.3.2.6. </span><span class="content">The script.StackTrace type</span><a class="self-link" href="#types-script-StackTrace"></a></h5>
-<pre class="cddl remote-cddl local-cddl">StackTrace = {
-  callFrames: [*StackFrame],
+<pre class="cddl remote-cddl local-cddl">script.StackTrace = {
+  callFrames: [*script.StackFrame],
 }
 </pre>
-   <p>The <code>StackTrace</code> type represents the javascript stack at a point in
+   <p>The <code>script.StackTrace</code> type represents the javascript stack at a point in
 script execution.</p>
    <p class="note" role="note"><span>Note:</span> The details of how to get a list of stack frames, and the properties of
 that list are underspecified, and therefore the details here are implementation
@@ -4074,14 +4092,14 @@ frame</dfn> corresponding to execution of a statement or expression in a script 
         <p>Let <var>url</var> be the result of running the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer⑤">URL serializer</a>, given
   the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url" id="ref-for-concept-url">URL</a> of <var>frame</var>’s <a data-link-type="dfn" href="#stackframe-script-url" id="ref-for-stackframe-script-url">script url</a>.</p>
        <li data-md>
-        <p>Let <var>frame info</var> be a new map matching the <code>StackFrame</code> production, with the <code>url</code> field set to <var>url</var>, the <code>functionName</code> field set to <var>frame</var>’s <a data-link-type="dfn" href="#stackframe-function" id="ref-for-stackframe-function">function</a>,
+        <p>Let <var>frame info</var> be a new map matching the <code>script.StackFrame</code> production, with the <code>url</code> field set to <var>url</var>, the <code>functionName</code> field set to <var>frame</var>’s <a data-link-type="dfn" href="#stackframe-function" id="ref-for-stackframe-function">function</a>,
   the <code>lineNumber</code> field set to <var>frame</var>’s <a data-link-type="dfn" href="#stackframe-line-number" id="ref-for-stackframe-line-number">line
   number</a> and the <code>columnNumber</code> field set to <var>frame</var>’s <a data-link-type="dfn" href="#stackframe-column-number" id="ref-for-stackframe-column-number">column number</a>.</p>
       </ol>
      <li data-md>
       <p>Append <var>frame info</var> to <var>call frames</var>.</p>
      <li data-md>
-      <p>Let <var>stack trace</var> be a new map matching the <code>StackTrace</code> production, with the <code>callFrames</code> property set to <var>call frames</var>.</p>
+      <p>Let <var>stack trace</var> be a new map matching the <code>script.StackTrace</code> production, with the <code>callFrames</code> property set to <var>call frames</var>.</p>
      <li data-md>
       <p>Return <var>stack trace</var>.</p>
     </ol>
@@ -4101,37 +4119,42 @@ Record</a> of type <code>throw</code>, <var>exception</var>, is given by:</p>
       <p>Return <a data-link-type="dfn" href="#construct-a-stack-trace" id="ref-for-construct-a-stack-trace①">construct a stack trace</a> given <var>stack</var>.</p>
     </ol>
    </div>
-   <h5 class="heading settled" data-level="7.3.2.7" id="type-script-ScriptEvaluateResult"><span class="secno">7.3.2.7. </span><span class="content">The script.ScriptEvaluateResult type</span><a class="self-link" href="#type-script-ScriptEvaluateResult"></a></h5>
+   <h5 class="heading settled" data-level="7.3.2.7" id="type-script-EvaluateResult"><span class="secno">7.3.2.7. </span><span class="content">The script.EvaluateResult type</span><a class="self-link" href="#type-script-EvaluateResult"></a></h5>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑥">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑦">local end definition</a></p>
-<pre class="cddl remote-cddl local-cddl">ScriptEvaluateResult = (
-  ScriptEvaluateResultSuccess //
-  ScriptEvaluateResultException
+<pre class="cddl remote-cddl local-cddl">script.EvaluateResult = (
+  script.EvaluateResultSuccess //
+  script.EvaluateResultException
 )
 
-ScriptEvaluateResultSuccess = {
+script.EvaluateResultSuccess = {
   type: "success",
   result: RemoteValue,
-  realm: Realm
+  realm: script.Realm
 }
 
-ScriptEvaluateResultException = {
+script.EvaluateResultException = {
   type: "exception",
-  exceptionDetails: ExceptionDetails,
-  realm: Realm
+  exceptionDetails: script.ExceptionDetails
+  realm: script.Realm
 }
 </pre>
-   <p>The <code>ScriptEvaluateResult</code> type indicates the return value of a command
-that executes script. The <code>ScriptEvaluateResultSuccess</code> variant is used in
-cases where the script completes normally and the <code>ScriptEvaluateResultException</code> variant is used in cases where the script
+   <p>The <code>script.EvaluateResult</code> type indicates the return value of a command
+that executes script. The <code>script.EvaluateResultSuccess</code> variant is used in
+cases where the script completes normally and the <code>script.EvaluateResultException</code> variant is used in cases where the script
 completes with a thrown exception.</p>
-   <h5 class="heading settled" data-level="7.3.2.8" id="type-script-Source"><span class="secno">7.3.2.8. </span><span class="content">The script.Source type</span><a class="self-link" href="#type-script-Source"></a></h5>
+   <h5 class="heading settled" data-level="7.3.2.8" id="type-script-ResultOwnership"><span class="secno">7.3.2.8. </span><span class="content">The script.ResultOwnership type</span><a class="self-link" href="#type-script-ResultOwnership"></a></h5>
+<pre class="cddl remote-cddl local-cddl">script.ResultOwnership = "root" / "none"
+</pre>
+   <p>The <code>script.ResultOwnership</code> specifies how the serialized value
+ownership will be treated.</p>
+   <h5 class="heading settled" data-level="7.3.2.9" id="type-script-Source"><span class="secno">7.3.2.9. </span><span class="content">The script.Source type</span><a class="self-link" href="#type-script-Source"></a></h5>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑧">Local end definition</a></p>
-<pre class="cddl local-cddl">Source = (
-  realm: Realm,
-  ?context: BrowsingContext
+<pre class="cddl local-cddl">script.Source = (
+  realm: script.Realm,
+  ?context: browsingContext.BrowsingContext
 );
 </pre>
-   <p>The <code>Source</code> type represents a <code>script.Realm</code> with
+   <p>The <code>script.Source</code> type represents a <code>script.Realm</code> with
 an optional <code>browsingContext.BrowsingContext</code> in which a
 script related event occurred.</p>
    <div class="algorithm" data-algorithm="get the source">
@@ -4153,34 +4176,36 @@ script related event occurred.</p>
       </ol>
       <p>Otherwise let <var>browsing context</var> be null.</p>
      <li data-md>
-      <p>Let <var>source</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②④">map</a> matching the <code>Source</code> production with the <code>realm</code> field set to <var>realm</var>, and the <code>context</code> field set
+      <p>Let <var>source</var> be a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-objects" id="ref-for-sec-map-objects②④">map</a> matching the <code>script.Source</code> production with the <code>realm</code> field set to <var>realm</var>, and the <code>context</code> field set
  to <var>context id</var> if <var>browsing context</var> is not null, or unset otherwise.</p>
      <li data-md>
       <p>Return <var>source</var>.</p>
     </ol>
    </div>
-   <h5 class="heading settled" data-level="7.3.2.9" id="type-script-Target"><span class="secno">7.3.2.9. </span><span class="content">The script.Target type</span><a class="self-link" href="#type-script-Target"></a></h5>
+   <h5 class="heading settled" data-level="7.3.2.10" id="type-script-Target"><span class="secno">7.3.2.10. </span><span class="content">The script.Target type</span><a class="self-link" href="#type-script-Target"></a></h5>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑦">Remote end definition</a></p>
-<pre class="cddl remote-cddl">RealmTarget = {realm: Realm};
+<pre class="cddl remote-cddl">script.RealmTarget = {
+  realm: script.Realm
+};
 
-ContextTarget = {
-  context: BrowsingContext,
+script.ContextTarget = {
+  context: browsingContext.BrowsingContext,
   ?sandbox: text
 }
 
-ScriptTarget = (
-  RealmTarget //
-  ContextTarget
+script.Target = (
+  script.RealmTarget //
+  script.ContextTarget
 );
 </pre>
-   <p>The <code>ScriptTarget</code> type represents a value that is either a <code>script.Realm</code> or a <code>browsingContext.BrowsingContext</code>. This
-is useful in cases where a context identifier can stand in for the realm
+   <p>The <code>script.Target</code> type represents a value that is either a <code>script.Realm</code> or a <code>browsingContext.BrowsingContext</code>.
+This is useful in cases where a context identifier can stand in for the realm
 associated with the context’s active document.</p>
    <div class="algorithm" data-algorithm="get a realm from a target">
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-a-realm-from-a-target">get a realm from a target</dfn> given <var>target</var>: 
     <ol>
      <li data-md>
-      <p>If <var>target</var> matches the <code>ContextTarget</code> production:</p>
+      <p>If <var>target</var> matches the <code>script.ContextTarget</code> production:</p>
       <ol>
        <li data-md>
         <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②②">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑧">get a browsing context</a> with <var>target</var>["<code>context</code>"].</p>
@@ -4202,7 +4227,7 @@ associated with the context’s active document.</p>
       <p>Otherwise:</p>
       <ol>
        <li data-md>
-        <p class="assertion">Assert: <var>target</var> matches the <code>RealmTarget</code> production.</p>
+        <p class="assertion">Assert: <var>target</var> matches the <code>script.RealmTarget</code> production.</p>
        <li data-md>
         <p>Let <var>realm id</var> be the value of the <code>realm</code> field of <var>target</var>.</p>
        <li data-md>
@@ -4213,11 +4238,6 @@ associated with the context’s active document.</p>
     </ol>
     <p class="issue" id="issue-89e6b783①"><a class="self-link" href="#issue-89e6b783①"></a> This has the wrong error code</p>
    </div>
-   <h5 class="heading settled" data-level="7.3.2.10" id="type-script-Ownership"><span class="secno">7.3.2.10. </span><span class="content">The script.Ownership type</span><a class="self-link" href="#type-script-Ownership"></a></h5>
-<pre class="cddl remote-cddl local-cddl">SerializationOwnershipModel = "root" / "none"
-</pre>
-   <p>The <code>SerializationOwnershipModel</code> specifies how the serialized value
-ownership should be treated.</p>
    <h4 class="heading settled" data-level="7.3.3" id="module-script-commands"><span class="secno">7.3.3. </span><span class="content">Commands</span><a class="self-link" href="#module-script-commands"></a></h4>
    <h5 class="heading settled" data-level="7.3.3.1" id="command-script-disown"><span class="secno">7.3.3.1. </span><span class="content">The script.disown Command</span><a class="self-link" href="#command-script-disown"></a></h5>
    <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptdisown">script.disown<a class="self-link" href="#commands-scriptdisown"></a></dfn> command disowns the given handles.
@@ -4226,14 +4246,14 @@ other handles or strong ECMAScript references.</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">ScriptDisownCommand = {
+<pre class="cddl remote-cddl">script.Disown = {
   method: "script.disown",
-  params: ScriptDisownParameters
+  params: script.DisownParameters
 }
 
-ScriptDisownParameters = {
+script.DisownParameters = {
   handles: [Handle]
-  target: ScriptTarget;
+  target: script.Target;
 }
 </pre>
    </dl>
@@ -4262,21 +4282,21 @@ function with given arguments in a given realm.</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">ScriptCallFunctionCommand = {
+<pre class="cddl remote-cddl">script.CallFunction = {
   method: "script.callFunction",
-  params: ScriptCallFunctionParameters
+  params: script.CallFunctionParameters
 }
 
-ScriptCallFunctionParameters = {
+script.CallFunctionParameters = {
   functionDeclaration: text;
   awaitPromise: bool;
-  target: ScriptTarget;
-  ?arguments: [ArgumentValue];
-  ?this: ArgumentValue;
-  ?resultOwnership: OwnershipModel;
+  target: script.Target;
+  ?arguments: [*script.ArgumentValue];
+  ?this: script.ArgumentValue;
+  ?resultOwnership: script.ResultOwnership;
 }
 
-ArgumentValue = (
+script.ArgumentValue = (
   RemoteReference //
   LocalValue
 );
@@ -4284,7 +4304,7 @@ ArgumentValue = (
 </pre>
     <dt>Result Type
     <dd>
-<pre class="cddl">ScriptEvaluateResult
+<pre class="cddl">script.EvaluateResult
 </pre>
    </dl>
    <p class="issue" id="issue-6eade172"><a class="self-link" href="#issue-6eade172"></a> TODO: Add timeout argument as described in the script.evaluate.</p>
@@ -4359,7 +4379,7 @@ ArgumentValue = (
       <li data-md>
        <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details">get exception details</a> given <var>realm</var>, <var>function body evaluation status</var> and <var>result ownership</var>.</p>
       <li data-md>
-       <p>Return a new map matching the <code>ScriptEvaluateResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
+       <p>Return a new map matching the <code>script.EvaluateResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
      </ol>
     <li data-md>
      <p>Let <var>function object</var> be <var>function body evaluation status</var>.[[Value]].</p>
@@ -4387,7 +4407,7 @@ ArgumentValue = (
       <li data-md>
        <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details①">get exception details</a> given <var>realm</var>, <var>evaluation status</var> and <var>result ownership</var>.</p>
       <li data-md>
-       <p>Return a new map matching the <code>ScriptEvaluateResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
+       <p>Return a new map matching the <code>script.EvaluateResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
      </ol>
     <li data-md>
      <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
@@ -4395,7 +4415,7 @@ ArgumentValue = (
      <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑥">serialize as a remote value</a> given <var>evaluation status</var>.[[Value]], <code>1</code> as <var>max depth</var>, <var>result
  ownership</var>, <code>new map</code> as <var>serialization internal map</var> and <var>realm</var>.</p>
     <li data-md>
-     <p>Return a new map matching the <code>ScriptEvaluateResultSuccess</code> production, with the <code>realm</code> field set to <var>realm id</var>,
+     <p>Return a new map matching the <code>script.EvaluateResultSuccess</code> production, with the <code>realm</code> field set to <var>realm id</var>,
  and the <code>result</code> field set to <var>result</var>.</p>
    </ol>
    <h5 class="heading settled" data-level="7.3.3.3" id="command-script-evaluate"><span class="secno">7.3.3.3. </span><span class="content">The script.evaluate Command</span><a class="self-link" href="#command-script-evaluate"></a></h5>
@@ -4409,16 +4429,16 @@ the promise is returned.</p>
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">ScriptEvaluateCommand = {
+<pre class="cddl remote-cddl">script.Evaluate = {
   method: "script.evaluate",
-  params: ScriptEvaluateParameters
+  params: script.EvaluateParameters
 }
 
-ScriptEvaluateParameters = {
+script.EvaluateParameters = {
   expression: text;
-  target: ScriptTarget;
+  target: script.Target;
   awaitPromise: bool;
-  ?resultOwnership: OwnershipModel;
+  ?resultOwnership: script.ResultOwnership;
 }
 </pre>
     <dt>Result Type
@@ -4469,7 +4489,7 @@ that likely isn’t what clients want.</p>
       <li data-md>
        <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details②">get exception details</a> given <var>realm</var>, <var>evaluation status</var> and <var>result ownership</var>.</p>
       <li data-md>
-       <p>Return a new map matching the <code>ScriptEvaluateResultException</code> production, with the <code>realm</code> field set to <var>realm id</var>, and the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
+       <p>Return a new map matching the <code>script.EvaluateResultException</code> production, with the <code>realm</code> field set to <var>realm id</var>, and the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
      </ol>
     <li data-md>
      <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
@@ -4477,7 +4497,7 @@ that likely isn’t what clients want.</p>
      <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑦">serialize as a remote value</a> given <var>evaluation status</var>.[[Value]], <code>1</code> as <var>max depth</var>, <var>result
  ownership</var>, <code>new map</code> as <var>serialization internal map</var> and <var>realm</var>.</p>
     <li data-md>
-     <p>Return a new map matching the <code>ScriptEvaluateResultSuccess</code> production, with the with the <code>realm</code> field set to <var>realm id</var>, and
+     <p>Return a new map matching the <code>script.EvaluateResultSuccess</code> production, with the with the <code>realm</code> field set to <var>realm id</var>, and
  the <code>result</code> field set to <var>result</var>.</p>
    </ol>
    <h5 class="heading settled" data-level="7.3.3.4" id="command-script-getRealms"><span class="secno">7.3.3.4. </span><span class="content">The script.getRealms Command</span><a class="self-link" href="#command-script-getRealms"></a></h5>
@@ -4487,22 +4507,20 @@ realm associated with the <a data-link-type="dfn" href="https://dom.spec.whatwg.
    <dl>
     <dt>Command Type
     <dd>
-<pre class="cddl remote-cddl">ScriptGetRealmsCommand = {
+<pre class="cddl remote-cddl">script.GetRealms = {
   method: "script.getRealms",
-  params: ScriptGetRealmsParameters
+  params: script.GetRealmsParameters
 }
 
-ScriptGetRealmsParameters = {
-  ?context: BrowsingContext,
-  ?type: RealmType,
+script.GetRealmsParameters = {
+  ?context: browsingContext.BrowsingContext,
+  ?type: script.RealmType,
 }
 </pre>
     <dt>Result Type
     <dd>
-<pre class="cddl local-cddl">RealmInfoList = [* RealmInfo]
-
-ScriptGetRealmsResult = {
-  realms: RealmInfoList
+<pre class="cddl local-cddl">script.GetRealmsResult = {
+  realms: [*script.RealmInfo]
 }
 </pre>
    </dl>
@@ -4551,7 +4569,7 @@ ScriptGetRealmsResult = {
         <p>If <var>realm info</var> is not null, append <var>realm info</var> to <var>realms</var>.</p>
       </ol>
      <li data-md>
-      <p>Let <var>body</var> be a map matching the <code>GetRealmsResult</code> production,
+      <p>Let <var>body</var> be a map matching the <code>script.GetRealmsResult</code> production,
  with the <code>realms</code> field set to <var>realms</var>.</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⓪">success</a> with data <var>body</var>.</p>
@@ -4565,9 +4583,9 @@ ScriptGetRealmsResult = {
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> ScriptRealmCreatedEvent = {
+<pre class="cddl local-cddl"> script.RealmCreated = {
   method: "script.realmCreated",
-  params: RealmInfo
+  params: script.RealmInfo
 }
 </pre>
    </dl>
@@ -4589,7 +4607,7 @@ object:</p>
       <p>Let <var>related browsing contexts</var> be the result of <a data-link-type="dfn" href="#get-related-browsing-contexts" id="ref-for-get-related-browsing-contexts">get related browsing
  contexts</a> given <var>environment settings</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a map matching the <code>RealmCreatedEvent</code> production, with the <code>params</code> field set to <var>realm info</var>.</p>
+      <p>Let <var>body</var> be a map matching the <code>script.RealmCreated</code> production, with the <code>params</code> field set to <var>realm info</var>.</p>
      <li data-md>
       <p>For each <var>session</var> in the <a data-link-type="dfn" href="#set-of-sessions-for-which-an-event-is-enabled" id="ref-for-set-of-sessions-for-which-an-event-is-enabled①①">set of sessions for which an event is enabled</a> given "<code>script.realmCreated</code>" and <var>related browsing contexts</var>:</p>
       <ol>
@@ -4622,7 +4640,7 @@ object:</p>
        <li data-md>
         <p>Let <var>realm info</var> be the result of <a data-link-type="dfn" href="#get-the-realm-info" id="ref-for-get-the-realm-info②">get the realm info</a> given <var>settings</var></p>
        <li data-md>
-        <p>Let <var>body</var> be a map matching the <code>RealmCreatedEvent</code> production, with the <code>params</code> field set to <var>realm info</var>.</p>
+        <p>Let <var>body</var> be a map matching the <code>script.RealmCreated</code> production, with the <code>params</code> field set to <var>realm info</var>.</p>
        <li data-md>
         <p>If <a data-link-type="dfn" href="#event-is-enabled" id="ref-for-event-is-enabled①">event is enabled</a> given <var>session</var>,
  "<code>script.realmCreated</code>" and <var>related browsing contexts</var>:</p>
@@ -4638,14 +4656,15 @@ object:</p>
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl">RealmDestroyedParameters = {
-  realm: Realm
+<pre class="cddl local-cddl">script.RealmDestroyed = {
+  method: "script.realmDestoyed",
+  params: script.RealmDestroyedParameters
 }
 
-ScriptRealmDestroyedEvent = {
-  method: "script.realmDestoyed",
-  params: RealmDestroyedParameters
+script.RealmDestroyedParameters = {
+  realm: script.Realm
 }
+
 </pre>
    </dl>
     The <a data-link-type="dfn" href="#remote-end-event-trigger" id="ref-for-remote-end-event-trigger①②">remote end event trigger</a> is: 
@@ -4665,9 +4684,9 @@ ScriptRealmDestroyedEvent = {
        <li data-md>
         <p>Let <var>realm id</var> be the <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id⑦">realm id</a> for <var>realm</var>.</p>
        <li data-md>
-        <p>Let <var>params</var> be a map matching the <code>RealmDestroyedParameters</code> production, with the <code>realm</code> field set of <var>realm id</var>.</p>
+        <p>Let <var>params</var> be a map matching the <code>script.RealmDestroyedParameters</code> production, with the <code>realm</code> field set of <var>realm id</var>.</p>
        <li data-md>
-        <p>Let <var>body</var> be a map matching the <code>RealmDestroyedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+        <p>Let <var>body</var> be a map matching the <code>script.RealmDestroyed</code> production, with the <code>params</code> field set to <var>params</var>.</p>
        <li data-md>
         <p>For each <var>session</var> in the <a data-link-type="dfn" href="#set-of-sessions-for-which-an-event-is-enabled" id="ref-for-set-of-sessions-for-which-an-event-is-enabled①②">set of sessions for which an event is enabled</a> given "<code>script.realmDestroyed</code>" and <var>related browsing contexts</var>:</p>
         <ol>
@@ -4682,9 +4701,9 @@ ScriptRealmDestroyedEvent = {
      <li data-md>
       <p>Let <var>realm id</var> be the <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id⑧">realm id</a> for <var>realm</var>.</p>
      <li data-md>
-      <p>Let <var>params</var> be a map matching the <code>RealmDestroyedParameters</code> production, with the <code>realm</code> field set to <var>realm id</var>.</p>
+      <p>Let <var>params</var> be a map matching the <code>script.RealmDestroyedParameters</code> production, with the <code>realm</code> field set to <var>realm id</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a map matching the <code>RealmDestroyedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a map matching the <code>script.RealmDestroyed</code> production, with the <code>params</code> field set to <var>params</var>.</p>
      <li data-md>
       <p>For each <var>session</var> in the <a data-link-type="dfn" href="#set-of-sessions-for-which-an-event-is-enabled" id="ref-for-set-of-sessions-for-which-an-event-is-enabled①③">set of sessions for which an event is enabled</a> given "<code>script.realmDestroyed</code>" and <var>related browsing contexts</var>:</p>
       <ol>
@@ -4706,9 +4725,9 @@ worker</a> algorithm:</p>
      <li data-md>
       <p>Let <var>realm id</var> be the <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id⑨">realm id</a> for <var>realm</var>.</p>
      <li data-md>
-      <p>Let <var>params</var> be a map matching the <code>RealmDestroyedParameters</code> production, with the <code>realm</code> field set of <var>realm id</var>.</p>
+      <p>Let <var>params</var> be a map matching the <code>script.RealmDestroyedParameters</code> production, with the <code>realm</code> field set of <var>realm id</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a map matching the <code>RealmDestroyedEvent</code> production, with the <code>params</code> field set to <var>params</var>.</p>
+      <p>Let <var>body</var> be a map matching the <code>script.RealmDestroyed</code> production, with the <code>params</code> field set to <var>params</var>.</p>
     </ol>
    </div>
    <h3 class="heading settled" data-level="7.4" id="module-log"><span class="secno">7.4. </span><span class="content">The log Module</span><a class="self-link" href="#module-log"></a></h3>
@@ -4760,57 +4779,57 @@ level context.</p>
    <h4 class="heading settled" data-level="7.4.1" id="module-log-definition"><span class="secno">7.4.1. </span><span class="content">Definition</span><a class="self-link" href="#module-log-definition"></a></h4>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑨">Local end definition</a></p>
 <pre class="cddl local-cddl">LogEvent = (
-  LogEntryAddedEvent
+  log.EntryAdded
 )
 </pre>
    <h4 class="heading settled" data-level="7.4.2" id="module-log-types"><span class="secno">7.4.2. </span><span class="content">Types</span><a class="self-link" href="#module-log-types"></a></h4>
    <h5 class="heading settled" data-level="7.4.2.1" id="types-log-logentry"><span class="secno">7.4.2.1. </span><span class="content">log.LogEntry</span><a class="self-link" href="#types-log-logentry"></a></h5>
    <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑤⓪">Local end definition</a></p>
-<pre class="cddl local-cddl">LogLevel = "debug" / "info" / "warn" / "error"
+<pre class="cddl local-cddl">log.Level = "debug" / "info" / "warn" / "error"
 
-LogEntry = (
-  GenericLogEntry //
-  ConsoleLogEntry //
-  JavascriptLogEntry
+log.Entry = (
+  log.GenericLogEntry //
+  log.ConsoleLogEntry //
+  log.JavascriptLogEntry
 )
 
-BaseLogEntry = {
-  level: LogLevel,
-  source: Source,
+log.BaseLogEntry = {
+  level: log.Level,
+  source: script.Source,
   text: text / null,
   timestamp: js-uint,
-  ?stackTrace: StackTrace,
+  ?stackTrace: script.StackTrace,
 }
 
-GenericLogEntry = {
-  BaseLogEntry,
+log.GenericLogEntry = {
+  log.BaseLogEntry,
   type: text,
 }
 
-ConsoleLogEntry = {
-  BaseLogEntry,
+log.ConsoleLogEntry = {
+  log.BaseLogEntry,
   type: "console",
   method: text,
   args: [*RemoteValue],
 }
 
-JavascriptLogEntry = {
-  BaseLogEntry,
+log.JavascriptLogEntry = {
+  log.BaseLogEntry,
   type: "javascript",
 }
 </pre>
-   <p>Each log event is represented by a <code>LogEntry</code> object. This has a <code>type</code> property which represents the type of log entry added, a <code>level</code> property representing severity, a <code>source</code> property representing the origin of the log entry, a <code>text</code> property
+   <p>Each log event is represented by a <code>log.Entry</code> object. This has a <code>type</code> property which represents the type of log entry added, a <code>level</code> property representing severity, a <code>source</code> property representing the origin of the log entry, a <code>text</code> property
 with the log message string itself, and a <code>timestamp</code> property
-corresponding to the time the log entry was generated. Specific variants of the <code>LogEntry</code> are used to represent logs from different sources, and
+corresponding to the time the log entry was generated. Specific variants of the <code>log.Entry</code> are used to represent logs from different sources, and
 provide additional fields specific to the entry type.</p>
    <h4 class="heading settled" data-level="7.4.3" id="module-log-events"><span class="secno">7.4.3. </span><span class="content">Events</span><a class="self-link" href="#module-log-events"></a></h4>
    <h5 class="heading settled" data-level="7.4.3.1" id="event-log-entryAdded"><span class="secno">7.4.3.1. </span><span class="content">The log.entryAdded Event</span><a class="self-link" href="#event-log-entryAdded"></a></h5>
    <dl>
     <dt>Event Type
     <dd>
-<pre class="cddl local-cddl"> LogEntryAddedEvent = {
+<pre class="cddl local-cddl"> log.EntryAdded = {
   method: "log.entryAdded",
-  params: LogEntry,
+  params: log.Entry,
 }
 </pre>
    </dl>
@@ -4859,12 +4878,12 @@ provide additional fields specific to the entry type.</p>
  "<code>trace</code>", or "<code>warn</code>", let <var>stack</var> be the <a data-link-type="dfn" href="#current-stack-trace" id="ref-for-current-stack-trace">current
  stack trace</a>. Otherwise let <var>stack</var> be null.</p>
      <li data-md>
-      <p>Let <var>entry</var> be a map matching the <code>ConsoleLogEntry</code> production,
+      <p>Let <var>entry</var> be a map matching the <code>log.ConsoleLogEntry</code> production,
  with the the <code>level</code> field set to <var>level</var>, the <code>text</code> field set to <var>text</var>, the <code>timestamp</code> field set to <var>timestamp</var>, the <code>stackTrace</code> field set to <var>stack</var> if <var>stack</var> is not null, or
  omitted otherwise, the <var>method</var> field set to <var>method</var>, the <code>source</code> field set to <var>source</var> and the <code>args</code> field set to <var>serialized
  args</var>.</p>
      <li data-md>
-      <p>Let <var>body</var> be a map matching the <code>LogEntryAddedEvent</code> production, with
+      <p>Let <var>body</var> be a map matching the <code>log.EntryAdded</code> production, with
  the <code>params</code> field set to <var>entry</var>.</p>
      <li data-md>
       <p>Let <var>settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#current-settings-object" id="ref-for-current-settings-object">current settings object</a></p>
@@ -4892,7 +4911,7 @@ provide additional fields specific to the entry type.</p>
      <li data-md>
       <p>Let <var>source</var> be the result of <a data-link-type="dfn" href="#get-the-source" id="ref-for-get-the-source①">get the source</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#current-realm" id="ref-for-current-realm②">current Realm Record</a>.</p>
      <li data-md>
-      <p>Let <var>entry</var> be a map matching the <code>JavascriptLogEntry</code> production,
+      <p>Let <var>entry</var> be a map matching the <code>log.JavascriptLogEntry</code> production,
  with <code>level</code> set to "<code>error</code>", <code>text</code> set to <var>message</var>, <code>source</code> set to <var>source</var>, and the <code>timestamp</code> field set to <var>timestamp</var>.</p>
      <li data-md>
       <p>Let <var>related browsing contexts</var> be the result of <a data-link-type="dfn" href="#get-related-browsing-contexts" id="ref-for-get-related-browsing-contexts③">get related browsing
@@ -5049,7 +5068,7 @@ end:</p>
    <li><a href="#stackframe-function">function</a><span>, in § 7.3.2.6</span>
    <li><a href="#get-a-browsing-context">get a browsing context</a><span>, in § 7.2.2.1</span>
    <li><a href="#get-a-realm">get a realm</a><span>, in § 7.3.2.2</span>
-   <li><a href="#get-a-realm-from-a-target">get a realm from a target</a><span>, in § 7.3.2.9</span>
+   <li><a href="#get-a-realm-from-a-target">get a realm from a target</a><span>, in § 7.3.2.10</span>
    <li><a href="#get-a-sandbox-name">get a sandbox name</a><span>, in § 5.1</span>
    <li><a href="#get-a-session-id-for-a-websocket-resource">get a session ID for a WebSocket resource</a><span>, in § 4</span>
    <li><a href="#get-exception-details">get exception details</a><span>, in § 7.3.2.1</span>
@@ -5060,7 +5079,7 @@ end:</p>
    <li><a href="#get-the-navigation-info">get the navigation info</a><span>, in § 7.2.2.4</span>
    <li><a href="#get-the-parent-browsing-context">get the parent browsing context</a><span>, in § 7.2.2.2</span>
    <li><a href="#get-the-realm-info">get the realm info</a><span>, in § 7.3.2.3</span>
-   <li><a href="#get-the-source">get the source</a><span>, in § 7.3.2.8</span>
+   <li><a href="#get-the-source">get the source</a><span>, in § 7.3.2.9</span>
    <li><a href="#event-global-event-set">global event set</a><span>, in § 3.5</span>
    <li><a href="#handle-a-connection-closing">handle a connection closing</a><span>, in § 4</span>
    <li><a href="#handle-an-incoming-message">handle an incoming message</a><span>, in § 4</span>
@@ -5171,7 +5190,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-document">
    <a href="https://dom.spec.whatwg.org/#document">https://dom.spec.whatwg.org/#document</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-document">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-document">7.2.2.2. The browsingContext.Info Type</a>
     <li><a href="#ref-for-document①">8.1. HTML</a>
    </ul>
   </aside>
@@ -5240,7 +5259,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-concept-document-url">
    <a href="https://dom.spec.whatwg.org/#concept-document-url">https://dom.spec.whatwg.org/#concept-document-url</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-document-url">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-concept-document-url">7.2.2.2. The browsingContext.Info Type</a>
     <li><a href="#ref-for-concept-document-url①">7.2.3.7. The browsingContext.reload Command</a>
    </ul>
   </aside>
@@ -5392,7 +5411,7 @@ end:</p>
    <ul>
     <li><a href="#ref-for-sec-map-objects">6.2.2.1. Deserialization</a>
     <li><a href="#ref-for-sec-map-objects①">7.1.3.1. The session.status Command</a>
-    <li><a href="#ref-for-sec-map-objects②">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-sec-map-objects③">(2)</a> <a href="#ref-for-sec-map-objects④">(3)</a> <a href="#ref-for-sec-map-objects⑤">(4)</a>
+    <li><a href="#ref-for-sec-map-objects②">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-sec-map-objects③">(2)</a> <a href="#ref-for-sec-map-objects④">(3)</a> <a href="#ref-for-sec-map-objects⑤">(4)</a>
     <li><a href="#ref-for-sec-map-objects⑥">7.2.2.4. The browsingContext.NavigationInfo Type</a>
     <li><a href="#ref-for-sec-map-objects⑦">7.2.3.1. The browsingContext.captureScreenshot Command</a>
     <li><a href="#ref-for-sec-map-objects⑧">7.2.3.3. The browsingContext.create Command</a>
@@ -5409,7 +5428,7 @@ end:</p>
     <li><a href="#ref-for-sec-map-objects①⑨">7.2.4.10. The browsingContext.userPromptClosed Event</a> <a href="#ref-for-sec-map-objects②⓪">(2)</a>
     <li><a href="#ref-for-sec-map-objects②①">7.2.4.11. The browsingContext.userPromptOpened Event</a> <a href="#ref-for-sec-map-objects②②">(2)</a>
     <li><a href="#ref-for-sec-map-objects②③">7.3.2.1. The script.ExceptionDetails type</a>
-    <li><a href="#ref-for-sec-map-objects②④">7.3.2.8. The script.Source type</a>
+    <li><a href="#ref-for-sec-map-objects②④">7.3.2.9. The script.Source type</a>
     <li><a href="#ref-for-sec-map-objects②⑤">7.4. The log Module</a>
     <li><a href="#ref-for-sec-map-objects②⑥">7.4.3.1. The log.entryAdded Event</a>
    </ul>
@@ -5586,25 +5605,25 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-nav-bc">
    <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#nav-bc">https://html.spec.whatwg.org/multipage/document-sequences.html#nav-bc</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-nav-bc">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-nav-bc①">(2)</a>
+    <li><a href="#ref-for-nav-bc">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-nav-bc①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-active-document">
    <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#active-document">https://html.spec.whatwg.org/multipage/document-sequences.html#active-document</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-active-document">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-active-document①">(2)</a> <a href="#ref-for-active-document②">(3)</a> <a href="#ref-for-active-document③">(4)</a> <a href="#ref-for-active-document④">(5)</a>
+    <li><a href="#ref-for-active-document">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-active-document①">(2)</a> <a href="#ref-for-active-document②">(3)</a> <a href="#ref-for-active-document③">(4)</a> <a href="#ref-for-active-document④">(5)</a>
     <li><a href="#ref-for-active-document⑤">7.2.3.1. The browsingContext.captureScreenshot Command</a>
     <li><a href="#ref-for-active-document⑥">7.2.3.6. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-active-document⑦">7.2.3.7. The browsingContext.reload Command</a>
     <li><a href="#ref-for-active-document⑧">7.2.4.1. The browsingContext.contextCreated Event</a>
-    <li><a href="#ref-for-active-document⑨">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-active-document⑨">7.3.2.10. The script.Target type</a>
     <li><a href="#ref-for-active-document①⓪">7.3.3.4. The script.getRealms Command</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-nav-document">
    <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#nav-document">https://html.spec.whatwg.org/multipage/document-sequences.html#nav-document</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-nav-document">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-nav-document①">(2)</a> <a href="#ref-for-nav-document②">(3)</a>
+    <li><a href="#ref-for-nav-document">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-nav-document①">(2)</a> <a href="#ref-for-nav-document②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-active-window">
@@ -5630,8 +5649,8 @@ end:</p>
    <ul>
     <li><a href="#ref-for-concept-document-window">4. Transport</a>
     <li><a href="#ref-for-concept-document-window①">7.3.2.3. The script.RealmInfo type</a> <a href="#ref-for-concept-document-window②">(2)</a>
-    <li><a href="#ref-for-concept-document-window③">7.3.2.8. The script.Source type</a> <a href="#ref-for-concept-document-window④">(2)</a>
-    <li><a href="#ref-for-concept-document-window⑤">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-concept-document-window③">7.3.2.9. The script.Source type</a> <a href="#ref-for-concept-document-window④">(2)</a>
+    <li><a href="#ref-for-concept-document-window⑤">7.3.2.10. The script.Target type</a>
     <li><a href="#ref-for-concept-document-window⑥">7.3.3.4. The script.getRealms Command</a>
     <li><a href="#ref-for-concept-document-window⑦">7.3.4.1. The script.realmCreated Event</a> <a href="#ref-for-concept-document-window⑧">(2)</a>
     <li><a href="#ref-for-concept-document-window⑨">7.3.4.2. The script.realmDestroyed Event</a>
@@ -5659,7 +5678,7 @@ end:</p>
    <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#concept-document-bc">https://html.spec.whatwg.org/multipage/document-sequences.html#concept-document-bc</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-concept-document-bc">4. Transport</a> <a href="#ref-for-concept-document-bc①">(2)</a>
-    <li><a href="#ref-for-concept-document-bc②">7.3.2.8. The script.Source type</a>
+    <li><a href="#ref-for-concept-document-bc②">7.3.2.9. The script.Source type</a>
     <li><a href="#ref-for-concept-document-bc③">7.3.4.1. The script.realmCreated Event</a>
     <li><a href="#ref-for-concept-document-bc④">7.3.4.2. The script.realmDestroyed Event</a>
    </ul>
@@ -5667,7 +5686,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-child-navigable">
    <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#child-navigable">https://html.spec.whatwg.org/multipage/document-sequences.html#child-navigable</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-child-navigable">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-child-navigable">7.2.2.2. The browsingContext.Info Type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-clean-up-after-running-script">
@@ -5717,8 +5736,8 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-environment-settings-object">
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object">https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-environment-settings-object">7.3.2.8. The script.Source type</a>
-    <li><a href="#ref-for-environment-settings-object①">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-environment-settings-object">7.3.2.9. The script.Source type</a>
+    <li><a href="#ref-for-environment-settings-object①">7.3.2.10. The script.Target type</a>
     <li><a href="#ref-for-environment-settings-object②">7.3.3.2. The script.callFunction Command</a>
     <li><a href="#ref-for-environment-settings-object③">7.3.3.3. The script.evaluate Command</a>
     <li><a href="#ref-for-environment-settings-object④">7.3.3.4. The script.getRealms Command</a>
@@ -5762,7 +5781,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-history-handling-behavior">
    <a href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#history-handling-behavior">https://html.spec.whatwg.org/multipage/browsing-the-web.html#history-handling-behavior</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-history-handling-behavior">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-history-handling-behavior">7.2.2.2. The browsingContext.Info Type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-in-parallel">
@@ -5774,20 +5793,20 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-navigable">
    <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#navigable">https://html.spec.whatwg.org/multipage/document-sequences.html#navigable</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-navigable">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-navigable①">(2)</a> <a href="#ref-for-navigable②">(3)</a>
+    <li><a href="#ref-for-navigable">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-navigable①">(2)</a> <a href="#ref-for-navigable②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-navigate">
    <a href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate">https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigate</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-navigate">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-navigate">7.2.2.2. The browsingContext.Info Type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-navigation-id">
    <a href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigation-id">https://html.spec.whatwg.org/multipage/browsing-the-web.html#navigation-id</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-navigation-id">7.2. The browsingContext Module</a>
-    <li><a href="#ref-for-navigation-id①">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-navigation-id①">7.2.2.2. The browsingContext.Info Type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-WorkerGlobalScope-owner-set">
@@ -5800,7 +5819,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-nav-parent">
    <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#nav-parent">https://html.spec.whatwg.org/multipage/document-sequences.html#nav-parent</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-nav-parent">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-nav-parent">7.2.2.2. The browsingContext.Info Type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-prepare-to-run-script">
@@ -5826,8 +5845,8 @@ end:</p>
    <a href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context">https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-realm-execution-context">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-realm-execution-context①">7.3.2.8. The script.Source type</a>
-    <li><a href="#ref-for-realm-execution-context②">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-realm-execution-context①">7.3.2.9. The script.Source type</a>
+    <li><a href="#ref-for-realm-execution-context②">7.3.2.10. The script.Target type</a>
     <li><a href="#ref-for-realm-execution-context③">7.3.3.2. The script.callFunction Command</a>
     <li><a href="#ref-for-realm-execution-context④">7.3.3.3. The script.evaluate Command</a>
     <li><a href="#ref-for-realm-execution-context⑤">7.3.4.2. The script.realmDestroyed Event</a>
@@ -5838,7 +5857,7 @@ end:</p>
    <ul>
     <li><a href="#ref-for-concept-relevant-global">4. Transport</a> <a href="#ref-for-concept-relevant-global①">(2)</a>
     <li><a href="#ref-for-concept-relevant-global②">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-concept-relevant-global③">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-concept-relevant-global③">7.3.2.10. The script.Target type</a>
     <li><a href="#ref-for-concept-relevant-global④">7.3.3.4. The script.getRealms Command</a>
     <li><a href="#ref-for-concept-relevant-global⑤">7.3.4.1. The script.realmCreated Event</a> <a href="#ref-for-concept-relevant-global⑥">(2)</a>
     <li><a href="#ref-for-concept-relevant-global⑦">7.3.4.2. The script.realmDestroyed Event</a>
@@ -6156,7 +6175,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-concept-url-serializer">
    <a href="https://url.spec.whatwg.org/#concept-url-serializer">https://url.spec.whatwg.org/#concept-url-serializer</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-concept-url-serializer">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-concept-url-serializer①">(2)</a> <a href="#ref-for-concept-url-serializer②">(3)</a> <a href="#ref-for-concept-url-serializer③">(4)</a>
+    <li><a href="#ref-for-concept-url-serializer">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-concept-url-serializer①">(2)</a> <a href="#ref-for-concept-url-serializer②">(3)</a> <a href="#ref-for-concept-url-serializer③">(4)</a>
     <li><a href="#ref-for-concept-url-serializer④">7.2.2.4. The browsingContext.NavigationInfo Type</a>
     <li><a href="#ref-for-concept-url-serializer⑤">7.3.2.6. The script.StackTrace type</a>
    </ul>
@@ -6229,7 +6248,7 @@ end:</p>
     <li><a href="#ref-for-dfn-errors①③">7.1.1. Definition</a> <a href="#ref-for-dfn-errors①④">(2)</a>
     <li><a href="#ref-for-dfn-errors①⑤">7.1.3.2. The session.new Command</a> <a href="#ref-for-dfn-errors①⑥">(2)</a>
     <li><a href="#ref-for-dfn-errors①⑦">7.2.2.1. The browsingContext.BrowsingContext Type</a>
-    <li><a href="#ref-for-dfn-errors①⑧">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-errors①⑨">(2)</a>
+    <li><a href="#ref-for-dfn-errors①⑧">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-dfn-errors①⑨">(2)</a>
     <li><a href="#ref-for-dfn-errors②⓪">7.2.3.1. The browsingContext.captureScreenshot Command</a>
     <li><a href="#ref-for-dfn-errors②①">7.2.3.2. The browsingContext.close Command</a>
     <li><a href="#ref-for-dfn-errors②②">7.2.3.3. The browsingContext.create Command</a> <a href="#ref-for-dfn-errors②③">(2)</a>
@@ -6252,7 +6271,7 @@ end:</p>
     <li><a href="#ref-for-dfn-error-code⑨">6.2.2.1. Deserialization</a> <a href="#ref-for-dfn-error-code①⓪">(2)</a> <a href="#ref-for-dfn-error-code①①">(3)</a> <a href="#ref-for-dfn-error-code①②">(4)</a>
     <li><a href="#ref-for-dfn-error-code①③">7.1.1. Definition</a> <a href="#ref-for-dfn-error-code①④">(2)</a>
     <li><a href="#ref-for-dfn-error-code①⑤">7.2.2.1. The browsingContext.BrowsingContext Type</a>
-    <li><a href="#ref-for-dfn-error-code①⑥">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-error-code①⑦">(2)</a>
+    <li><a href="#ref-for-dfn-error-code①⑥">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-dfn-error-code①⑦">(2)</a>
     <li><a href="#ref-for-dfn-error-code①⑧">7.2.3.1. The browsingContext.captureScreenshot Command</a>
     <li><a href="#ref-for-dfn-error-code①⑨">7.2.3.2. The browsingContext.close Command</a>
     <li><a href="#ref-for-dfn-error-code②⓪">7.2.3.3. The browsingContext.create Command</a> <a href="#ref-for-dfn-error-code②①">(2)</a>
@@ -6415,13 +6434,13 @@ end:</p>
     <li><a href="#ref-for-dfn-success②⑤">7.1.3.3. The session.subscribe Command</a>
     <li><a href="#ref-for-dfn-success②⑥">7.1.3.4. The session.unsubscribe Command</a>
     <li><a href="#ref-for-dfn-success②⑦">7.2.2.1. The browsingContext.BrowsingContext Type</a> <a href="#ref-for-dfn-success②⑧">(2)</a>
-    <li><a href="#ref-for-dfn-success②⑨">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-success③⓪">(2)</a> <a href="#ref-for-dfn-success③①">(3)</a>
+    <li><a href="#ref-for-dfn-success②⑨">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-dfn-success③⓪">(2)</a> <a href="#ref-for-dfn-success③①">(3)</a>
     <li><a href="#ref-for-dfn-success③②">7.2.3.1. The browsingContext.captureScreenshot Command</a>
     <li><a href="#ref-for-dfn-success③③">7.2.3.3. The browsingContext.create Command</a>
     <li><a href="#ref-for-dfn-success③④">7.2.3.4. The browsingContext.getTree Command</a>
     <li><a href="#ref-for-dfn-success③⑤">7.2.3.5. The browsingContext.handleUserPrompt Command</a>
     <li><a href="#ref-for-dfn-success③⑥">7.3.2.2. The script.Realm type</a> <a href="#ref-for-dfn-success③⑦">(2)</a>
-    <li><a href="#ref-for-dfn-success③⑧">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-dfn-success③⑧">7.3.2.10. The script.Target type</a>
     <li><a href="#ref-for-dfn-success③⑨">7.3.3.2. The script.callFunction Command</a>
     <li><a href="#ref-for-dfn-success④⓪">7.3.3.4. The script.getRealms Command</a>
    </ul>
@@ -6441,7 +6460,7 @@ end:</p>
     <li><a href="#ref-for-dfn-try①⑨">7.2.3.5. The browsingContext.handleUserPrompt Command</a>
     <li><a href="#ref-for-dfn-try②⓪">7.2.3.6. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-try②①">7.2.3.7. The browsingContext.reload Command</a>
-    <li><a href="#ref-for-dfn-try②②">7.3.2.9. The script.Target type</a> <a href="#ref-for-dfn-try②③">(2)</a>
+    <li><a href="#ref-for-dfn-try②②">7.3.2.10. The script.Target type</a> <a href="#ref-for-dfn-try②③">(2)</a>
     <li><a href="#ref-for-dfn-try②④">7.3.3.1. The script.disown Command</a>
     <li><a href="#ref-for-dfn-try②⑤">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-dfn-try②⑥">(2)</a> <a href="#ref-for-dfn-try②⑦">(3)</a> <a href="#ref-for-dfn-try②⑧">(4)</a>
     <li><a href="#ref-for-dfn-try②⑨">7.3.3.3. The script.evaluate Command</a>
@@ -6463,7 +6482,7 @@ end:</p>
     <li><a href="#ref-for-dfn-try①⑨">7.2.3.5. The browsingContext.handleUserPrompt Command</a>
     <li><a href="#ref-for-dfn-try②⓪">7.2.3.6. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-dfn-try②①">7.2.3.7. The browsingContext.reload Command</a>
-    <li><a href="#ref-for-dfn-try②②">7.3.2.9. The script.Target type</a> <a href="#ref-for-dfn-try②③">(2)</a>
+    <li><a href="#ref-for-dfn-try②②">7.3.2.10. The script.Target type</a> <a href="#ref-for-dfn-try②③">(2)</a>
     <li><a href="#ref-for-dfn-try②④">7.3.3.1. The script.disown Command</a>
     <li><a href="#ref-for-dfn-try②⑤">7.3.3.2. The script.callFunction Command</a> <a href="#ref-for-dfn-try②⑥">(2)</a> <a href="#ref-for-dfn-try②⑦">(3)</a> <a href="#ref-for-dfn-try②⑧">(4)</a>
     <li><a href="#ref-for-dfn-try②⑨">7.3.3.3. The script.evaluate Command</a>
@@ -6479,7 +6498,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-dfn-unknown-error">
    <a href="https://w3c.github.io/webdriver/#dfn-unknown-error">https://w3c.github.io/webdriver/#dfn-unknown-error</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-unknown-error">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-dfn-unknown-error①">(2)</a>
+    <li><a href="#ref-for-dfn-unknown-error">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-dfn-unknown-error①">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-dfn-unsupported-operation">
@@ -6875,7 +6894,7 @@ to express as a patch to the specification since it requires changing multiple p
    <b><a href="#awaits">#awaits</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-awaits">2. Infrastructure</a>
-    <li><a href="#ref-for-awaits①">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-awaits②">(2)</a>
+    <li><a href="#ref-for-awaits①">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-awaits②">(2)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="resume">
@@ -6899,15 +6918,15 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-remote-end-definition⑥">4. Transport</a>
     <li><a href="#ref-for-remote-end-definition⑦">6.2.3. Remote Value</a>
     <li><a href="#ref-for-remote-end-definition⑧">7.1.1. Definition</a>
-    <li><a href="#ref-for-remote-end-definition⑨">7.1.2.1. The session.CapabilitiesRequest Type</a>
+    <li><a href="#ref-for-remote-end-definition⑨">7.1.2.2. The session.CapabilityRequest Type</a>
     <li><a href="#ref-for-remote-end-definition①⓪">7.2.1. Definition</a>
     <li><a href="#ref-for-remote-end-definition①①">7.2.2.1. The browsingContext.BrowsingContext Type</a>
     <li><a href="#ref-for-remote-end-definition①②">7.2.2.3. The browsingContext.Navigation Type</a>
     <li><a href="#ref-for-remote-end-definition①③">7.3.1. Definition</a>
     <li><a href="#ref-for-remote-end-definition①④">7.3.2.1. The script.ExceptionDetails type</a>
     <li><a href="#ref-for-remote-end-definition①⑤">7.3.2.2. The script.Realm type</a>
-    <li><a href="#ref-for-remote-end-definition①⑥">7.3.2.7. The script.ScriptEvaluateResult type</a>
-    <li><a href="#ref-for-remote-end-definition①⑦">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-remote-end-definition①⑥">7.3.2.7. The script.EvaluateResult type</a>
+    <li><a href="#ref-for-remote-end-definition①⑦">7.3.2.10. The script.Target type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="local-end-definition">
@@ -6922,10 +6941,10 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-local-end-definition①⑥">6.2.3. Remote Value</a>
     <li><a href="#ref-for-local-end-definition①⑦">6.2.3.1. Serialization</a> <a href="#ref-for-local-end-definition①⑧">(2)</a> <a href="#ref-for-local-end-definition①⑨">(3)</a> <a href="#ref-for-local-end-definition②⓪">(4)</a> <a href="#ref-for-local-end-definition②①">(5)</a> <a href="#ref-for-local-end-definition②②">(6)</a> <a href="#ref-for-local-end-definition②③">(7)</a> <a href="#ref-for-local-end-definition②④">(8)</a> <a href="#ref-for-local-end-definition②⑤">(9)</a> <a href="#ref-for-local-end-definition②⑥">(10)</a> <a href="#ref-for-local-end-definition②⑦">(11)</a> <a href="#ref-for-local-end-definition②⑧">(12)</a> <a href="#ref-for-local-end-definition②⑨">(13)</a> <a href="#ref-for-local-end-definition③⓪">(14)</a> <a href="#ref-for-local-end-definition③①">(15)</a> <a href="#ref-for-local-end-definition③②">(16)</a> <a href="#ref-for-local-end-definition③③">(17)</a> <a href="#ref-for-local-end-definition③④">(18)</a>
     <li><a href="#ref-for-local-end-definition③⑤">7.1.1. Definition</a>
-    <li><a href="#ref-for-local-end-definition③⑥">7.1.2.1. The session.CapabilitiesRequest Type</a>
+    <li><a href="#ref-for-local-end-definition③⑥">7.1.2.2. The session.CapabilityRequest Type</a>
     <li><a href="#ref-for-local-end-definition③⑦">7.2.1. Definition</a>
     <li><a href="#ref-for-local-end-definition③⑧">7.2.2.1. The browsingContext.BrowsingContext Type</a>
-    <li><a href="#ref-for-local-end-definition③⑨">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-local-end-definition③⑨">7.2.2.2. The browsingContext.Info Type</a>
     <li><a href="#ref-for-local-end-definition④⓪">7.2.2.3. The browsingContext.Navigation Type</a>
     <li><a href="#ref-for-local-end-definition④①">7.2.2.4. The browsingContext.NavigationInfo Type</a>
     <li><a href="#ref-for-local-end-definition④②">7.3.1. Definition</a>
@@ -6933,8 +6952,8 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-local-end-definition④④">7.3.2.2. The script.Realm type</a>
     <li><a href="#ref-for-local-end-definition④⑤">7.3.2.3. The script.RealmInfo type</a>
     <li><a href="#ref-for-local-end-definition④⑥">7.3.2.4. The script.RealmType type</a>
-    <li><a href="#ref-for-local-end-definition④⑦">7.3.2.7. The script.ScriptEvaluateResult type</a>
-    <li><a href="#ref-for-local-end-definition④⑧">7.3.2.8. The script.Source type</a>
+    <li><a href="#ref-for-local-end-definition④⑦">7.3.2.7. The script.EvaluateResult type</a>
+    <li><a href="#ref-for-local-end-definition④⑧">7.3.2.9. The script.Source type</a>
     <li><a href="#ref-for-local-end-definition④⑨">7.4.1. Definition</a>
     <li><a href="#ref-for-local-end-definition⑤⓪">7.4.2.1. log.LogEntry</a>
    </ul>
@@ -7280,7 +7299,7 @@ to express as a patch to the specification since it requires changing multiple p
   <aside class="dfn-panel" data-for="get-or-create-a-sandbox-realm">
    <b><a href="#get-or-create-a-sandbox-realm">#get-or-create-a-sandbox-realm</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-get-or-create-a-sandbox-realm">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-get-or-create-a-sandbox-realm">7.3.2.10. The script.Target type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="create-a-sandbox-realm">
@@ -7414,14 +7433,14 @@ to express as a patch to the specification since it requires changing multiple p
    <b><a href="#browsing-context-id">#browsing-context-id</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-browsing-context-id">7.2.2.1. The browsingContext.BrowsingContext Type</a> <a href="#ref-for-browsing-context-id①">(2)</a>
-    <li><a href="#ref-for-browsing-context-id②">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a> <a href="#ref-for-browsing-context-id③">(2)</a>
+    <li><a href="#ref-for-browsing-context-id②">7.2.2.2. The browsingContext.Info Type</a> <a href="#ref-for-browsing-context-id③">(2)</a>
     <li><a href="#ref-for-browsing-context-id④">7.2.2.4. The browsingContext.NavigationInfo Type</a>
     <li><a href="#ref-for-browsing-context-id⑤">7.2.3.3. The browsingContext.create Command</a> <a href="#ref-for-browsing-context-id⑥">(2)</a>
     <li><a href="#ref-for-browsing-context-id⑦">7.2.4.10. The browsingContext.userPromptClosed Event</a>
     <li><a href="#ref-for-browsing-context-id⑧">7.2.4.11. The browsingContext.userPromptOpened Event</a>
     <li><a href="#ref-for-browsing-context-id⑨">7.3.2.2. The script.Realm type</a>
     <li><a href="#ref-for-browsing-context-id①⓪">7.3.2.3. The script.RealmInfo type</a> <a href="#ref-for-browsing-context-id①①">(2)</a>
-    <li><a href="#ref-for-browsing-context-id①②">7.3.2.8. The script.Source type</a>
+    <li><a href="#ref-for-browsing-context-id①②">7.3.2.9. The script.Source type</a>
     <li><a href="#ref-for-browsing-context-id①③">7.4. The log Module</a> <a href="#ref-for-browsing-context-id①④">(2)</a>
    </ul>
   </aside>
@@ -7436,7 +7455,7 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-get-a-browsing-context⑤">7.2.3.5. The browsingContext.handleUserPrompt Command</a>
     <li><a href="#ref-for-get-a-browsing-context⑥">7.2.3.6. The browsingContext.navigate Command</a>
     <li><a href="#ref-for-get-a-browsing-context⑦">7.2.3.7. The browsingContext.reload Command</a>
-    <li><a href="#ref-for-get-a-browsing-context⑧">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-get-a-browsing-context⑧">7.3.2.10. The script.Target type</a>
     <li><a href="#ref-for-get-a-browsing-context⑨">7.3.3.4. The script.getRealms Command</a>
     <li><a href="#ref-for-get-a-browsing-context①⓪">7.4.3.1. The log.entryAdded Event</a>
    </ul>
@@ -7444,20 +7463,20 @@ to express as a patch to the specification since it requires changing multiple p
   <aside class="dfn-panel" data-for="get-the-parent-browsing-context">
    <b><a href="#get-the-parent-browsing-context">#get-the-parent-browsing-context</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-get-the-parent-browsing-context">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-get-the-parent-browsing-context">7.2.2.2. The browsingContext.Info Type</a>
     <li><a href="#ref-for-get-the-parent-browsing-context①">7.2.4.2. The browsingContext.contextDestroyed Event</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-the-child-browsing-contexts">
    <b><a href="#get-the-child-browsing-contexts">#get-the-child-browsing-contexts</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-get-the-child-browsing-contexts">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-get-the-child-browsing-contexts">7.2.2.2. The browsingContext.Info Type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-the-browsing-context-info">
    <b><a href="#get-the-browsing-context-info">#get-the-browsing-context-info</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-get-the-browsing-context-info">7.2.2.2. The browsingContext.BrowsingContextInfo Type</a>
+    <li><a href="#ref-for-get-the-browsing-context-info">7.2.2.2. The browsingContext.Info Type</a>
     <li><a href="#ref-for-get-the-browsing-context-info①">7.2.3.4. The browsingContext.getTree Command</a>
     <li><a href="#ref-for-get-the-browsing-context-info②">7.2.4.1. The browsingContext.contextCreated Event</a>
     <li><a href="#ref-for-get-the-browsing-context-info③">7.2.4.2. The browsingContext.contextDestroyed Event</a>
@@ -7506,7 +7525,7 @@ to express as a patch to the specification since it requires changing multiple p
    <ul>
     <li><a href="#ref-for-realm-id">7.3.2.2. The script.Realm type</a> <a href="#ref-for-realm-id①">(2)</a> <a href="#ref-for-realm-id②">(3)</a>
     <li><a href="#ref-for-realm-id③">7.3.2.3. The script.RealmInfo type</a>
-    <li><a href="#ref-for-realm-id④">7.3.2.8. The script.Source type</a>
+    <li><a href="#ref-for-realm-id④">7.3.2.9. The script.Source type</a>
     <li><a href="#ref-for-realm-id⑤">7.3.3.2. The script.callFunction Command</a>
     <li><a href="#ref-for-realm-id⑥">7.3.3.3. The script.evaluate Command</a>
     <li><a href="#ref-for-realm-id⑦">7.3.4.2. The script.realmDestroyed Event</a> <a href="#ref-for-realm-id⑧">(2)</a> <a href="#ref-for-realm-id⑨">(3)</a>
@@ -7516,7 +7535,7 @@ to express as a patch to the specification since it requires changing multiple p
   <aside class="dfn-panel" data-for="get-a-realm">
    <b><a href="#get-a-realm">#get-a-realm</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-get-a-realm">7.3.2.9. The script.Target type</a>
+    <li><a href="#ref-for-get-a-realm">7.3.2.10. The script.Target type</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="get-the-realm-info">
