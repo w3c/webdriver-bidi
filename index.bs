@@ -46,10 +46,16 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
     text: getting a property; url: dfn-get-a-property
+    text: get a known connected element; url: dfn-get-a-known-connected-element
+    text: get a known shadow root; url: dfn-get-a-known-shadow-root
+    text: get or create a shadow root reference; url: dfn-get-or-create-a-shadow-root-reference
+    text: get or create a web element reference; url: dfn-get-or-create-a-web-element-reference
     text: http session; url: dfn-http-session
     text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
     text: invalid session id; url: dfn-invalid-session-id
+    text: list of known elements; url: dfn-list-of-known-elements
+    text: list of known shadow roots; url: dfn-list-of-known-shadow-roots
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
     text: maximum active sessions; url: dfn-maximum-active-sessions
@@ -1108,7 +1114,7 @@ Issue: Define how this works.
 Each EMCAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
 strong map from handle ids to their corresponding objects.
 
-Each {{Window}} has a corresponding <dfn>platform objects map</dfn>. This is a strong
+Each {{Window}} has a corresponding <dfn>platform objects map</dfn>. This is a weak
 map from shared ids to their corresponding [=platform object=].
 
 <pre class="cddl remote-cddl">
@@ -1118,15 +1124,9 @@ OwnershipModel = "root" / "none";
 <dfn>RemoteReference</dfn> is either a <code>RemoteObjectReference</code>
 representing a remote reference to an existing ECMAScript object in
 [=handle object map=] in the given [=Realm=], or is a <code>SharedReference</code>
-representing a reference to a [=platform object=] in [=platform objects map=] in the
-given {{Window}}.
-
-In [=BiDi session=]:
- * Each realm has an <dfn>object id map</dfn>, a weak map from objects to their
-   corresponding id. The [=object id map=] is unique per realm.
- * Each {{Window}} has a <dfn>shared id map</dfn>, a weak map from
-   [=platform object=] to their corresponding shared id. The [=shared id map=] is
-   shared among all of the realms of the {{Window}}.
+representing a reference to a [=platform object=] in the given [=browsing context=]'s
+[=list of known elements=], [=list of known shadow roots=] on in the given
+{{Window}}'s [=platform objects map=].
 
 <pre class="cddl remote-cddl local-cddl">
 RemoteReference = {
@@ -1191,14 +1191,30 @@ To <dfn>deserialize remote object reference</dfn> given |realm| and
 </div>
 
 <div algorithm>
-To <dfn>deserialize shared reference</dfn> given |realm| and |shared reference|:
+To <dfn>find platform object by shared reference</dfn> given |realm| and
+|shared reference|:
+
+1. Let |browsing context| be the result of [=get the browsing context=] of the
+   |realm|.
+
+1. If |browsing context| is <code>null</code>, return <code>null</code>.
+
+1. Let |shared id| be the value of the <code>sharedId</code> field of
+   |shared reference|.
+
+1. If |browser context|'s [=list of known elements=] contains an |element|, which
+   [=web element reference=] equals to |shared id|, return the result of [=trying=]
+   to [=get a known connected element=] with argument |shared id| and
+   |browsing context|.
+
+1. If |browser context|'s [=list of known shadow roots=] contains an |element|, which
+   [=web element reference=] equals to |shared id|, return the result of [=trying=]
+   to [=get a known connected element=] with argument |shared id| and
+   |browsing context|.
 
 1. Let |window| be the result of [=get the window=] of the |realm|.
 
 1. If |window| is <code>null</code>, return <code>null</code>.
-
-1. Let |shared id| be the value of the <code>sharedId</code> field of
-   |shared reference|.
 
 1. Let |platform objects map| be |window|'s [=platform objects map=].
 
@@ -1206,6 +1222,26 @@ To <dfn>deserialize shared reference</dfn> given |realm| and |shared reference|:
    <code>null</code>.
 
 1. Let |platform object| be the |platform objects map|[|shared id|].
+
+1. Assert |platform object| is a [=platform object=].
+
+1. Let |realm global object| be the [=realm/global object=] of the |realm|.
+
+1. If the |realm global object| is {{SandboxWindowProxy}} object, set
+   |platform object| to the {{SandboxProxy}} wrapping |platform object| in the
+   |realm|.
+
+1. Return |platform object|.
+
+</div>
+
+<div algorithm>
+To <dfn>deserialize shared reference</dfn> given |realm| and |shared reference|:
+
+1. Let |platform object| be result of [=trying=] to
+   [=find platform object by shared reference=] given |realm| and |shared reference|.
+
+1. If |platform object| is <code>null</code>, return <code>null</code>.
 
 1. Assert |platform object| is a [=platform object=].
 
@@ -1638,7 +1674,29 @@ To get the <dfn>handle for an object</dfn> given |realm|, |ownership type| and
 <div algorithm>
 To get the <dfn>shared id for an object</dfn> given a |realm| and |object|:
 
+1. Let |object| be [=unwrapped=] |object|.
+
 1. If |object| is not a [=platform object=], return <code>null</code>.
+
+1. If |object| is an [=/Element=]:
+
+  1. Let |browsing context| be the result of [=get the browsing context=] of the
+     |realm|.
+
+  1. If |browsing context| is <code>null</code>, return <code>null</code>.
+
+  1. Return the result of [=trying=] to [=get or create a web element reference=]
+     with |object| and |browsing context|.
+
+1. If |object| is a [=/ShadowRoot=]:
+
+  1. Let |browsing context| be the result of [=get the browsing context=] of the
+     |realm|.
+
+  1. If |browsing context| is <code>null</code>, return <code>null</code>.
+
+  1. Return the result of [=trying=] to [=get or create a shadow root reference=]
+     with |object| and |browsing context|.
 
 1. Let |window| be the result of [=get the window=] of the |realm|.
 
@@ -4215,6 +4273,22 @@ To <dfn>get the window</dfn> of the given |realm|:
 1. If |global object| is a {{Window}} object, return |global object|.
 
 1. Return <code>null</code>.
+
+</div
+
+<div algorithm>
+To <dfn>get the browsing context</dfn> of the given |realm|:
+
+1. Let |window| be the [=get the window=] of the |realm|.
+
+1. Let |global object| be [=unwrapped=] |global object|.
+
+1. If |window| is code>null</code>, return code>null</code>.
+
+1. Let |document| be |window|'s [=relevant global object=]'s
+   <a>associated <code>Document</code></a>.
+
+1. Return |document|'s [=/browsing context=].
 
 </div
 
