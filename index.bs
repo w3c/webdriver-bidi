@@ -3792,12 +3792,12 @@ relating to script realms and execution.
 
 <pre class="cddl remote-cddl">
 ScriptCommand = (
-  script.AddLoadScriptCommand //
+  script.AddPreloadScriptCommand //
   script.CallFunction //
   script.Disown //
   script.Evaluate //
   script.GetRealms
-  script.RemoveLoadScriptCommand
+  script.RemovePreloadScriptCommand
 )
 </pre>
 
@@ -3805,7 +3805,7 @@ ScriptCommand = (
 
 <pre class="cddl local-cddl">
 ScriptResult = (
-  script.AddLoadScriptResult //
+  script.AddPreloadScriptResult //
   script.EvaluateResult //
   script.GetRealmsResult
 )
@@ -3816,20 +3816,20 @@ ScriptEvent = (
 )
 </pre>
 
-### Load Scripts ### {#load-scripts}
+### Preload Scripts ### {#preload-scripts}
 
-A <dfn>load script</dfn> is one which runs on creation of a new {{Window}},
+A <dfn>Preload script</dfn> is one which runs on creation of a new {{Window}},
 before any author-defined script have run.
 
 TODO: Extend this to scripts in other kinds of realms.
 
-A [=BiDi session=] has a <dfn>load script map</dfn> which is a map in which the
+A [=BiDi session=] has a <dfn>preload script map</dfn> which is a map in which the
 keys are [[!RFC4122|UUID]]s, and the values are [=structs=] with an <a
 for=struct>item</a> named <code>expression</code>, which is a string, and an
 item named <code>sandbox</code> which is a string or null.
 
 <div algorithm>
-To <dfn export>run WebDriver BiDi load scripts</dfn> given |environment settings|:
+To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment settings|:
 
 1. Let |document| be |environment settings|' [=relevant global object=]'s
    <a>associated <code>Document</code></a>.
@@ -3838,14 +3838,15 @@ To <dfn export>run WebDriver BiDi load scripts</dfn> given |environment settings
 
 1. For each |session| in [=active BiDi sessions=]:
 
-  1. For each |load script| in |session|'s [=load script map=]'s [=values=]:
+  1. For each |preload script| in |session|'s [=preload script map=]'s
+     [=values=]:
 
-    1. If |load script|'s <code>sandbox</code> is not null, let |realm| be [=get
-       or create a sandbox realm=] with load script|'s <code>sandbox</code> and
+    1. If |preload script|'s <code>sandbox</code> is not null, let |realm| be [=get
+       or create a sandbox realm=] with |preload script|'s <code>sandbox</code> and
        |browsing context|. Otherwise let |realm| be |environment settings|'
        [=realm execution context=]'s Realm component.
 
-    1. Let |source| be |load script|'s <code>expression</code>.
+    1. Let |source| be |preload script|'s <code>expression</code>.
 
     1. Let |options| be the [=default classic script fetch options=].
 
@@ -3918,15 +3919,15 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
 
 </div>
 
-#### The script.LoadScript type #### {#type-script-LoadScript}
+#### The script.PreloadScript type #### {#type-script-PreloadScript}
 
 [=Remote end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-script.LoadScript = text;
+script.PreloadScript = text;
 </pre>
 
-The <code>script.LoadScript</code> type represents a handle to a script that will run
+The <code>script.PreloadScript</code> type represents a handle to a script that will run
 on realm creation.
 
 #### The script.Realm type #### {#type-script-Realm}
@@ -4385,21 +4386,21 @@ Issue: This has the wrong error code
 
 ### Commands ### {#module-script-commands}
 
-#### The script.addLoadScript Command ####  {#command-script-addLoadScript}
+#### The script.addPreloadScript Command ####  {#command-script-addPreloadScript}
 
-The <dfn export for=commands>script.addLoadScript</dfn> command adds a [=load
+The <dfn export for=commands>script.addPreloadScript</dfn> command adds a [=preload
 script=].
 
 <dl>
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      script.AddLoadScriptCommand = {
-        method: "script.addLoadScript",
-        params: ScriptAddLoadScriptParameters
+      script.AddPreloadScriptCommand = {
+        method: "script.addPreloadScript",
+        params: script.AddPreloadScriptParameters
       }
 
-      script.AddLoadScriptParameters = {
+      script.AddPreloadScriptParameters = {
         expression: text;
         ?sandbox: text
       }
@@ -4408,14 +4409,14 @@ script=].
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      script.AddLoadScriptResult = {
-        script: LoadScript
+      script.AddPreloadScriptResult = {
+        script: script.PreloadScript
       }
     </pre>
    </dd>
 </dl>
 
-<div algorithm="remote end steps for script.addLoadScript">
+<div algorithm="remote end steps for script.addPreloadScript">
 The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |expression| be the <code>expression</code> field of |command
@@ -4426,12 +4427,12 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
 
-1. Let |load script map| be |session|'s [=load script map=].
+1. Let |preload script map| be |session|'s [=preload script map=].
 
-1. Set |load script map|[|script|] to a struct with <code>expression</code>
+1. Set |preload script map|[|script|] to a struct with <code>expression</code>
    |expression| and <code>sandbox</code> |sandbox|.
 
-1. Return a new map matching the <code>script.AddLoadScriptResult</code> with the
+1. Return a new map matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
 
 </div>
@@ -4827,22 +4828,22 @@ Issue: We might want to have a more sophisticated filter system than just a
 
 </div>
 
-#### The script.removeLoadScript Command ####  {#command-script-removeLoadScript}
+#### The script.removePreloadScript Command ####  {#command-script-removePreloadScript}
 
-The <dfn export for=commands>script.removeLoadScript</dfn> command removes a
-[=load script=].
+The <dfn export for=commands>script.removePreloadScript</dfn> command removes a
+[=preload script=].
 
 <dl>
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      script.RemoveLoadScriptCommand = {
-        method: "script.removeLoadScript",
-        params: ScriptRemoveLoadScriptParameters
+      script.RemovPreloadScriptCommand = {
+        method: "script.removePreloadScript",
+        params: script.RemovePreloadScriptParameters
       }
 
-      script.RemoveLoadScriptParameters = {
-        script: script.LoadScript
+      script.RemovePreloadScriptParameters = {
+        script: script.PreloadScript
       }
     </pre>
    </dd>
@@ -4854,20 +4855,20 @@ The <dfn export for=commands>script.removeLoadScript</dfn> command removes a
    </dd>
 </dl>
 
-<div algorithm="remote end steps for script.removeLoadScript">
+<div algorithm="remote end steps for script.removePreloadScript">
 The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |script| be the value of the "<code>script</code>" field in |command
    parameters|.
 
-1. Let |load script map| be |session|'s [=load script map=].
+1. Let |preload script map| be |session|'s [=preload script map=].
 
-1. If |load script map| does not <a for=map>contain</a> |script|, return
+1. If |preload script map| does not <a for=map>contain</a> |script|, return
    [=error=] with [=error code=] [=invalid argument=].
 
    TODO: Should this be a "no such script" error?
 
-1. <a for=set>Remove</a> |script| from |load script map|.
+1. <a for=set>Remove</a> |script| from |preload script map|.
 
 1. Return null
 
