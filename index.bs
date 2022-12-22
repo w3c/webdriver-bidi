@@ -289,16 +289,6 @@ ErrorResponse = {
   Extensible
 }
 
-ErrorCode = {
-   "invalid argument" /
-   "no such alert" /
-   "no such frame" /
-   "session not created" /
-   "unknown command" /
-   "unknown error" /
-   "unsupported operation"
-}
-
 ResultData = (
   EmptyResult //
   SessionResult //
@@ -423,6 +413,28 @@ end=] which ignores all responses could use the same command id for each command
 The <dfn export for=command>set of all command names</dfn> is a set containing
 all the defined [=command names=], including any belonging to [=extension
 modules=].
+
+## Errors ## {#errors}
+
+WebDriver BiDi extends the set of [=error codes=] from [[WEBDRIVER|WebDriver]]
+with the following additional codes:
+
+<dl>
+  <dt><dfn>No such script</dfn>
+  <dd>Tried to remove an unknown [=preload script=].
+</dl>
+
+<pre class="cddl local-cddl">
+ErrorCode = ("invalid argument" /
+             "invalid session id" /
+             "no such alert" /
+             "no such frame" /
+             "no such script" /
+             "session not created" /
+             "unknown command" /
+             "unknown error" /
+             "unsupported operation")
+</pre>
 
 ## Events ## {#events}
 
@@ -3792,10 +3804,12 @@ relating to script realms and execution.
 
 <pre class="cddl remote-cddl">
 ScriptCommand = (
+  script.AddPreloadScriptCommand //
   script.CallFunction //
   script.Disown //
   script.Evaluate //
   script.GetRealms
+  script.RemovePreloadScriptCommand
 )
 </pre>
 
@@ -3803,6 +3817,7 @@ ScriptCommand = (
 
 <pre class="cddl local-cddl">
 ScriptResult = (
+  script.AddPreloadScriptResult //
   script.EvaluateResult //
   script.GetRealmsResult
 )
@@ -3813,6 +3828,55 @@ ScriptEvent = (
 )
 </pre>
 
+### Preload Scripts ### {#preload-scripts}
+
+A <dfn>Preload script</dfn> is one which runs on creation of a new {{Window}},
+before any author-defined script have run.
+
+TODO: Extend this to scripts in other kinds of realms.
+
+A [=BiDi session=] has a <dfn>preload script map</dfn> which is a map in which the
+keys are [[!RFC4122|UUID]]s, and the values are [=structs=] with an <a
+for=struct>item</a> named <code>expression</code>, which is a string, and an
+item named <code>sandbox</code> which is a string or null.
+
+<div algorithm>
+To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment settings|:
+
+1. Let |document| be |environment settings|' [=relevant global object=]'s
+   <a>associated <code>Document</code></a>.
+
+1. Let |browsing context| be |document|'s [=/browsing context=].
+
+1. For each |session| in [=active BiDi sessions=]:
+
+  1. For each |preload script| in |session|'s [=preload script map=]'s
+     [=values=]:
+
+    1. If |preload script|'s <code>sandbox</code> is not null, let |realm| be [=get
+       or create a sandbox realm=] with |preload script|'s <code>sandbox</code> and
+       |browsing context|. Otherwise let |realm| be |environment settings|'
+       [=realm execution context=]'s Realm component.
+
+    1. Let |source| be |preload script|'s <code>expression</code>.
+
+    1. Let |options| be the [=default classic script fetch options=].
+
+    1. Let |base URL| be the [=API base URL=] of |environment settings|.
+
+    1. Let |script| be the result of [=create a classic script=] with |source|,
+       |environment settings|, |base URL|, and |options|.
+
+    1. [=Prepare to run script=] with |environment settings|.
+
+    1. Let |evaluation status| be [=ScriptEvaluation=](|script|'s record).
+
+    1. If |evaluation status| is an [=abrupt completion=], then [=report the
+       exception=] given by |evaluation status|.\[[Value]] for |script|.
+
+    1. [=Clean up after running script=] with |environment settings|.
+
+</div>
 
 ### Types ### {#module-script-types}
 
@@ -3866,6 +3930,17 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
 1. Return |exception details|.
 
 </div>
+
+#### The script.PreloadScript type #### {#type-script-PreloadScript}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+script.PreloadScript = text;
+</pre>
+
+The <code>script.PreloadScript</code> type represents a handle to a script that will run
+on realm creation.
 
 #### The script.Realm type #### {#type-script-Realm}
 
@@ -4323,6 +4398,57 @@ Issue: This has the wrong error code
 
 ### Commands ### {#module-script-commands}
 
+#### The script.addPreloadScript Command ####  {#command-script-addPreloadScript}
+
+The <dfn export for=commands>script.addPreloadScript</dfn> command adds a [=preload
+script=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      script.AddPreloadScriptCommand = {
+        method: "script.addPreloadScript",
+        params: script.AddPreloadScriptParameters
+      }
+
+      script.AddPreloadScriptParameters = {
+        expression: text;
+        ?sandbox: text
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      script.AddPreloadScriptResult = {
+        script: script.PreloadScript
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for script.addPreloadScript">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |expression| be the <code>expression</code> field of |command
+   parameters|.
+
+1. Let |script| be the string representation of a [[!RFC4122|UUID]].
+
+1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
+   parameters|, if present, or null otherwise.
+
+1. Let |preload script map| be |session|'s [=preload script map=].
+
+1. Set |preload script map|[|script|] to a struct with <code>expression</code>
+   |expression| and <code>sandbox</code> |sandbox|.
+
+1. Return a new map matching the <code>script.AddPreloadScriptResult</code> with the
+   <code>script</code> field set to |script|.
+
+</div>
+
 #### The script.disown Command ####  {#command-script-disown}
 
 The <dfn export for=commands>script.disown</dfn> command disowns the given handles.
@@ -4713,6 +4839,51 @@ Issue: We might want to have a more sophisticated filter system than just a
        literal match.
 
 </div>
+
+#### The script.removePreloadScript Command ####  {#command-script-removePreloadScript}
+
+The <dfn export for=commands>script.removePreloadScript</dfn> command removes a
+[=preload script=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      script.RemovePreloadScriptCommand = {
+        method: "script.removePreloadScript",
+        params: script.RemovePreloadScriptParameters
+      }
+
+      script.RemovePreloadScriptParameters = {
+        script: script.PreloadScript
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for script.removePreloadScript">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |script| be the value of the "<code>script</code>" field in |command
+   parameters|.
+
+1. Let |preload script map| be |session|'s [=preload script map=].
+
+1. If |preload script map| does not <a for=map>contain</a> |script|, return
+   [=error=] with [=error code=] [=no such script=].
+
+1. <a for=set>Remove</a> |script| from |preload script map|.
+
+1. Return null
+
+</div>
+
 
 ### Events ### {#module-script-events}
 
