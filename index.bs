@@ -1156,12 +1156,12 @@ only <code>sharedId</code>.
 ### Deserialization ### {#data-types-reference-deserialization}
 
 <div algorithm>
-To <dfn>deserialize remote reference</dfn> given |realm| and |remote reference|:
+To <dfn>deserialize remote reference</dfn> given |session|, |realm| and |remote reference|:
 
 1. Assert |remote reference| matches the <code>RemoteReference</code> production.
 
 1. If |remote reference| matches the <code>SharedReference</code> production, return
-   [=deserialize shared reference=] given |realm| and |remote reference|.
+   [=deserialize shared reference=] given |session|, |realm| and |remote reference|.
 
 1. Assert |remote reference| matches the <code>RemoteObjectReference</code>
    production.
@@ -1188,7 +1188,7 @@ To <dfn>deserialize remote object reference</dfn> given |realm| and
 </div>
 
 <div algorithm>
-To <dfn>deserialize shared reference</dfn> given |realm| and |shared reference|:
+To <dfn>deserialize shared reference</dfn> given |session|, |realm| and |shared reference|:
 
 1. Assert |remote reference| matches the <code>SharedReference</code> production.
 
@@ -1450,7 +1450,8 @@ SetLocalValue = {
 
 <div algorithm>
 
-To <dfn>deserialize key-value list</dfn> given |realm| and |serialized key-value list|:
+To <dfn>deserialize key-value list</dfn> given |session|, |realm| and
+|serialized key-value list|:
 
 1. Let |deserialized key-value list| be a new list.
 
@@ -1464,13 +1465,13 @@ To <dfn>deserialize key-value list</dfn> given |realm| and |serialized key-value
    1. If |serialized key| is a <code>string</code>,
       let |deserialized key| be |serialized key|.
 
-   1. Otherwise let |deserialized key| be result of [=trying=] to [=deserialize local value=]
-      given |realm| and |serialized key|.
+   1. Otherwise let |deserialized key| be result of [=trying=] to
+      [=deserialize local value=] with |session|, |realm| and |serialized key|.
 
    1. Let |serialized value| be |serialized key-value|[1].
 
    1. Let |deserialized value| be result of [=trying=] to [=deserialize local value=]
-      given |realm| and |serialized value|.
+      with |session|, |realm| and |serialized value|.
 
    1. Append [=CreateArrayFromList=](«|deserialized key|, |deserialized value|») to
       |deserialized key-value list|.
@@ -1483,14 +1484,15 @@ To <dfn>deserialize key-value list</dfn> given |realm| and |serialized key-value
 
 Issue: TODO distinguish between `List` and `Array`.
 
-To <dfn>deserialize value list</dfn> given |realm| and |serialized value list|:
+To <dfn>deserialize value list</dfn> given |session|, |realm| and
+|serialized value list|:
 
 1. Let |deserialized values| be a new list.
 
 1. For each |serialized value| in the |serialized value list|:
 
-   1. Let |deserialized value| be result of [=trying=] to [=deserialize local value=] with
-      given |realm| and |serialized value|.
+   1. Let |deserialized value| be result of [=trying=] to [=deserialize local value=]
+      with |session|, |realm| and |serialized value|.
 
    1. Append |deserialized value| to |deserialized values|;
 
@@ -1500,10 +1502,12 @@ To <dfn>deserialize value list</dfn> given |realm| and |serialized value list|:
 
 <div algorithm>
 
-To <dfn>deserialize local value</dfn> given |realm| and |local protocol value|:
+To <dfn>deserialize local value</dfn> with given |session|, |realm| and
+|local protocol value|:
 
 1. If |local protocol value| matches the [=RemoteReference=] production, return
-   [=deserialize remote reference=] of given |realm| and |local protocol value|.
+   [=deserialize remote reference=] with |session|, |realm| and
+   |local protocol value|.
 
 1. If |local protocol value| matches the [=PrimitiveProtocolValue=] production, return
    [=deserialize primitive protocol value=] with |local protocol value|.
@@ -1522,7 +1526,7 @@ To <dfn>deserialize local value</dfn> given |realm| and |local protocol value|:
     <dt>|type| is the string "<code>array</code>"
     <dd>
       1. Let |deserialized value list| be a result of [=trying=] to [=deserialize value list=]
-         given |realm| and |value|.
+         given |session|, |realm| and |value|.
 
       1. Return [=success=] with data [=CreateArrayFromList=](|deserialized value list|).
 
@@ -1540,7 +1544,7 @@ To <dfn>deserialize local value</dfn> given |realm| and |local protocol value|:
     <dt>|type| is the string "<code>map</code>"
     <dd>
       1. Let |deserialized key-value list| be a result of [=trying=] to
-         [=deserialize key-value list=] given |realm| and |value|.
+         [=deserialize key-value list=] with |session|, |realm| and |value|.
 
       1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
 
@@ -1549,7 +1553,7 @@ To <dfn>deserialize local value</dfn> given |realm| and |local protocol value|:
     <dt>|type| is the string "<code>object</code>"
     <dd>
       1. Let |deserialized key-value list| be a result of [=trying=] to
-         [=deserialize key-value list=] given |realm| and |value|.
+         [=deserialize key-value list=] with |session|, |realm| and |value|.
 
       1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
 
@@ -1570,7 +1574,7 @@ To <dfn>deserialize local value</dfn> given |realm| and |local protocol value|:
     <dt>|type| is the string "<code>set</code>"
     <dd>
       1. Let |deserialized value list| be a result of [=trying=] to [=deserialize value list=]
-         given |realm| and |value|.
+         given |session|, |realm| and |value|.
 
       1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
 
@@ -4712,14 +4716,15 @@ Issue: TODO: Add timeout argument as described in the script.evaluate.
 
 <div algorithm>
 
-To <dfn>deserialize arguments</dfn> given |realm| and |serialized arguments list|:
+To <dfn>deserialize arguments</dfn> with given |session|, |realm| and
+|serialized arguments list|:
 
 1. Let |deserialized arguments list| be an empty list.
 
 1. For each |serialized argument| of |serialized arguments list|:
 
-  1. Let |deserialized argument| be the result of [=trying=] to [=deserialize local value=]
-     given |realm| and |serialized argument|.
+  1. Let |deserialized argument| be the result of [=trying=] to
+     [=deserialize local value=] with |session|, |realm| and |serialized argument|.
 
   1. Append |deserialized argument| to the |deserialized arguments list|.
 
@@ -4750,7 +4755,7 @@ Note: the |function declaration| is parenthesized and evaluated.
 </div>
 
 
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given the value of the <code>target</code> field of |command parameters|.
@@ -4766,7 +4771,7 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |deserialized arguments| be an empty list.
 
 1. If |command arguments| is not null, set |deserialized arguments| to the result of [=trying=] to
-   [=deserialize arguments=] given |realm| and |command arguments|.
+   [=deserialize arguments=] with |session|, |realm| and |command arguments|.
 
 1. Let |this parameter| be the value of the <code>this</code> field
    of |command parameters|.
@@ -4774,7 +4779,7 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |this object| be null.
 
 1. If |this parameter| is not null, set |this object| to the result of [=trying=] to
-   [=deserialize local value=] given |realm| and |this parameter|.
+   [=deserialize local value=] with |session|, |realm| and |this parameter|.
 
 1. Let |function declaration| be the value of the
    <code>functionDeclaration</code> field of |command parameters|.
