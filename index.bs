@@ -1203,11 +1203,8 @@ To <dfn>deserialize shared reference</dfn> given |session|, |realm| and |shared 
 1. Let |node| be result of [=trying=] to [=get a node=] given [=current session=],
    |browsing context| and |shared id|.
 
-1. If |browsing context| is <code>null</code>, return [=error=] with [=error code=]
-   [=no such element=].
-
-1. If |node| [=is stale=], return [=error=] with [=error code=]
-   [=stale element reference=].
+1. If |node| is <code>null</code>, return [=error=] with [=error code=]
+   [=no such reference=].
 
 1. Let |realm global object| be the [=realm/global object=] of the |realm|.
 
@@ -1215,6 +1212,9 @@ To <dfn>deserialize shared reference</dfn> given |session|, |realm| and |shared 
    |node| to the {{SandboxProxy}} wrapping |node| in the |realm|.
 
 1. Return [=success=] with data |node|.
+
+TODO: Add check that `|node|`'s `ownerDocument`'s origin is same origin-domain with
+|context|'s associated Document.
 
 </div>
 
@@ -4218,13 +4218,16 @@ To <dfn>get the top level window</dfn> with given |realm|:
 <div algorithm>
 To <dfn>get the browsing context</dfn> with given |realm|:
 
-1. Let |window| be [=get the top level window=] with |realm|.
+1. Let |global object| be the [=realm/global object=] of the |realm|.
 
-1. If |window| is <code>null</code>, return <code>null</code>.
+1. Let |global object| be the [=unwrapped=] |global object|.
 
-1. Let |window| be [=unwrapped=] |window|.
+1. If |global object| is not a {{Window}} object, return <code>null</code>.
 
-1. Return |window|'s [=/browsing context=].
+1. Let |document| be |global object|'s wrapped {{Window}}'s
+   <a>associated <code>Document</code></a>.
+
+1. Return |document|'s [=/browsing context=].
 
 </div
 
