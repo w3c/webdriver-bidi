@@ -1636,7 +1636,7 @@ To get the <dfn>handle for an object</dfn> given |realm|, |ownership type| and
 </div>
 
 <div algorithm>
-To get <dfn>shared id for a node</dfn> given |realm| and |node|:
+To get <dfn>shared id for a node</dfn> given |session|, |realm| and |node|:
 
 1. Let |node| be [=unwrapped=] |node|.
 
@@ -1646,8 +1646,8 @@ To get <dfn>shared id for a node</dfn> given |realm| and |node|:
 
 1. If |browsing context| is <code>null</code>, return <code>null</code>.
 
-1. Return [=get or create a node reference=] with [=current session=],
-   |browsing context| and |node|.
+1. Return [=get or create a node reference=] with |session|, |browsing context| and
+   |node|.
 
 </div>
 
@@ -1874,8 +1874,8 @@ Issue: handle String / Number / etc. wrapper objects specially?
 
 <div algorithm>
 
-To <dfn>serialize as a remote value</dfn> given a |value|, a |max depth|,
-an |ownership type|, a |serialization internal map| and a |realm|:
+To <dfn>serialize as a remote value</dfn> given a |session|, a |value|,
+a |max depth|, an |ownership type|, a |serialization internal map| and a |realm|:
 
 1. Let |remote value| be a result of [=serialize primitive protocol value=]
    given a |value|.
@@ -1900,7 +1900,7 @@ an |ownership type|, a |serialization internal map| and a |realm|:
         property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>[=IsArray=](|value|)
-    <dd>Let |remote value| be [=serialize an Array-like=] with
+    <dd>Let |remote value| be [=serialize an Array-like=] with |session|,
         <code>ArrayRemoteValue</code>, |handle id|, |known object|, |value|,
         |max depth|, |ownership type|, |serialization internal map|, and |realm|.
 
@@ -1946,8 +1946,8 @@ an |ownership type|, a |serialization internal map| and a |realm|:
     1. If |known object| is <code>false</code>, and |max depth| is not 0, run
        the following steps:
 
-       1. Let |serialized| be the result of [=serialize as a mapping=] given
-          [=CreateMapIterator=](|value|, key+value), |max depth|,
+       1. Let |serialized| be the result of [=serialize as a mapping=] with
+          |session|, [=CreateMapIterator=](|value|, key+value), |max depth|,
           |ownership type|, |serialization internal map| and |realm|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
@@ -1968,8 +1968,8 @@ an |ownership type|, a |serialization internal map| and a |realm|:
     1. If |known object| is <code>false</code>, and |max depth| is not 0, run
        the following steps:
 
-       1. Let |serialized| be the result of [=serialize as a list=] given
-          [=CreateSetIterator=](|value|, value), |max depth|, |ownership type|,
+       1. Let |serialized| be the result of [=serialize as a list=] with
+          |session|, [=CreateSetIterator=](|value|, value), |max depth|, |ownership type|,
           |serialization internal map| and |realm|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
@@ -2018,7 +2018,7 @@ an |ownership type|, a |serialization internal map| and a |realm|:
 
     <dt>|value| is a [=platform object=] that implements [=Node=]
     <dd>
-      1. Let |shared id| be [=shared id for a node=] given |realm| and
+      1. Let |shared id| be [=shared id for a node=] given |session|, |realm| and
          |value|.
 
       1. Let |remote value| be a map matching the <code>NodeRemoteValue</code>
@@ -2060,7 +2060,7 @@ an |ownership type|, a |serialization internal map| and a |realm|:
             1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null otherwise.
 
             1. Let |serialized| be the result of [=serialize as a remote value=]
-               with |child|, |child depth|, |ownership type|,
+               with |session|, |child|, |child depth|, |ownership type|,
                |serialization internal map| and |realm|.
 
             1. Append |serialized| to |children|.
@@ -2090,7 +2090,7 @@ an |ownership type|, a |serialization internal map| and a |realm|:
                   null, or null otherwise.
 
                1. Let |serialized shadow| be the result of
-                  [=serialize as a remote value=] with |shadow root|, |child depth|,
+                  [=serialize as a remote value=] with |session|, |shadow root|, |child depth|,
                   false, |ownership type|, |serialization internal map| and |realm|.
 
                 Note: this means the <code>handle</code> for the shadow root
@@ -2133,8 +2133,8 @@ an |ownership type|, a |serialization internal map| and a |realm|:
     1. If |known object| is <code>false</code>, and |max depth| is not 0, run
        the following steps:
 
-       1. Let |serialized| be the result of [=serialize as a mapping=] given
-          [=EnumerableOwnPropertyNames=](|value|, key+value), |max depth|,
+       1. Let |serialized| be the result of [=serialize as a mapping=] with
+          |session|, [=EnumerableOwnPropertyNames=](|value|, key+value), |max depth|,
           |ownership type|, |serialization internal map| and
           |realm|.
 
@@ -2160,7 +2160,7 @@ remove optional flag from the field.
 </div>
 
 <div algorithm>
-To <dfn>serialize an Array-like</dfn> given |production|, |handle id|, |known object|,
+To <dfn>serialize an Array-like</dfn> given |session|, |production|, |handle id|, |known object|,
 |value|, |max depth|, |ownership type|, |serialization internal map|, and |realm|:
 
 1. Let |remote value| be a map matching |production|, with the
@@ -2184,7 +2184,7 @@ To <dfn>serialize an Array-like</dfn> given |production|, |handle id|, |known ob
 </div>
 
 <div algorithm>
-To <dfn>serialize as a list</dfn> given |iterable|, |max depth|, |ownership type|,
+To <dfn>serialize as a list</dfn> given |session|, |iterable|, |max depth|, |ownership type|,
 |serialization internal map| and |realm|:
 
   1. Let |serialized| be a new list.
@@ -2195,7 +2195,7 @@ To <dfn>serialize as a list</dfn> given |iterable|, |max depth|, |ownership type
        otherwise.
 
     1. Let |serialized child| be the result of [=serialize as a remote value=]
-       with arguments |child value|, |child depth|, |ownership type|,
+       with |session|, |child value|, |child depth|, |ownership type|,
        |serialization internal map| and |realm|.
 
     1. Append |serialized child| to |serialized|.
@@ -2206,7 +2206,7 @@ To <dfn>serialize as a list</dfn> given |iterable|, |max depth|, |ownership type
 Issue: this assumes for-in works on iterators
 
 <div algorithm>
-To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
+To <dfn>serialize as a mapping</dfn> given |session|, |iterable|, |max depth|,
 |ownership type|, |serialization internal map| and |realm|:
 
 1. Let |serialized| be a new list.
@@ -2226,11 +2226,11 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
 
   1. If [=Type=](|key|) is String, let |serialized key| be |child key|,
      otherwise let |serialized key| be the result of [=serialize as a remote value=]
-     with arguments |child key|, |child depth|, |ownership type|,
+     with |session|, |child key|, |child depth|, |ownership type|,
      |serialization internal map| and |realm|.
 
   1. Let |serialized value| be the result of [=serialize as a remote value=]
-     with arguments |value|, |child depth|, |ownership type|,
+     with |session|, |value|, |child depth|, |ownership type|,
      |serialization internal map| and |realm|.
 
   1. Let |serialized child| be («|serialized key|, |serialized value|»).
@@ -4052,8 +4052,8 @@ The <code>script.ExceptionDetails</code> type represents a JavaScript exception.
 
 <div algorithm>
 
-To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
-|record| and an |ownership type|:
+To <dfn>get exception details</dfn> given a |session|, a |realm|,
+a [=completion record=] |record| and an |ownership type|:
 
 1. Assert: |record|.\[[Type]] is <code>throw</code>.
 
@@ -4063,7 +4063,7 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
    TODO: Tighten up the requirements here; people will probably try to parse
    this data with regex or something equally bad.
 
-1. Let |exception| be the result of [=serialize as a remote value=] given
+1. Let |exception| be the result of [=serialize as a remote value=] with |session|,
    |record|.\[[Value]], <code>1</code> as max depth, |ownership type|,
    a new [=Map=] as serialization internal map and |realm|.
 
@@ -4796,7 +4796,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. If |function body evaluation status|.\[[Type]] is <code>throw</code>:
 
    1. Let |exception details| be the result of [=get exception details=] given
-      |realm|, |function body evaluation status| and |result ownership|.
+      |session|, |realm|, |function body evaluation status| and |result ownership|.
 
    1. Return a new map matching the <code>script.EvaluateResultException</code>
       production, with the <code>exceptionDetails</code> field set to
@@ -4824,7 +4824,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. If |evaluation status|.\[[Type]] is <code>throw</code>:
 
   1. Let |exception details| be the result of [=get exception details=] given
-     |realm|, |evaluation status| and |result ownership|.
+     |session|, |realm|, |evaluation status| and |result ownership|.
 
   1. Return a new map matching the <code>script.EvaluateResultException</code>
      production, with the <code>exceptionDetails</code> field set to
@@ -4832,8 +4832,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
-1. Let |result| be the result of [=serialize as a remote value=] given
-   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result
+1. Let |result| be the result of [=serialize as a remote value=] with
+   |session|, |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result
    ownership|, <code>new map</code> as |serialization internal map| and |realm|.
 
 1. Return a new map matching the <code>script.EvaluateResultSuccess</code>
@@ -4880,7 +4880,7 @@ TODO: Add timeout argument. It's not totally clear how this ought to work; in
 Chrome it seems like the timeout doesn't apply to the promise resolve step, but
 that likely isn't what clients want.
 
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given the value of the <code>target</code> field of |command parameters|.
@@ -4920,7 +4920,7 @@ The [=remote end steps=] with |command parameters| are:
 1. If |evaluation status|.\[[Type]] is <code>throw</code>:
 
   1. Let |exception details| be the result of [=get exception details=] given
-     |realm|, |evaluation status| and |result ownership|.
+     |session|, |realm|, |evaluation status| and |result ownership|.
 
   1. Return a new map matching the <code>script.EvaluateResultException</code>
      production, with the <code>realm</code> field set to |realm id|, and the
@@ -4928,8 +4928,8 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
-1. Let |result| be the result of [=serialize as a remote value=] given
-   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result
+1. Let |result| be the result of [=serialize as a remote value=] with
+   |session|, |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result
    ownership|, <code>new map</code> as |serialization internal map| and |realm|.
 
 1. Return a new map matching the <code>script.EvaluateResultSuccess</code>
@@ -5368,7 +5368,7 @@ The [=remote end event trigger=] is:
 
 <div algorithm="remote end event trigger for log.entryAdded">
 
-Define the following [=console steps=] with |method|, |args|, and <var
+Define the following [=console steps=] with |session|, |method|, |args|, and <var
 ignore>options</var>:
 
 1. If |method| is "<code>error</code>" or "<code>assert</code>", let |level| be
@@ -5399,8 +5399,8 @@ ignore>options</var>:
 1. Let |serialized args| be a new list.
 
 1. For each |arg| of |args|:
-   1. Let |serialized arg| be the result of [=serialize as a remote value=] given
-      |arg| as value, <code>1</code> as max depth, <code>none</code> as
+   1. Let |serialized arg| be the result of [=serialize as a remote value=] with
+      |session|, |arg| as value, <code>1</code> as max depth, <code>none</code> as
       ownership type, a new [=Map=] as serialization internal map, and
       |realm|.
 
@@ -5550,11 +5550,14 @@ Other specifications can define <dfn>console steps</dfn>. When any method of the
 {{console}} interface is called, with method name
 |method| and argument |args|:
 
-1. If that method does not call the [=Printer=] operation, call any [=console
-   steps=] defined in external specification with arguments |method|, |args|,
-   and undefined.
+1. For each |session| in [=active BiDI sessions=]:
 
-   Otherwise, at the point when the [=Printer=] operation is called with
-   arguments |name|, |printerArgs| and |options| (which is undefined if the
-   argument is not provided), call any [=console steps=] defined in
-   external specification with arguments |name|, |printerArgs|, and |options|.
+  1. If that method does not call the [=Printer=] operation, call any [=console
+     steps=] defined in external specification with arguments |session|, |method|,
+     |args|, and undefined.
+
+     Otherwise, at the point when the [=Printer=] operation is called with
+     arguments |name|, |printerArgs| and |options| (which is undefined if the
+     argument is not provided), call any [=console steps=] defined in
+     external specification with arguments |session|, |name|, |printerArgs|, and
+     |options|.
