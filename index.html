@@ -8,7 +8,7 @@
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
   <meta content="Bikeshed version 26e85e599, updated Thu Dec 8 15:29:31 2022 -0800" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="cadc6b532fe5a41ba97865955063943994445e9c" name="document-revision">
+  <meta content="5a452f4c5954754172a2fbbf58ec8b01a5fb4300" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -1913,7 +1913,7 @@ protocol will result in an error.</p>
     </ol>
    </div>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑦">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑥">local end definition</a></p>
-<pre class="cddl remote-cddl local-cddl">RemoteValue = {
+<pre class="cddl remote-cddl local-cddl">RemoteValue = (
   PrimitiveProtocolValue //
   SymbolRemoteValue //
   ArrayRemoteValue //
@@ -1932,9 +1932,11 @@ protocol will result in an error.</p>
   PromiseRemoteValue //
   TypedArrayRemoteValue //
   ArrayBufferRemoteValue //
+  NodeListRemoteValue //
+  HTMLCollectionRemoteValue //
   NodeRemoteValue //
   WindowProxyRemoteValue //
-}
+)
 
 InternalId = js-uint;
 
@@ -2048,6 +2050,20 @@ ArrayBufferRemoteValue = {
   ?internalId: InternalId,
 }
 
+NodeListRemoteValue = {
+  type: "nodelist",
+  ?handle: Handle,
+  ?internalId: InternalId,
+  ?value: ListRemoteValue,
+}
+
+HTMLCollectionRemoteValue = {
+  type: "htmlcollection",
+  ?handle: Handle,
+  ?internalId: InternalId,
+  ?value: ListRemoteValue,
+}
+
 NodeRemoteValue = {
   type: "node",
   ?handle: Handle,
@@ -2093,31 +2109,14 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
      <li data-md>
       <p>Let <var>handle id</var> be the <a data-link-type="dfn" href="#handle-for-an-object" id="ref-for-handle-for-an-object">handle for an object</a> given <var>realm</var>, <var>ownership type</var> and <var>value</var>.</p>
      <li data-md>
-      <p>Let <var>known object</var> be <code>true</code>, if <var>value</var> is in the <var>serialization internal map</var>, otherwise <code>false</code>.</p>
+      <p>Set <var>ownership type</var> to "<code>none</code>".</p>
      <li data-md>
-      <p>Let <var>child ownership</var> be "<code>none</code>".</p>
+      <p>Let <var>known object</var> be <code>true</code>, if <var>value</var> is in the <var>serialization internal map</var>, otherwise <code>false</code>.</p>
       <dl>
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑧">Type</a>(<var>value</var>) is Symbol 
        <dd>Let <var>remote value</var> be a map matching the <code>SymbolRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑦">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-isarray" id="ref-for-sec-isarray">IsArray</a>(<var>value</var>) 
-       <dd>
-        <ol>
-         <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>ArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑧">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
-         <li data-md>
-          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
-         <li data-md>
-          <p>Let <var>serialized</var> be null.</p>
-         <li data-md>
-          <p>If <var>known object</var> is <code>false</code>, and <var>max depth</var> is not 0, run
- the following steps:</p>
-          <ol>
-           <li data-md>
-            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayiterator" id="ref-for-sec-createarrayiterator">CreateArrayIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
-          </ol>
-         <li data-md>
-          <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
-        </ol>
+       <dd>Let <var>remote value</var> be <a data-link-type="dfn" href="#serialize-an-array-like" id="ref-for-serialize-an-array-like">serialize an Array-like</a> with <code>ArrayRemoteValue</code>, <var>handle id</var>, <var>value</var>, <var>max depth</var>, <var>ownership type</var>, <var>known object</var>, <var>serialization internal map</var>, and <var>realm</var>. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-isregexp" id="ref-for-sec-isregexp">IsRegExp</a>(<var>value</var>) 
        <dd>
         <ol>
@@ -2126,9 +2125,9 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
          <li data-md>
           <p>Let <var>flags</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-tostring" id="ref-for-sec-tostring②">ToString</a>(<a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-get" id="ref-for-sec-get①">Get</a>(<var>value</var>, "flags")).</p>
          <li data-md>
-          <p>Let <var>value</var> be a map matching the <code>RegExpValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑨">local end definition</a>, with the <code>pattern</code> property set to the <var>pattern</var> and the the <code>flags</code> property set to the <var>flags</var>.</p>
+          <p>Let <var>value</var> be a map matching the <code>RegExpValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑧">local end definition</a>, with the <code>pattern</code> property set to the <var>pattern</var> and the the <code>flags</code> property set to the <var>flags</var>.</p>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>RegExpRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and
+          <p>Let <var>remote value</var> be a map matching the <code>RegExpRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition①⑨">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and
  the <code>value</code> property set to <var>value</var>.</p>
         </ol>
        <dt><var>value</var> has a [[DateValue]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots">internal slot</a>. 
@@ -2139,14 +2138,34 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
          <li data-md>
           <p class="assertion">Assert: <var>serialized</var> is not a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type①">throw completion</a>.</p>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>DateRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and the
+          <p>Let <var>remote value</var> be a map matching the <code>DateRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise, and the
  value set to <var>serialized</var>.</p>
         </ol>
        <dt><var>value</var> has a [[MapData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots①">internal slot</a> 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>MapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
+          <p>Let <var>remote value</var> be a map matching the <code>MapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
+ otherwise.</p>
+         <li data-md>
+          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
+         <li data-md>
+          <p>Let <var>serialized</var> be null.</p>
+         <li data-md>
+          <p>If <var>known object</var> is <code>false</code>, and <var>max depth</var> is not 0, run
+ the following steps:</p>
+          <ol>
+           <li data-md>
+            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createmapiterator" id="ref-for-sec-createmapiterator">CreateMapIterator</a>(<var>value</var>, key+value), <var>max depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+          </ol>
+         <li data-md>
+          <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
+        </ol>
+       <dt><var>value</var> has a [[SetData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots②">internal slot</a> 
+       <dd>
+        <ol>
+         <li data-md>
+          <p>Let <var>remote value</var> be a map matching the <code>SetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
  otherwise.</p>
          <li data-md>
           <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed①">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
@@ -2157,50 +2176,35 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
  the following steps:</p>
           <ol>
            <li data-md>
-            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createmapiterator" id="ref-for-sec-createmapiterator">CreateMapIterator</a>(<var>value</var>, key+value), <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
-          </ol>
-         <li data-md>
-          <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
-        </ol>
-       <dt><var>value</var> has a [[SetData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots②">internal slot</a> 
-       <dd>
-        <ol>
-         <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>SetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②③">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
- otherwise.</p>
-         <li data-md>
-          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed②">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
-         <li data-md>
-          <p>Let <var>serialized</var> be null.</p>
-         <li data-md>
-          <p>If <var>known object</var> is <code>false</code>, and <var>max depth</var> is not 0, run
- the following steps:</p>
-          <ol>
-           <li data-md>
-            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list①">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createsetiterator" id="ref-for-sec-createsetiterator">CreateSetIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createsetiterator" id="ref-for-sec-createsetiterator">CreateSetIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
           </ol>
          <li data-md>
           <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
        <dt><var>value</var> has a [[WeakMapData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots③">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>WeakMapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②④">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>WeakMapRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②③">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has a [[WeakSetData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots④">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>WeakSetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑤">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>WeakSetRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②④">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has an [[ErrorData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑤">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>ErrorRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑥">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>ErrorRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑤">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ispromise" id="ref-for-sec-ispromise">IsPromise</a>(<var>value</var>) 
-       <dd>Let <var>remote value</var> be a map matching the <code>PromiseRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑦">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>PromiseRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑥">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has a [[TypedArrayName]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑥">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>TypedArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑧">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>TypedArrayRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑦">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><var>value</var> has an [[ArrayBufferData]] <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object-internal-methods-and-internal-slots" id="ref-for-sec-object-internal-methods-and-internal-slots⑦">internal slot</a> 
-       <dd>Let <var>remote value</var> be a map matching the <code>ArrayBufferRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑨">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
-       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object">platform object</a> that implements <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#boundary-point-node" id="ref-for-boundary-point-node">Node</a> 
+       <dd>Let <var>remote value</var> be a map matching the <code>ArrayBufferRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑧">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://dom.spec.whatwg.org/#nodelist" id="ref-for-nodelist">NodeList</a></code> 
+       <dd>Let <var>remote value</var> be <a data-link-type="dfn" href="#serialize-an-array-like" id="ref-for-serialize-an-array-like①">serialize an Array-like</a> with <code>NodeListRemoteValue</code>,<var>handle id</var>, <var>value</var>, <var>max depth</var>, <var>ownership type</var>, <var>known object</var>, <var>serialization internal map</var>, and <var>realm</var>. 
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object①">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://dom.spec.whatwg.org/#htmlcollection" id="ref-for-htmlcollection">HTMLCollection</a></code> 
+       <dd>Let <var>remote value</var> be <a data-link-type="dfn" href="#serialize-an-array-like" id="ref-for-serialize-an-array-like②">serialize an Array-like</a> with <code>HTMLCollectionRemoteValue</code>, <var>handle id</var>, <var>value</var>, <var>max
+      depth</var>, <var>ownership type</var>, <var>known object</var>, <var>serialization internal map</var>, and <var>realm</var>. 
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object②">platform object</a> that implements <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#boundary-point-node" id="ref-for-boundary-point-node">Node</a> 
        <dd>
         <ol>
          <li data-md>
-          <p>Let <var>remote value</var> be a map matching the <code>NodeRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
+          <p>Let <var>remote value</var> be a map matching the <code>NodeRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑨">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
          <li data-md>
-          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed③">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
+          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed②">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
          <li data-md>
           <p>Let <var>serialized</var> be null.</p>
          <li data-md>
@@ -2233,7 +2237,7 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
              <li data-md>
               <p>Let <var>child depth</var> be <var>max depth</var> - 1 if <var>max depth</var> is not null, or null otherwise.</p>
              <li data-md>
-              <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value">serialize as a remote value</a> with <var>child</var>, <var>child depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+              <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value">serialize as a remote value</a> with <var>child</var>, <var>child depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
              <li data-md>
               <p>Append <var>serialized</var> to <var>children</var>.</p>
             </ol>
@@ -2267,7 +2271,7 @@ an <var>ownership type</var>, a <var>serialization internal map</var> and a <var
   null, or null otherwise.</p>
                <li data-md>
                 <p>Let <var>serialized shadow</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value①">serialize as a remote value</a> with <var>shadow root</var>, <var>child depth</var>,
-  false, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+  false, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
                 <p class="note" role="note"><span>Note:</span> this means the <code>handle</code> for the shadow root
 will be serialized irrespective of whether the shadow is open or closed,
 but no properties of the node will be returned.</p>
@@ -2279,12 +2283,12 @@ but no properties of the node will be returned.</p>
          <li data-md>
           <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
         </ol>
-       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object①">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/nav-history-apis.html#windowproxy" id="ref-for-windowproxy">WindowProxy</a></code> 
-       <dd>1. Let <var>remote value</var> be a map matching the <code>WindowProxyRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
-       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object②">platform object</a> 
-       <dd>1. Let <var>remote value</var> be a map matching the <code>ObjectRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object③">platform object</a> that implements <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/nav-history-apis.html#windowproxy" id="ref-for-windowproxy">WindowProxy</a></code> 
+       <dd>1. Let <var>remote value</var> be a map matching the <code>WindowProxyRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⓪">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dt><var>value</var> is a <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#dfn-platform-object" id="ref-for-dfn-platform-object④">platform object</a> 
+       <dd>1. Let <var>remote value</var> be a map matching the <code>ObjectRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③①">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt><a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-iscallable" id="ref-for-sec-iscallable">IsCallable</a>(<var>value</var>) 
-       <dd>Let <var>remote value</var> be a map matching the <code>FunctionRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③③">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
+       <dd>Let <var>remote value</var> be a map matching the <code>FunctionRemoteValue</code> production in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③②">local end definition</a>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted otherwise. 
        <dt>Otherwise: 
        <dd>
         <ol>
@@ -2292,10 +2296,10 @@ but no properties of the node will be returned.</p>
           <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#assert" id="ref-for-assert③">Assert</a>: <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑨">type</a>(<var>value</var>) is Object</p>
          <li data-md>
           <p>Let <var>remote value</var> be a map matching the <code>ObjectRemoteValue</code> production
- in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③④">local end definition</a>, with the <code>handle</code> property set
+ in the <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③③">local end definition</a>, with the <code>handle</code> property set
  to <var>handle id</var> if it’s not null, or omitted otherwise.</p>
          <li data-md>
-          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed④">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
+          <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed③">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
          <li data-md>
           <p>Let <var>serialized</var> be null.</p>
          <li data-md>
@@ -2303,7 +2307,7 @@ but no properties of the node will be returned.</p>
  the following steps:</p>
           <ol>
            <li data-md>
-            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping①">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-enumerableownpropertynames" id="ref-for-sec-enumerableownpropertynames">EnumerableOwnPropertyNames</a>(<var>value</var>, key+value), <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+            <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-mapping" id="ref-for-serialize-as-a-mapping①">serialize as a mapping</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-enumerableownpropertynames" id="ref-for-sec-enumerableownpropertynames">EnumerableOwnPropertyNames</a>(<var>value</var>, key+value), <var>max depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
           </ol>
          <li data-md>
           <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
@@ -2321,8 +2325,28 @@ null value.</p>
     <p class="issue" id="issue-e8085260"><a class="self-link" href="#issue-e8085260"></a> <code>shadowRoot</code> field is optional. Omit it in case of <var>shadow root</var> is null, or
 remove optional flag from the field.</p>
    </div>
+   <div class="algorithm" data-algorithm="serialize an Array-like">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-an-array-like">serialize an Array-like</dfn> given <var>production</var>, <var>handle id</var>, <var>value</var>, <var>max depth</var>, <var>ownership type</var>, <var>known object</var>, <var>serialization internal map</var>, and <var>realm</var>: 
+    <ol>
+     <li data-md>
+      <p>Let <var>remote value</var> be a map matching <var>production</var>, with the <code>handle</code> property set to <var>handle id</var> if it’s not null, or omitted
+ otherwise.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="#set-internal-ids-if-needed" id="ref-for-set-internal-ids-if-needed④">Set internal ids if needed</a> given <var>serialization internal map</var>, <var>remote value</var> and <var>value</var>.</p>
+     <li data-md>
+      <p>If <var>known object</var> is <code>false</code>, and <var>max depth</var> is not 0:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>serialized</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-list" id="ref-for-serialize-as-a-list①">serialize as a list</a> given <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayiterator" id="ref-for-sec-createarrayiterator">CreateArrayIterator</a>(<var>value</var>, value), <var>max depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+       <li data-md>
+        <p>If <var>serialized</var> is not null, set field <code>value</code> of <var>remote value</var> to <var>serialized</var>.</p>
+      </ol>
+     <li data-md>
+      <p>Return <var>remote value</var></p>
+    </ol>
+   </div>
    <div class="algorithm" data-algorithm="serialize as a list">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-list">serialize as a list</dfn> given <var>iterable</var>, <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-list">serialize as a list</dfn> given <var>iterable</var>, <var>max depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>: 
     <ol>
      <li data-md>
       <p>Let <var>serialized</var> be a new list.</p>
@@ -2333,7 +2357,7 @@ remove optional flag from the field.</p>
         <p>Let <var>child depth</var> be <var>max depth</var> - 1 if <var>max depth</var> is not null, or null
  otherwise.</p>
        <li data-md>
-        <p>Let <var>serialized child</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value②">serialize as a remote value</a> with arguments <var>child value</var>, <var>child depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+        <p>Let <var>serialized child</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value②">serialize as a remote value</a> with arguments <var>child value</var>, <var>child depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
        <li data-md>
         <p>Append <var>serialized child</var> to <var>serialized</var>.</p>
       </ol>
@@ -2343,7 +2367,7 @@ remove optional flag from the field.</p>
    </div>
    <p class="issue" id="issue-c12b3c7f"><a class="self-link" href="#issue-c12b3c7f"></a> this assumes for-in works on iterators</p>
    <div class="algorithm" data-algorithm="serialize as a mapping">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-mapping">serialize as a mapping</dfn> given <var>iterable</var>, <var>max depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>: 
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-as-a-mapping">serialize as a mapping</dfn> given <var>iterable</var>, <var>max depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>: 
     <ol>
      <li data-md>
       <p>Let <var>serialized</var> be a new list.</p>
@@ -2363,9 +2387,9 @@ remove optional flag from the field.</p>
  otherwise.</p>
        <li data-md>
         <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values①⓪">Type</a>(<var>key</var>) is String, let <var>serialized key</var> be <var>child key</var>,
- otherwise let <var>serialized key</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value③">serialize as a remote value</a> with arguments <var>child key</var>, <var>child depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+ otherwise let <var>serialized key</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value③">serialize as a remote value</a> with arguments <var>child key</var>, <var>child depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
        <li data-md>
-        <p>Let <var>serialized value</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value④">serialize as a remote value</a> with arguments <var>value</var>, <var>child depth</var>, <var>child ownership</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
+        <p>Let <var>serialized value</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value④">serialize as a remote value</a> with arguments <var>value</var>, <var>child depth</var>, <var>ownership type</var>, <var>serialization internal map</var> and <var>realm</var>.</p>
        <li data-md>
         <p>Let <var>serialized child</var> be («<var>serialized key</var>, <var>serialized value</var>»).</p>
        <li data-md>
@@ -2388,7 +2412,7 @@ events for monitoring the status of the remote end.</p>
   session.Unsubscribe
 )
 </pre>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑤">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③④">local end definition</a></p>
 <pre class="cddl local-cddl">SessionResult = (session.StatusResult)
 </pre>
    <div class="algorithm" data-algorithm="update the event map">
@@ -2525,7 +2549,7 @@ filter only those that ought to be returned to the local end.</p>
    <p>The <code>session.CapabilitiesRequest</code> type represents the capabilities requested
 for a session.</p>
    <h5 class="heading settled" data-level="7.1.2.2" id="type-session-CapabilityRequest"><span class="secno">7.1.2.2. </span><span class="content">The session.CapabilityRequest Type</span><a class="self-link" href="#type-session-CapabilityRequest"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑨">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑥">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition⑨">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑤">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">session.CapabilityRequest = {
   ?acceptInsecureCerts: bool,
   ?browserName: text,
@@ -2779,7 +2803,7 @@ navigation status<a class="self-link" href="#webdriver-navigation-status"></a></
   browsingContext.Reload
 )
 </pre>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑦">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑥">local end definition</a></p>
 <pre class="cddl local-cddl">BrowsingContextResult = (
   browsingContext.CaptureScreenshotResult //
   browsingContext.CreateResult //
@@ -2803,7 +2827,7 @@ BrowsingContextEvent = (
 </pre>
    <h4 class="heading settled" data-level="7.2.2" id="module-browsingcontext-types"><span class="secno">7.2.2. </span><span class="content">Types</span><a class="self-link" href="#module-browsingcontext-types"></a></h4>
    <h5 class="heading settled" data-level="7.2.2.1" id="type-browsingContext-Browsingcontext"><span class="secno">7.2.2.1. </span><span class="content">The browsingContext.BrowsingContext Type</span><a class="self-link" href="#type-browsingContext-Browsingcontext"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①①">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑧">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①①">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑦">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">browsingContext.BrowsingContext = text;
 </pre>
    <p>Each <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#browsing-context" id="ref-for-browsing-context">browsing context</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export data-lt="browsing context id" id="browsing-context-id">browsing context
@@ -2825,7 +2849,7 @@ same as the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-w
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.2.2.2" id="type-browsingContext-Info"><span class="secno">7.2.2.2. </span><span class="content">The browsingContext.Info Type</span><a class="self-link" href="#type-browsingContext-Info"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑨">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑧">local end definition</a></p>
 <pre class="cddl local-cddl">browsingContext.InfoList = [*browsingContext.Info]
 
 browsingContext.Info = {
@@ -2983,14 +3007,14 @@ browsing context.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.2.2.3" id="type-browsingContext-Navigation"><span class="secno">7.2.2.3. </span><span class="content">The browsingContext.Navigation Type</span><a class="self-link" href="#type-browsingContext-Navigation"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①②">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⓪">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①②">remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition③⑨">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">browsingContext.Navigation = text;
 </pre>
    <p>The <code>browsingContext.Navigation</code> type is a unique string identifying an ongoing
 navigation.</p>
    <p>TODO: Link to the definition in the HTML spec.</p>
    <h5 class="heading settled" data-level="7.2.2.4" id="type-browsingContext-NavigationInfo"><span class="secno">7.2.2.4. </span><span class="content">The browsingContext.NavigationInfo Type</span><a class="self-link" href="#type-browsingContext-NavigationInfo"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④①">local end definition</a>:</p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⓪">local end definition</a>:</p>
 <pre class="cddl local-cddl">browsingContext.NavigationInfo = {
   context: browsingContext.BrowsingContext,
   navigation: browsingContext.Navigation / null,
@@ -3803,7 +3827,7 @@ relating to script realms and execution.</p>
   script.RemovePreloadScriptCommand
 )
 </pre>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④②">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④①">local end definition</a></p>
 <pre class="cddl local-cddl">ScriptResult = (
   script.AddPreloadScriptResult //
   script.EvaluateResult //
@@ -3861,7 +3885,7 @@ item named <code>sandbox</code> which is a string or null.</p>
    </div>
    <h4 class="heading settled" data-level="7.3.3" id="module-script-types"><span class="secno">7.3.3. </span><span class="content">Types</span><a class="self-link" href="#module-script-types"></a></h4>
    <h5 class="heading settled" data-level="7.3.3.1" id="type-script-ExceptionDetails"><span class="secno">7.3.3.1. </span><span class="content">The script.ExceptionDetails type</span><a class="self-link" href="#type-script-ExceptionDetails"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①④">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④③">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①④">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④②">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">script.ExceptionDetails = {
   columnNumber: js-uint,
   exception: RemoteValue,
@@ -3903,7 +3927,7 @@ item named <code>sandbox</code> which is a string or null.</p>
    <p>The <code>script.PreloadScript</code> type represents a handle to a script that will run
 on realm creation.</p>
    <h5 class="heading settled" data-level="7.3.3.3" id="type-script-Realm"><span class="secno">7.3.3.3. </span><span class="content">The script.Realm type</span><a class="self-link" href="#type-script-Realm"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑥">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④④">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑥">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④③">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">script.Realm = text;
 </pre>
    <p>Each <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms③">realm</a> has an associated <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="realm-id">realm id</dfn>, which is a string
@@ -3929,7 +3953,7 @@ relationships between different ids.</p>
     <p class="issue" id="issue-89e6b783"><a class="self-link" href="#issue-89e6b783"></a> This has the wrong error code</p>
    </div>
    <h5 class="heading settled" data-level="7.3.3.4" id="type-script-RealmInfo"><span class="secno">7.3.3.4. </span><span class="content">The script.RealmInfo type</span><a class="self-link" href="#type-script-RealmInfo"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑤">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④④">Local end definition</a></p>
 <pre class="cddl local-cddl">script.RealmInfo = {
   script.WindowRealmInfo //
   script.DedicatedWorkerRealmInfo //
@@ -4103,7 +4127,7 @@ script.WorkletRealmInfo = {
          implementing <code class="idl"><a data-link-type="idl" href="https://html.spec.whatwg.org/multipage/worklets.html#workletglobalscope" id="ref-for-workletglobalscope①">WorkletGlobalScope</a></code>.</p>
    </div>
    <h5 class="heading settled" data-level="7.3.3.5" id="type-script-RealmType"><span class="secno">7.3.3.5. </span><span class="content">The script.RealmType type</span><a class="self-link" href="#type-script-RealmType"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑥">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑤">Local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">script.RealmType = "window" / "dedicated-worker" / "shared-worker" / "service-worker" /
                    "worker" / "paint-worklet" / "audio-worklet" / "worklet"
 </pre>
@@ -4186,7 +4210,7 @@ Record</a> of type <code>throw</code>, <var>exception</var>, is given by:</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.3.3.8" id="type-script-EvaluateResult"><span class="secno">7.3.3.8. </span><span class="content">The script.EvaluateResult type</span><a class="self-link" href="#type-script-EvaluateResult"></a></h5>
-   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑦">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑦">local end definition</a></p>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition①⑦">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑥">local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">script.EvaluateResult = (
   script.EvaluateResultSuccess //
   script.EvaluateResultException
@@ -4214,7 +4238,7 @@ completes with a thrown exception.</p>
    <p>The <code>script.ResultOwnership</code> specifies how the serialized value
 ownership will be treated.</p>
    <h5 class="heading settled" data-level="7.3.3.10" id="type-script-Source"><span class="secno">7.3.3.10. </span><span class="content">The script.Source type</span><a class="self-link" href="#type-script-Source"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑧">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑦">Local end definition</a></p>
 <pre class="cddl local-cddl">script.Source = (
   realm: script.Realm,
   ?context: browsingContext.BrowsingContext
@@ -4920,14 +4944,14 @@ is then navigated before the local end subscribes to log events for the top
 level context.</p>
    </div>
    <h4 class="heading settled" data-level="7.4.1" id="module-log-definition"><span class="secno">7.4.1. </span><span class="content">Definition</span><a class="self-link" href="#module-log-definition"></a></h4>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑨">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑧">Local end definition</a></p>
 <pre class="cddl local-cddl">LogEvent = (
   log.EntryAdded
 )
 </pre>
    <h4 class="heading settled" data-level="7.4.2" id="module-log-types"><span class="secno">7.4.2. </span><span class="content">Types</span><a class="self-link" href="#module-log-types"></a></h4>
    <h5 class="heading settled" data-level="7.4.2.1" id="types-log-logentry"><span class="secno">7.4.2.1. </span><span class="content">log.LogEntry</span><a class="self-link" href="#types-log-logentry"></a></h5>
-   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition⑤⓪">Local end definition</a></p>
+   <p><a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition④⑨">Local end definition</a></p>
 <pre class="cddl local-cddl">log.Level = "debug" / "info" / "warn" / "error"
 
 log.Entry = (
@@ -5269,6 +5293,7 @@ end:</p>
    <li><a href="#stackframe-script-url">script url</a><span>, in § 7.3.3.7</span>
    <li><a href="#listener-secure-flag">secure flag</a><span>, in § 4</span>
    <li><a href="#send-an-error-response">send an error response</a><span>, in § 4</span>
+   <li><a href="#serialize-an-array-like">serialize an Array-like</a><span>, in § 6.2.3.1</span>
    <li><a href="#serialize-as-a-list">serialize as a list</a><span>, in § 6.2.3.1</span>
    <li><a href="#serialize-as-a-mapping">serialize as a mapping</a><span>, in § 6.2.3.1</span>
    <li><a href="#serialize-as-a-remote-value">serialize as a remote value</a><span>, in § 6.2.3.1</span>
@@ -5341,6 +5366,18 @@ end:</p>
    <ul>
     <li><a href="#ref-for-document">7.2.2.2. The browsingContext.Info Type</a>
     <li><a href="#ref-for-document①">8.1. HTML</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-htmlcollection">
+   <a href="https://dom.spec.whatwg.org/#htmlcollection">https://dom.spec.whatwg.org/#htmlcollection</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-htmlcollection">6.2.3.1. Serialization</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="term-for-nodelist">
+   <a href="https://dom.spec.whatwg.org/#nodelist">https://dom.spec.whatwg.org/#nodelist</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-nodelist">6.2.3.1. Serialization</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="term-for-concept-attribute">
@@ -6725,7 +6762,7 @@ end:</p>
   <aside class="dfn-panel" data-for="term-for-dfn-platform-object">
    <a href="https://webidl.spec.whatwg.org/#dfn-platform-object">https://webidl.spec.whatwg.org/#dfn-platform-object</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-dfn-platform-object">6.2.3.1. Serialization</a> <a href="#ref-for-dfn-platform-object①">(2)</a> <a href="#ref-for-dfn-platform-object②">(3)</a>
+    <li><a href="#ref-for-dfn-platform-object">6.2.3.1. Serialization</a> <a href="#ref-for-dfn-platform-object①">(2)</a> <a href="#ref-for-dfn-platform-object②">(3)</a> <a href="#ref-for-dfn-platform-object③">(4)</a> <a href="#ref-for-dfn-platform-object④">(5)</a>
    </ul>
   </aside>
   <h3 class="no-num no-ref heading settled" id="index-defined-elsewhere"><span class="content">Terms defined by reference</span><a class="self-link" href="#index-defined-elsewhere"></a></h3>
@@ -6747,6 +6784,8 @@ end:</p>
     <a data-link-type="biblio">[DOM]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="term-for-document">Document</span>
+     <li><span class="dfn-paneled" id="term-for-htmlcollection">HTMLCollection</span>
+     <li><span class="dfn-paneled" id="term-for-nodelist">NodeList</span>
      <li><span class="dfn-paneled" id="term-for-concept-attribute">attribute</span>
      <li><span class="dfn-paneled" id="term-for-concept-element-attribute">attribute list</span>
      <li><span class="dfn-paneled" id="term-for-concept-tree-child">children</span>
@@ -7147,23 +7186,23 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-local-end-definition⑧">4. Transport</a> <a href="#ref-for-local-end-definition⑨">(2)</a>
     <li><a href="#ref-for-local-end-definition①⓪">6.2.1.1. Serialization</a> <a href="#ref-for-local-end-definition①①">(2)</a> <a href="#ref-for-local-end-definition①②">(3)</a> <a href="#ref-for-local-end-definition①③">(4)</a> <a href="#ref-for-local-end-definition①④">(5)</a> <a href="#ref-for-local-end-definition①⑤">(6)</a>
     <li><a href="#ref-for-local-end-definition①⑥">6.2.3. Remote Value</a>
-    <li><a href="#ref-for-local-end-definition①⑦">6.2.3.1. Serialization</a> <a href="#ref-for-local-end-definition①⑧">(2)</a> <a href="#ref-for-local-end-definition①⑨">(3)</a> <a href="#ref-for-local-end-definition②⓪">(4)</a> <a href="#ref-for-local-end-definition②①">(5)</a> <a href="#ref-for-local-end-definition②②">(6)</a> <a href="#ref-for-local-end-definition②③">(7)</a> <a href="#ref-for-local-end-definition②④">(8)</a> <a href="#ref-for-local-end-definition②⑤">(9)</a> <a href="#ref-for-local-end-definition②⑥">(10)</a> <a href="#ref-for-local-end-definition②⑦">(11)</a> <a href="#ref-for-local-end-definition②⑧">(12)</a> <a href="#ref-for-local-end-definition②⑨">(13)</a> <a href="#ref-for-local-end-definition③⓪">(14)</a> <a href="#ref-for-local-end-definition③①">(15)</a> <a href="#ref-for-local-end-definition③②">(16)</a> <a href="#ref-for-local-end-definition③③">(17)</a> <a href="#ref-for-local-end-definition③④">(18)</a>
-    <li><a href="#ref-for-local-end-definition③⑤">7.1.1. Definition</a>
-    <li><a href="#ref-for-local-end-definition③⑥">7.1.2.2. The session.CapabilityRequest Type</a>
-    <li><a href="#ref-for-local-end-definition③⑦">7.2.1. Definition</a>
-    <li><a href="#ref-for-local-end-definition③⑧">7.2.2.1. The browsingContext.BrowsingContext Type</a>
-    <li><a href="#ref-for-local-end-definition③⑨">7.2.2.2. The browsingContext.Info Type</a>
-    <li><a href="#ref-for-local-end-definition④⓪">7.2.2.3. The browsingContext.Navigation Type</a>
-    <li><a href="#ref-for-local-end-definition④①">7.2.2.4. The browsingContext.NavigationInfo Type</a>
-    <li><a href="#ref-for-local-end-definition④②">7.3.1. Definition</a>
-    <li><a href="#ref-for-local-end-definition④③">7.3.3.1. The script.ExceptionDetails type</a>
-    <li><a href="#ref-for-local-end-definition④④">7.3.3.3. The script.Realm type</a>
-    <li><a href="#ref-for-local-end-definition④⑤">7.3.3.4. The script.RealmInfo type</a>
-    <li><a href="#ref-for-local-end-definition④⑥">7.3.3.5. The script.RealmType type</a>
-    <li><a href="#ref-for-local-end-definition④⑦">7.3.3.8. The script.EvaluateResult type</a>
-    <li><a href="#ref-for-local-end-definition④⑧">7.3.3.10. The script.Source type</a>
-    <li><a href="#ref-for-local-end-definition④⑨">7.4.1. Definition</a>
-    <li><a href="#ref-for-local-end-definition⑤⓪">7.4.2.1. log.LogEntry</a>
+    <li><a href="#ref-for-local-end-definition①⑦">6.2.3.1. Serialization</a> <a href="#ref-for-local-end-definition①⑧">(2)</a> <a href="#ref-for-local-end-definition①⑨">(3)</a> <a href="#ref-for-local-end-definition②⓪">(4)</a> <a href="#ref-for-local-end-definition②①">(5)</a> <a href="#ref-for-local-end-definition②②">(6)</a> <a href="#ref-for-local-end-definition②③">(7)</a> <a href="#ref-for-local-end-definition②④">(8)</a> <a href="#ref-for-local-end-definition②⑤">(9)</a> <a href="#ref-for-local-end-definition②⑥">(10)</a> <a href="#ref-for-local-end-definition②⑦">(11)</a> <a href="#ref-for-local-end-definition②⑧">(12)</a> <a href="#ref-for-local-end-definition②⑨">(13)</a> <a href="#ref-for-local-end-definition③⓪">(14)</a> <a href="#ref-for-local-end-definition③①">(15)</a> <a href="#ref-for-local-end-definition③②">(16)</a> <a href="#ref-for-local-end-definition③③">(17)</a>
+    <li><a href="#ref-for-local-end-definition③④">7.1.1. Definition</a>
+    <li><a href="#ref-for-local-end-definition③⑤">7.1.2.2. The session.CapabilityRequest Type</a>
+    <li><a href="#ref-for-local-end-definition③⑥">7.2.1. Definition</a>
+    <li><a href="#ref-for-local-end-definition③⑦">7.2.2.1. The browsingContext.BrowsingContext Type</a>
+    <li><a href="#ref-for-local-end-definition③⑧">7.2.2.2. The browsingContext.Info Type</a>
+    <li><a href="#ref-for-local-end-definition③⑨">7.2.2.3. The browsingContext.Navigation Type</a>
+    <li><a href="#ref-for-local-end-definition④⓪">7.2.2.4. The browsingContext.NavigationInfo Type</a>
+    <li><a href="#ref-for-local-end-definition④①">7.3.1. Definition</a>
+    <li><a href="#ref-for-local-end-definition④②">7.3.3.1. The script.ExceptionDetails type</a>
+    <li><a href="#ref-for-local-end-definition④③">7.3.3.3. The script.Realm type</a>
+    <li><a href="#ref-for-local-end-definition④④">7.3.3.4. The script.RealmInfo type</a>
+    <li><a href="#ref-for-local-end-definition④⑤">7.3.3.5. The script.RealmType type</a>
+    <li><a href="#ref-for-local-end-definition④⑥">7.3.3.8. The script.EvaluateResult type</a>
+    <li><a href="#ref-for-local-end-definition④⑦">7.3.3.10. The script.Source type</a>
+    <li><a href="#ref-for-local-end-definition④⑧">7.4.1. Definition</a>
+    <li><a href="#ref-for-local-end-definition④⑨">7.4.2.1. log.LogEntry</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="bidi-flag">
@@ -7625,6 +7664,12 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-serialize-as-a-remote-value⑥">7.3.4.3. The script.callFunction Command</a>
     <li><a href="#ref-for-serialize-as-a-remote-value⑦">7.3.4.4. The script.evaluate Command</a>
     <li><a href="#ref-for-serialize-as-a-remote-value⑧">7.4.3.1. The log.entryAdded Event</a>
+   </ul>
+  </aside>
+  <aside class="dfn-panel" data-for="serialize-an-array-like">
+   <b><a href="#serialize-an-array-like">#serialize-an-array-like</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-serialize-an-array-like">6.2.3.1. Serialization</a> <a href="#ref-for-serialize-an-array-like①">(2)</a> <a href="#ref-for-serialize-an-array-like②">(3)</a>
    </ul>
   </aside>
   <aside class="dfn-panel" data-for="serialize-as-a-list">
