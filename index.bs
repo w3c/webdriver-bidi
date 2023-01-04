@@ -394,8 +394,12 @@ Each [=command=] is defined by:
 - A <dfn export for=command>result type</dfn>, which is defined by a [=local
   end definition=] fragment.
 - A set of [=remote end steps=] which define the actions to take for a command
-  given a [=BiDi session=] and [=command parameters=] and return an
-  instance of the command [=result type=].
+  given a [=BiDi session=] and [=command parameters=]. If the command runs to
+  completion these steps return [=success=] with either a [=map=] matching the
+  command [=result type=] production or with null to indicate an
+  <code>EmptyResult</code>. If the command does not run to completion these
+  steps return [=error=] with the [=error code=] that will be reported to the
+  user.
 
 A command that can run without an active session is a <dfn>static
 command</dfn>. Commands are not static commands unless stated in their
@@ -796,6 +800,8 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
        return.
 
     1. Let |value| be |result|'s data.
+
+    1. If |value| is null, set |value| to an empty map.
 
     1. Assert: |value| matches the definition for the [=result type=]
        corresponding to the command with [=command name=] |method|.
@@ -4917,7 +4923,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. <a for=set>Remove</a> |script| from |preload script map|.
 
-1. Return null
+1. Return [=success=] with data null
 
 </div>
 
