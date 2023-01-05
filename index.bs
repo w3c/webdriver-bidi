@@ -234,9 +234,9 @@ protocol. These terms are distinct from their representation at the
 The protocol is defined using a [[!RFC8610|CDDL]] definition. For the
 convenience of implementors two separate CDDL definitions are defined; the
 <dfn>remote end definition</dfn> which defines the format of messages produced
-on the [=local end=] and consumed on the [=remote end=], and the <dfn>local end
-definition</dfn> which defines the format of messages produced on the [=remote
-end=] and consumed on the [=local end=]
+on the [=local end=] and consumed on the [=remote end=], and the
+<dfn>local end definition</dfn> which defines the format of messages produced on the
+[=remote end=] and consumed on the [=local end=]
 
 ## Definition ## {#protocol-definition}
 
@@ -369,8 +369,8 @@ An implementation may define <dfn>extension modules</dfn>. These must have a
 [=module name=] that contains a single colon "<code>:</code>" character. The
 part before the colon is the prefix; this is typically the same for all
 extension modules specific to a given implementation and should be unique for a
-given implementation. Such modules extend the [=local end definition=] and [=remote
-end definition=] providing additional groups as choices for the defined
+given implementation. Such modules extend the [=local end definition=] and
+[=remote end definition=] providing additional groups as choices for the defined
 [=commands=] and [=events=].
 
 ## Commands ## {#commands}
@@ -383,23 +383,22 @@ long-running. As a consequence, commands can finish out-of-order.
 
 Each [=command=] is defined by:
 
-- A <dfn export for=command>command type</dfn> which is defined by a [=remote
-   end definition=] fragment containing a group. Each such group has two fields:
-    - <code>method</code> which is a string literal of the form <code>[module
-      name].[method name]</code>. This is the <dfn export for=command>command
-      name</dfn>.
+- A <dfn export for=command>command type</dfn> which is defined by a
+  [=remote end definition=] fragment containing a group. Each such group has two fields:
+    - <code>method</code> which is a string literal of the form
+      <code>[module name].[method name]</code>. This is the
+      <dfn export for=command>command name</dfn>.
     - <code>params</code> which defines a mapping containing data that to be passed into
       the command. The populated value of this map is the
       <dfn export for=command>command parameters</dfn>.
-- A <dfn export for=command>result type</dfn>, which is defined by a [=local
-  end definition=] fragment.
+- A <dfn export for=command>result type</dfn>, which is defined by a
+  [=local end definition=] fragment.
 - A set of [=remote end steps=] which define the actions to take for a command
   given a [=BiDi session=] and [=command parameters=] and return an
   instance of the command [=result type=].
 
-A command that can run without an active session is a <dfn>static
-command</dfn>. Commands are not static commands unless stated in their
-definition.
+A command that can run without an active session is a <dfn>static command</dfn>.
+Commands are not static commands unless stated in their definition.
 
 When commands are sent from the [=local end=] they have a command id. This is an
 identifier used by the [=local end=] to identify the response from a particular
@@ -407,12 +406,12 @@ command. From the point of view of the [=remote end=] this identifier is opaque
 and cannot be used internally to identify the command.
 
 Note: This is because the command id is entirely controlled by the [=local end=]
-and isn't necessarily unique over the course of a session. For example a [=local
-end=] which ignores all responses could use the same command id for each command.
+and isn't necessarily unique over the course of a session. For example a
+[=local end=] which ignores all responses could use the same command id for each
+command.
 
 The <dfn export for=command>set of all command names</dfn> is a set containing
-all the defined [=command names=], including any belonging to [=extension
-modules=].
+all the defined [=command names=], including any belonging to [=extension modules=].
 
 ## Errors ## {#errors}
 
@@ -438,19 +437,19 @@ ErrorCode = ("invalid argument" /
 
 ## Events ## {#events}
 
-An <dfn export>event</dfn> is a notification, sent by the [=remote
-end=] to the [=local end=], signaling that something of interest has
-occurred on the [=remote end=].
+An <dfn export>event</dfn> is a notification, sent by the [=remote end=] to the
+[=local end=], signaling that something of interest has occurred on the
+[=remote end=].
 
- - An <dfn export for=event>event type</dfn> is defined by a [=local
-   end definition=] fragment containing a group. Each such group has two fields:
-    - <code>method</code> which is a string literal of the form <code>[module
-      name].[event name]</code>. This is the <dfn export for=event>event
-      name</dfn>.
+ - An <dfn export for=event>event type</dfn> is defined by a [=local end definition=]
+   fragment containing a group. Each such group has two fields:
+    - <code>method</code> which is a string literal of the form
+      <code>[module name].[event name]</code>. This is the
+      <dfn export for=event>event name</dfn>.
 
     - <code>params</code> which defines a mapping containing event data. The
-      populated value of this map is the <dfn export for=command>event
-      parameters</code>.
+      populated value of this map is the
+      <dfn export for=command>event parameters</dfn>.
  - A <dfn export>remote end event trigger</dfn> which defines when the event is
    triggered and steps to construct the [=event type=] data.
  - Optionally, a set of <dfn>remote end subscribe steps</dfn>, which define
@@ -464,10 +463,9 @@ which is a set containing the event names for events that are enabled for all
 browsing contexts. This initially contains the [=event name=] for events that
 are <dfn export for=event>in the default event set</dfn>.
 
-A [=BiDi session=] has a <dfn export for=event>browsing context event
-map</dfn>, which is a map with [=/top-level browsing context=] keys and values
-that are a set of [=event name=]s for events that are enabled in the given
-browsing context.
+A [=BiDi session=] has a <dfn export for=event>browsing context event map</dfn>,
+which is a map with [=/top-level browsing context=] keys and values that are a set of
+[=event name=]s for events that are enabled in the given browsing context.
 
 <div algorithm>
 
@@ -562,17 +560,16 @@ Message transport is provided using the WebSocket protocol.
 Note: In the terms of the WebSocket protocol, the [=local end=] is the
 client and the [=remote end=] is the server / remote host.
 
-Note: The encoding of [=commands=] and [=events=] as messages is
-similar to JSON-RPC, but this specification does not normatively
-reference it. [[JSON-RPC]] The normative requirements on [=remote
-ends=] are instead given as a precise processing model, while no
-normative requirements are given for [=local ends=].
+Note: The encoding of [=commands=] and [=events=] as messages is similar to JSON-RPC,
+but this specification does not normatively reference it. [[JSON-RPC]] The normative
+requirements on [=remote ends=] are instead given as a precise processing model,
+while no normative requirements are given for [=local ends=].
 
 A <dfn>WebSocket listener</dfn> is a network endpoint that is able
 to accept incoming [[!RFC6455|WebSocket]] connections.
 
-A [=WebSocket listener=] has a <dfn for=listener>host</dfn>, a <dfn
-for=listener>port</dfn>, a <dfn for=listener>secure flag</dfn>, and a
+A [=WebSocket listener=] has a <dfn for=listener>host</dfn>, a
+<dfn for=listener>port</dfn>, a <dfn for=listener>secure flag</dfn>, and a
 <dfn>list of WebSocket resources</dfn>.
 
 When a [=WebSocket listener=] |listener| is created, a [=remote end=]
@@ -581,48 +578,45 @@ given by |listener|'s [=listener/host=] and [=listener/port=]. If
 |listener|'s [=listener/secure flag=] is set, then connections
 established from |listener| must be TLS encrypted.
 
-A [=remote end=] has a [=set=] of [=WebSocket listeners=] <dfn>active
-listeners</dfn>, which is initially empty.
+A [=remote end=] has a [=set=] of [=WebSocket listeners=]
+<dfn>active listeners</dfn>, which is initially empty.
 
-A [=remote end=] has a [=set=] of <dfn>WebSocket connections not associated with a
-session</dfn>, which is initially empty.
+A [=remote end=] has a [=set=] of
+<dfn>WebSocket connections not associated with a session</dfn>, which is initially
+empty.
 
 A <dfn>WebSocket connection</dfn> is a network connection that follows the
 requirements of the [[!RFC6455|WebSocket protocol]]
 
-A [=BiDi session=] has a set of <dfn>session WebSocket
-connections</dfn> whose elements are [=WebSocket connections=]. This is
-initially empty.
+A [=BiDi session=] has a set of <dfn>session WebSocket connections</dfn> whose
+elements are [=WebSocket connections=]. This is initially empty.
 
 A [=BiDi session=] |session| is <dfn>associated with connection</dfn>
 |connection| if |session|'s [=session WebSocket connections=] contains |connection|.
 
-Note: Each [=WebSocket connection=] is associated with at most one [=BiDi
-session=].
+Note: Each [=WebSocket connection=] is associated with at most one [=BiDi session=].
 
 <div>
 
-When a client [=establishes a WebSocket connection=] |connection| by
-connecting to one of the set of [=active listeners=] |listener|, the
-implementation must proceed according to the WebSocket [=server-side
-requirements=], with the following steps run when deciding whether to
-accept the incoming connection:
+When a client [=establishes a WebSocket connection=] |connection| by connecting to
+one of the set of [=active listeners=] |listener|, the implementation must proceed
+according to the WebSocket [=server-side requirements=], with the following steps run
+when deciding whether to accept the incoming connection:
 
-1. Let |resource name| be the resource name from [=reading the
-   client's opening handshake=]. If |resource name| is not in
-   |listener|'s [=list of WebSocket resources=], then stop
-   running these steps and act as if the requested service is not
-   available.
+1. Let |resource name| be the resource name from
+   [=reading the client's opening handshake=]. If |resource name| is not in
+   |listener|'s [=list of WebSocket resources=], then stop running these steps and
+   act as if the requested service is not available.
 
 1. If |resource name| is the byte string "<code>/session</code>",
    and the implementation [=supports BiDi-only sessions=]:
 
-    1. Run any other implementation-defined steps to decide if the
-       connection should be accepted, and if it is not stop running these
-       steps and act as if the requested service is not available.
+    1. Run any other implementation-defined steps to decide if the connection should
+       be accepted, and if it is not stop running these steps and act as if the
+       requested service is not available.
 
-    1. Add the connection to the set of [=WebSocket connections not associated
-       with a session=].
+    1. Add the connection to the set of
+       [=WebSocket connections not associated with a session=].
 
     1. Return.
 
@@ -640,31 +634,28 @@ accept the incoming connection:
    connection should be accepted, and if it is not stop running these
    steps and act as if the requested service is not available.
 
-1. Otherwise append |connection| to |session|'s [=session WebSocket
-   connections=], and proceed with the WebSocket [=server-side requirements=]
+1. Otherwise append |connection| to |session|'s [=session WebSocket connections=],
+   and proceed with the WebSocket [=server-side requirements=]
    when a server chooses to accept an incoming connection.
 
 Issue: Do we support > 1 connection for a single session?
 
 </div>
 
-When [=a WebSocket message has been received=] for a [=WebSocket
-connection=] |connection| with type |type| and data |data|, a [=remote
-end=] must [=handle an incoming message=] given |connection|, |type|
-and |data|.
+When [=a WebSocket message has been received=] for a [=WebSocket connection=]
+|connection| with type |type| and data |data|, a [=remote end=] must
+[=handle an incoming message=] given |connection|, |type| and |data|.
 
-When [=the WebSocket closing handshake is started=] or when [=the
-WebSocket connection is closed=] for a [=WebSocket connection=]
-|connection|, a [=remote end=] must [=handle a connection closing=]
-given |connection|.
+When [=the WebSocket closing handshake is started=] or when
+[=the WebSocket connection is closed=] for a [=WebSocket connection=] |connection|, a
+[=remote end=] must [=handle a connection closing=] given |connection|.
 
 Note: Both conditions are needed because it is possible for a
 WebSocket connection to be closed without a closing handshake.
 
 <div algorithm>
 
-To <dfn lt="construct a WebSocket resource name|constructing a
-WebSocket resource name">construct a WebSocket resource name</dfn>
+To <dfn lt="construct a WebSocket resource name|constructing a WebSocket resource name">construct a WebSocket resource name</dfn>
 given a [=/session=] |session|:
 
 1. If |session| is null, return "<code>/session</code>"
@@ -676,12 +667,11 @@ given a [=/session=] |session|:
 
 <div algorithm>
 
-To <dfn lt="construct a WebSocket URL|constructing a WebSocket
-URL">construct a WebSocket URL</dfn> given a [=WebSocket listener=]
+To <dfn lt="construct a WebSocket URL|constructing a WebSocket URL">construct a WebSocket URL</dfn> given a [=WebSocket listener=]
 |listener| and [=/session=] |session|:
 
-1. Let |resource name| be the result of [=constructing a WebSocket
-   resource name=] given |session|.
+1. Let |resource name| be the result of [=constructing a WebSocket resource name=]
+   given |session|.
 
 1. Return a [=WebSocket URI=] constructed with host set to
    |listener|'s [=listener/host=], port set to |listener|'s
@@ -720,14 +710,13 @@ To <dfn>start listening for a WebSocket connection</dfn> given a
    [=listener/host=], [=listener/port=], [=listener/secure flag=],
    and an empty [=list of WebSocket resources=].
 
-1. Let |resource name| be the result of [=constructing a WebSocket
-   resource name=] given |session|.
+1. Let |resource name| be the result of [=constructing a WebSocket resource name=]
+   given |session|.
 
 1. Append |resource name| to the [=list of WebSocket resources=] for
    |listener|.
 
-1. [=set/Append=] |listener| to the [=remote end=]'s [=active
-    listeners=].
+1. [=set/Append=] |listener| to the [=remote end=]'s [=active listeners=].
 
 1. Return |listener|.
 
@@ -745,14 +734,12 @@ typically be "<code>localhost</code>".
 To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 |connection|, type |type| and data |data|:
 
-1. If |type| is not [=%x1 denotes a text frame|text=], [=send an error
-   response=] given |connection|, null, and [=invalid argument=], and finally
-   return.
+1. If |type| is not [=%x1 denotes a text frame|text=], [=send an error response=]
+   given |connection|, null, and [=invalid argument=], and finally return.
 
-1. [=Assert=]: |data| is a [=scalar value string=], because the
-    WebSocket [=handling errors in UTF-8-encoded data=] would already
-    have [=fail the WebSocket connection|failed the WebSocket
-    connection=] otherwise.
+1. [=Assert=]: |data| is a [=scalar value string=], because the WebSocket
+   [=handling errors in UTF-8-encoded data=] would already have
+   [=fail the WebSocket connection|failed the WebSocket connection=] otherwise.
 
    Issue: Nothing seems to define what [=status codes|status code=]
    is used for UTF-8 errors.
@@ -762,10 +749,10 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
    [=WebSocket connections not associated with a session=], let |session| be
    null. Otherwise, return.
 
-1. Let |parsed| be the result of [=parse JSON into Infra values|parsing JSON
-   into Infra values=] given |data|. If this throws an exception, then [=send
-   an error response=] given |connection|, null, and [=invalid argument=], and
-   finally return.
+1. Let |parsed| be the result of
+   [=parse JSON into Infra values|parsing JSON into Infra values=] given |data|. If
+   this throws an exception, then [=send an error response=] given |connection|,
+   null, and [=invalid argument=], and finally return.
 
 1. Match |parsed| against the [=remote end definition=]. If this results in a
    match:
@@ -782,8 +769,8 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
    1. Let |command| be the command with [=command name=] |method|.
 
    1. If |session| is null and |command| is not a [=static command=], then
-      [=send an error response=] given |connection|, |command id|, and [=invalid
-      session id=], and return.
+      [=send an error response=] given |connection|, |command id|, and
+      [=invalid session id=], and return.
 
    1. Run the following steps in parallel:
 
@@ -811,8 +798,7 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
        field set to |command id| and the <code>value</code> field set to
        |value|.
 
-    1. Let |serialized| be the result of [=serialize an infra value to JSON
-       bytes=] given |response|.
+    1. Let |serialized| be the result of [=serialize an infra value to JSON bytes=] given |response|.
 
     1. [=Send a WebSocket message=] comprised of |serialized| over
        |connection|.
@@ -827,8 +813,8 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
    1. Let |error code| be [=invalid argument=].
 
    1. If |parsed| is a map and |parsed|["<code>method</code>"] exists and is a
-      string, but |parsed|["<code>method</code>"] is not in the [=set of all
-      command names=], set |error code| to [=unknown command=].
+      string, but |parsed|["<code>method</code>"] is not in the
+      [=set of all command names=], set |error code| to [=unknown command=].
 
    1. [=Send an error response=] given |connection|, |command id|, and
       |error code|.
@@ -864,8 +850,8 @@ To <dfn>get related browsing contexts</dfn> given an [=script/settings object=]
 
 1. If |connection| is null, return.
 
-1. Let |serialized| be the result of [=serialize an infra value to JSON
-   bytes=] given |body|.
+1. Let |serialized| be the result of [=serialize an infra value to JSON bytes=]
+   given |body|.
 
 1. [=Send a WebSocket message=] comprised of |serialized| over |connection|.
 
@@ -905,8 +891,7 @@ To <dfn>handle a connection closing</dfn> given a [=WebSocket connection=]
   1. Let |session| be the [=BiDi session=] [=associated with connection=]
      |connection|.
 
-  1. Remove |connection| from |session|'s [=session WebSocket
-     connections=].
+  1. Remove |connection| from |session|'s [=session WebSocket connections=].
 
 1. Otherwise, if the set of [=WebSocket connections not associated with a session=]
    contains |connection|, remove |connection| from that set.
@@ -961,11 +946,11 @@ with parameters |session|, |capabilities|, and |flags| is:
 
 1. [=Assert=]: |webSocketUrl| is true.
 
-1. Let |listener| be the result of [=start listening for a WebSocket
-   connection=] given |session|.
+1. Let |listener| be the result of [=start listening for a WebSocket connection=]
+   given |session|.
 
-1. Set |webSocketUrl| to the result of [=constructing a WebSocket
-   URL=] given |listener| and |session|.
+1. Set |webSocketUrl| to the result of [=constructing a WebSocket URL=] given
+   |listener| and |session|.
 
 1. [=Set a property=] on |capabilities| named
    "<code>webSocketUrl</code>" to |webSocketUrl|.
@@ -980,9 +965,9 @@ with parameters |session|, |capabilities|, and |flags| is:
 
 Implementations should also allow clients to establish a [=BiDi Session=] which
 is not a [=HTTP Session=]. In this case the URL to the WebSocket server is
-communicated out-of-band. An implementation that allows this <dfn>supports
-BiDi-only sessions</dfn>. At the time such an implementation is ready to accept
-requests to start a WebDriver session, it must:
+communicated out-of-band. An implementation that allows this
+<dfn>supports BiDi-only sessions</dfn>. At the time such an implementation is ready
+to accept requests to start a WebDriver session, it must:
 
 1. [=Start listening for a WebSocket connection=] given null.
 
@@ -1030,8 +1015,8 @@ To <dfn>get or create a sandbox realm</dfn> given |name| and |browsing context|:
 
 1. Let |sandboxes| be [=sandbox map=][|window|].
 
-1. If |sandboxes| does not contain |name|, set |sandboxes|[|name|] to [=create
-   a sandbox realm=] with |browsing context|.
+1. If |sandboxes| does not contain |name|, set |sandboxes|[|name|] to
+   [=create a sandbox realm=] with |browsing context|.
 
 1. Return [=success=] with data |sandboxes|[|name|].
 
@@ -2186,16 +2171,17 @@ events are disabled, the return value is always empty.
 
          1. If |global event set| doesn't contain |event name|:
 
-           1. Let |already enabled contexts| be the [=event enabled browsing
-              contexts=] given |session| and |event name|
+           1. Let |already enabled contexts| be the
+              [=event enabled browsing contexts=] given |session| and |event name|
 
            1. Add |event name| to |global event set|.
 
            1. For each |context| of |already enabled contexts|, remove |event
               name| from |event map|[|context|].
 
-           1. Let |newly enabled contexts| be a list of all [=top-level browsing
-              contexts=] that are not contained in |already enabled contexts|,
+           1. Let |newly enabled contexts| be a list of all
+              [=top-level browsing contexts=] that are not contained in
+              |already enabled contexts|,
 
            1. Set |enabled events|[|event name|] to |newly enabled contexts|.
 
@@ -2241,8 +2227,8 @@ events are disabled, the return value is always empty.
       1. If |enabled| is false:
 
         1. If |target| contains |event name|, remove |event name| from
-           |target|. Otherwise return [=error=] with [=error code=] [=invalid
-           argument=].
+           |target|. Otherwise return [=error=] with [=error code=]
+           [=invalid argument=].
 
 1. Set the [=global event set=] for |session| to |global event set|.
 
@@ -2345,8 +2331,8 @@ This is a [=static command=].
 
 <div algorithm="remote end steps for session.status">
 
-The [=remote end steps=] given <var ignore>session</var>, and <var
-ignore>command parameters</var> are:
+The [=remote end steps=] given <var ignore>session</var>, and
+<var ignore>command parameters</var> are:
 
 1. Let |body| be a new [=map=] with the following properties:
 
@@ -2486,8 +2472,9 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. For each |event name| → |contexts| in |enabled events|:
 
-  1. If the [=event=] with [=event name=] |event name| defines [=remote end
-     subscribe steps=], set |subscribe step events|[|event name|] to |contexts|.
+  1. If the [=event=] with [=event name=] |event name| defines
+     [=remote end subscribe steps=], set |subscribe step events|[|event name|] to
+     |contexts|.
 
 1. [=map/Sort in ascending order=] |subscribe step events| using the following less
    than algorithm given two entries with keys |event name one| and |event
@@ -2559,8 +2546,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 The <dfn export for=modules>browsingContext</dfn> module contains commands and
 events relating to browsing contexts.
 
-The progress of navigation is communicated using an immutable <dfn export>WebDriver
-navigation status</dfn> struct, which has the following items:
+The progress of navigation is communicated using an immutable
+<dfn export>WebDriver navigation status</dfn> struct, which has the following items:
 
 <dl>
   <dt><dfn export for="WebDriver navigation status" id="navigation-status-id">id</dfn></dt>
@@ -2629,11 +2616,11 @@ BrowsingContextEvent = (
 browsingContext.BrowsingContext = text;
 </pre>
 
-Each [=/browsing context=] has an associated <dfn export>browsing context
-id</dfn>, which is a string uniquely identifying that browsing context. This is
-implicitly set when the context is created. For browsing contexts with an
-associated WebDriver [=window handle=] the [=/browsing context id=] must be the
-same as the [=window handle=].
+Each [=/browsing context=] has an associated <dfn export>browsing context id</dfn>,
+which is a string uniquely identifying that browsing context. This is implicitly set
+when the context is created. For browsing contexts with an associated WebDriver
+[=window handle=] the [=/browsing context id=] must be the same as the
+[=window handle=].
 
 <div algorithm>
 To <dfn>get a browsing context</dfn> given |context id|:
@@ -2670,8 +2657,8 @@ browsing context.
 <div algorithm>
 To <dfn>get the parent browsing context</dfn> given |browsing context|:
 
-1. Let |navigable| be the [=navigable=] whose [=navigable/active
-   document=] is |browsing context|'s [=browsing context/active document=].
+1. Let |navigable| be the [=navigable=] whose [=navigable/active document=] is
+   |browsing context|'s [=browsing context/active document=].
 
 1. Let |parent navigable| be |navigable|'s [=navigable/parent=].
 
@@ -2686,8 +2673,8 @@ To <dfn>get the child browsing contexts</dfn> given |browsing context|:
 
 TODO: make this return a list in document order
 
-1. Let |navigable| be the [=navigable=] whose [=navigable/active
-   document=] is |browsing context|'s [=browsing context/active document=].
+1. Let |navigable| be the [=navigable=] whose [=navigable/active document=] is
+   |browsing context|'s [=browsing context/active document=].
 
 1. Let |child navigables| be a set containing all navigables that are
    a [=child navigable=] of |navigable|.
@@ -2710,8 +2697,8 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
-1. Let |parent browsing context| be [=get the parent browsing
-   context=] given |context|.
+1. Let |parent browsing context| be [=get the parent browsing context=] given
+   |context|.
 
 1. If |parent browsing context| is not null let |parent id| be the
    [=browsing context id=] of |parent browsing context|. Otherwise let
@@ -2758,14 +2745,14 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 1. Let |navigation id| be the string representation of a
    [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
 
-1. Let |navigable| be the [=navigable=] whose [=navigable/active
-   document=] is |context|'s [=browsing context/active document=].
+1. Let |navigable| be the [=navigable=] whose [=navigable/active document=] is
+   |context|'s [=browsing context/active document=].
 
-1. [=Navigate=] |navigable| with resource |request|, and using
-   |context|'s [=browsing context/active document=] as the source
-   {{Document}}, with [=navigation id=] |navigation id|, and [=history
-   handling behavior=] |history handling|. If |ignore cache| is true,
-   the navigation must not load resources from the HTTP cache.
+1. [=Navigate=] |navigable| with resource |request|, and using |context|'s
+   [=browsing context/active document=] as the source {{Document}}, with
+   [=navigation id=] |navigation id|, and [=history handling behavior=]
+   |history handling|. If |ignore cache| is true, the navigation must not load
+   resources from the HTTP cache.
 
    Issue: property specify how the |ignore cache| flag works. This needs to
    consider whether only the first load of a resource bypasses the cache
@@ -2941,19 +2928,19 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |document| be |context|'s [=active document=].
 
-1. Immediately after the next invocation of the [=run the animation frame
-   callbacks=] algorithm for |document|:
+1. Immediately after the next invocation of the [=run the animation frame callbacks=]
+   algorithm for |document|:
 
    Issue: This ought to be integrated into the update rendering algorithm
    in some more explicit way.
 
  1. Let |root rect| be |document|’s [=document element=]'s [=rectangle=].
 
- 1. Let |canvas| be the result of [=trying=] to [=draw a bounding box from the
-    framebuffer=] with |root rect|.
+ 1. Let |canvas| be the result of [=trying=] to
+    [=draw a bounding box from the framebuffer=] with |root rect|.
 
- 1. Let |encoding result| be the result of [=trying=] to [=encode a canvas as
-    Base64=] with |canvas|.
+ 1. Let |encoding result| be the result of [=trying=] to
+    [=encode a canvas as Base64=] with |canvas|.
 
  1. Let |body| be a [=map=] matching the
     <code>browsingContext.CaptureScreenshotResult</code> production, with the
@@ -3065,9 +3052,8 @@ The [=remote end steps=] with |command parameters| are:
 
   <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
        but without using the "current browsing context" concept. -->
-  1. Create a new [=top-level browsing context=] by running the [=window open
-     steps=] with <var ignore>url</var> set to "<code>about:blank</code>",
-     <var ignore>target</var> set to the empty string, and
+  1. Create a new [=top-level browsing context=] by running the [=window open steps=]
+     with <var ignore>url</var> set to "<code>about:blank</code>", <var ignore>target</var> set to the empty string, and
      <var ignore>features</var> set to "<code>noopener</code>". This must be
      done without invoking the [=/focusing steps=] for the created browsing
      context. Which OS window the new [=/browsing context=] is created in
@@ -3219,9 +3205,9 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    [=prompt=], then respond with the string value |text| if |accept| is
    true, or abort if |accept| is false.
 
-   Otherwise, if |context| is currently showing a prompt as part of the [=prompt
-   to unload=] steps, then confirm the navigation if |accept| is true, otherwise
-   refuse the navigation.
+   Otherwise, if |context| is currently showing a prompt as part of the
+   [=prompt to unload=] steps, then confirm the navigation if |accept| is true,
+   otherwise refuse the navigation.
 
    Otherwise return [=error=] with [=error code=] [=no such alert=].
 
@@ -3285,8 +3271,8 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |url record| be the result of applying the [=URL parser=] to |url|,
    with [=base URL=] |base|.
 
-1. If |url record| is failure, return [=error=] with [=error code=] [=invalid
-   argument=].
+1. If |url record| is failure, return [=error=] with [=error code=]
+   [=invalid argument=].
 
 1. Let |request| be a new [=/request=] whose URL is |url record|.
 
@@ -3481,8 +3467,9 @@ become inaccessible but not yet get discarded because bfcache.
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-started</dfn> steps given |context| and |navigation status|:
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi navigation started</dfn> steps given |context| and
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
@@ -3520,8 +3507,9 @@ started</dfn> steps given |context| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fragment
-navigated</dfn> steps given |context| and |navigation status|:
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi fragment navigated</dfn> steps given |context| and
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
@@ -3559,8 +3547,9 @@ navigated</dfn> steps given |context| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi DOM content
-loaded</dfn> steps given |context| and |navigation status|:
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi DOM content loaded</dfn> steps given |context| and
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
@@ -3598,8 +3587,9 @@ loaded</dfn> steps given |context| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load
-complete</dfn> steps given |context| and |navigation status|:
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi load complete</dfn> steps given |context| and
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
@@ -3636,8 +3626,9 @@ complete</dfn> steps given |context| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download
-started</dfn> steps given |context| and |navigation status|:
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi download started</dfn> steps given |context| and
+|navigation status|:
 
  1. Let |params| be the result of [=get the navigation info=] given |context|
     and |navigation status|.
@@ -3674,8 +3665,9 @@ started</dfn> steps given |context| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-aborted</dfn> steps given |context| and |navigation status|:
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi navigation aborted</dfn> steps given |context| and
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
@@ -3713,8 +3705,9 @@ aborted</dfn> steps given |context| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-failed</dfn> steps given |context| and |navigation status|:
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi navigation failed</dfn> steps given |context| and
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
@@ -3757,9 +3750,9 @@ failed</dfn> steps given |context| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
-closed</dfn> steps given |window|, |accepted| and optional |user text|
-(default: null).
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi user prompt closed</dfn> steps given |window|, |accepted|
+and optional |user text| (default: null).
 
 1. Let |context| be |window|'s [=/browsing context=].
 
@@ -3805,8 +3798,9 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
-opened</dfn> steps given |window|, |type| and |message|.
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi user prompt opened</dfn> steps given |window|, |type| and
+|message|.
 
 1. Let |context| be |window|'s [=/browsing context=].
 
@@ -4224,11 +4218,11 @@ Note: The details of how to get a list of stack frames, and the properties of
 that list are underspecified, and therefore the details here are implementation
 defined.
 
-It is assumed that an implementation is able to generate a <dfn>list of stack
-frames</dfn>, which is a list with one entry for each item in the javascript
-call stack, starting from the most recent. Each entry is a single <dfn>stack
-frame</dfn> corresponding to execution of a statement or expression in a script
-|script|, which contains the following fields:
+It is assumed that an implementation is able to generate a
+<dfn>list of stack frames</dfn>, which is a list with one entry for each item in the
+javascript call stack, starting from the most recent. Each entry is a single
+<dfn>stack frame</dfn> corresponding to execution of a statement or expression in a
+script |script|, which contains the following fields:
 
 <dl>
  <dt><dfn for=stackframe>script url</dfn>
@@ -4258,8 +4252,8 @@ To <dfn>construct a stack trace</dfn>, with a list of stack frames |stack|:
    1. Let |frame info| be a new map matching the <code>script.StackFrame</code>
       production, with the <code>url</code> field set to |url|, the
       <code>functionName</code> field set to |frame|'s [=stackframe/function=],
-      the <code>lineNumber</code> field set to |frame|'s [=stackframe/line
-      number=] and the <code>columnNumber</code> field set to |frame|'s
+      the <code>lineNumber</code> field set to |frame|'s [=stackframe/line number=]
+      and the <code>columnNumber</code> field set to |frame|'s
       [=stackframe/column number=].
 
 1. Append |frame info| to |call frames|.
@@ -4272,13 +4266,13 @@ To <dfn>construct a stack trace</dfn>, with a list of stack frames |stack|:
 </div>
 
 The <dfn>current stack trace</dfn> is the result of [=construct a stack trace=]
-given a [=list of stack frames=] representing the callstack of the [=running
-execution context=].
+given a [=list of stack frames=] representing the callstack of the
+[=running execution context=].
 
 <div algorithm>
 
-The <dfn>stack trace for an exception</dfn> with an exception, or a [=Completion
-Record=] of type <code>throw</code>, |exception|, is given by:
+The <dfn>stack trace for an exception</dfn> with an exception, or a
+[=Completion Record=] of type <code>throw</code>, |exception|, is given by:
 
 1. If |exception| is a value that has been thrown as an exception, let |record|
    be the [=Completion Record=] created to throw |exception|. Otherwise let
@@ -4941,21 +4935,20 @@ The [=remote end event trigger=] is:
 
 <div algorithm="remote end event trigger for script.realmCreated">
 
-When any of the [=set up a window environment settings object=], [=set up a
-worker environment settings object=] or [=set up a worklet environment settings
-object=] algorithms are invoked, immediately prior to returning the settings
-object:
+When any of the [=set up a window environment settings object=],
+[=set up a worker environment settings object=] or
+[=set up a worklet environment settings object=] algorithms are invoked, immediately
+prior to returning the settings object:
 
-1. Let |environment settings| be the newly created [=environment settings
-   object=].
+1. Let |environment settings| be the newly created [=environment settings object=].
 
 1. Let |realm info| be the result of [=get the realm info=] given
    |environment settings|.
 
 1. If |realm info| is null, return.
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |environment settings|.
+1. Let |related browsing contexts| be the result of [=get related browsing contexts=]
+   given |environment settings|.
 
 1. Let |body| be a map matching the <code>script.RealmCreated</code>
    production, with the <code>params</code> field set to |realm info|.
@@ -5073,14 +5066,14 @@ Define the following [=unloading document cleanup steps=] with |document|:
   1. [=Emit an event=] with |session| and |body|.
 
 Whenever a [=worker event loop=] |event loop| is destroyed, either because the
-worker comes to the end of its lifecycle, or prematurely via the [=terminate a
-worker=] algorithm:
+worker comes to the end of its lifecycle, or prematurely via the
+[=terminate a worker=] algorithm:
 
 1. Let |environment settings| be the [=environment settings object=] for which
    |event loop| is the [=responsible event loop=].
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |environment settings|.
+1. Let |related browsing contexts| be the result of [=get related browsing contexts=]
+   given |environment settings|.
 
 1. Let |realm| be |environment settings|'s [=environment settings object's Realm=].
 
@@ -5223,8 +5216,8 @@ The [=remote end event trigger=] is:
 
 <div algorithm="remote end event trigger for log.entryAdded">
 
-Define the following [=console steps=] with |method|, |args|, and <var
-ignore>options</var>:
+Define the following [=console steps=] with |method|, |args|, and
+<var ignore>options</var>:
 
 1. If |method| is "<code>error</code>" or "<code>assert</code>", let |level| be
    "<code>error</code>". If |method| is "<code>debug</code>" or "<code>trace</code>"
@@ -5264,8 +5257,8 @@ ignore>options</var>:
 1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
 
 1. If |method| is "<code>assert</code>", "<code>error</code>",
-   "<code>trace</code>", or "<code>warn</code>", let |stack| be the [=current
-   stack trace=]. Otherwise let |stack| be null.
+   "<code>trace</code>", or "<code>warn</code>", let |stack| be the
+   [=current stack trace=]. Otherwise let |stack| be null.
 
 1. Let |entry| be a map matching the <code>log.ConsoleLogEntry</code> production,
    with the the <code>level</code> field set to |level|, the <code>text</code>
@@ -5280,8 +5273,8 @@ ignore>options</var>:
 
 1. Let |settings| be the [=current settings object=]
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |settings|.
+1. Let |related browsing contexts| be the result of [=get related browsing contexts=]
+   given |settings|.
 
 1. For each |session| in [=active BiDi sessions=]:
 
@@ -5291,8 +5284,8 @@ ignore>options</var>:
      Otherwise, [=buffer a log event=] with |session|, |related browsing
      contexts|, and |body|.
 
-Define the following [=error reporting steps=] with arguments |script|, <var
-ignore>line number</var>, <var ignore>column number</var>, |message| and
+Define the following [=error reporting steps=] with arguments |script|,
+<var ignore>line number</var>, <var ignore>column number</var>, |message| and
 |handled|:
 
 1. If |handled| is true return.
@@ -5309,8 +5302,8 @@ ignore>line number</var>, <var ignore>column number</var>, |message| and
    |message|, <code>source</code> set to |source|, and the <code>timestamp</code>
    field set to |timestamp|.
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |settings|.
+1. Let |related browsing contexts| be the result of [=get related browsing contexts=]
+   given |settings|.
 
 1. For each |session| in [=active BiDi sessions=]:
 
@@ -5339,8 +5332,7 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 10, given
   1. Let |maybe context| be the result of [=getting a browsing context=] given
      |context id|.
 
-  1. If |maybe context| is an [=error=], remove |context id| from [=log event
-     buffer=] and continue.
+  1. If |maybe context| is an [=error=], remove |context id| from [=log event buffer=] and continue.
 
   1. Let |context| be |maybe context|'s data
 
@@ -5373,11 +5365,11 @@ The [=a browsing context is discarded=] algorithm is modified to read as follows
 <div algorithm>
 To discard a browsing context |browsingContext|, run these steps:
 
-1. If this is not a recursive invocation of this algorithm, call any <dfn export>browsing context
-   tree discarded</dfn> steps defined in other applicable specifications with |browsingContext|.
+1. If this is not a recursive invocation of this algorithm, call any
+   <dfn export>browsing context tree discarded</dfn> steps defined in other applicable
+   specifications with |browsingContext|.
 
-1. Discard all {{Document}} objects for all the entries in |browsingContext|'s [=session
-   history=].
+1. Discard all {{Document}} objects for all the entries in |browsingContext|'s [=session history=].
 
 1. If |browsingContext| is a [=top-level browsing context=], then [=remove a browsing context=]
    |browsingContext|.
@@ -5394,9 +5386,9 @@ end:
 
 <div algorithm>
 1. Call any <dfn>error reporting steps</dfn> defined in external specifications
-   with <var ignore>script</var>, <var ignore>line</var>, <var
-   ignore>col</var>, <var ignore>message</var>, and true if the error is
-   [=handled=], or false otherwise.
+   with <var ignore>script</var>, <var ignore>line</var>, <var ignore>col</var>,
+   <var ignore>message</var>, and true if the error is [=handled=], or false
+   otherwise.
 
 </div>
 ## Console ##  {#patches-console}
@@ -5405,9 +5397,8 @@ Other specifications can define <dfn>console steps</dfn>. When any method of the
 {{console}} interface is called, with method name
 |method| and argument |args|:
 
-1. If that method does not call the [=Printer=] operation, call any [=console
-   steps=] defined in external specification with arguments |method|, |args|,
-   and undefined.
+1. If that method does not call the [=Printer=] operation, call any [=console steps=]
+   defined in external specification with arguments |method|, |args|, and undefined.
 
    Otherwise, at the point when the [=Printer=] operation is called with
    arguments |name|, |printerArgs| and |options| (which is undefined if the

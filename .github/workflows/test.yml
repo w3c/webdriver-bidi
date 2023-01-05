@@ -43,9 +43,18 @@ jobs:
         with:
           toolchain: stable
       - name: Validate CDDL files
-        run: ./scripts/test.sh
+        run: ./scripts/cddl/test.sh
       - name: Archive CDDL files
         uses: actions/upload-artifact@v3
         with:
           name: cddl
           path: "*.cddl"
+  no-split-vars:
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 14.x
+      - name: Check no break lines inside blocks
+        run: node ./scripts/formatter/no_split_var.js
