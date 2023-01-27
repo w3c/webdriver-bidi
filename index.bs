@@ -1137,20 +1137,25 @@ SharedId = text;
 </pre>
 
 <pre class="cddl remote-cddl">
+<!-- This is specifically ordered in the order in which matches need to be -->
+<!-- evaluated, since the definitions are overlapping -->
 RemoteReference = (
-  RemoteObjectReference //
-  SharedReference
+  SharedReference //
+  RemoteObjectReference
 )
 
-RemoteObjectReference = {
-   handle: Handle,
-   ?sharedId: SharedId
+SharedReference = {
+   sharedId: SharedId
+   <!-- Ensure that if we have a handle, it at least has the correct type -->
+   ?handle: Handle,
    Extensible
 }
 
-SharedReference = {
-   ?handle: Handle,
-   sharedId: SharedId
+RemoteObjectReference = {
+   handle: Handle,
+   <!-- This shouldn't ever match. The problem is that Extensible would
+   otherwise allow this to match a non-text sharedId -->
+   ?sharedId: SharedId
    Extensible
 }
 </pre>
@@ -1171,9 +1176,6 @@ To <dfn>deserialize remote reference</dfn> given |remote reference|, |realm| and
 
 1. If |remote reference| matches the <code>SharedReference</code> production, return
    [=deserialize shared reference=] given |remote reference|, |realm| and |session|.
-
-1. Assert |remote reference| matches the <code>RemoteObjectReference</code>
-   production.
 
 1. Return [=deserialize remote object reference=] given |remote reference| and
    |realm|.
