@@ -5368,67 +5368,68 @@ The [=remote end event trigger=] is:
 
 <div algorithm="remote end event trigger for log.entryAdded">
 
-Define the following [=console steps=] with |method|, |args|, |session| and
+Define the following [=console steps=] with |method|, |args|, and
 <var ignore>options</var>:
 
-1. If |method| is "<code>error</code>" or "<code>assert</code>", let |level| be
-   "<code>error</code>". If |method| is "<code>debug</code>" or "<code>trace</code>"
-   let |level| be "<code>debug</code>". If |method| is "<code>warn</code>", let
-   |level| be "<code>warn</code>". Otherwise let |level| be "<code>info</code>".
+1. For each |session| in [=active BiDI sessions=]:
 
-1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
+  1. If |method| is "<code>error</code>" or "<code>assert</code>", let |level| be
+     "<code>error</code>". If |method| is "<code>debug</code>" or "<code>trace</code>"
+     let |level| be "<code>debug</code>". If |method| is "<code>warn</code>", let
+     |level| be "<code>warn</code>". Otherwise let |level| be "<code>info</code>".
 
-1. Let |text| be an empty string.
+  1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
 
-1. If [=Type=](|args|[0]) is String, and |args|[0] contains a
-   [=formatting specifier=], let |formatted args| be [=Formatter=](|args|). Otherwise
-   let |formatted args| be |args|.
+  1. Let |text| be an empty string.
 
-   Note: The formatter operation is underdefined in the console specification,
-   formatting can be inconsistent between different implementations.
+  1. If [=Type=](|args|[0]) is String, and |args|[0] contains a
+     [=formatting specifier=], let |formatted args| be [=Formatter=](|args|). Otherwise
+     let |formatted args| be |args|.
 
-1. For each |arg| in |formatted args|:
+     Note: The formatter operation is underdefined in the console specification,
+     formatting can be inconsistent between different implementations.
 
-  1. If |arg| is not the first entry in |args|, append a U+0020 SPACE to |text|.
+  1. For each |arg| in |formatted args|:
 
-  1. If |arg| is a [=primitive ECMAScript value=], append [=ToString=](|arg|) to
-     |text|. Otherwise append an implementation-defined string to |text|.
+    1. If |arg| is not the first entry in |args|, append a U+0020 SPACE to |text|.
 
-1. Let |realm| be the [=realm id=] of the [=current Realm Record=].
+    1. If |arg| is a [=primitive ECMAScript value=], append [=ToString=](|arg|) to
+       |text|. Otherwise append an implementation-defined string to |text|.
 
-1. Let |serialized args| be a new list.
+  1. Let |realm| be the [=realm id=] of the [=current Realm Record=].
 
-1. For each |arg| of |args|:
-   1. Let |serialized arg| be the result of [=serialize as a remote value=] given
-      |arg| as value, <code>1</code> as max depth, <code>none</code> as
-      ownership type, a new [=Map=] as serialization internal map, |realm| and
-      |session|.
+  1. Let |serialized args| be a new list.
 
-   1. Add |serialized arg| to |serialized args|.
+  1. For each |arg| of |args|:
 
-1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
+     1. Let |serialized arg| be the result of [=serialize as a remote value=] with
+        |arg| as value, <code>1</code> as max depth, <code>none</code> as
+        ownership type, a new [=Map=] as serialization internal map, |realm| and
+        |session|.
 
-1. If |method| is "<code>assert</code>", "<code>error</code>",
-   "<code>trace</code>", or "<code>warn</code>", let |stack| be the [=current
-   stack trace=]. Otherwise let |stack| be null.
+     1. Add |serialized arg| to |serialized args|.
 
-1. Let |entry| be a map matching the <code>log.ConsoleLogEntry</code> production,
-   with the the <code>level</code> field set to |level|, the <code>text</code>
-   field set to |text|, the <code>timestamp</code> field set to |timestamp|, the
-   <code>stackTrace</code> field set to |stack| if |stack| is not null, or
-   omitted otherwise, the |method| field set to |method|, the <code>source</code>
-   field set to |source| and the <code>args</code> field set to |serialized
-   args|.
+  1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
 
-1. Let |body| be a map matching the <code>log.EntryAdded</code> production, with
-   the <code>params</code> field set to |entry|.
+  1. If |method| is "<code>assert</code>", "<code>error</code>",
+     "<code>trace</code>", or "<code>warn</code>", let |stack| be the [=current
+     stack trace=]. Otherwise let |stack| be null.
 
-1. Let |settings| be the [=current settings object=]
+  1. Let |entry| be a map matching the <code>log.ConsoleLogEntry</code> production,
+     with the the <code>level</code> field set to |level|, the <code>text</code>
+     field set to |text|, the <code>timestamp</code> field set to |timestamp|, the
+     <code>stackTrace</code> field set to |stack| if |stack| is not null, or
+     omitted otherwise, the |method| field set to |method|, the <code>source</code>
+     field set to |source| and the <code>args</code> field set to |serialized
+     args|.
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |settings|.
+  1. Let |body| be a map matching the <code>log.EntryAdded</code> production, with
+     the <code>params</code> field set to |entry|.
 
-1. For each |session| in [=active BiDi sessions=]:
+  1. Let |settings| be the [=current settings object=]
+
+  1. Let |related browsing contexts| be the result of [=get related browsing
+     contexts=] given |settings|.
 
   1. If [=event is enabled=] with |session|, "<code>log.entryAdded</code>" and
      |related browsing contexts|, [=emit an event=] with |session| and |body|.
@@ -5550,14 +5551,12 @@ Other specifications can define <dfn>console steps</dfn>. When any method of the
 {{console}} interface is called, with method name
 |method| and argument |args|:
 
-1. For each |session| in [=active BiDI sessions=]:
 
-  1. If that method does not call the [=Printer=] operation, call any [=console
-     steps=] defined in external specification with arguments |method|,
-     |args|, |session| and undefined.
+1. If that method does not call the [=Printer=] operation, call any [=console
+   steps=] defined in external specification with arguments |method|,
+   |args|, and undefined.
 
-     Otherwise, at the point when the [=Printer=] operation is called with
-     arguments |name|, |printerArgs| and |options| (which is undefined if the
-     argument is not provided), call any [=console steps=] defined in
-     external specification with arguments |name|, |printerArgs|, |session| and
-     |options|.
+   Otherwise, at the point when the [=Printer=] operation is called with
+   arguments |name|, |printerArgs| and |options| (which is undefined if the
+   argument is not provided), call any [=console steps=] defined in
+   external specification with arguments |name|, |printerArgs|, and |options|.
