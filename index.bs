@@ -1218,15 +1218,22 @@ To <dfn>deserialize shared reference</dfn> given |shared reference|, |realm| and
 1. If |node| is <code>null</code>, return [=error=] with [=error code=]
    [=no such node=].
 
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
+
+1. If |node|'s [=node document=]'s [=document/origin=] is not [=same origin
+   domain=] with |environment settings|'s [=environment settings/origin=] then
+   return null.
+
+   Note: This ensures that WebDriver-BiDi can not be used to pass objects
+   between realms that do not otherwise permit script access.
+
 1. Let |realm global object| be the [=realm/global object=] of the |realm|.
 
 1. If the |realm global object| is {{SandboxWindowProxy}} object, set
    |node| to the {{SandboxProxy}} wrapping |node| in the |realm|.
 
 1. Return [=success=] with data |node|.
-
-TODO: Add check that `|node|`'s `ownerDocument`'s origin is same origin-domain with
-|browsing context|'s associated Document.
 
 </div>
 
