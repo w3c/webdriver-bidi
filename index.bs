@@ -101,6 +101,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: Construct; url: sec-construct
     text: CreateArrayFromList; url: sec-createarrayfromlist
     text: CreateArrayIterator; url: sec-createarrayiterator
+    text: CreateBuiltinFunction; url: sec-createbuiltinfunction
     text: CreateListFromArrayLike; url: sec-createlistfromarraylike
     text: CreateMapIterator; url: sec-createmapiterator
     text: CreateSetIterator; url: sec-createsetiterator
@@ -1576,6 +1577,9 @@ To <dfn>deserialize local value</dfn> given |local protocol value|, |realm| and
 
 1. If |local protocol value| matches the [=PrimitiveProtocolValue=] production, return
    [=deserialize primitive protocol value=] with |local protocol value|.
+
+1. If |local protocol value| matches the <code>script.ChannelValue</code> production,
+   return [=create a channel=] with |session|, |realm| and |local protocol value|.
 
 1. Let |type| be the value of the <code>type</code> field of |local protocol value| or undefined if
    no such a field.
@@ -5064,6 +5068,17 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
        |browsing context|. Otherwise let |realm| be |environment settings|'
        [=realm execution context=]'s Realm component.
 
+    1. Let |arguments| be |preload script|'s <code>arguments</code>.
+
+    1. Let |deserialized arguments| be an empty list.
+
+    1. For each |argument| in |arguments|:
+
+      1. Let |channel| be [=create a channel=] with |session|, |realm| and
+         |argument|.
+
+      1. Append |channel| to |deserialized arguments|.
+
     1. Let |base URL| be the [=API base URL=] of |environment settings|.
 
     1. Let |options| be the [=default classic script fetch options=].
@@ -5089,7 +5104,7 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
     1. [=Prepare to run script=] with |environment settings|.
 
     1. Set |evaluation status| to
-       [=Call=](|function object|, null, «»).
+       [=Call=](|function object|, null, |deserialized arguments|).
 
     1. [=Clean up after running script=] with |environment settings|.
 
@@ -5099,6 +5114,49 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 </div>
 
 ### Types ### {#module-script-types}
+
+#### The script.Channel type #### {#type-script-Channel}
+<pre class="cddl remote-cddl local-cddl">
+script.Channel = text;
+</pre>
+
+The <code>script.Channel</code> type represents the id of a specific channel
+used to send custom messages from the [=remote end=] to the [=local end=].
+
+#### The script.ChannelValue type #### {#type-script-ChannelValue}
+
+<pre class="cddl remote-cddl">
+script.ChannelValue = {
+  type: "channel",
+  value: script.ChannelProperties,
+};
+
+script.ChannelProperties = {
+  channel: script.Channel,
+  ?serializationOptions: script.SerializationOptions,
+  ?ownership: script.ResultOwnership,
+}
+</pre>
+
+The <code>script.ChannelValue</code> type represents an
+<code>ArgumentValue</code> that can be deserialized into a function that sends
+messages from the [=remote end=] to the [=local end=].
+
+<div algorithm>
+
+To <dfn>create a channel</dfn> given |session|, |realm| and |protocol value|:
+
+1. Let |channel properties| be |protocol value|["<code>value</code>"].
+
+1. Let |steps| be the following steps given the argument |message|:
+
+  1. Let |current realm| be the [=current Realm Record=].
+
+  1. [=Emit a script message=] with |session|, |current realm|, |channel properties| and |message|.
+
+1. Return [=CreateBuiltinFunction=](|steps|, 1, "", « », |realm|).
+
+</div>
 
 #### The script.ExceptionDetails type #### {#type-script-ExceptionDetails}
 
@@ -5669,6 +5727,7 @@ script=].
 
       script.AddPreloadScriptParameters = {
         functionDeclaration: text,
+        ?arguments: [*script.ChannelValue],
         ?sandbox: text
       }
       </pre>
@@ -5689,6 +5748,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |function declaration| be the <code>functionDeclaration</code> field of |command
    parameters|.
 
+1. Let |arguments| be the <code>arguments</code> field of |command
+   parameters| if present, or an empty [=/list=] otherwise.
+
 1. Let |script| be the string representation of a [[!RFC4122|UUID]].
 
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
@@ -5697,7 +5759,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |preload script map| be |session|'s [=preload script map=].
 
 1. Set |preload script map|[|script|] to a struct with <code>function
-   declaration</code> |function declaration|, and <code>sandbox</code> |sandbox|.
+   declaration</code> |function declaration|, <code>arguments</code>
+   |arguments|, and <code>sandbox</code> |sandbox|.
 
 1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
@@ -5782,7 +5845,8 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
 
       script.ArgumentValue = (
         RemoteReference //
-        LocalValue
+        LocalValue //
+        script.ChannelValue
       );
 
     </pre>
@@ -6175,6 +6239,69 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 
 ### Events ### {#module-script-events}
+
+#### The script.message Event #### {#event-script-message}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        script.Message = {
+         method: "script.message",
+         params: script.MessageParameters
+       }
+
+       script.MessageParameters = {
+         channel: script.Channel,
+         data: RemoteValue,
+         source: script.Source,
+       }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end event trigger for script.message">
+The [=remote end event trigger=] is the <dfn>emit a script message</dfn> steps,
+given |session|, |realm|, |channel properties|, and |message|:
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
+
+1. Let |related browsing contexts| be the result of [=get related browsing
+   contexts=] given |environment settings|.
+
+1. If [=event is enabled=] given |session|, "<code>script.message</code>"
+   and |related browsing contexts|:
+
+  1. If |channel properties| [=map/contains=]
+     "<code>serializationOptions</code>", let |serialization options| be the
+     value of the <code>serializationOptions</code> field of |channel
+     properties|. Otherwise let |serialization options| be a [=/map=]
+     matching the <code>script.SerializationOptions</code> production with the
+     fields set to their default values.
+
+  1. Let if |channel properties| [=map/contains=] "<code>ownership</code>", let
+     |ownership type| be |channel properties|["<code>ownership</code>"]. Otherwise let
+     |ownership type| be "<code>none</code>".
+
+  1. Let |data| be the result of [=serialize as a remote value=] given
+     |message|, |serialization options|, |ownership type|, a new [=/map=] as serialization
+     internal map and |realm|.
+
+  1. Let |source| be the [=get the source=] with |realm|.
+
+  1. Let |params| be a [=/map=] matching the
+     <code>script.MessageParameters</code> production, with the
+     <code>channel</code> field set to |channel properties|["<code>channel</code>"],
+     the <code>data</code> field set to |data|, and the <code>source</code>
+     field set to |source|.
+
+  1. Let |body| be a [=/map=] matching the <code>script.Message</code>
+     production, with the <code>params</code> field set to |params|.
+
+  1. [=Emit an event=] with |session| and |body|.
+
+</div>
 
 #### The script.realmCreated Event #### {#event-script-realmCreated}
 
