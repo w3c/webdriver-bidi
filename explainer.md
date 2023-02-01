@@ -31,7 +31,7 @@ The protocol is designed with the following goals in mind:
     - Simple for browser vendors to implement and maintain.
     - Possible for clients to enhance their WebDriver automation with browser-specific devtools protocol features.
 
-This document doesn't attempt to dive into the any of the new feature scenarios identified above, but rather tries to provide a solid foundation and the necessary primitives to build these features on. See [the roadmap](roadmap.md) for the real-world user scenarios we aim to enable.
+This document doesn't attempt to dive into the any of the new feature scenarios identified above, but rather tries to provide a solid foundation and the necessary primitives to build these features on. See [the roadmap](roadmap.md) for some example real-world user scenarios we aim to enable.
 
 The document does walk through an example of an existing WebDriver feature (unhandled prompts) being updated for a bidirectional world.
 
