@@ -9,31 +9,29 @@ This document presents a possible design for a bidirectional WebDriver protocol,
 The protocol is designed with the following goals in mind:
 
 - **Support for top customer scenarios:**
-    - Listen for DOM events
-    - Log what's going on in the browser including console and JS errors
-    - Fail fast on any JS error
-    - Mock backends and intercept network requests
-    - Record traffic
-    - Full-page screenshot
-    - Access to native devtools protocol
-    - Dynamic changes to iframe or documents
-    - Performance timings
-    - Notifying of new contexts
-    - Bootstrap scripts
+  - Listen for DOM events
+  - Log what's going on in the browser including console and JS errors
+  - Fail fast on any JS error
+  - Mock backends and intercept network requests
+  - Record traffic
+  - Full-page screenshot
+  - Access to native devtools protocol
+  - Dynamic changes to iframe or documents
+  - Performance timings
+  - Notifying of new contexts
+  - Bootstrap scripts
 - **Interoperability with classical WebDriver commands**
-    - Allow existing test/automation code to be upgraded gradually.
+  - Allow existing test/automation code to be upgraded gradually.
 - **Feature parity with existing WebDriver commands**
-    - Existing commands can be sent over the new protocol so that new test/automation code can be written entirely in the new protocol.
-    - Update features to take advantage of bidi communication where appropriate. Useful for unhandled prompts and scenarios where polling is common.
+  - Existing commands can be sent over the new protocol so that new test/automation code can be written entirely in the new protocol.
+  - Update features to take advantage of BiDi communication where appropriate. Useful for unhandled prompts and scenarios where polling is common.
 - **A machine and human-readable API specification**
-    - Makes it easier to generate up-to-date language bindings, documentation, and test cases.
+  - Makes it easier to generate up-to-date language bindings, documentation, and test cases.
 - **Easily mappable to/from native devtools protocols**
-    - Simple for browser vendors to implement and maintain.
-    - Possible for clients to enhance their WebDriver automation with browser-specific devtools protocol features.
+  - Simple for browser vendors to implement and maintain.
+  - Possible for clients to enhance their WebDriver automation with browser-specific devtools protocol features.
 
-This document doesn't attempt to dive into the any of the new feature scenarios identified above, but rather tries to provide a solid foundation and the necessary primitives to build these features on. See [the roadmap](roadmap.md) for some example real-world user scenarios we aim to enable.
-
-The document does walk through an example of an existing WebDriver feature (unhandled prompts) being updated for a bidirectional world.
+This document doesn't attempt to dive into any of the new feature scenarios identified above, but rather tries to provide a solid foundation and the necessary primitives to build these features on. See [the roadmap](roadmap.md) for some example real-world user scenarios we aim to enable.
 
 ## Proposals
 
