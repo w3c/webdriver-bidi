@@ -33,7 +33,7 @@ This scenario loads a web page within a new tab, and uses script evaluation to e
 This scenario sets up handlers for network events and then navigates to a web page. The provided timing information from the emitted events can be used to measure the page load performance by storing the relevant data eg. in a HAR file. In spec terms, this involves:
 
 - [x] Some items from the previous scenario
-- [] [Network events for the request to be sent, and response started and completed](https://github.com/w3c/webdriver-bidi/pull/204)
+- [ ] [Network events for the request to be sent, and response started and completed](https://github.com/w3c/webdriver-bidi/pull/204)
 
 ### Submitting forms
 
@@ -65,17 +65,17 @@ This scenario loads a web page and uses network request interception to replace 
 This scenario loads a web page that is protected behind user credentials. In spec terms, this involves:
 
 - [x] Some items from the previous scenarios
-- [] [The event for a HTTP auth challenge](https://github.com/w3c/webdriver-bidi/issues/66)
-- [] [The command to provide the authentication response](https://github.com/w3c/webdriver-bidi/issues/66)
+- [ ] [The event for a HTTP auth challenge](https://github.com/w3c/webdriver-bidi/issues/66)
+- [ ] [The command to provide the authentication response](https://github.com/w3c/webdriver-bidi/issues/66)
 
 ### Handling onbeforeunload prompts
 
 This scenario loads a web page with a registered `beforeunload` event handler. After updating the value of some form input elements it should be checked that navigating away opens the beforeonload prompt. In spec terms, this involves:
 
 - [x] Some items from the previous scenarios
-- [] [The event when a user prompt opens](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-opened)
-- [] [Handling the beforeunload prompt](https://w3c.github.io/webdriver-bidi/#command-browsingContext-handleUserPrompt)
-- [] [The event when a user prompt closes](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-closed)
+- [ ] [The event when a user prompt opens](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-opened)
+- [ ] [Handling the beforeunload prompt](https://w3c.github.io/webdriver-bidi/#command-browsingContext-handleUserPrompt)
+- [ ] [The event when a user prompt closes](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-closed)
 
 ### Capturing screenshots
 
