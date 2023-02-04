@@ -6,6 +6,7 @@ building on and extending [WebDriver](https://w3c.github.io/webdriver/).
 WebDriver BiDi is not ready. Here's what we have so far:
 
 - An [explainer](./explainer.md) with more background and goals
+- A [roadmap](./roadmap.md) based on real-world end-to-end user scenarios
 - Detailed [proposals](./proposals/) for the initial protocol
 - A [unofficial spec draft](https://w3c.github.io/webdriver-bidi/) waiting to be fleshed out
 
