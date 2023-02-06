@@ -43,15 +43,22 @@ This scenario loads a web page, enters text into a form field via the keyboard, 
 - [ ] [Emulating keyboard input](https://github.com/w3c/webdriver-bidi/pull/175)
 - [ ] [Emulating mouse input](https://github.com/w3c/webdriver-bidi/pull/175)
 
+### Capturing screenshots
+
+This scenario loads a web page and captures a screenshot. In spec terms, this involves:
+
+- [x] Some items from the previous milestones
+- [x] [Capturing a screenshot as Base64-encoded string](https://w3c.github.io/webdriver-bidi/#command-browsingContext-captureScreenshot)
+
 ### Observing changes being made to the DOM tree
 
-In this scenario a MutationObserver will be installed by a bootstrap script as early as the document gets created. It watches for changes made to the DOM tree and sends the relevant updates to the client. In spec terms, this involves:
+In this scenario a `MutationObserver` is installed by a bootstrap script as early as the document gets created. It watches for changes made to the DOM tree and sends the relevant updates to the client. In spec terms, this involves:
 
 - [x] Some items from the previous scenarios
-- [ ] [Adding a bootstrap script](https://w3c.github.io/webdriver-bidi/#command-script-addPreloadScript)
-- [ ] [Installing the bootstrap script](https://w3c.github.io/webdriver-bidi/#preload-scripts)
+- [ ] [Adding a preload script](https://w3c.github.io/webdriver-bidi/#command-script-addPreloadScript)
+- [ ] [Installing the preload script](https://w3c.github.io/webdriver-bidi/#preload-scripts)
 - [ ] [Back channel for communicating with the client](https://github.com/w3c/webdriver-bidi/pull/361)
-- [ ] [Removing a bootstrap script][https://w3c.github.io/webdriver-bidi/#command-script-removePreloadScript]
+- [ ] [Removing a preload script](https://w3c.github.io/webdriver-bidi/#command-script-removePreloadScript)
 
 ### Replacing resources with test data
 
@@ -76,13 +83,6 @@ This scenario loads a web page with a registered `beforeunload` event handler. A
 - [ ] [The event when a user prompt opens](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-opened)
 - [ ] [Handling the beforeunload prompt](https://w3c.github.io/webdriver-bidi/#command-browsingContext-handleUserPrompt)
 - [ ] [The event when a user prompt closes](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-closed)
-
-### Capturing screenshots
-
-This scenario loads a web page and captures a screenshot. In spec terms, this involves:
-
-- [x] Some items from the previous milestones
-- [x] [Capturing a screenshot as Base64-encoded string](https://w3c.github.io/webdriver-bidi/#command-browsingContext-captureScreenshot)
 
 ### Printing to PDF
 
