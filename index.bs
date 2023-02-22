@@ -58,6 +58,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such alert; url: dfn-no-such-alert
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
+    text: parse a page range; url: dfn-parse-a-page-range
     text: process capabilities; url: dfn-processing-capabilities
     text: readiness state; url: dfn-readiness-state
     text: remote end steps; url: dfn-remote-end-steps
@@ -161,6 +162,9 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url: worklets.html#concept-document-worklet-global-scopes
+spec: RFC4648; urlPrefix: https://tools.ietf.org/html/rfc4648
+  type: dfn
+    text: Base64 Encode; url: section-4
 </pre>
 
 <style>
@@ -2725,6 +2729,7 @@ BrowsingContextCommand = (
   browsingContext.GetTree //
   browsingContext.HandleUserPrompt //
   browsingContext.Navigate //
+  browsingContext.Print //
   browsingContext.Reload
 )
 </pre>
@@ -2736,7 +2741,8 @@ BrowsingContextResult = (
   browsingContext.CaptureScreenshotResult //
   browsingContext.CreateResult //
   browsingContext.GetTreeResult //
-  browsingContext.NavigateResult
+  browsingContext.NavigateResult //
+  browsingContext.PrintResult
 )
 
 BrowsingContextEvent = (
@@ -3427,6 +3433,150 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Return the result of [=await a navigation=] with |context|, |request| and
    |wait condition|.
+
+</div>
+
+#### The browsingContext.print Command ####  {#command-browsingContext-print}
+
+The <dfn export for=commands>browsingContext.print</dfn> command
+creates a paginated representation of a document, and returns it as a
+PDF document represented as a Base64-encoded string.
+
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browsingContext.Print = {
+        method: "browsingContext.print",
+        params: browsingContext.PrintParameters
+      }
+
+      browsingContext.PrintParameters = {
+        context: browsingContext.BrowsingContext,
+        ?background: bool .default false,
+        ?margin: browsingContext.PrintMarginParameters,
+        ?orientation: ("portrait" / "landscape") .default "portrait",
+        ?page: browsingContext.PrintPageParameters,
+        ?pageRanges: [*text],
+        ?scale: 0.1..2.0 .default 1.0,
+        ?shrinkToFit: bool .default true,
+      }
+
+      browsingContext.PrintMarginParameters = {
+        ?bottom: (float .ge 0.0) .default 1.0,
+        ?left: (float .ge 0.0) .default 1.0,
+        ?right: (float .ge 0.0) .default 1.0,
+        ?top: (float .ge 0.0) .default 1.0,
+      }
+
+      browsingContext.PrintPageParameters = {
+        ?height: (float .ge 0.0) .default 27.94,
+        ?width: (float .ge 0.0) .default 21.59,
+      }
+      </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        browsingContext.PrintResult = {
+          data: text
+        }
+    </pre>
+   </dd>
+</dl>
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. If the implementation is unable to provide a paginated representation of
+   |context| for any reason then return [=error=] with [=error code=]
+   [=unsupported operation=].
+
+1. Let |margins| be the value of the <code>margins</code> field of |command
+   parameters| if present, or otherwise a [=/map=] matching the
+   <code>browsingContext.PrintMarginParameters</code> with the fields set to
+   their default values.
+
+1. Let |page size| be the value of the <code>page</code> field of |command
+   parameters| if present, or otherwise a [=/map=] matching the
+   <code>browsingContext.PrintPageParameters</code> with the fields set to
+   their default values.
+
+1. Let |page ranges| be the value of the <code>pageRanges</code> field of
+   |command parameters| if present or an empty [=/list=] otherwise.
+
+1. Let |document| be |context|'s [=active document=].
+
+1. Immediately after the next invocation of the [=run the animation frame
+   callbacks=] algorithm for |document|:
+
+   Issue: This ought to be integrated into the update rendering algorithm
+   in some more explicit way.
+
+  1. Let |pdf data| be the result taking UA-specific steps to generate a
+     paginated representation of |document|, with the CSS [=media type=] set to
+     <code>print</code>, encoded as a PDF, with the following paper settings:
+
+     <table>
+       <tr>
+         <th>Property
+         <th>Value
+       <tr>
+         <td>Width in cm
+         <td>|page size|["<code>width</code>"] if
+             |command parameters|["<code>orientation</code>"] is
+             "<code>portrait</code>" otherwise |page size|["<code>height</code>"]
+       <tr>
+         <td>Height in cm
+         <td>|page size|["<code>height</code>"] if
+             |command parameters|["<code>orientation</code>"] is
+             "<code>portrait</code>" otherwise |page size|["<code>width</code>"]
+       <tr>
+         <td>Top margin, in cm
+         <td>|margins|["<code>top</code>"]
+       <tr>
+         <td>Bottom margin, in cm
+         <td>|margins|["<code>bottom</code>"]
+       <tr>
+         <td>Left margin, in cm
+         <td>|margins|["<code>left</code>"]
+       <tr>
+         <td>Right margin, in cm
+         <td>|margins|["<code>right</code>"]
+     </table>
+
+     In addition, the following formatting hints should be applied by the UA:
+       <dl>
+         <dt>If |command parameters|["<code>scale</code>"] is not equal to <code>1</code>:
+         <dd>Zoom the size of the content by a factor |command parameters|["<code>scale</code>"]
+         <dt>If |command parameters|["<code>background</code>"] is false:
+         <dd>Suppress output of background images
+         <dt>If |command parameters|["<code>shrinkToFit</code>"] is true:
+         <dd>Resize the content to match the page width, overriding any page
+             width specified in the content
+     </dl>
+
+  1. If |page ranges| is not [=list/empty=], let |pages| be the result of
+     [=trying=] to [=parse a page range=] with |page ranges| and the number of
+     pages contained in |pdf data|, then remove any pages from |pdf data|
+     whose one-based index is not contained in |pages|.
+
+  1. Let |encoding result| be the result of calling [=Base64 Encode=] on
+     |pdf data|.
+
+  1. Let |encoded data| be |encoding result|’s data.
+
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.PrintResult</code> production, with the
+     <code>data</code> field set to |encoded data|.
+
+  1. Return [=success=] with data |body|.
 
 </div>
 
