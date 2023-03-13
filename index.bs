@@ -5785,7 +5785,7 @@ InputCommand = (
 
 ### Types ### {#module-input-types}
 
-#### input.ElementOrigin ### {#module-input-origin}
+#### input.ElementOrigin #### {#type-input-origin}
 
 Tjhe <code>input.ElementOrigin</code> type represents an {{Element}} that will
 be used as a coordinate origin.
@@ -5807,30 +5807,31 @@ The <dfn>is <code>input.ElementOrigin</code></dfn> steps given |object| are:
 
 </div>
 
-<div algorithm>
-The <dfn>get an Element from <code>input.ElementOrigin</code></dfn> steps given
-|origin| and |context| are:
+<div algorithm>To <dfn>get Element from <code>input.ElementOrigin</code>
+steps</dfn> given |session|:
 
-1. Assert: |origin| matches <code>input.ElementOrigin</code>.
+1. Return the following steps, given |origin| and |context|:
 
-<!-- converting to realm here is kind of silly since we immediately convert back
-     in [=deserialize remote reference=] -->
-1. Let |document| be |context|'s [=active document=].
+  1. Assert: |origin| matches <code>input.ElementOrigin</code>.
 
-1. Let |environment settings| be the [=environment settings object=] whose
-   [=relevant global object=]'s <a>associated <code>Document</code></a> is
-   |document|.
+  <!-- converting to realm here is kind of silly since we immediately convert back
+       in [=deserialize remote reference=] -->
+  1. Let |document| be |context|'s [=active document=].
 
-1. Let |realm| be |environment settings|' [=realm execution context=]'s
-   Realm component.
+  1. Let |environment settings| be the [=environment settings object=] whose
+     [=relevant global object=]'s <a>associated <code>Document</code></a> is
+     |document|.
 
-1. Let |node| be the result of [=trying=] to [=deserialize remote reference=]
-   with |origin|, |realm|, and |session|.
+  1. Let |realm| be |environment settings|' [=realm execution context=]'s
+     Realm component.
 
-1. If |node| doesn't implement {{Element}} return [=error=] with [=error code=]
-   [=no such element=].
+  1. Let |node| be the result of [=trying=] to [=deserialize remote reference=]
+     with |origin|, |realm|, and |session|.
 
-1. Return [=success=] with data |node|.
+  1. If |node| doesn't implement {{Element}} return [=error=] with [=error code=]
+     [=no such element=].
+
+  1. Return [=success=] with data |node|.
 
 </div>
 
@@ -6000,8 +6001,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |actions options| be a new [=actions options=] with the [=is element
    origin=] steps set to [=is input.ElementOrigin=], and the
-   [=get element origin=] steps set to [=get an Element from
-   input.ElementOrigin=].
+   [=get element origin=] steps set to the result of [=get Element from
+   input.ElementOrigin steps=] given |session|.
 
 1. Let |actions by tick| be the result of trying to [=extract an action
    sequence=] with |input state|, |command parameters|, and |actions options|.
@@ -6042,8 +6043,7 @@ state associated with the current session.
 
 <div algorithm="remote end steps for input.releaseActions">
 
-The [=remote end steps=] given <var ignore>session</var>, and |command
-parameters| are:
+The [=remote end steps=] given |session|, and |command parameters| are:
 
 1. Let |context id| be the value of the <code>context</code> field of
    |command parameters|.
@@ -6057,8 +6057,8 @@ parameters| are:
 
 1. Let |actions options| be a new [=actions options=] with the [=is element
    origin=] steps set to [=is input.ElementOrigin=], and the
-   [=get element origin=] steps set to [=get an Element from
-   input.ElementOrigin=].
+   [=get element origin=] steps set to [=get Element from
+   input.ElementOrigin steps=] given |session|.
 
 1. Let |undo actions| be |input state|’s [=input cancel list=] in reverse order.
 
