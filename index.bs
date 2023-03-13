@@ -5778,8 +5778,8 @@ simulated user input.
 <pre class="cddl remote-cddl">
 
 InputCommand = (
-  input.PerformActionsCommand //
-  input.ReleaseActionsCommand
+  input.PerformActions //
+  input.ReleaseActions
 )
 </pre>
 
@@ -5845,7 +5845,7 @@ specified sequence of user input actions.
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      input.PerformActionsCommand = {
+      input.PerformActions = {
         method: "input.performActions",
         params: input.PerformActionsParameters
       };
@@ -5886,8 +5886,10 @@ specified sequence of user input actions.
         actions: [*input.PointerSourceAction]
       }
 
+      input.PointerType = "mouse" / "pen" / "touch"
+
       input.PointerParameters = {
-        ?pointerType: "mouse" / "pen" / "touch"
+        ?pointerType: input.PointerType .default "mouse"
       }
 
       input.PointerSourceAction = (
@@ -5925,7 +5927,7 @@ specified sequence of user input actions.
       input.PointerUpAction = {
         type: "pointerUp",
         button: js-uint,
-        input.PointerCommonProperties,
+        input.PointerCommonProperties
       }
 
       input.PointerDownAction = {
@@ -5940,7 +5942,7 @@ specified sequence of user input actions.
         y: js-uint,
         ? duration: js-uint,
         ? origin: input.Origin,
-        input.PointerCommonProperties,
+        input.PointerCommonProperties
       }
 
       input.WheelScrollAction = {
@@ -5950,20 +5952,26 @@ specified sequence of user input actions.
         deltaX: js-int,
         deltaY: js-int,
         ? duration: js-uint,
-        ? origin: input.Origin,
-        input.PointerCommonProperties,
+        ? origin: input.Origin .default "viewport",
       }
 
       input.PointerCommonProperties = (
-        ? width: js-uint,
-        ? height: js-uint,
-        ? pressure: float,
-        ? tangentialPressure: float,
-        ? tiltX: -90..90,
-        ? tiltY: -90..90,
-        ? twist: 0..359,
-        ? altitudeAngle: float,
-        ? azimuthAngle: float,
+        ? width: js-uint .default 1,
+        ? height: js-uint .default 1,
+        ? pressure: float .default 0.0,
+        ? tangentialPressure: float .default 0.0,
+        ? twist: 0..359 .default 0,
+        (input.TiltProperties // input.AngleProperties)
+      )
+
+      input.AngleProperties = (
+        ? altitudeAngle: float .default 0.0,
+        ? azimuthAngle: float .default 0.0,
+      )
+
+      input.TiltProperties = (
+        ? tiltX: -90..90 .default 0,
+        ? tiltY: -90..90 .default 0,
       )
 
       input.Origin = "viewport" / "pointer" / input.ElementOrigin
@@ -6014,7 +6022,7 @@ state associated with the current session.
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      input.ReleaseActionsCommand = {
+      input.ReleaseActions = {
         method: "input.releaseActions",
         params: input.ReleaseActionsParameters
       };
