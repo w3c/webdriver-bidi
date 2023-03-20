@@ -4864,12 +4864,13 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
       }
 
       script.CallFunctionParameters = {
-        functionDeclaration: text;
-        awaitPromise: bool;
-        target: script.Target;
-        ?arguments: [*script.ArgumentValue];
-        ?this: script.ArgumentValue;
-        ?resultOwnership: script.ResultOwnership;
+        functionDeclaration: text,
+        awaitPromise: bool,
+        target: script.Target,
+        ?arguments: [*script.ArgumentValue],
+        ?maxDepth: js-uint,
+        ?resultOwnership: script.ResultOwnership,
+        ?this: script.ArgumentValue,
       }
 
       script.ArgumentValue = (
@@ -4962,6 +4963,9 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |await promise| be the value of the <code>awaitPromise</code> field of
    |command parameters|.
 
+1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
+   parameters|, if present, or 1 otherwise.
+
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
 
@@ -5008,7 +5012,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
 1. Let |result| be the result of [=serialize as a remote value=] with
-   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result ownership|,
+   |evaluation status|.\[[Value]], |max depth|, |result ownership|,
    a new [=/map=] as serialization internal map, |realm| and |session|.
 
 1. Return a new [=/map=] matching the <code>script.EvaluateResultSuccess</code>
@@ -5038,10 +5042,11 @@ the promise is returned.
       }
 
       script.EvaluateParameters = {
-        expression: text;
-        target: script.Target;
-        awaitPromise: bool;
-        ?resultOwnership: script.ResultOwnership;
+        expression: text,
+        target: script.Target,
+        awaitPromise: bool,
+        ?maxDepth: js-uint,
+        ?resultOwnership: script.ResultOwnership,
       }
       </pre>
    </dd>
@@ -5072,6 +5077,9 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |await promise| be the value of the <code>awaitPromise</code> field of
    |command parameters|.
+
+1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
+   parameters|, if present, or 1 otherwise.
 
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
@@ -5106,7 +5114,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
 1. Let |result| be the result of [=serialize as a remote value=] with
-   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result ownership|,
+   |evaluation status|.\[[Value]], |max depth|, |result ownership|,
    a new [=/map=] as serialization internal map, |realm| and |session|.
 
 1. Return a new [=/map=] matching the <code>script.EvaluateResultSuccess</code>
