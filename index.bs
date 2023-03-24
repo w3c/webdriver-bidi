@@ -1867,6 +1867,7 @@ NodeProperties = {
   ?attributes: {*text => text},
   ?children: [*NodeRemoteValue],
   ?localName: text,
+  ?mode: "open" / "closed",
   ?namespaceURI: text,
   ?nodeValue: text,
   ?shadowRoot: NodeRemoteValue / null,
@@ -1895,7 +1896,7 @@ Issue: handle String / Number / etc. wrapper objects specially?
 
 <div algorithm>
 
-To <dfn>serialize as a remote value</dfn> given a |value|, a |max depth|,
+To <dfn>serialize as a remote value</dfn> given |value|, |serialization options|,
 an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
 1. Let |remote value| be a result of [=serialize primitive protocol value=]
@@ -1923,7 +1924,7 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
     <dt>[=IsArray=](|value|)
     <dd>Let |remote value| be [=serialize an Array-like=] with |session|,
         <code>ArrayRemoteValue</code>, |handle id|, |known object|, |value|,
-        |max depth|, |ownership type|, |serialization internal map|, and |realm|.
+        |serialization options|, |ownership type|, |serialization internal map|, and |realm|.
 
     <dt>[=IsRegExp=](|value|)
     <dd>
@@ -1964,11 +1965,12 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
     1. Let |serialized| be null.
 
-    1. If |known object| is <code>false</code>, and |max depth| is not 0, run
-       the following steps:
+    1. If |known object| is <code>false</code>, and |serialization
+       options|["<code>maxObjectDepth</code>"] is not 0, run the following
+       steps:
 
        1. Let |serialized| be the result of [=serialize as a mapping=] with
-          [=CreateMapIterator=](|value|, key+value), |max depth|,
+          [=CreateMapIterator=](|value|, key+value), |serialization options|,
           |ownership type|, |serialization internal map|, |realm|, and |session|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
@@ -1986,12 +1988,14 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
     1. Let |serialized| be null.
 
-    1. If |known object| is <code>false</code>, and |max depth| is not 0, run
-       the following steps:
+    1. If |known object| is <code>false</code>, and |serialization
+       options|["<code>maxObjectDepth</code>"] is not 0, run the following
+       steps:
 
        1. Let |serialized| be the result of [=serialize as a list=] with
-          [=CreateSetIterator=](|value|, value), |max depth|, |ownership type|,
-          |serialization internal map|, |realm|, and |session|.
+          [=CreateSetIterator=](|value|, value), |serialization options|,
+          |ownership type|, |serialization internal map|, |realm|, and
+          |session|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
        |serialized|.
@@ -2029,12 +2033,12 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
     <dt>|value| is a [=platform object=] that implements {{NodeList}}
     <dd>Let |remote value| be [=serialize an Array-like=] with
         <code>NodeListRemoteValue</code>,|handle id|, |known object|, |value|,
-        |max depth|, |ownership type|, |serialization internal map|, and |realm|.
+        |serialization options|, |ownership type|, |serialization internal map|, and |realm|.
 
     <dt>|value| is a [=platform object=] that implements {{HTMLCollection}}
     <dd>Let |remote value| be [=serialize an Array-like=] with
         <code>HTMLCollectionRemoteValue</code>, |handle id|, |known object|, |value|,
-        |max depth|, |ownership type|, |known object|, |serialization internal map|,
+        |serialization options|, |ownership type|, |known object|, |serialization internal map|,
         and |realm|.
 
     <dt>|value| is a [=platform object=] that implements {{Node}}
@@ -2074,14 +2078,27 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
           1. Set |serialized|["<code>childNodeCount</code>"] to |child node count|.
 
-          1. If |max depth| is equal to 0 let |children| be null.
-             Otherwise, let |children| be an empty [=/list=] and, for each node
-             |child| in the [=children=] of |value|:
+          1. If |serialization options|["<code>maxDomDepth</code>"] is equal to
+             0, or if |value| implements {{ShadowRoot}} and |serialization
+             options|["<code>includeShadowTree</code>"] is "<code>none</code>"
+             or |serialization options|["<code>includeShadowTree</code>"] is
+             "<code>open</code>" and |value|'s <a spec=dom for=ShadowRoot>mode</a> is
+             "<code>closed</code>", let |children| be null.
 
-            1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null otherwise.
+             Otherwise, let |children| be an empty
+             [=/list=] and, for each node |child| in the [=children=] of
+             |value|:
+
+            1. Let |child serialization options| be a [=map/clone=] of
+               |serialization options|.
+
+            1. If |child serialization options|["<code>maxDomDepth</code>"] is
+               not null, set |child serialization
+               options|["<code>maxDomDepth</code>"] to |child serialization
+               options|["<code>maxDomDepth</code>"] - 1.
 
             1. Let |serialized| be the result of [=serialize as a remote value=]
-               with |child|, |child depth|, |ownership type|,
+               with |child|, |child serialization options|, |ownership type|,
                |serialization internal map|, |realm|, and |session|.
 
             1. Append |serialized| to |children|.
@@ -2107,19 +2124,15 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
              1. If |shadow root| is null, let |serialized shadow| be null.
                 Otherwise run the following substeps:
 
-               1.  Let |child depth| be |max depth| - 1 if |max depth| is not
-                  null, or null otherwise.
-
                1. Let |serialized shadow| be the result of
-                  [=serialize as a remote value=] with |shadow root|, |child depth|,
-                  false, |ownership type|, |serialization internal map|,
+                  [=serialize as a remote value=] with |shadow root|,
+                  |serialization options|, |ownership type|, |serialization internal map|,
                   |realm|, and |session|.
 
-                Note: this means the <code>handle</code> for the shadow root
-                will be serialized irrespective of whether the shadow is open or closed,
-                but no properties of the node will be returned.
-
              1. Set |serialized|["<code>shadowRoot</code>"] to |serialized shadow|.
+
+          1. If |value| implements {{ShadowRoot}}
+             |serialized|["<code>mode</code>"] |value|'s <a spec=dom for=ShadowRoot>mode</a>.
 
       1. If |serialized| is not null, set field <code>value</code> of |remote value| to
          |serialized|.
@@ -2152,11 +2165,12 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
     1. Let |serialized| be null.
 
-    1. If |known object| is <code>false</code>, and |max depth| is not 0, run
-       the following steps:
+    1. If |known object| is <code>false</code>, and |serialization
+       options|["<code>maxObjectDepth</code>"] is not 0, run the following
+       steps:
 
        1. Let |serialized| be the result of [=serialize as a mapping=] with
-          [=EnumerableOwnPropertyNames=](|value|, key+value), |max depth|,
+          [=EnumerableOwnPropertyNames=](|value|, key+value), |serialization options|,
           |ownership type|, |serialization internal map|,
           |realm|, and |session|.
 
@@ -2183,7 +2197,7 @@ remove optional flag from the field.
 
 <div algorithm>
 To <dfn>serialize an Array-like</dfn> given |production|, |handle id|, |known object|,
-|value|, |max depth|, |ownership type|, |serialization internal map|, |realm|, and |session|:
+|value|, |serialization options|, |ownership type|, |serialization internal map|, |realm|, and |session|:
 
 1. Let |remote value| be a [=/map=] matching |production|, with the
    <code>handle</code> property set to |handle id| if it's not null, or omitted
@@ -2192,10 +2206,11 @@ To <dfn>serialize an Array-like</dfn> given |production|, |handle id|, |known ob
 1. [=Set internal ids if needed=] with |serialization internal map|,
    |remote value| and |value|.
 
-1. If |known object| is <code>false</code>, and |max depth| is not 0:
+1. If |known object| is <code>false</code>, and |serialization
+   options|["<code>maxObjectDepth</code>"]| is not 0:
 
   1. Let |serialized| be the result of [=serialize as a list=] with
-     [=CreateArrayIterator=](|value|, value), |max depth|, |ownership type|,
+     [=CreateArrayIterator=](|value|, value), |serialization options|, |ownership type|,
      |serialization internal map|, |realm|, and |session|.
 
   1. If |serialized| is not null, set field <code>value</code> of |remote value| to
@@ -2206,18 +2221,23 @@ To <dfn>serialize an Array-like</dfn> given |production|, |handle id|, |known ob
 </div>
 
 <div algorithm>
-To <dfn>serialize as a list</dfn> given |iterable|, |max depth|, |ownership type|,
+To <dfn>serialize as a list</dfn> given |iterable|, |serialization options|, |ownership type|,
 |serialization internal map|, |realm|, and |session|:
 
   1. Let |serialized| be a new list.
 
   1. For each |child value| in |iterable|:
 
-    1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null
-       otherwise.
+    1. Let |child serialization options| be a [=map/clone=] of
+       |serialization options|.
+
+    1. If |child serialization options|["<code>maxObjectDepth</code>"] is
+       not null, set |child serialization
+       options|["<code>maxObjectDepth</code>"] to |child serialization
+       options|["<code>maxObjectDepth</code>"] - 1.
 
     1. Let |serialized child| be the result of [=serialize as a remote value=]
-       with |child value|, |child depth|, |ownership type|,
+       with |child value|, |child serialization options|, |ownership type|,
        |serialization internal map|, |realm|, and |session|.
 
     1. Append |serialized child| to |serialized|.
@@ -2228,7 +2248,7 @@ To <dfn>serialize as a list</dfn> given |iterable|, |max depth|, |ownership type
 Issue: this assumes for-in works on iterators
 
 <div algorithm>
-To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
+To <dfn>serialize as a mapping</dfn> given |iterable|, |serialization options|,
 |ownership type|, |serialization internal map|, |realm|, and |session|:
 
 1. Let |serialized| be a new list.
@@ -2243,16 +2263,21 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
 
   1. Let |key| be |property|[0] and let |value| be |property|[1]
 
-  1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null
-     otherwise.
+  1. Let |child serialization options| be a [=map/clone=] of
+     |serialization options|.
+
+  1. If |child serialization options|["<code>maxObjectDepth</code>"] is
+     not null, set |child serialization
+     options|["<code>maxObjectDepth</code>"] to |child serialization
+     options|["<code>maxObjectDepth</code>"] - 1.
 
   1. If [=Type=](|key|) is String, let |serialized key| be |child key|,
      otherwise let |serialized key| be the result of [=serialize as a remote value=]
-     with |child key|, |child depth|, |ownership type|,
+     with |child key|, |child serialization options|, |ownership type|,
      |serialization internal map|, |realm|, and |session|.
 
   1. Let |serialized value| be the result of [=serialize as a remote value=]
-     with |value|, |child depth|, |ownership type|,
+     with |value|, |child serialization options|, |ownership type|,
      |serialization internal map|, |realm|, and |session|.
 
   1. Let |serialized child| be («|serialized key|, |serialized value|»).
@@ -4241,8 +4266,12 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
    TODO: Tighten up the requirements here; people will probably try to parse
    this data with regex or something equally bad.
 
+1. Let |serialization options| be a [=/map=] matching the
+   <code>script.SerializationOptions</code> production with the fields set to
+   their default values.
+
 1. Let |exception| be the result of [=serialize as a remote value=] with
-   |record|.\[[Value]], <code>1</code> as max depth, |ownership type|,
+   |record|.\[[Value]], |serialization options|, |ownership type|,
    a new [=/map=] as serialization internal map, |realm| and |session|.
 
 1. Let |stack trace| be the [=stack trace for an exception=] given |record|.
@@ -4640,6 +4669,21 @@ script.ResultOwnership = "root" / "none"
 The <code>script.ResultOwnership</code> specifies how the serialized value
 ownership will be treated.
 
+#### The script.SerializationOptions type #### {#type-script-SerializationOptions}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl">
+script.SerializationOptions = {
+  ?maxDomDepth: (js-uint / null) .default 0,
+  ?maxObjectDepth: (js-uint / null) .default null,
+  ?includeShadowTree: ("none" / "open" / "all") .default "none",
+}
+</pre>
+
+The <code>script.SerializationOptions</code> allows specifying how ECMAScript
+objects will be serialized.
+
 #### The script.Source type #### {#type-script-Source}
 
 [=Local end definition=]
@@ -4868,8 +4912,8 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
         awaitPromise: bool,
         target: script.Target,
         ?arguments: [*script.ArgumentValue],
-        ?maxDepth: js-uint,
         ?resultOwnership: script.ResultOwnership,
+        ?serializationOptions: script.SerializationOptions
         ?this: script.ArgumentValue,
       }
 
@@ -4963,8 +5007,10 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |await promise| be the value of the <code>awaitPromise</code> field of
    |command parameters|.
 
-1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
-   parameters|, if present, or 1 otherwise.
+1. Let |serialization options| be the value of the
+   <code>serializationOptions</code> field of |command parameters|, if present,
+   or otherwise a [=/map=] matching the <code>script.SerializationOptions</code>
+   production with the fields set to their default values.
 
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
@@ -5012,7 +5058,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
 1. Let |result| be the result of [=serialize as a remote value=] with
-   |evaluation status|.\[[Value]], |max depth|, |result ownership|,
+   |evaluation status|.\[[Value]], |serialization options|, |result ownership|,
    a new [=/map=] as serialization internal map, |realm| and |session|.
 
 1. Return a new [=/map=] matching the <code>script.EvaluateResultSuccess</code>
@@ -5045,8 +5091,8 @@ the promise is returned.
         expression: text,
         target: script.Target,
         awaitPromise: bool,
-        ?maxDepth: js-uint,
         ?resultOwnership: script.ResultOwnership,
+        ?serializationOptions: script.SerializationOptions,
       }
       </pre>
    </dd>
@@ -5078,8 +5124,10 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |await promise| be the value of the <code>awaitPromise</code> field of
    |command parameters|.
 
-1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
-   parameters|, if present, or 1 otherwise.
+1. Let |serialization options| be the value of the
+   <code>serializationOptions</code> field of |command parameters|, if present,
+   or otherwise a [=/map=] matching the <code>script.SerializationOptions</code>
+   production with the fields set to their default values.
 
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
@@ -5114,7 +5162,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
 1. Let |result| be the result of [=serialize as a remote value=] with
-   |evaluation status|.\[[Value]], |max depth|, |result ownership|,
+   |evaluation status|.\[[Value]], |serialization options|, |result ownership|,
    a new [=/map=] as serialization internal map, |realm| and |session|.
 
 1. Return a new [=/map=] matching the <code>script.EvaluateResultSuccess</code>
@@ -5587,10 +5635,14 @@ Define the following [=console steps=] with |method|, |args|, and
 
   1. Let |serialized args| be a new list.
 
+  1. Let |serialization options| be a [=/map=] matching the
+     <code>script.SerializationOptions</code> production with the fields set to
+     their default values.
+
   1. For each |arg| of |args|:
 
      1. Let |serialized arg| be the result of [=serialize as a remote value=] with
-        |arg| as value, <code>1</code> as max depth, <code>none</code> as
+        |arg| as value, |serialization options|, <code>none</code> as
         ownership type, a new [=/map=] as serialization internal map, |realm| and
         |session|.
 
