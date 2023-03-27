@@ -1924,7 +1924,8 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
     <dt>[=IsArray=](|value|)
     <dd>Let |remote value| be [=serialize an Array-like=] with |session|,
         <code>ArrayRemoteValue</code>, |handle id|, |known object|, |value|,
-        |serialization options|, |ownership type|, |serialization internal map|, and |realm|.
+        |serialization options|, |ownership type|, |serialization internal map|,
+        |realm|, and |session|.
 
     <dt>[=IsRegExp=](|value|)
     <dd>
@@ -2033,13 +2034,14 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
     <dt>|value| is a [=platform object=] that implements {{NodeList}}
     <dd>Let |remote value| be [=serialize an Array-like=] with
         <code>NodeListRemoteValue</code>,|handle id|, |known object|, |value|,
-        |serialization options|, |ownership type|, |serialization internal map|, and |realm|.
+        |serialization options|, |ownership type|, |serialization internal map|,
+        |realm|, and |session|.
 
     <dt>|value| is a [=platform object=] that implements {{HTMLCollection}}
     <dd>Let |remote value| be [=serialize an Array-like=] with
         <code>HTMLCollectionRemoteValue</code>, |handle id|, |known object|, |value|,
         |serialization options|, |ownership type|, |known object|, |serialization internal map|,
-        and |realm|.
+        |realm|, and |session|.
 
     <dt>|value| is a [=platform object=] that implements {{Node}}
     <dd>
@@ -2080,8 +2082,8 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
           1. If |serialization options|["<code>maxDomDepth</code>"] is equal to
              0, or if |value| implements {{ShadowRoot}} and |serialization
-             options|["<code>includeShadowTree</code>"] is "<code>none</code>"
-             or |serialization options|["<code>includeShadowTree</code>"] is
+             options|["<code>includeShadowTree</code>"] is "<code>none</code>",
+             or if |serialization options|["<code>includeShadowTree</code>"] is
              "<code>open</code>" and |value|'s <a spec=dom for=ShadowRoot>mode</a> is
              "<code>closed</code>", let |children| be null.
 
@@ -2131,8 +2133,8 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
              1. Set |serialized|["<code>shadowRoot</code>"] to |serialized shadow|.
 
-          1. If |value| implements {{ShadowRoot}}
-             |serialized|["<code>mode</code>"] |value|'s <a spec=dom for=ShadowRoot>mode</a>.
+          1. If |value| implements {{ShadowRoot}}, set |serialized|["<code>mode</code>"]
+             to |value|'s <a spec=dom for=ShadowRoot>mode</a>.
 
       1. If |serialized| is not null, set field <code>value</code> of |remote value| to
          |serialized|.
@@ -2197,7 +2199,8 @@ remove optional flag from the field.
 
 <div algorithm>
 To <dfn>serialize an Array-like</dfn> given |production|, |handle id|, |known object|,
-|value|, |serialization options|, |ownership type|, |serialization internal map|, |realm|, and |session|:
+|value|, |serialization options|, |ownership type|, |serialization internal map|, |realm|,
+and |session|:
 
 1. Let |remote value| be a [=/map=] matching |production|, with the
    <code>handle</code> property set to |handle id| if it's not null, or omitted
@@ -2224,25 +2227,29 @@ To <dfn>serialize an Array-like</dfn> given |production|, |handle id|, |known ob
 To <dfn>serialize as a list</dfn> given |iterable|, |serialization options|, |ownership type|,
 |serialization internal map|, |realm|, and |session|:
 
-  1. Let |serialized| be a new list.
+1. Assert: serialization options|["<code>maxObjectDepth</code>"] is greater
+   than 0.
 
-  1. For each |child value| in |iterable|:
+1. Let |serialized| be a new list.
 
-    1. Let |child serialization options| be a [=map/clone=] of
-       |serialization options|.
+1. For each |child value| in |iterable|:
 
-    1. If |child serialization options|["<code>maxObjectDepth</code>"] is
-       not null, set |child serialization
-       options|["<code>maxObjectDepth</code>"] to |child serialization
-       options|["<code>maxObjectDepth</code>"] - 1.
+  1. Let |child serialization options| be a [=map/clone=] of
+     |serialization options|.
 
-    1. Let |serialized child| be the result of [=serialize as a remote value=]
-       with |child value|, |child serialization options|, |ownership type|,
-       |serialization internal map|, |realm|, and |session|.
+  1. If |child serialization options|["<code>maxObjectDepth</code>"] is
+     not null, set |child serialization
+     options|["<code>maxObjectDepth</code>"] to |child serialization
+     options|["<code>maxObjectDepth</code>"] - 1.
 
-    1. Append |serialized child| to |serialized|.
+  1. Let |serialized child| be the result of [=serialize as a remote value=]
+     with |child value|, |child serialization options|, |ownership type|,
+     |serialization internal map|, |realm|, and |session|.
 
-  1. Return |serialized|
+  1. Append |serialized child| to |serialized|.
+
+1. Return |serialized|
+
 </div>
 
 Issue: this assumes for-in works on iterators
@@ -2250,6 +2257,9 @@ Issue: this assumes for-in works on iterators
 <div algorithm>
 To <dfn>serialize as a mapping</dfn> given |iterable|, |serialization options|,
 |ownership type|, |serialization internal map|, |realm|, and |session|:
+
+1. Assert: serialization options|["<code>maxObjectDepth</code>"] is greater
+   than 0.
 
 1. Let |serialized| be a new list.
 
