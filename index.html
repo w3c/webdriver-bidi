@@ -8,7 +8,7 @@
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
   <meta content="Bikeshed version d9bd89757, updated Thu Mar 23 10:06:53 2023 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="99db2d46888260e9066b23ad8822e1837cce6110" name="document-revision">
+  <meta content="6fdbd4992d03c0e703f99f63e8d9067b5a0a40d8" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -690,6 +690,22 @@ dfn > a.self-link::before      { content: "#"; }
           <li><a href="#event-log-entryAdded"><span class="secno">7.4.3.1</span> <span class="content">The log.entryAdded Event</span></a>
          </ol>
        </ol>
+      <li>
+       <a href="#module-input"><span class="secno">7.5</span> <span class="content">Input</span></a>
+       <ol class="toc">
+        <li><a href="#module-input-definition"><span class="secno">7.5.1</span> <span class="content">Definition</span></a>
+        <li>
+         <a href="#module-input-types"><span class="secno">7.5.2</span> <span class="content">Types</span></a>
+         <ol class="toc">
+          <li><a href="#type-input-origin"><span class="secno">7.5.2.1</span> <span class="content">input.ElementOrigin</span></a>
+         </ol>
+        <li>
+         <a href="#module-input-commands"><span class="secno">7.5.3</span> <span class="content">Commands</span></a>
+         <ol class="toc">
+          <li><a href="#command-input-performActions"><span class="secno">7.5.3.1</span> <span class="content">The input.performActions Command</span></a>
+          <li><a href="#command-input-releaseActions"><span class="secno">7.5.3.2</span> <span class="content">The input.releaseActions Command</span></a>
+         </ol>
+       </ol>
      </ol>
     <li>
      <a href="#patches"><span class="secno">8</span> <span class="content">Patches to Other Specifications</span></a>
@@ -784,6 +800,7 @@ the remainder of the specification.</p>
 
 CommandData = (
   BrowsingContextCommand //
+  InputCommand //
   ScriptCommand //
   SessionCommand
 )
@@ -838,6 +855,7 @@ EventData = (
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition②">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②">Local end definition</a></p>
 <pre class="cddl remote-cddl local-cddl">Extensible = (*text => any)
 
+js-int = -9007199254740991..9007199254740991
 js-uint = 0..9007199254740991
 </pre>
    <h3 class="heading settled" data-level="3.2" id="session"><span class="secno">3.2. </span><span class="content">Session</span><a class="self-link" href="#session"></a></h3>
@@ -5437,6 +5455,270 @@ the js exception and console API types that are represented by different methods
       </ol>
     </ol>
    </div>
+   <h3 class="heading settled" data-level="7.5" id="module-input"><span class="secno">7.5. </span><span class="content">Input</span><a class="self-link" href="#module-input"></a></h3>
+   <p>The <dfn data-dfn-for="modules" data-dfn-type="dfn" data-export id="modules-input">input<a class="self-link" href="#modules-input"></a></dfn> module contains functionality for
+simulated user input.</p>
+   <h4 class="heading settled" data-level="7.5.1" id="module-input-definition"><span class="secno">7.5.1. </span><span class="content">Definition</span><a class="self-link" href="#module-input-definition"></a></h4>
+   <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition②⓪">remote end definition</a></p>
+<pre class="cddl remote-cddl">InputCommand = (
+  input.PerformActions //
+  input.ReleaseActions
+)
+</pre>
+   <h4 class="heading settled" data-level="7.5.2" id="module-input-types"><span class="secno">7.5.2. </span><span class="content">Types</span><a class="self-link" href="#module-input-types"></a></h4>
+   <h5 class="heading settled" data-level="7.5.2.1" id="type-input-origin"><span class="secno">7.5.2.1. </span><span class="content">input.ElementOrigin</span><a class="self-link" href="#type-input-origin"></a></h5>
+   <p>The <code>input.ElementOrigin</code> type represents an <code class="idl"><a data-link-type="idl" href="https://dom.spec.whatwg.org/#element" id="ref-for-element②">Element</a></code> that will
+be used as a coordinate origin.</p>
+<pre class="cddl remote-cddl">input.ElementOrigin = {
+  type: "element",
+  element: SharedReference
+}
+</pre>
+   <div class="algorithm" data-algorithm="is input.ElementOrigin">
+     The <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="is-inputelementorigin">is <code>input.ElementOrigin</code></dfn> steps given <var>object</var> are: 
+    <ol>
+     <li data-md>
+      <p>If <var>object</var> is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⓪⑥">map</a> matching the <code>input.ElementOrigin</code> production, return true.</p>
+     <li data-md>
+      <p>Return false.</p>
+    </ol>
+   </div>
+   <div class="algorithm" data-algorithm="get Element from input.ElementOrigin steps">
+    To <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="get Element from input.ElementOrigin steps" data-noexport id="get-element-from-inputelementorigin-steps">get Element from <code>input.ElementOrigin</code> steps</dfn> given <var>session</var>: 
+    <ol>
+     <li data-md>
+      <p>Return the following steps, given <var>origin</var> and <var>context</var>:</p>
+      <ol>
+       <li data-md>
+        <p class="assertion">Assert: <var>origin</var> matches <code>input.ElementOrigin</code>.</p>
+       <li data-md>
+        <p>Let <var>document</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#active-document" id="ref-for-active-document①②">active document</a>.</p>
+       <li data-md>
+        <p>Let <var>reference</var> be <var>origin</var>["<code>element</code>"]</p>
+       <li data-md>
+        <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object①⓪">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global" id="ref-for-concept-relevant-global⑨">relevant global object</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/nav-history-apis.html#concept-document-window" id="ref-for-concept-document-window①②">associated <code>Document</code></a> is <var>document</var>.</p>
+       <li data-md>
+        <p>Let <var>realm</var> be <var>environment settings</var>’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context" id="ref-for-realm-execution-context⑧">realm execution context</a>'s
+ Realm component.</p>
+       <li data-md>
+        <p>Let <var>element</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③④">trying</a> to <a data-link-type="dfn" href="#deserialize-remote-reference" id="ref-for-deserialize-remote-reference①">deserialize remote reference</a> with <var>reference</var>, <var>realm</var>, and <var>session</var>.</p>
+       <li data-md>
+        <p>If <var>element</var> doesn’t implement <code class="idl"><a data-link-type="idl" href="https://dom.spec.whatwg.org/#element" id="ref-for-element③">Element</a></code> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③②">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-element" id="ref-for-dfn-no-such-element">no such element</a>.</p>
+       <li data-md>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑦">success</a> with data <var>element</var>.</p>
+      </ol>
+    </ol>
+   </div>
+   <h4 class="heading settled" data-level="7.5.3" id="module-input-commands"><span class="secno">7.5.3. </span><span class="content">Commands</span><a class="self-link" href="#module-input-commands"></a></h4>
+   <h5 class="heading settled" data-level="7.5.3.1" id="command-input-performActions"><span class="secno">7.5.3.1. </span><span class="content">The input.performActions Command</span><a class="self-link" href="#command-input-performActions"></a></h5>
+   <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-inputperformactions">input.performActions<a class="self-link" href="#commands-inputperformactions"></a></dfn> command performs a
+specified sequence of user input actions.</p>
+   <dl>
+    <dt>Command Type
+    <dd>
+<pre class="cddl remote-cddl">input.PerformActions = {
+  method: "input.performActions",
+  params: input.PerformActionsParameters
+};
+
+input.PerformActionsParameters = {
+  context: browsingContext.BrowsingContext,
+  actions: [*input.SourceActions]
+}
+
+input.SourceActions = (
+  input.NoneSourceActions //
+  input.KeySourceActions //
+  input.PointerSourceActions //
+  input.WheelSourceActions
+)
+
+input.NoneSourceActions = {
+  type: "none",
+  actions: [*input.NoneSourceAction]
+}
+
+input.NoneSourceAction = input.PauseAction
+
+input.KeySourceActions = {
+  type: "key",
+  actions: [*input.KeySourceAction]
+}
+
+input.KeySourceAction = (
+  input.PauseAction //
+  input.KeyDownAction //
+  input.KeyUpAction
+)
+
+input.PointerSourceActions = {
+  type: "pointer",
+  ? parameters: input.PointerParameters,
+  actions: [*input.PointerSourceAction]
+}
+
+input.PointerType = "mouse" / "pen" / "touch"
+
+input.PointerParameters = {
+  ?pointerType: input.PointerType .default "mouse"
+}
+
+input.PointerSourceAction = (
+  input.PauseAction //
+  input.PointerDownAction //
+  input.PointerUpAction //
+  input.PointerMoveAction
+)
+
+input.WheelSourceActions = {
+  type: "wheel",
+  actions: [*input.WheelSourceAction]
+}
+
+input.WheelSourceAction = (
+  input.PauseAction //
+  input.WheelScrollAction
+)
+
+input.PauseAction = {
+  type: "pause",
+  ? duration: js-uint
+}
+
+input.KeyDownAction = {
+  type: "keyDown",
+  value: text
+}
+
+input.KeyUpAction = {
+  type: "keyUp",
+  value: text
+}
+
+input.PointerUpAction = {
+  type: "pointerUp",
+  button: js-uint,
+  input.PointerCommonProperties
+}
+
+input.PointerDownAction = {
+  type: "pointerDown",
+  button: js-uint,
+  input.PointerCommonProperties
+}
+
+input.PointerMoveAction = {
+  type: "pointerMove",
+  x: js-uint,
+  y: js-uint,
+  ? duration: js-uint,
+  ? origin: input.Origin,
+  input.PointerCommonProperties
+}
+
+input.WheelScrollAction = {
+  type: "scroll",
+  x: js-uint,
+  y: js-uint,
+  deltaX: js-int,
+  deltaY: js-int,
+  ? duration: js-uint,
+  ? origin: input.Origin .default "viewport",
+}
+
+input.PointerCommonProperties = (
+  ? width: js-uint .default 1,
+  ? height: js-uint .default 1,
+  ? pressure: float .default 0.0,
+  ? tangentialPressure: float .default 0.0,
+  ? twist: 0..359 .default 0,
+  (input.TiltProperties // input.AngleProperties)
+)
+
+input.AngleProperties = (
+  ? altitudeAngle: float .default 0.0,
+  ? azimuthAngle: float .default 0.0,
+)
+
+input.TiltProperties = (
+  ? tiltX: -90..90 .default 0,
+  ? tiltY: -90..90 .default 0,
+)
+
+input.Origin = "viewport" / "pointer" / input.ElementOrigin
+</pre>
+    <dt>Return Type
+    <dd>
+<pre class="cddl">EmptyResult
+</pre>
+   </dl>
+   <div class="algorithm" data-algorithm="remote end steps for input.performActions">
+    <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps②⓪">remote end steps</a> with <var>session</var> and <var>command parameters</var> are:</p>
+    <ol>
+     <li data-md>
+      <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
+     <li data-md>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⑤">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①②">get a browsing context</a> with <var>context id</var>.</p>
+     <li data-md>
+      <p>Let <var>input state</var> be <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-get-the-input-state" id="ref-for-dfn-get-the-input-state">get the input state</a> with <var>session</var> and <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①③">top-level browsing context</a>.</p>
+     <li data-md>
+      <p>Let <var>actions options</var> be a new <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-actions-options" id="ref-for-dfn-actions-options">actions options</a> with the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-is-element-origin" id="ref-for-dfn-is-element-origin">is element
+ origin</a> steps set to <a data-link-type="dfn" href="#is-inputelementorigin" id="ref-for-is-inputelementorigin">is input.ElementOrigin</a>, and the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-get-element-origin" id="ref-for-dfn-get-element-origin">get element origin</a> steps set to the result of <a data-link-type="dfn" href="#get-element-from-inputelementorigin-steps" id="ref-for-get-element-from-inputelementorigin-steps">get Element from
+ input.ElementOrigin steps</a> given <var>session</var>.</p>
+     <li data-md>
+      <p>Let <var>actions by tick</var> be the result of trying to <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-extract-an-action-sequence" id="ref-for-dfn-extract-an-action-sequence">extract an action
+ sequence</a> with <var>input state</var>, <var>command parameters</var>, and <var>actions options</var>.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⑥">Try</a> to <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-dispatch-actions" id="ref-for-dfn-dispatch-actions">dispatch actions</a> with <var>input state</var>, <var>actions by tick</var>, <var>context</var>, and <var>actions options</var>.</p>
+     <li data-md>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑧">success</a> with data null.</p>
+    </ol>
+   </div>
+   <h5 class="heading settled" data-level="7.5.3.2" id="command-input-releaseActions"><span class="secno">7.5.3.2. </span><span class="content">The input.releaseActions Command</span><a class="self-link" href="#command-input-releaseActions"></a></h5>
+   <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-inputreleaseactions">input.releaseActions<a class="self-link" href="#commands-inputreleaseactions"></a></dfn> command resets the input
+state associated with the current session.</p>
+   <dl>
+    <dt>Command Type
+    <dd>
+<pre class="cddl remote-cddl">input.ReleaseActions = {
+  method: "input.releaseActions",
+  params: input.ReleaseActionsParameters
+};
+
+input.ReleaseActionsParameters = {
+  context: browsingContext.BrowsingContext,
+}
+</pre>
+    <dt>Return Type
+    <dd>
+<pre class="cddl">EmptyResult
+</pre>
+   </dl>
+   <div class="algorithm" data-algorithm="remote end steps for input.releaseActions">
+    <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps②①">remote end steps</a> given <var>session</var>, and <var>command parameters</var> are:</p>
+    <ol>
+     <li data-md>
+      <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
+     <li data-md>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⑦">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①③">get a browsing context</a> with <var>context id</var>.</p>
+     <li data-md>
+      <p>Let <var>top-level context</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①④">top-level browsing context</a>.</p>
+     <li data-md>
+      <p>Let <var>input state</var> be <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-get-the-input-state" id="ref-for-dfn-get-the-input-state①">get the input state</a> with <var>session</var> and <var>top-level context</var>.</p>
+     <li data-md>
+      <p>Let <var>actions options</var> be a new <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-actions-options" id="ref-for-dfn-actions-options①">actions options</a> with the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-is-element-origin" id="ref-for-dfn-is-element-origin①">is element
+ origin</a> steps set to <a data-link-type="dfn" href="#is-inputelementorigin" id="ref-for-is-inputelementorigin①">is input.ElementOrigin</a>, and the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-get-element-origin" id="ref-for-dfn-get-element-origin①">get element origin</a> steps set to <a data-link-type="dfn" href="#get-element-from-inputelementorigin-steps" id="ref-for-get-element-from-inputelementorigin-steps①">get Element from
+ input.ElementOrigin steps</a> given <var>session</var>.</p>
+     <li data-md>
+      <p>Let <var>undo actions</var> be <var>input state</var>’s <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-input-cancel-list" id="ref-for-dfn-input-cancel-list">input cancel list</a> in reverse order.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⑧">Try</a> to <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-dispatch-tick-actions" id="ref-for-dfn-dispatch-tick-actions">dispatch tick actions</a> with <var>undo actions</var>, 0, <var>context</var>, and <var>actions options</var>.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-reset-the-input-state" id="ref-for-dfn-reset-the-input-state">Reset the input state</a> with <var>session</var> and <var>top-level context</var>.</p>
+     <li data-md>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑨">success</a> with data null.</p>
+    </ol>
+   </div>
    <h2 class="heading settled" data-level="8" id="patches"><span class="secno">8. </span><span class="content">Patches to Other Specifications</span><a class="self-link" href="#patches"></a></h2>
    <p>This specification requires some changes to external specifications to provide the necessary
 integration points. It is assumed that these patches will be committed to the other specifications
@@ -5453,7 +5735,7 @@ as part of the standards process.</p>
       <p>Discard all <code class="idl"><a data-link-type="idl" href="https://dom.spec.whatwg.org/#document" id="ref-for-document①">Document</a></code> objects for all the entries in <var>browsingContext</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/history.html#session-history" id="ref-for-session-history">session
  history</a>.</p>
      <li data-md>
-      <p>If <var>browsingContext</var> is a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①③">top-level browsing context</a>, then <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#bcg-remove" id="ref-for-bcg-remove">remove a browsing context</a> <var>browsingContext</var>.</p>
+      <p>If <var>browsingContext</var> is a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①⑤">top-level browsing context</a>, then <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsers.html#bcg-remove" id="ref-for-bcg-remove">remove a browsing context</a> <var>browsingContext</var>.</p>
     </ol>
    </div>
    <p class="issue" id="issue-b664c1e3"><a class="self-link" href="#issue-b664c1e3"></a> The actual patch might be better to split the algorithm into an outer algorithm that is
@@ -5544,6 +5826,7 @@ end:</p>
    <li><a href="#get-a-realm-from-a-target">get a realm from a target</a><span>, in § 7.3.3.12</span>
    <li><a href="#get-a-sandbox-name">get a sandbox name</a><span>, in § 5.1</span>
    <li><a href="#get-a-session-id-for-a-websocket-resource">get a session ID for a WebSocket resource</a><span>, in § 4</span>
+   <li><a href="#get-element-from-inputelementorigin-steps">get Element from input.ElementOrigin steps</a><span>, in § 7.5.2.1</span>
    <li><a href="#get-exception-details">get exception details</a><span>, in § 7.3.3.1</span>
    <li><a href="#get-or-create-a-sandbox-realm">get or create a sandbox realm</a><span>, in § 5.1</span>
    <li><a href="#get-related-browsing-contexts">get related browsing contexts</a><span>, in § 4</span>
@@ -5562,7 +5845,11 @@ end:</p>
    <li><a href="#handle-object-map">handle object map</a><span>, in § 6.1</span>
    <li><a href="#listener-host">host</a><span>, in § 4</span>
    <li><a href="#navigation-status-id">id</a><span>, in § 7.2</span>
+   <li><a href="#modules-input">input</a><span>, in § 7.5</span>
+   <li><a href="#commands-inputperformactions">input.performActions</a><span>, in § 7.5.3.1</span>
+   <li><a href="#commands-inputreleaseactions">input.releaseActions</a><span>, in § 7.5.3.2</span>
    <li><a href="#event-in-the-default-event-set">in the default event set</a><span>, in § 3.6</span>
+   <li><a href="#is-inputelementorigin">is input.ElementOrigin</a><span>, in § 7.5.2.1</span>
    <li><a href="#stackframe-line-number">line number</a><span>, in § 7.3.3.7</span>
    <li><a href="#list-of-stack-frames">list of stack frames</a><span>, in § 7.3.3.7</span>
    <li><a href="#list-of-websocket-resources">list of WebSocket resources</a><span>, in § 4</span>
@@ -5689,6 +5976,7 @@ end:</p>
    <span id="infopaneltitle-for-217dfc85318b612bdb489d33301d0fc2" style="display:none">Info about the 'Element' external reference.</span><a href="https://dom.spec.whatwg.org/#element">https://dom.spec.whatwg.org/#element</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-element">6.2.3.1. Serialization</a> <a href="#ref-for-element①">(2)</a>
+    <li><a href="#ref-for-element②">7.5.2.1. input.ElementOrigin</a> <a href="#ref-for-element③">(2)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-799a059d101194cda7cd3ec7ca551345" class="dfn-panel" data-for="799a059d101194cda7cd3ec7ca551345" id="infopanel-for-799a059d101194cda7cd3ec7ca551345">
@@ -6126,6 +6414,7 @@ end:</p>
     <li><a href="#ref-for-active-document⑨">7.2.4.1. The browsingContext.contextCreated Event</a>
     <li><a href="#ref-for-active-document①⓪">7.3.3.12. The script.Target type</a>
     <li><a href="#ref-for-active-document①①">7.3.4.5. The script.getRealms Command</a>
+    <li><a href="#ref-for-active-document①②">7.5.2.1. input.ElementOrigin</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-de11cdc07a64c79878f1c3074e81554a" class="dfn-panel" data-for="de11cdc07a64c79878f1c3074e81554a" id="infopanel-for-de11cdc07a64c79878f1c3074e81554a">
@@ -6164,6 +6453,7 @@ end:</p>
     <li><a href="#ref-for-concept-document-window⑧">7.3.4.5. The script.getRealms Command</a>
     <li><a href="#ref-for-concept-document-window⑨">7.3.5.1. The script.realmCreated Event</a> <a href="#ref-for-concept-document-window①⓪">(2)</a>
     <li><a href="#ref-for-concept-document-window①①">7.3.5.2. The script.realmDestroyed Event</a>
+    <li><a href="#ref-for-concept-document-window①②">7.5.2.1. input.ElementOrigin</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-8e051bfc0dab89b1142e587ce663a4c1" class="dfn-panel" data-for="8e051bfc0dab89b1142e587ce663a4c1" id="infopanel-for-8e051bfc0dab89b1142e587ce663a4c1">
@@ -6258,6 +6548,7 @@ end:</p>
     <li><a href="#ref-for-environment-settings-object⑤">7.3.4.5. The script.getRealms Command</a>
     <li><a href="#ref-for-environment-settings-object⑥">7.3.5.1. The script.realmCreated Event</a> <a href="#ref-for-environment-settings-object⑦">(2)</a>
     <li><a href="#ref-for-environment-settings-object⑧">7.3.5.2. The script.realmDestroyed Event</a> <a href="#ref-for-environment-settings-object⑨">(2)</a>
+    <li><a href="#ref-for-environment-settings-object①⓪">7.5.2.1. input.ElementOrigin</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-9a3c5799d173b1aec7df3fd93cfc01bd" class="dfn-panel" data-for="9a3c5799d173b1aec7df3fd93cfc01bd" id="infopanel-for-9a3c5799d173b1aec7df3fd93cfc01bd">
@@ -6375,6 +6666,7 @@ end:</p>
     <li><a href="#ref-for-realm-execution-context⑤">7.3.4.3. The script.callFunction Command</a>
     <li><a href="#ref-for-realm-execution-context⑥">7.3.4.4. The script.evaluate Command</a>
     <li><a href="#ref-for-realm-execution-context⑦">7.3.5.2. The script.realmDestroyed Event</a>
+    <li><a href="#ref-for-realm-execution-context⑧">7.5.2.1. input.ElementOrigin</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-2233058c8f0998915af8393ee2abbc1d" class="dfn-panel" data-for="2233058c8f0998915af8393ee2abbc1d" id="infopanel-for-2233058c8f0998915af8393ee2abbc1d">
@@ -6387,6 +6679,7 @@ end:</p>
     <li><a href="#ref-for-concept-relevant-global⑤">7.3.4.5. The script.getRealms Command</a>
     <li><a href="#ref-for-concept-relevant-global⑥">7.3.5.1. The script.realmCreated Event</a> <a href="#ref-for-concept-relevant-global⑦">(2)</a>
     <li><a href="#ref-for-concept-relevant-global⑧">7.3.5.2. The script.realmDestroyed Event</a>
+    <li><a href="#ref-for-concept-relevant-global⑨">7.5.2.1. input.ElementOrigin</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-8ee6ba3007ddbcc1bac5ed5548b8cb0e" class="dfn-panel" data-for="8ee6ba3007ddbcc1bac5ed5548b8cb0e" id="infopanel-for-8ee6ba3007ddbcc1bac5ed5548b8cb0e">
@@ -6491,7 +6784,9 @@ end:</p>
     <li><a href="#ref-for-top-level-browsing-context①⓪">7.2.3.4. The browsingContext.getTree Command</a>
     <li><a href="#ref-for-top-level-browsing-context①①">7.3.5.1. The script.realmCreated Event</a>
     <li><a href="#ref-for-top-level-browsing-context①②">7.4.3.1. The log.entryAdded Event</a>
-    <li><a href="#ref-for-top-level-browsing-context①③">8.1. HTML</a>
+    <li><a href="#ref-for-top-level-browsing-context①③">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-top-level-browsing-context①④">7.5.3.2. The input.releaseActions Command</a>
+    <li><a href="#ref-for-top-level-browsing-context①⑤">8.1. HTML</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-5002247a1e0aa38a7705419d947c6884" class="dfn-panel" data-for="5002247a1e0aa38a7705419d947c6884" id="infopanel-for-5002247a1e0aa38a7705419d947c6884">
@@ -6653,6 +6948,7 @@ end:</p>
     <li><a href="#ref-for-ordered-map⑨④">7.3.5.2. The script.realmDestroyed Event</a> <a href="#ref-for-ordered-map⑨⑤">(2)</a> <a href="#ref-for-ordered-map⑨⑥">(3)</a> <a href="#ref-for-ordered-map⑨⑦">(4)</a> <a href="#ref-for-ordered-map⑨⑧">(5)</a> <a href="#ref-for-ordered-map⑨⑨">(6)</a>
     <li><a href="#ref-for-ordered-map①⓪⓪">7.4. The log Module</a>
     <li><a href="#ref-for-ordered-map①⓪①">7.4.3.1. The log.entryAdded Event</a> <a href="#ref-for-ordered-map①⓪②">(2)</a> <a href="#ref-for-ordered-map①⓪③">(3)</a> <a href="#ref-for-ordered-map①⓪④">(4)</a> <a href="#ref-for-ordered-map①⓪⑤">(5)</a>
+    <li><a href="#ref-for-ordered-map①⓪⑥">7.5.2.1. input.ElementOrigin</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-4b944ac25c4d8b0b79b2296641fde4e4" class="dfn-panel" data-for="4b944ac25c4d8b0b79b2296641fde4e4" id="infopanel-for-4b944ac25c4d8b0b79b2296641fde4e4">
@@ -6853,6 +7149,13 @@ end:</p>
     <li><a href="#ref-for-AudioWorkletGlobalScope">7.3.3.4. The script.RealmInfo type</a>
    </ul>
   </aside>
+  <aside aria-labelledby="infopaneltitle-for-034fdc6cb2142481d0851c703f6044f6" class="dfn-panel" data-for="034fdc6cb2142481d0851c703f6044f6" id="infopanel-for-034fdc6cb2142481d0851c703f6044f6">
+   <span id="infopaneltitle-for-034fdc6cb2142481d0851c703f6044f6" style="display:none">Info about the 'actions options' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-actions-options">https://w3c.github.io/webdriver/#dfn-actions-options</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-actions-options">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-dfn-actions-options①">7.5.3.2. The input.releaseActions Command</a>
+   </ul>
+  </aside>
   <aside aria-labelledby="infopaneltitle-for-a9132b22a3455d142d8ee7c6fa0519e5" class="dfn-panel" data-for="a9132b22a3455d142d8ee7c6fa0519e5" id="infopanel-for-a9132b22a3455d142d8ee7c6fa0519e5">
    <span id="infopaneltitle-for-a9132b22a3455d142d8ee7c6fa0519e5" style="display:none">Info about the 'active sessions' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-active-session">https://w3c.github.io/webdriver/#dfn-active-session</a><b>Referenced in:</b>
    <ul>
@@ -6882,6 +7185,18 @@ end:</p>
    <span id="infopaneltitle-for-122ea287803b1fa75416bc085e5ff1b2" style="display:none">Info about the 'create a session' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-create-a-session">https://w3c.github.io/webdriver/#dfn-create-a-session</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-create-a-session">7.1.3.2. The session.new Command</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-69683b9caacbcd5c3828d93b8ef7b9c8" class="dfn-panel" data-for="69683b9caacbcd5c3828d93b8ef7b9c8" id="infopanel-for-69683b9caacbcd5c3828d93b8ef7b9c8">
+   <span id="infopaneltitle-for-69683b9caacbcd5c3828d93b8ef7b9c8" style="display:none">Info about the 'dispatch actions' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-dispatch-actions">https://w3c.github.io/webdriver/#dfn-dispatch-actions</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-dispatch-actions">7.5.3.1. The input.performActions Command</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-78eaf883b907b2064144b6b35050485a" class="dfn-panel" data-for="78eaf883b907b2064144b6b35050485a" id="infopanel-for-78eaf883b907b2064144b6b35050485a">
+   <span id="infopaneltitle-for-78eaf883b907b2064144b6b35050485a" style="display:none">Info about the 'dispatch tick actions' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-dispatch-tick-actions">https://w3c.github.io/webdriver/#dfn-dispatch-tick-actions</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-dispatch-tick-actions">7.5.3.2. The input.releaseActions Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-36649b1f1180eb4fc6c8b856648f5fbb" class="dfn-panel" data-for="36649b1f1180eb4fc6c8b856648f5fbb" id="infopanel-for-36649b1f1180eb4fc6c8b856648f5fbb">
@@ -6926,6 +7241,7 @@ end:</p>
     <li><a href="#ref-for-dfn-errors③①">7.3.4.3. The script.callFunction Command</a>
     <li><a href="#ref-for-dfn-errors③②">7.3.4.6. The script.removePreloadScript Command</a>
     <li><a href="#ref-for-dfn-errors③③">7.4.3.1. The log.entryAdded Event</a>
+    <li><a href="#ref-for-dfn-errors③④">7.5.2.1. input.ElementOrigin</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-6eb571ce45464ee68892a4f6a93ade01" class="dfn-panel" data-for="6eb571ce45464ee68892a4f6a93ade01" id="infopanel-for-6eb571ce45464ee68892a4f6a93ade01">
@@ -6951,6 +7267,13 @@ end:</p>
     <li><a href="#ref-for-dfn-error-code②⑨">7.3.3.3. The script.Realm type</a>
     <li><a href="#ref-for-dfn-error-code③⓪">7.3.4.3. The script.callFunction Command</a>
     <li><a href="#ref-for-dfn-error-code③①">7.3.4.6. The script.removePreloadScript Command</a>
+    <li><a href="#ref-for-dfn-error-code③②">7.5.2.1. input.ElementOrigin</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-44bab237e272204c73504c62dbcf86f6" class="dfn-panel" data-for="44bab237e272204c73504c62dbcf86f6" id="infopanel-for-44bab237e272204c73504c62dbcf86f6">
+   <span id="infopaneltitle-for-44bab237e272204c73504c62dbcf86f6" style="display:none">Info about the 'extract an action sequence' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-extract-an-action-sequence">https://w3c.github.io/webdriver/#dfn-extract-an-action-sequence</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-extract-an-action-sequence">7.5.3.1. The input.performActions Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-0b600e3bf9e17d50334dc54b7d4307e7" class="dfn-panel" data-for="0b600e3bf9e17d50334dc54b7d4307e7" id="infopanel-for-0b600e3bf9e17d50334dc54b7d4307e7">
@@ -6959,10 +7282,24 @@ end:</p>
     <li><a href="#ref-for-dfn-get-a-node">6.1.1. Deserialization</a>
    </ul>
   </aside>
+  <aside aria-labelledby="infopaneltitle-for-dfdca70f8cc455d23f1c6cee2e79ad69" class="dfn-panel" data-for="dfdca70f8cc455d23f1c6cee2e79ad69" id="infopanel-for-dfdca70f8cc455d23f1c6cee2e79ad69">
+   <span id="infopaneltitle-for-dfdca70f8cc455d23f1c6cee2e79ad69" style="display:none">Info about the 'get element origin' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-get-element-origin">https://w3c.github.io/webdriver/#dfn-get-element-origin</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-get-element-origin">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-dfn-get-element-origin①">7.5.3.2. The input.releaseActions Command</a>
+   </ul>
+  </aside>
   <aside aria-labelledby="infopaneltitle-for-b0a02d829ea2d7243e53ddfa6cbe57cd" class="dfn-panel" data-for="b0a02d829ea2d7243e53ddfa6cbe57cd" id="infopanel-for-b0a02d829ea2d7243e53ddfa6cbe57cd">
    <span id="infopaneltitle-for-b0a02d829ea2d7243e53ddfa6cbe57cd" style="display:none">Info about the 'get or create a node reference' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-get-or-create-a-node-reference">https://w3c.github.io/webdriver/#dfn-get-or-create-a-node-reference</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-get-or-create-a-node-reference">6.2.3. Remote Value</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-6ad50c60dd1c503714655b4d8a589c2e" class="dfn-panel" data-for="6ad50c60dd1c503714655b4d8a589c2e" id="infopanel-for-6ad50c60dd1c503714655b4d8a589c2e">
+   <span id="infopaneltitle-for-6ad50c60dd1c503714655b4d8a589c2e" style="display:none">Info about the 'get the input state' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-get-the-input-state">https://w3c.github.io/webdriver/#dfn-get-the-input-state</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-get-the-input-state">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-dfn-get-the-input-state①">7.5.3.2. The input.releaseActions Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-2e9c5e80b0c20f2b791e1df16184d037" class="dfn-panel" data-for="2e9c5e80b0c20f2b791e1df16184d037" id="infopanel-for-2e9c5e80b0c20f2b791e1df16184d037">
@@ -6975,6 +7312,12 @@ end:</p>
    <span id="infopaneltitle-for-ef467d524f8367b8f59ab1ec707789dc" style="display:none">Info about the 'http session' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-http-session">https://w3c.github.io/webdriver/#dfn-http-session</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-http-session">4.1. Establishing a Connection</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-8d83e25fe375a67a192fdd3b433b79d9" class="dfn-panel" data-for="8d83e25fe375a67a192fdd3b433b79d9" id="infopanel-for-8d83e25fe375a67a192fdd3b433b79d9">
+   <span id="infopaneltitle-for-8d83e25fe375a67a192fdd3b433b79d9" style="display:none">Info about the 'input cancel list' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-input-cancel-list">https://w3c.github.io/webdriver/#dfn-input-cancel-list</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-input-cancel-list">7.5.3.2. The input.releaseActions Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-a638b41a28b59015603667dc5e99fd20" class="dfn-panel" data-for="a638b41a28b59015603667dc5e99fd20" id="infopanel-for-a638b41a28b59015603667dc5e99fd20">
@@ -7005,6 +7348,13 @@ end:</p>
     <li><a href="#ref-for-dfn-invalid-session-id">4. Transport</a>
    </ul>
   </aside>
+  <aside aria-labelledby="infopaneltitle-for-6799af3b17cff603b1060d7bcd28f8ed" class="dfn-panel" data-for="6799af3b17cff603b1060d7bcd28f8ed" id="infopanel-for-6799af3b17cff603b1060d7bcd28f8ed">
+   <span id="infopaneltitle-for-6799af3b17cff603b1060d7bcd28f8ed" style="display:none">Info about the 'is element origin' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-is-element-origin">https://w3c.github.io/webdriver/#dfn-is-element-origin</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-is-element-origin">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-dfn-is-element-origin①">7.5.3.2. The input.releaseActions Command</a>
+   </ul>
+  </aside>
   <aside aria-labelledby="infopaneltitle-for-07f5461e1eb68ff91f31d2884b623f54" class="dfn-panel" data-for="07f5461e1eb68ff91f31d2884b623f54" id="infopanel-for-07f5461e1eb68ff91f31d2884b623f54">
    <span id="infopaneltitle-for-07f5461e1eb68ff91f31d2884b623f54" style="display:none">Info about the 'local end' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-local-ends">https://w3c.github.io/webdriver/#dfn-local-ends</a><b>Referenced in:</b>
    <ul>
@@ -7024,6 +7374,12 @@ end:</p>
    <span id="infopaneltitle-for-76404ab5b5beec7eafb1868b1fe6a5a8" style="display:none">Info about the 'no such alert' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-no-such-alert">https://w3c.github.io/webdriver/#dfn-no-such-alert</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-dfn-no-such-alert">7.2.3.5. The browsingContext.handleUserPrompt Command</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-62a893fc3c6c5410de832388f053c2cd" class="dfn-panel" data-for="62a893fc3c6c5410de832388f053c2cd" id="infopanel-for-62a893fc3c6c5410de832388f053c2cd">
+   <span id="infopaneltitle-for-62a893fc3c6c5410de832388f053c2cd" style="display:none">Info about the 'no such element' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-no-such-element">https://w3c.github.io/webdriver/#dfn-no-such-element</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-no-such-element">7.5.2.1. input.ElementOrigin</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-b97e8d83907362c3dd7f096643ec3feb" class="dfn-panel" data-for="b97e8d83907362c3dd7f096643ec3feb" id="infopanel-for-b97e8d83907362c3dd7f096643ec3feb">
@@ -7084,6 +7440,14 @@ end:</p>
     <li><a href="#ref-for-dfn-remote-end-steps①⑦">7.3.4.4. The script.evaluate Command</a>
     <li><a href="#ref-for-dfn-remote-end-steps①⑧">7.3.4.5. The script.getRealms Command</a>
     <li><a href="#ref-for-dfn-remote-end-steps①⑨">7.3.4.6. The script.removePreloadScript Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps②⓪">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-dfn-remote-end-steps②①">7.5.3.2. The input.releaseActions Command</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-7159740cfd4895030f78e5b0a1c5dda8" class="dfn-panel" data-for="7159740cfd4895030f78e5b0a1c5dda8" id="infopanel-for-7159740cfd4895030f78e5b0a1c5dda8">
+   <span id="infopaneltitle-for-7159740cfd4895030f78e5b0a1c5dda8" style="display:none">Info about the 'reset the input state' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-reset-the-input-state">https://w3c.github.io/webdriver/#dfn-reset-the-input-state</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-reset-the-input-state">7.5.3.2. The input.releaseActions Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-ee494e0eb8fb6b6396268fc24e6a6474" class="dfn-panel" data-for="ee494e0eb8fb6b6396268fc24e6a6474" id="infopanel-for-ee494e0eb8fb6b6396268fc24e6a6474">
@@ -7140,6 +7504,9 @@ end:</p>
     <li><a href="#ref-for-dfn-success④④">7.3.4.2. The script.disown Command</a>
     <li><a href="#ref-for-dfn-success④⑤">7.3.4.3. The script.callFunction Command</a>
     <li><a href="#ref-for-dfn-success④⑥">7.3.4.5. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-success④⑦">7.5.2.1. input.ElementOrigin</a>
+    <li><a href="#ref-for-dfn-success④⑧">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-dfn-success④⑨">7.5.3.2. The input.releaseActions Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-f5554d6d292abf6b561f403a60ae357e" class="dfn-panel" data-for="f5554d6d292abf6b561f403a60ae357e" id="infopanel-for-f5554d6d292abf6b561f403a60ae357e">
@@ -7164,6 +7531,9 @@ end:</p>
     <li><a href="#ref-for-dfn-try②⑧">7.3.4.3. The script.callFunction Command</a> <a href="#ref-for-dfn-try②⑨">(2)</a> <a href="#ref-for-dfn-try③⓪">(3)</a> <a href="#ref-for-dfn-try③①">(4)</a>
     <li><a href="#ref-for-dfn-try③②">7.3.4.4. The script.evaluate Command</a>
     <li><a href="#ref-for-dfn-try③③">7.3.4.5. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-try③④">7.5.2.1. input.ElementOrigin</a>
+    <li><a href="#ref-for-dfn-try③⑤">7.5.3.1. The input.performActions Command</a> <a href="#ref-for-dfn-try③⑥">(2)</a>
+    <li><a href="#ref-for-dfn-try③⑦">7.5.3.2. The input.releaseActions Command</a> <a href="#ref-for-dfn-try③⑧">(2)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-1f031a828d6568a6e3468b454162919f" class="dfn-panel" data-for="1f031a828d6568a6e3468b454162919f" id="infopanel-for-1f031a828d6568a6e3468b454162919f">
@@ -7188,6 +7558,9 @@ end:</p>
     <li><a href="#ref-for-dfn-try②⑧">7.3.4.3. The script.callFunction Command</a> <a href="#ref-for-dfn-try②⑨">(2)</a> <a href="#ref-for-dfn-try③⓪">(3)</a> <a href="#ref-for-dfn-try③①">(4)</a>
     <li><a href="#ref-for-dfn-try③②">7.3.4.4. The script.evaluate Command</a>
     <li><a href="#ref-for-dfn-try③③">7.3.4.5. The script.getRealms Command</a>
+    <li><a href="#ref-for-dfn-try③④">7.5.2.1. input.ElementOrigin</a>
+    <li><a href="#ref-for-dfn-try③⑤">7.5.3.1. The input.performActions Command</a> <a href="#ref-for-dfn-try③⑥">(2)</a>
+    <li><a href="#ref-for-dfn-try③⑦">7.5.3.2. The input.releaseActions Command</a> <a href="#ref-for-dfn-try③⑧">(2)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-0145a735adf963639759e3c01c0f3f7c" class="dfn-panel" data-for="0145a735adf963639759e3c01c0f3f7c" id="infopanel-for-0145a735adf963639759e3c01c0f3f7c">
@@ -7460,32 +7833,42 @@ end:</p>
    <li>
     <a data-link-type="biblio">[WEBDRIVER]</a> defines the following terms:
     <ul>
+     <li><span class="dfn-paneled" id="034fdc6cb2142481d0851c703f6044f6">actions options</span>
      <li><span class="dfn-paneled" id="a9132b22a3455d142d8ee7c6fa0519e5">active sessions</span>
      <li><span class="dfn-paneled" id="242a623e6ccbce47c80c6c63563c62cf">additional capability deserialization algorithm</span>
      <li><span class="dfn-paneled" id="671006b814994c7b94e53e71e1de1edd">additional webdriver capability</span>
      <li><span class="dfn-paneled" id="582fa9ad0d15209e3774b3513a80d728">capability name</span>
      <li><span class="dfn-paneled" id="122ea287803b1fa75416bc085e5ff1b2">create a session</span>
+     <li><span class="dfn-paneled" id="69683b9caacbcd5c3828d93b8ef7b9c8">dispatch actions</span>
+     <li><span class="dfn-paneled" id="78eaf883b907b2064144b6b35050485a">dispatch tick actions</span>
      <li><span class="dfn-paneled" id="36649b1f1180eb4fc6c8b856648f5fbb">draw a bounding box from the framebuffer</span>
      <li><span class="dfn-paneled" id="a8137af6bac64190735c116f54991fea">encode a canvas as base64</span>
      <li><span class="dfn-paneled" id="7a22850aa13024a5345a0e546aa85505">endpoint node</span>
      <li><span class="dfn-paneled" id="b86e10f1021ff0e05cd2a49f7e8f768a">error</span>
      <li><span class="dfn-paneled" id="6eb571ce45464ee68892a4f6a93ade01">error code</span>
+     <li><span class="dfn-paneled" id="44bab237e272204c73504c62dbcf86f6">extract an action sequence</span>
      <li><span class="dfn-paneled" id="0b600e3bf9e17d50334dc54b7d4307e7">get a node</span>
+     <li><span class="dfn-paneled" id="dfdca70f8cc455d23f1c6cee2e79ad69">get element origin</span>
      <li><span class="dfn-paneled" id="b0a02d829ea2d7243e53ddfa6cbe57cd">get or create a node reference</span>
+     <li><span class="dfn-paneled" id="6ad50c60dd1c503714655b4d8a589c2e">get the input state</span>
      <li><span class="dfn-paneled" id="2e9c5e80b0c20f2b791e1df16184d037">getting a property</span>
      <li><span class="dfn-paneled" id="ef467d524f8367b8f59ab1ec707789dc">http session</span>
+     <li><span class="dfn-paneled" id="8d83e25fe375a67a192fdd3b433b79d9">input cancel list</span>
      <li><span class="dfn-paneled" id="a638b41a28b59015603667dc5e99fd20">intermediary node</span>
      <li><span class="dfn-paneled" id="5c637a54e27c5c6475d469050d96b7f6">invalid argument</span>
      <li><span class="dfn-paneled" id="2f2cf2b26f5c123b5a279a9058a803b8">invalid session id</span>
+     <li><span class="dfn-paneled" id="6799af3b17cff603b1060d7bcd28f8ed">is element origin</span>
      <li><span class="dfn-paneled" id="07f5461e1eb68ff91f31d2884b623f54">local end</span>
      <li><span class="dfn-paneled" id="210c38d3a7a6b662d8444313441a9959">matched capability serialization algorithm</span>
      <li><span class="dfn-paneled" id="76404ab5b5beec7eafb1868b1fe6a5a8">no such alert</span>
+     <li><span class="dfn-paneled" id="62a893fc3c6c5410de832388f053c2cd">no such element</span>
      <li><span class="dfn-paneled" id="b97e8d83907362c3dd7f096643ec3feb">no such frame</span>
      <li><span class="dfn-paneled" id="67f7030af89c7e154d7377a04519a1c0">parse a page range</span>
      <li><span class="dfn-paneled" id="9105349867473b4e50abd8f9e0836909">process capabilities</span>
      <li><span class="dfn-paneled" id="196d86cbedd3ecbc75efc4c7780e5e21">readiness state</span>
      <li><span class="dfn-paneled" id="0bdb89d46ae757ec817dbfe27671fb32">remote end</span>
      <li><span class="dfn-paneled" id="93461d1ab461d2682bb8ec8f73e5787f">remote end steps</span>
+     <li><span class="dfn-paneled" id="7159740cfd4895030f78e5b0a1c5dda8">reset the input state</span>
      <li><span class="dfn-paneled" id="ee494e0eb8fb6b6396268fc24e6a6474">session</span>
      <li><span class="dfn-paneled" id="903414b14cf3304c3eb6db0ced7af776">session id</span>
      <li><span class="dfn-paneled" id="c80e3f76ffda80e5311a0c17dbf64f80">session not created</span>
@@ -7667,6 +8050,7 @@ to express as a patch to the specification since it requires changing multiple p
     <li><a href="#ref-for-remote-end-definition①⑦">7.3.3.8. The script.EvaluateResult type</a>
     <li><a href="#ref-for-remote-end-definition①⑧">7.3.3.10. The script.SerializationOptions type</a>
     <li><a href="#ref-for-remote-end-definition①⑨">7.3.3.12. The script.Target type</a>
+    <li><a href="#ref-for-remote-end-definition②⓪">7.5.1. Definition</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-local-end-definition" class="dfn-panel" data-for="local-end-definition" id="infopanel-for-local-end-definition">
@@ -8130,6 +8514,7 @@ BiDi-only sessions' definition.</span><b><a href="#supports-bidi-only-sessions">
    <span id="infopaneltitle-for-deserialize-remote-reference" style="display:none">Info about the 'deserialize remote reference' definition.</span><b><a href="#deserialize-remote-reference">#deserialize-remote-reference</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-deserialize-remote-reference">6.2.2.1. Deserialization</a>
+    <li><a href="#ref-for-deserialize-remote-reference①">7.5.2.1. input.ElementOrigin</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-deserialize-remote-object-reference" class="dfn-panel" data-for="deserialize-remote-object-reference" id="infopanel-for-deserialize-remote-object-reference">
@@ -8265,6 +8650,8 @@ id' definition.</span><b><a href="#browsing-context-id">#browsing-context-id</a>
     <li><a href="#ref-for-get-a-browsing-context⑨">7.3.3.12. The script.Target type</a>
     <li><a href="#ref-for-get-a-browsing-context①⓪">7.3.4.5. The script.getRealms Command</a>
     <li><a href="#ref-for-get-a-browsing-context①①">7.4.3.1. The log.entryAdded Event</a>
+    <li><a href="#ref-for-get-a-browsing-context①②">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-get-a-browsing-context①③">7.5.3.2. The input.releaseActions Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-get-the-parent-browsing-context" class="dfn-panel" data-for="get-the-parent-browsing-context" id="infopanel-for-get-the-parent-browsing-context">
@@ -8469,6 +8856,21 @@ frame' definition.</span><b><a href="#stack-frame">#stack-frame</a></b><b>Refere
    <span id="infopaneltitle-for-buffer-a-log-event" style="display:none">Info about the 'buffer a log event' definition.</span><b><a href="#buffer-a-log-event">#buffer-a-log-event</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-buffer-a-log-event">7.4.3.1. The log.entryAdded Event</a> <a href="#ref-for-buffer-a-log-event①">(2)</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-is-inputelementorigin" class="dfn-panel" data-for="is-inputelementorigin" id="infopanel-for-is-inputelementorigin">
+   <span id="infopaneltitle-for-is-inputelementorigin" style="display:none">Info about the 'is input.ElementOrigin' definition.</span><b><a href="#is-inputelementorigin">#is-inputelementorigin</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-is-inputelementorigin">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-is-inputelementorigin①">7.5.3.2. The input.releaseActions Command</a>
+   </ul>
+  </aside>
+  <aside aria-labelledby="infopaneltitle-for-get-element-from-inputelementorigin-steps" class="dfn-panel" data-for="get-element-from-inputelementorigin-steps" id="infopanel-for-get-element-from-inputelementorigin-steps">
+   <span id="infopaneltitle-for-get-element-from-inputelementorigin-steps" style="display:none">Info about the 'get Element from input.ElementOrigin
+steps' definition.</span><b><a href="#get-element-from-inputelementorigin-steps">#get-element-from-inputelementorigin-steps</a></b><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-get-element-from-inputelementorigin-steps">7.5.3.1. The input.performActions Command</a>
+    <li><a href="#ref-for-get-element-from-inputelementorigin-steps①">7.5.3.2. The input.releaseActions Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-browsing-context-tree-discarded" class="dfn-panel" data-for="browsing-context-tree-discarded" id="infopanel-for-browsing-context-tree-discarded">
