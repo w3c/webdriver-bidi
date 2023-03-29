@@ -8,7 +8,7 @@ This document presents a possible design for a bidirectional WebDriver protocol,
 
 The protocol is designed with the following goals in mind:
 
-- **Support for the top customer scenarios identified at TPAC 2019:**
+- **Support for top customer scenarios:**
     - Listen for DOM events
     - Log what's going on in the browser including console and JS errors
     - Fail fast on any JS error
@@ -31,7 +31,7 @@ The protocol is designed with the following goals in mind:
     - Simple for browser vendors to implement and maintain.
     - Possible for clients to enhance their WebDriver automation with browser-specific devtools protocol features.
 
-This document doesn't attempt to dive into the any of the new feature scenarios identified above, but rather tries to provide a solid foundation and the necessary primitives to build these features on. The document does walk through an example of an existing WebDriver feature (unhandled prompts) being updated for a bidirectional world.
+This document doesn't attempt to dive into the any of the new feature scenarios identified above, but rather tries to provide a solid foundation and the necessary primitives to build these features on. See [the roadmap](roadmap.md) for some example real-world user scenarios we aim to enable.
 
 ## Proposals
 

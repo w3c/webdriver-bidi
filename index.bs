@@ -35,31 +35,43 @@ spec: RFC8610; urlPrefix: https://tools.ietf.org/html/rfc8610
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
+    text: actions options; url: dfn-actions-options
     text: active sessions; url: dfn-active-session
     text: additional WebDriver capability; url: dfn-additional-webdriver-capability
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
     text: capability name; url: dfn-capability-name
     text: create a session; url: dfn-create-a-session
+    text: dispatch actions; url: dfn-dispatch-actions
+    text: dispatch tick actions; url: dfn-dispatch-tick-actions
     text: draw a bounding box from the framebuffer; url: dfn-draw-a-bounding-box-from-the-framebuffer
     text: encode a canvas as Base64; url: dfn-encoding-a-canvas-as-base64
     text: endpoint node; url: dfn-endpoint-node
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
+    text: extract an action sequence; url: dfn-extract-an-action-sequence
+    text: get a node; url: dfn-get-a-node
+    text: get or create a node reference; url: dfn-get-or-create-a-node-reference
     text: getting a property; url: dfn-get-a-property
+    text: get element origin; url: dfn-get-element-origin
+    text: get the input state; url: dfn-get-the-input-state
     text: http session; url: dfn-http-session
+    text: input cancel list; url: dfn-input-cancel-list
     text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
     text: invalid session id; url: dfn-invalid-session-id
+    text: is element origin; url: dfn-is-element-origin
     text: local end; url: dfn-local-ends
     text: matched capability serialization algorithm; url: dfn-matched-capability-serialization-algorithm
     text: maximum active sessions; url: dfn-maximum-active-sessions
     text: no such alert; url: dfn-no-such-alert
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
+    text: parse a page range; url: dfn-parse-a-page-range
     text: process capabilities; url: dfn-processing-capabilities
     text: readiness state; url: dfn-readiness-state
     text: remote end steps; url: dfn-remote-end-steps
     text: remote end; url: dfn-remote-ends
+    text: reset the input state; url: dfn-reset-the-input-state
     text: session ID; url: dfn-session-id
     text: session not created; url: dfn-session-not-created
     text: session; url: dfn-sessions
@@ -103,7 +115,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: IsPromise; url: sec-ispromise
     text: IsRegExp; url: sec-isregexp
     text: LengthOfArrayLike; url: sec-lengthofarraylike
-    text: Map; url: sec-map-objects
+    text: Map; url: #sec-map-iterable; for: constructor
     text: Number; url: sec-number-constructor
     text: null; url: sec-null-value
     text: Object; url: sec-object-objects
@@ -150,17 +162,18 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: report an error; url: webappapis.html#report-the-error
     text: remove a browsing context; url: browsers.html#bcg-remove
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
+    text: same origin domain; url: browsers.html#same-origin-domain
     text: session history; url: history.html#session-history
     text: set up a window environment settings object; url: window-object.html#set-up-a-window-environment-settings-object
     text: set up a worker environment settings object; url: workers.html#set-up-a-worker-environment-settings-object
     text: set up a worklet environment settings object; url: worklets.html#set-up-a-worklet-environment-settings-object
+    text: shared worker; url: workers.html#shared-workers
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url: worklets.html#concept-document-worklet-global-scopes
-</pre>
-
-<pre class="link-defaults">
-spec:infra; type:dfn; for:/; text:set
+spec: RFC4648; urlPrefix: https://tools.ietf.org/html/rfc4648
+  type: dfn
+    text: Base64 Encode; url: section-4
 </pre>
 
 <style>
@@ -186,7 +199,7 @@ This specification depends on the Infra Standard. [[!INFRA]]
 
 Network protocol messages are defined using CDDL. [[!RFC8610]]
 
-This specification defines a <dfn>wait queue</dfn> which is a map.
+This specification defines a <dfn>wait queue</dfn> which is a [=/map=].
 
 Issue: Surely there's a better mechanism for doing this "wait for an event" thing.
 
@@ -257,6 +270,7 @@ Command = {
 
 CommandData = (
   BrowsingContextCommand //
+  InputCommand //
   ScriptCommand //
   SessionCommand
 )
@@ -289,16 +303,6 @@ ErrorResponse = {
   Extensible
 }
 
-ErrorCode = {
-   "invalid argument" /
-   "no such alert" /
-   "no such frame" /
-   "session not created" /
-   "unknown command" /
-   "unknown error" /
-   "unsupported operation"
-}
-
 ResultData = (
   EmptyResult //
   SessionResult //
@@ -327,6 +331,7 @@ EventData = (
 <pre class="cddl remote-cddl local-cddl">
 Extensible = (*text => any)
 
+js-int = -9007199254740991..9007199254740991
 js-uint = 0..9007199254740991
 </pre>
 
@@ -343,7 +348,7 @@ set to true.
 <div algorithm>
 The set of <dfn>active BiDi sessions</dfn> is given by:
 
-1. Let |BiDi sessions| be a new set.
+1. Let |BiDi sessions| be a new [=/set=].
 
 1. For each |session| in [=active sessions=]:
 
@@ -420,9 +425,43 @@ Note: This is because the command id is entirely controlled by the [=local end=]
 and isn't necessarily unique over the course of a session. For example a [=local
 end=] which ignores all responses could use the same command id for each command.
 
-The <dfn export for=command>set of all command names</dfn> is a set containing
+The <dfn export for=command>set of all command names</dfn> is a [=/set=] containing
 all the defined [=command names=], including any belonging to [=extension
 modules=].
+
+## Errors ## {#errors}
+
+WebDriver BiDi extends the set of [=error codes=] from [[WEBDRIVER|WebDriver]]
+with the following additional codes:
+
+<dl>
+  <dt><dfn>no such script</dfn>
+  <dd>Tried to remove an unknown [=preload script=].
+</dl>
+
+<dl>
+  <dt><dfn>no such handle</dfn>
+  <dd>Tried to deserialize an unknown <code>RemoteObjectReference</code>.
+</dl>
+
+<dl>
+  <dt><dfn>no such node</dfn>
+  <dd>Tried to deserialize an unknown <code>SharedReference</code>.
+</dl>
+
+<pre class="cddl local-cddl">
+ErrorCode = ("invalid argument" /
+             "invalid session id" /
+             "no such alert" /
+             "no such frame" /
+             "no such handle" /
+             "no such node" /
+             "no such script" /
+             "session not created" /
+             "unknown command" /
+             "unknown error" /
+             "unsupported operation")
+</pre>
 
 ## Events ## {#events}
 
@@ -448,13 +487,13 @@ occurred on the [=remote end=].
    enabled at once, with lower integers indicating steps that run earlier.
 
 A [=BiDi session=] has a <dfn export for=event>global event set</dfn>
-which is a set containing the event names for events that are enabled for all
+which is a [=/set=] containing the event names for events that are enabled for all
 browsing contexts. This initially contains the [=event name=] for events that
 are <dfn export for=event>in the default event set</dfn>.
 
 A [=BiDi session=] has a <dfn export for=event>browsing context event
-map</dfn>, which is a map with [=/top-level browsing context=] keys and values
-that are a set of [=event name=]s for events that are enabled in the given
+map</dfn>, which is a [=/map=] with [=/top-level browsing context=] keys and values
+that are a [=/set=] of [=event name=]s for events that are enabled in the given
 browsing context.
 
 <div algorithm>
@@ -462,7 +501,7 @@ browsing context.
 To obtain a list of <dfn>event enabled browsing contexts</dfn> given
 |session| and |event name|:
 
-1. Let |contexts| be an empty set.
+1. Let |contexts| be an empty [=/set=].
 
 1. For each |context| → |events| of |session|'s [=browsing context event map=]:
 
@@ -477,7 +516,7 @@ To obtain a list of <dfn>event enabled browsing contexts</dfn> given
 The <dfn>set of sessions for which an event is enabled</dfn> given |event name| and
 |browsing contexts| is:
 
-1. Let |sessions| be a new set.
+1. Let |sessions| be a new [=/set=].
 
 1. For each |session| in [=active BiDI sessions=]:
 
@@ -496,7 +535,7 @@ To determine if an <dfn>event is enabled</dfn> given |session|,
 Note: |browsing contexts| is a set because a [=shared worker=] can be associated
       with multiple contexts.
 
-1. Let |top-level browsing contexts| be an empty set.
+1. Let |top-level browsing contexts| be an empty [=/set=].
 
 1. For each |browsing context| of |browsing contexts|, append |browsing
    context|'s [=top-level browsing context=] to |top-level browsing contexts|.
@@ -522,7 +561,7 @@ Note: |browsing contexts| is a set because a [=shared worker=] can be associated
 <div algorithm>
 To <dfn>obtain a set of event names</dfn> given an |name|:
 
-1. Let |events| be an empty set.
+1. Let |events| be an empty [=/set=].
 
 1. If |name| contains a U+002E (period):
 
@@ -569,16 +608,16 @@ given by |listener|'s [=listener/host=] and [=listener/port=]. If
 |listener|'s [=listener/secure flag=] is set, then connections
 established from |listener| must be TLS encrypted.
 
-A [=remote end=] has a [=set=] of [=WebSocket listeners=] <dfn>active
+A [=remote end=] has a [=/set=] of [=WebSocket listeners=] <dfn>active
 listeners</dfn>, which is initially empty.
 
-A [=remote end=] has a [=set=] of <dfn>WebSocket connections not associated with a
+A [=remote end=] has a [=/set=] of <dfn>WebSocket connections not associated with a
 session</dfn>, which is initially empty.
 
 A <dfn>WebSocket connection</dfn> is a network connection that follows the
 requirements of the [[!RFC6455|WebSocket protocol]]
 
-A [=BiDi session=] has a set of <dfn>session WebSocket
+A [=BiDi session=] has a [=/set=] of <dfn>session WebSocket
 connections</dfn> whose elements are [=WebSocket connections=]. This is
 initially empty.
 
@@ -609,8 +648,8 @@ accept the incoming connection:
        connection should be accepted, and if it is not stop running these
        steps and act as if the requested service is not available.
 
-    1. Add the connection to the set of [=WebSocket connections not associated
-       with a session=].
+    1. Add the connection to [=WebSocket connections not associated with a
+       session=].
 
     1. Return.
 
@@ -701,12 +740,11 @@ given |resource name|:
 To <dfn>start listening for a WebSocket connection</dfn> given a
 [=/session=] |session|:
 
-1. If there is an existing [=WebSocket listener=] in the set of
-   [=active listeners=] which the [=remote end=] would like to reuse,
-   let |listener| be that listener. Otherwise let |listener| be a new
-   [=WebSocket listener=] with [=implementation-defined=]
-   [=listener/host=], [=listener/port=], [=listener/secure flag=],
-   and an empty [=list of WebSocket resources=].
+1. If there is an existing [=WebSocket listener=] in [=active listeners=] which
+   the [=remote end=] would like to reuse, let |listener| be that
+   listener. Otherwise let |listener| be a new [=WebSocket listener=] with
+   [=implementation-defined=] [=listener/host=], [=listener/port=],
+   [=listener/secure flag=], and an empty [=list of WebSocket resources=].
 
 1. Let |resource name| be the result of [=constructing a WebSocket
    resource name=] given |session|.
@@ -746,8 +784,8 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
    is used for UTF-8 errors.
 
 1. If there is a [=BiDi Session=] [=associated with connection=] |connection|,
-   let |session| be that session. Otherwise if |connection| is in the set of
-   [=WebSocket connections not associated with a session=], let |session| be
+   let |session| be that session. Otherwise if |connection| is in [=WebSocket
+   connections not associated with a session=], let |session| be
    null. Otherwise, return.
 
 1. Let |parsed| be the result of [=parse JSON into Infra values|parsing JSON
@@ -758,7 +796,7 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 1. Match |parsed| against the [=remote end definition=]. If this results in a
    match:
 
-   1. Let |matched| be the map representing the matched data.
+   1. Let |matched| be the [=/map=] representing the matched data.
 
    1. Assert: |matched| [=map/contains=] "<code>id</code>", "<code>method</code>", and
       "<code>params</code>".
@@ -792,10 +830,10 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
        the list of [=active sessions=] whose [=session ID=] is equal to the
        "<code>sessionId</code>" property of |value|, [=set/append=]
        |connection| to |session|'s [=session WebSocket connections=], and
-       remove |connection| from the set of [=WebSocket connections not
-       associated with a session=].
+       remove |connection| from the [=WebSocket connections not associated with
+       a session=].
 
-    1. Let |response| be a new map matching the <code>CommandResponse</code>
+    1. Let |response| be a new [=/map=] matching the <code>CommandResponse</code>
        production in the [=local end definition=] with the <code>id</code>
        field set to |command id| and the <code>value</code> field set to
        |value|.
@@ -810,12 +848,12 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 
    1. Let |command id| be null.
 
-   1. If |parsed| is a map and |parsed|["<code>id</code>"] exists and is an
+   1. If |parsed| is a [=/map=] and |parsed|["<code>id</code>"] exists and is an
       integer greater than or equal to zero, set |command id| to that integer.
 
    1. Let |error code| be [=invalid argument=].
 
-   1. If |parsed| is a map and |parsed|["<code>method</code>"] exists and is a
+   1. If |parsed| is a [=/map=] and |parsed|["<code>method</code>"] exists and is a
       string, but |parsed|["<code>method</code>"] is not in the [=set of all
       command names=], set |error code| to [=unknown command=].
 
@@ -829,7 +867,7 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 To <dfn>get related browsing contexts</dfn> given an [=script/settings object=]
 |settings|:
 
-1. Let |related browsing contexts| be an empty set
+1. Let |related browsing contexts| be an empty [=/set=]
 
 1. If |settings|' [=relevant global object=] is a {{Window}}, append |settings|'
    [=relevant global object=]'s <a>associated <code>Document</code></a>'s
@@ -862,7 +900,7 @@ To <dfn>get related browsing contexts</dfn> given an [=script/settings object=]
 To <dfn>send an error response</dfn> given a [=WebSocket connection=]
 |connection|, |command id|, and |error code|:
 
-1. Let |error data| be a new map matching the <code>ErrorResponse</code>
+1. Let |error data| be a new [=/map=] matching the <code>ErrorResponse</code>
    production in the [=local end definition=], with the <code>id</code> field
    set to |command id|, the <code>error</code> field set to |error code|, the
    <code>message</code> field set to an implementation-defined string
@@ -895,8 +933,8 @@ To <dfn>handle a connection closing</dfn> given a [=WebSocket connection=]
   1. Remove |connection| from |session|'s [=session WebSocket
      connections=].
 
-1. Otherwise, if the set of [=WebSocket connections not associated with a session=]
-   contains |connection|, remove |connection| from that set.
+1. Otherwise, if [=WebSocket connections not associated with a session=]
+   [=list/contains=] |connection|, [=list/remove=] |connection| from that set.
 
 </div>
 
@@ -983,7 +1021,7 @@ the DOM APIs made by scripts running in the browsing context containing the
 document.
 
 A [=BiDi session=] has a <dfn>sandbox map</dfn> which is a weak map in which the
-keys are [=window=] objects, and the values are maps between strings and
+keys are {{Window}} objects, and the values are maps between strings and
 {{SandboxWindowProxy}} objects.
 
 Note: The definition of sandboxes here is an attempt to codify the behaviour of
@@ -1013,7 +1051,7 @@ To <dfn>get or create a sandbox realm</dfn> given |name| and |browsing context|:
 1. Let |window| be |browsing context|'s [=active window=].
 
 1. If [=sandbox map=] does not contain |window|, set [=sandbox map=][|window|]
-   to a new map.
+   to a new [=/map=].
 
 1. Let |sandboxes| be [=sandbox map=][|window|].
 
@@ -1068,6 +1106,17 @@ There is no {{SandboxProxy}} interface object.
 
 Issue: Define in detail how {{SandboxProxy}} works
 
+<div algorithm>
+To get <dfn>unwrapped</dfn> |object|:
+
+1. While |object| is {{SandboxProxy}} or {{SandboxWindowProxy}}, set |object| to it's
+   wrapped object.
+
+1. Return |object|.
+
+</div>
+
+
 ## SandboxWindowProxy ## {#sandbox-sandboxwindowproxy}
 
 A <dfn interface>SandboxWindowProxy</dfn> is an exotic object that represents a
@@ -1081,37 +1130,122 @@ Issue: Define how this works.
 ## Reference ## {#data-types-reference}
 
 Each EMCAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
-strong map from handle ids to their corresponding objects.
+strong [=/map=] from handle ids to their corresponding objects.
 
 <pre class="cddl remote-cddl">
 OwnershipModel = "root" / "none";
 </pre>
 
-<dfn>RemoteReference</dfn> represents a remote reference to an existing ECMAScript
-object in [=handle object map=] in the given [=Realm=].
+<dfn>RemoteReference</dfn> is either a <code>RemoteObjectReference</code>
+representing a remote reference to an existing ECMAScript object in
+[=handle object map=] in the given [=Realm=], or is a <code>SharedReference</code>
+representing a reference to a [=node=].
 
 <pre class="cddl remote-cddl local-cddl">
 Handle = text;
+SharedId = text;
+</pre>
 
-RemoteReference = {
+<pre class="cddl remote-cddl">
+<!-- This is specifically ordered in the order in which matches need to be -->
+<!-- evaluated, since the definitions are overlapping -->
+RemoteReference = (
+  SharedReference //
+  RemoteObjectReference
+)
+
+SharedReference = {
+   sharedId: SharedId
+   <!-- Ensure that if we have a handle, it at least has the correct type -->
+   ?handle: Handle,
+   Extensible
+}
+
+RemoteObjectReference = {
    handle: Handle,
+   <!-- This shouldn't ever match. The problem is that Extensible would
+   otherwise allow this to match a non-text sharedId -->
+   ?sharedId: SharedId
    Extensible
 }
 </pre>
 
 Issue: handle "stale object reference" case.
 
-<div algorithm>
-To <dfn>deserialize remote reference</dfn> given |realm| and |remote reference|:
+Note: if the provided reference has both <code>handle</code> and
+<code>sharedId</code>, the algorithm will ignore <code>handle</code> and respect
+only <code>sharedId</code>.
 
-1. Let |handle id| be the value of the <code>handle</code> field of |remote reference|.
+### Deserialization ### {#data-types-reference-deserialization}
+
+<div algorithm>
+To <dfn>deserialize remote reference</dfn> given |remote reference|, |realm| and
+|session|:
+
+1. Assert |remote reference| matches the <code>RemoteReference</code> production.
+
+1. If |remote reference| matches the <code>SharedReference</code> production, return
+   [=deserialize shared reference=] with |remote reference|, |realm| and |session|.
+
+1. Return [=deserialize remote object reference=] with |remote reference| and
+   |realm|.
+
+</div>
+
+<div algorithm>
+To <dfn>deserialize remote object reference</dfn> given |remote object reference| and
+|realm|:
+
+1. Let |handle id| be the value of the <code>handle</code> field of
+   |remote object reference|.
 
 1. Let |handle map| be |realm|'s [=handle object map=]
 
 1. If |handle map| does not contain |handle id|, then return [=error=] with
-   [=error code=] [=invalid argument=].
+   [=error code=] [=no such handle=].
 
-1. Return |handle map|[|handle id|].
+1. Return [=success=] with data |handle map|[|handle id|].
+
+</div>
+
+<div algorithm>
+To <dfn>deserialize shared reference</dfn> given |shared reference|, |realm| and
+|session|:
+
+1. Assert |shared reference| matches the <code>SharedReference</code> production.
+
+1. Let |browsing context| be [=get the browsing context=] with |realm|.
+
+1. If |browsing context| is <code>null</code>, return [=error=] with [=error code=]
+   [=no such node=].
+
+   Note: This happens when the realm isn't a Window global.
+
+1. Let |shared id| be the value of the <code>sharedId</code> field of
+   |shared reference|.
+
+1. Let |node| be result of [=trying=] to [=get a node=] with |session|,
+   |browsing context| and |shared id|.
+
+1. If |node| is <code>null</code>, return [=error=] with [=error code=]
+   [=no such node=].
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
+
+1. If |node|'s [=node document=]'s [=Document/origin=] is not [=same origin
+   domain=] with |environment settings|'s [=environment settings object/origin=]
+   then return [=error=] with [=error code=] [=no such node=].
+
+   Note: This ensures that WebDriver-BiDi can not be used to pass objects
+   between realms that do not otherwise permit script access.
+
+1. Let |realm global object| be the [=realm/global object=] of the |realm|.
+
+1. If the |realm global object| is {{SandboxWindowProxy}} object, set
+   |node| to the {{SandboxProxy}} wrapping |node| in the |realm|.
+
+1. Return [=success=] with data |node|.
 
 </div>
 
@@ -1176,15 +1310,15 @@ To <dfn>serialize primitive protocol value</dfn> given a |value|:
 
   <dl>
     <dt>[=Type=](|value|) is undefined
-    <dd>Let |remote value| be a map matching the <code>UndefinedValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>UndefinedValue</code>
     production in the [=local end definition=].
 
     <dt>[=Type=](|value|) is Null
-    <dd>Let |remote value| be a map matching the <code>NullValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>NullValue</code>
     production in the [=local end definition=].
 
     <dt>[=Type=](|value|) is String
-    <dd>Let |remote value| be a map matching the <code>StringValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>StringValue</code>
     production in the [=local end definition=], with the <code>value</code>
     property set to |value|.
 
@@ -1206,17 +1340,17 @@ To <dfn>serialize primitive protocol value</dfn> given a |value|:
         <dd>Let |serialized| be |value|
       </dl>
 
-    1. Let |remote value| be a map matching the <code>NumberValue</code>
+    1. Let |remote value| be a [=/map=] matching the <code>NumberValue</code>
        production in the [=local end definition=], with the <code>value</code>
        property set to |serialized|.
 
     <dt>[=Type=](|value|) is Boolean
-    <dd>Let |remote value| be a map matching the <code>BooleanValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>BooleanValue</code>
         production in the [=local end definition=], with the <code>value</code>
         property set to |value|.
 
     <dt>[=Type=](|value|) is BigInt
-    <dd>Let |remote value| be a map matching the <code>BigIntValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>BigIntValue</code>
         production in the [=local end definition=], with the <code>value</code>
         property set to the result of running the [=ToString=] operation on
         |value|.
@@ -1347,7 +1481,8 @@ SetLocalValue = {
 
 <div algorithm>
 
-To <dfn>deserialize key-value list</dfn> given |realm| and |serialized key-value list|:
+To <dfn>deserialize key-value list</dfn> given |serialized key-value list|, |realm|
+and |session|:
 
 1. Let |deserialized key-value list| be a new list.
 
@@ -1361,13 +1496,13 @@ To <dfn>deserialize key-value list</dfn> given |realm| and |serialized key-value
    1. If |serialized key| is a <code>string</code>,
       let |deserialized key| be |serialized key|.
 
-   1. Otherwise let |deserialized key| be result of [=trying=] to [=deserialize local value=]
-      given |realm| and |serialized key|.
+   1. Otherwise let |deserialized key| be result of [=trying=] to
+      given [=deserialize local value=] with |serialized key|, |realm| and |session|.
 
    1. Let |serialized value| be |serialized key-value|[1].
 
    1. Let |deserialized value| be result of [=trying=] to [=deserialize local value=]
-      given |realm| and |serialized value|.
+      given |serialized value|, |realm| and |session|.
 
    1. Append [=CreateArrayFromList=](«|deserialized key|, |deserialized value|») to
       |deserialized key-value list|.
@@ -1380,14 +1515,15 @@ To <dfn>deserialize key-value list</dfn> given |realm| and |serialized key-value
 
 Issue: TODO distinguish between `List` and `Array`.
 
-To <dfn>deserialize value list</dfn> given |realm| and |serialized value list|:
+To <dfn>deserialize value list</dfn> given |serialized value list|, |realm| and
+|session|:
 
 1. Let |deserialized values| be a new list.
 
 1. For each |serialized value| in the |serialized value list|:
 
-   1. Let |deserialized value| be result of [=trying=] to [=deserialize local value=] with
-      given |realm| and |serialized value|.
+   1. Let |deserialized value| be result of [=trying=] to [=deserialize local value=]
+      given |serialized value|, |realm| and |session|.
 
    1. Append |deserialized value| to |deserialized values|;
 
@@ -1397,10 +1533,12 @@ To <dfn>deserialize value list</dfn> given |realm| and |serialized value list|:
 
 <div algorithm>
 
-To <dfn>deserialize local value</dfn> given |realm| and |local protocol value|:
+To <dfn>deserialize local value</dfn> given |local protocol value|, |realm| and
+|session|:
 
 1. If |local protocol value| matches the [=RemoteReference=] production, return
-   [=deserialize remote reference=] of given |realm| and |local protocol value|.
+   [=deserialize remote reference=] of given |local protocol value|, |realm| and
+   |session|.
 
 1. If |local protocol value| matches the [=PrimitiveProtocolValue=] production, return
    [=deserialize primitive protocol value=] with |local protocol value|.
@@ -1419,7 +1557,7 @@ To <dfn>deserialize local value</dfn> given |realm| and |local protocol value|:
     <dt>|type| is the string "<code>array</code>"
     <dd>
       1. Let |deserialized value list| be a result of [=trying=] to [=deserialize value list=]
-         given |realm| and |value|.
+         given |value|, |realm| and |session|.
 
       1. Return [=success=] with data [=CreateArrayFromList=](|deserialized value list|).
 
@@ -1437,16 +1575,16 @@ To <dfn>deserialize local value</dfn> given |realm| and |local protocol value|:
     <dt>|type| is the string "<code>map</code>"
     <dd>
       1. Let |deserialized key-value list| be a result of [=trying=] to
-         [=deserialize key-value list=] given |realm| and |value|.
+         [=deserialize key-value list=] with |value|, |realm| and |session|.
 
       1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
 
-      1. Return [=success=] with data [=Map=](|iterable|).
+      1. Return [=success=] with data [=constructor/Map=](|iterable|).
 
     <dt>|type| is the string "<code>object</code>"
     <dd>
       1. Let |deserialized key-value list| be a result of [=trying=] to
-         [=deserialize key-value list=] given |realm| and |value|.
+         [=deserialize key-value list=] with |value|, |realm| and |session|.
 
       1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
 
@@ -1467,7 +1605,7 @@ To <dfn>deserialize local value</dfn> given |realm| and |local protocol value|:
     <dt>|type| is the string "<code>set</code>"
     <dd>
       1. Let |deserialized value list| be a result of [=trying=] to [=deserialize value list=]
-         given |realm| and |value|.
+         given |value|, |realm| and |session|.
 
       1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
 
@@ -1529,6 +1667,23 @@ To get the <dfn>handle for an object</dfn> given |realm|, |ownership type| and
 </div>
 
 <div algorithm>
+To <dfn>get shared id for a node</dfn> given |node|, |realm| and |session|:
+
+1. Let |node| be [=unwrapped=] |node|.
+
+1. If |node| does not implement {{Node}}, return null.
+
+1. Let |browsing context| be [=get the browsing context=] with |realm|.
+
+1. If |browsing context| is null, return null.
+
+1. Return [=get or create a node reference=] with |session|, |browsing context| and
+   |node|.
+
+</div>
+
+
+<div algorithm>
 To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
 |remote value| and |object|:
 
@@ -1557,7 +1712,7 @@ To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
 [=remote end definition=] and [=local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-RemoteValue = {
+RemoteValue = (
   PrimitiveProtocolValue //
   SymbolRemoteValue //
   ArrayRemoteValue //
@@ -1576,9 +1731,11 @@ RemoteValue = {
   PromiseRemoteValue //
   TypedArrayRemoteValue //
   ArrayBufferRemoteValue //
+  NodeListRemoteValue //
+  HTMLCollectionRemoteValue //
   NodeRemoteValue //
   WindowProxyRemoteValue //
-}
+)
 
 InternalId = js-uint;
 
@@ -1692,8 +1849,23 @@ ArrayBufferRemoteValue = {
   ?internalId: InternalId,
 }
 
+NodeListRemoteValue = {
+  type: "nodelist",
+  ?handle: Handle,
+  ?internalId: InternalId,
+  ?value: ListRemoteValue,
+}
+
+HTMLCollectionRemoteValue = {
+  type: "htmlcollection",
+  ?handle: Handle,
+  ?internalId: InternalId,
+  ?value: ListRemoteValue,
+}
+
 NodeRemoteValue = {
   type: "node",
+  ?sharedId: SharedId,
   ?handle: Handle,
   ?internalId: InternalId,
   ?value: NodeProperties,
@@ -1705,6 +1877,7 @@ NodeProperties = {
   ?attributes: {*text => text},
   ?children: [*NodeRemoteValue],
   ?localName: text,
+  ?mode: "open" / "closed",
   ?namespaceURI: text,
   ?nodeValue: text,
   ?shadowRoot: NodeRemoteValue / null,
@@ -1733,8 +1906,8 @@ Issue: handle String / Number / etc. wrapper objects specially?
 
 <div algorithm>
 
-To <dfn>serialize as a remote value</dfn> given a |value|, a |max depth|,
-an |ownership type|, a |serialization internal map| and a |realm|:
+To <dfn>serialize as a remote value</dfn> given |value|, |serialization options|,
+an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
 1. Let |remote value| be a result of [=serialize primitive protocol value=]
    given a |value|.
@@ -1744,41 +1917,25 @@ an |ownership type|, a |serialization internal map| and a |realm|:
 1. In the following list of conditions and associated steps, run the first set
    of steps for which the associated condition is true:
 
-1. Let |handle id| be the [=handle for an object=] given |realm|, |ownership type|
+1. Let |handle id| be the [=handle for an object=] with |realm|, |ownership type|
    and |value|.
+
+1. Set |ownership type| to "<code>none</code>".
 
 1. Let |known object| be <code>true</code>, if |value| is in the
    |serialization internal map|, otherwise <code>false</code>.
 
-1. Let |child ownership| be "<code>none</code>".
-
   <dl>
     <dt>[=Type=](|value|) is Symbol
-    <dd>Let |remote value| be a map matching the <code>SymbolRemoteValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>SymbolRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>[=IsArray=](|value|)
-    <dd>
-
-    1. Let |remote value| be a map matching the <code>ArrayRemoteValue</code>
-       production in the [=local end definition=], with the <code>handle</code>
-       property set to |handle id| if it's not null, or omitted otherwise.
-
-    1. [=Set internal ids if needed=] given |serialization internal map|,
-       |remote value| and |value|.
-
-    1. Let |serialized| be null.
-
-    1. If |known object| is <code>false</code>, and |max depth| is not 0, run
-       the following steps:
-
-           1. Let |serialized| be the result of [=serialize as a list=] given
-              [=CreateArrayIterator=](|value|, value), |max depth|, |child ownership|,
-              |serialization internal map| and |realm|.
-
-    1. If |serialized| is not null, set field <code>value</code> of |remote value| to
-       |serialized|.
+    <dd>Let |remote value| be [=serialize an Array-like=] with |session|,
+        <code>ArrayRemoteValue</code>, |handle id|, |known object|, |value|,
+        |serialization options|, |ownership type|, |serialization internal map|,
+        |realm|, and |session|.
 
     <dt>[=IsRegExp=](|value|)
     <dd>
@@ -1786,11 +1943,11 @@ an |ownership type|, a |serialization internal map| and a |realm|:
 
     1. Let |flags| be [=ToString=]([=Get=](|value|, "flags")).
 
-    1. Let |value| be a map matching the <code>RegExpValue</code> production in the
+    1. Let |value| be a [=/map=] matching the <code>RegExpValue</code> production in the
        [=local end definition=], with the <code>pattern</code> property set to the
        |pattern| and the the <code>flags</code> property set to the |flags|.
 
-    1. Let |remote value| be a map matching the <code>RegExpRemoteValue</code>
+    1. Let |remote value| be a [=/map=] matching the <code>RegExpRemoteValue</code>
        production in the [=local end definition=], with the <code>handle</code>
        property set to |handle id| if it's not null, or omitted otherwise, and
        the <code>value</code> property set to |value|.
@@ -1801,7 +1958,7 @@ an |ownership type|, a |serialization internal map| and a |realm|:
 
     1. Assert: |serialized| is not a [=throw completion=].
 
-    1. Let |remote value| be a map matching the <code>DateRemoteValue</code>
+    1. Let |remote value| be a [=/map=] matching the <code>DateRemoteValue</code>
        production in the [=local end definition=], with the <code>handle</code>
        property set to |handle id| if it's not null, or omitted otherwise, and the
        value set to |serialized|.
@@ -1809,92 +1966,112 @@ an |ownership type|, a |serialization internal map| and a |realm|:
     <dt>|value| has a \[[MapData]] [=internal slot=]
     <dd>
 
-    1. Let |remote value| be a map matching the <code>MapRemoteValue</code>
+    1. Let |remote value| be a [=/map=] matching the <code>MapRemoteValue</code>
        production in the [=local end definition=], with the
        <code>handle</code> property set to |handle id| if it's not null, or omitted
        otherwise.
 
-    1. [=Set internal ids if needed=] given |serialization internal map|,
+    1. [=Set internal ids if needed=] with |serialization internal map|,
        |remote value| and |value|.
 
     1. Let |serialized| be null.
 
-    1. If |known object| is <code>false</code>, and |max depth| is not 0, run
-       the following steps:
+    1. If |known object| is <code>false</code>, and |serialization
+       options|["<code>maxObjectDepth</code>"] is not 0, run the following
+       steps:
 
-       1. Let |serialized| be the result of [=serialize as a mapping=] given
-          [=CreateMapIterator=](|value|, key+value), |max depth|,
-          |child ownership|, |serialization internal map| and |realm|.
+       1. Let |serialized| be the result of [=serialize as a mapping=] with
+          [=CreateMapIterator=](|value|, key+value), |serialization options|,
+          |ownership type|, |serialization internal map|, |realm|, and |session|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
        |serialized|.
 
     <dt>|value| has a \[[SetData]] [=internal slot=]
     <dd>
-    1. Let |remote value| be a map matching the <code>SetRemoteValue</code>
+    1. Let |remote value| be a [=/map=] matching the <code>SetRemoteValue</code>
        production in the [=local end definition=], with the
        <code>handle</code> property set to |handle id| if it's not null, or omitted
        otherwise.
 
-    1. [=Set internal ids if needed=] given |serialization internal map|,
+    1. [=Set internal ids if needed=] with |serialization internal map|,
        |remote value| and |value|.
 
     1. Let |serialized| be null.
 
-    1. If |known object| is <code>false</code>, and |max depth| is not 0, run
-       the following steps:
+    1. If |known object| is <code>false</code>, and |serialization
+       options|["<code>maxObjectDepth</code>"] is not 0, run the following
+       steps:
 
-       1. Let |serialized| be the result of [=serialize as a list=] given
-          [=CreateSetIterator=](|value|, value), |max depth|, |child ownership|,
-          |serialization internal map| and |realm|.
+       1. Let |serialized| be the result of [=serialize as a list=] with
+          [=CreateSetIterator=](|value|, value), |serialization options|,
+          |ownership type|, |serialization internal map|, |realm|, and
+          |session|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
        |serialized|.
 
     <dt>|value| has a \[[WeakMapData]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>WeakMapRemoteValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>WeakMapRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>|value| has a \[[WeakSetData]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>WeakSetRemoteValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>WeakSetRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>|value| has an \[[ErrorData]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>ErrorRemoteValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>ErrorRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>[=IsPromise=](|value|)
-    <dd>Let |remote value| be a map matching the <code>PromiseRemoteValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>PromiseRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>|value| has a \[[TypedArrayName]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>TypedArrayRemoteValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>TypedArrayRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>|value| has an \[[ArrayBufferData]] [=internal slot=]
-    <dd>Let |remote value| be a map matching the <code>ArrayBufferRemoteValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>ArrayBufferRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
-    <dt>|value| is a [=platform object=] that implements [=Node=]
-    <dd>
-      1. Let |remote value| be a map matching the <code>NodeRemoteValue</code>
-         production in the [=local end definition=], with the <code>handle</code>
-         property set to |handle id| if it's not null, or omitted otherwise.
+    <dt>|value| is a [=platform object=] that implements {{NodeList}}
+    <dd>Let |remote value| be [=serialize an Array-like=] with
+        <code>NodeListRemoteValue</code>,|handle id|, |known object|, |value|,
+        |serialization options|, |ownership type|, |serialization internal map|,
+        |realm|, and |session|.
 
-      1. [=Set internal ids if needed=] given |serialization internal map|,
+    <dt>|value| is a [=platform object=] that implements {{HTMLCollection}}
+    <dd>Let |remote value| be [=serialize an Array-like=] with
+        <code>HTMLCollectionRemoteValue</code>, |handle id|, |known object|, |value|,
+        |serialization options|, |ownership type|, |known object|, |serialization internal map|,
+        |realm|, and |session|.
+
+    <dt>|value| is a [=platform object=] that implements {{Node}}
+    <dd>
+      1. Let |shared id| be [=get shared id for a node=] with |value|, |realm| and
+         |session|.
+
+      1. Let |remote value| be a [=/map=] matching the <code>NodeRemoteValue</code>
+         production in the [=local end definition=], with the <code>sharedId</code>
+         property set to |shared id| if it's not null, or omitted otherwise, and the
+         <code>handle</code> property set to |handle id| if it's not null, or omitted
+         otherwise.
+
+      1. [=Set internal ids if needed=] with |serialization internal map|,
          |remote value| and |value|.
 
       1. Let |serialized| be null.
 
       1. If |known object| is <code>false</code>, run the following steps:
 
-          1. Let |serialized| be a map.
+          1. Let |serialized| be a [=/map=].
 
           1. Set |serialized|["<code>nodeType</code>"] to [=Get=](|value|, "nodeType").
 
@@ -1903,7 +2080,7 @@ an |ownership type|, a |serialization internal map| and a |realm|:
           1. If |node value| is not null set
              |serialized|["<code>nodeValue</code>"] to |node value|.
 
-          1. If |value| is an [=/Element=] or an <a spec=dom>Attribute</a>:
+          1. If |value| implements {{Element}} or {{Attr}}:
 
             1. Set |serialized|["<code>localName</code>"] to [=Get=](|value|, "localName").
 
@@ -1913,23 +2090,36 @@ an |ownership type|, a |serialization internal map| and a |realm|:
 
           1. Set |serialized|["<code>childNodeCount</code>"] to |child node count|.
 
-          1. If |max depth| is equal to 0 let |children| be null.
-             Otherwise, let |children| be an empty list and, for each node
-             |child| in the [=children=] of |value|:
+          1. If |serialization options|["<code>maxDomDepth</code>"] is equal to
+             0, or if |value| implements {{ShadowRoot}} and |serialization
+             options|["<code>includeShadowTree</code>"] is "<code>none</code>",
+             or if |serialization options|["<code>includeShadowTree</code>"] is
+             "<code>open</code>" and |value|'s <a spec=dom for=ShadowRoot>mode</a> is
+             "<code>closed</code>", let |children| be null.
 
-            1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null otherwise.
+             Otherwise, let |children| be an empty
+             [=/list=] and, for each node |child| in the [=children=] of
+             |value|:
+
+            1. Let |child serialization options| be a [=map/clone=] of
+               |serialization options|.
+
+            1. If |child serialization options|["<code>maxDomDepth</code>"] is
+               not null, set |child serialization
+               options|["<code>maxDomDepth</code>"] to |child serialization
+               options|["<code>maxDomDepth</code>"] - 1.
 
             1. Let |serialized| be the result of [=serialize as a remote value=]
-               with |child|, |child depth|, |child ownership|,
-               |serialization internal map| and |realm|.
+               with |child|, |child serialization options|, |ownership type|,
+               |serialization internal map|, |realm|, and |session|.
 
             1. Append |serialized| to |children|.
 
-          1. Set |serialized|["<code>children</code>"] to |children|.
+          1. If |children| is not null, set |serialized|["<code>children</code>"] to |children|.
 
-          1. If |value| is an [=/Element=]:
+          1. If |value| implements {{Element}}:
 
-             1. Let |attributes| be a new map.
+             1. Let |attributes| be a new [=/map=].
 
              1. For each |attribute| in |value|'s [=Element/attribute list=]:
 
@@ -1946,34 +2136,31 @@ an |ownership type|, a |serialization internal map| and a |realm|:
              1. If |shadow root| is null, let |serialized shadow| be null.
                 Otherwise run the following substeps:
 
-               1.  Let |child depth| be |max depth| - 1 if |max depth| is not
-                  null, or null otherwise.
-
                1. Let |serialized shadow| be the result of
-                  [=serialize as a remote value=] with |shadow root|, |child depth|,
-                  false, |child ownership|, |serialization internal map| and |realm|.
-
-                Note: this means the <code>handle</code> for the shadow root
-                will be serialized irrespective of whether the shadow is open or closed,
-                but no properties of the node will be returned.
+                  [=serialize as a remote value=] with |shadow root|,
+                  |serialization options|, |ownership type|, |serialization internal map|,
+                  |realm|, and |session|.
 
              1. Set |serialized|["<code>shadowRoot</code>"] to |serialized shadow|.
+
+          1. If |value| implements {{ShadowRoot}}, set |serialized|["<code>mode</code>"]
+             to |value|'s <a spec=dom for=ShadowRoot>mode</a>.
 
       1. If |serialized| is not null, set field <code>value</code> of |remote value| to
          |serialized|.
 
     <dt>|value| is a [=platform object=] that implements {{WindowProxy}}
-    <dd>1. Let |remote value| be a map matching the <code>WindowProxyRemoteValue</code>
+    <dd>1. Let |remote value| be a [=/map=] matching the <code>WindowProxyRemoteValue</code>
            production in the [=local end definition=], with the <code>handle</code>
            property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>|value| is a [=platform object=]
-    <dd>1. Let |remote value| be a map matching the <code>ObjectRemoteValue</code>
+    <dd>1. Let |remote value| be a [=/map=] matching the <code>ObjectRemoteValue</code>
            production in the [=local end definition=], with the <code>handle</code>
            property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>[=IsCallable=](|value|)
-    <dd>Let |remote value| be a map matching the <code>FunctionRemoteValue</code>
+    <dd>Let |remote value| be a [=/map=] matching the <code>FunctionRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
@@ -1981,22 +2168,23 @@ an |ownership type|, a |serialization internal map| and a |realm|:
     <dd>
     1. [=Assert=]: [=type=](|value|) is Object
 
-    1. Let |remote value| be a map matching the <code>ObjectRemoteValue</code> production
+    1. Let |remote value| be a [=/map=] matching the <code>ObjectRemoteValue</code> production
        in the [=local end definition=], with the <code>handle</code> property set
        to |handle id| if it's not null, or omitted otherwise.
 
-    1. [=Set internal ids if needed=] given |serialization internal map|,
+    1. [=Set internal ids if needed=] with |serialization internal map|,
        |remote value| and |value|.
 
     1. Let |serialized| be null.
 
-    1. If |known object| is <code>false</code>, and |max depth| is not 0, run
-       the following steps:
+    1. If |known object| is <code>false</code>, and |serialization
+       options|["<code>maxObjectDepth</code>"] is not 0, run the following
+       steps:
 
-       1. Let |serialized| be the result of [=serialize as a mapping=] given
-          [=EnumerableOwnPropertyNames=](|value|, key+value), |max depth|,
-          |child ownership|, |serialization internal map| and
-          |realm|.
+       1. Let |serialized| be the result of [=serialize as a mapping=] with
+          [=EnumerableOwnPropertyNames=](|value|, key+value), |serialization options|,
+          |ownership type|, |serialization internal map|,
+          |realm|, and |session|.
 
     1. If |serialized| is not null, set field <code>value</code> of |remote value| to
        |serialized|.
@@ -2020,30 +2208,68 @@ remove optional flag from the field.
 </div>
 
 <div algorithm>
-To <dfn>serialize as a list</dfn> given |iterable|, |max depth|, |child ownership|,
-|serialization internal map| and |realm|:
+To <dfn>serialize an Array-like</dfn> given |production|, |handle id|, |known object|,
+|value|, |serialization options|, |ownership type|, |serialization internal map|, |realm|,
+and |session|:
 
-  1. Let |serialized| be a new list.
+1. Let |remote value| be a [=/map=] matching |production|, with the
+   <code>handle</code> property set to |handle id| if it's not null, or omitted
+   otherwise.
 
-  1. For each |child value| in |iterable|:
+1. [=Set internal ids if needed=] with |serialization internal map|,
+   |remote value| and |value|.
 
-    1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null
-       otherwise.
+1. If |known object| is <code>false</code>, and |serialization
+   options|["<code>maxObjectDepth</code>"]| is not 0:
 
-    1. Let |serialized child| be the result of [=serialize as a remote value=]
-       with arguments |child value|, |child depth|, |child ownership|,
-       |serialization internal map| and |realm|.
+  1. Let |serialized| be the result of [=serialize as a list=] with
+     [=CreateArrayIterator=](|value|, value), |serialization options|, |ownership type|,
+     |serialization internal map|, |realm|, and |session|.
 
-    1. Append |serialized child| to |serialized|.
+  1. If |serialized| is not null, set field <code>value</code> of |remote value| to
+     |serialized|.
 
-  1. Return |serialized|
+1. Return |remote value|
+
+</div>
+
+<div algorithm>
+To <dfn>serialize as a list</dfn> given |iterable|, |serialization options|, |ownership type|,
+|serialization internal map|, |realm|, and |session|:
+
+1. Assert: |serialization options|["<code>maxObjectDepth</code>"] is greater
+   than 0.
+
+1. Let |serialized| be a new list.
+
+1. For each |child value| in |iterable|:
+
+  1. Let |child serialization options| be a [=map/clone=] of
+     |serialization options|.
+
+  1. If |child serialization options|["<code>maxObjectDepth</code>"] is
+     not null, set |child serialization
+     options|["<code>maxObjectDepth</code>"] to |child serialization
+     options|["<code>maxObjectDepth</code>"] - 1.
+
+  1. Let |serialized child| be the result of [=serialize as a remote value=]
+     with |child value|, |child serialization options|, |ownership type|,
+     |serialization internal map|, |realm|, and |session|.
+
+  1. Append |serialized child| to |serialized|.
+
+1. Return |serialized|
+
 </div>
 
 Issue: this assumes for-in works on iterators
 
 <div algorithm>
-To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
-|child ownership|, |serialization internal map| and |realm|:
+To <dfn>serialize as a mapping</dfn> given |iterable|, |serialization options|,
+|ownership type|, |serialization internal map|, |realm|, and |session|:
+
+1. Assert: |serialization options|["<code>maxObjectDepth</code>"] is greater
+   than 0.
 
 1. Let |serialized| be a new list.
 
@@ -2057,17 +2283,22 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |max depth|,
 
   1. Let |key| be |property|[0] and let |value| be |property|[1]
 
-  1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null
-     otherwise.
+  1. Let |child serialization options| be a [=map/clone=] of
+     |serialization options|.
+
+  1. If |child serialization options|["<code>maxObjectDepth</code>"] is
+     not null, set |child serialization
+     options|["<code>maxObjectDepth</code>"] to |child serialization
+     options|["<code>maxObjectDepth</code>"] - 1.
 
   1. If [=Type=](|key|) is String, let |serialized key| be |child key|,
      otherwise let |serialized key| be the result of [=serialize as a remote value=]
-     with arguments |child key|, |child depth|, |child ownership|,
-     |serialization internal map| and |realm|.
+     with |child key|, |child serialization options|, |ownership type|,
+     |serialization internal map|, |realm|, and |session|.
 
   1. Let |serialized value| be the result of [=serialize as a remote value=]
-     with arguments |value|, |child depth|, |child ownership|,
-     |serialization internal map| and |realm|.
+     with |value|, |child serialization options|, |ownership type|,
+     |serialization internal map|, |realm|, and |session|.
 
   1. Let |serialized child| be («|serialized key|, |serialized value|»).
 
@@ -2116,20 +2347,20 @@ events are disabled, the return value is always empty.
 1. Let |global event set| be a [=set/clone=] of the [=global event set=] for
    |session|.
 
-1. Let |event map| be a new map.
+1. Let |event map| be a new [=/map=].
 
 1. For each |key| → |value| of the [=browsing context event map=] for
    |session|:
 
   1. Set |event map|[|key|] to a [=set/clone=] of |value|.
 
-1. Let |event names| be an empty set.
+1. Let |event names| be an empty [=/set=].
 
 1. For each entry |name| in |requested event names|,
    let |event names| be the union of |event names| and the result of
    [=trying=] to [=obtain a set of event names=] with |name|.
 
-1. Let |enabled events| be a new map.
+1. Let |enabled events| be a new [=/map=].
 
 1. If |browsing contexts| is null:
 
@@ -2162,7 +2393,7 @@ events are disabled, the return value is always empty.
 
 1. Otherwise, if |browsing contexts| is not null:
 
-  1. Let |targets| be an empty map.
+  1. Let |targets| be an empty [=/map=].
 
   1. For each |context id| in |browsing contexts|:
 
@@ -2172,7 +2403,7 @@ events are disabled, the return value is always empty.
     1. Let |top-level context| be the [=top-level browsing context=] for |context|.
 
     1. If |event map| does not contain |top-level context|, set |event
-       map|[|top-level context|] to a new set.
+       map|[|top-level context|] to a new [=/set=].
 
     1. Set |targets|[|top-level context|] to |event map|[|top-level context|].
 
@@ -2187,7 +2418,7 @@ events are disabled, the return value is always empty.
         1. Add |event name| to |target|.
 
         1. If |enabled events| does not contain |event name|, set |enabled
-           events|[|event name|] to a new set.
+           events|[|event name|] to a new [=/set=].
 
         1. Append |context| to |enabled events|[|event name|].
 
@@ -2301,7 +2532,7 @@ This is a [=static command=].
 The [=remote end steps=] given <var ignore>session</var>, and <var
 ignore>command parameters</var> are:
 
-1. Let |body| be a new [=map=] with the following properties:
+1. Let |body| be a new [=/map=] with the following properties:
 
    <dl>
       <dt>"ready"</dt>
@@ -2376,7 +2607,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If the implementation is unable to start a new session for any reason, return
    an [=error=] with error code [=session not created=].
 
-1. Let |flags| be a set containing "<code>bidi</code>".
+1. Let |flags| be a [=/set=] containing "<code>bidi</code>".
 
 1. Let |capabilities| be the result of [=trying=] to [=process capabilities=]
    with |command parameters| and |flags|.
@@ -2389,7 +2620,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
    Note: the connection for this session will be set to the current connection
    by the caller.
 
-1. Let |body| be a new map matching the <code>session.NewResult</code> production,
+1. Let |body| be a new [=/map=] matching the <code>session.NewResult</code> production,
    with the <code>sessionId</code> field set to |session|'s [=session ID=], and
    the <code>capabilities</code> field set to |capabilities|.
 
@@ -2435,7 +2666,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
    with |session|, |list of event names| , |list of contexts| and
    enabled true.
 
-1. Let |subscribe step events| be a new map.
+1. Let |subscribe step events| be a new [=/map=].
 
 1. For each |event name| → |contexts| in |enabled events|:
 
@@ -2516,18 +2747,18 @@ The progress of navigation is communicated using an immutable <dfn export>WebDri
 navigation status</dfn> struct, which has the following items:
 
 <dl>
-  <dt><dfn export id="navigation-status-id">id</dfn></dt>
+  <dt><dfn export for="WebDriver navigation status" id="navigation-status-id">id</dfn></dt>
   <dd>The [=navigation id=] for the navigation, or null when the navigation is
   canceled before making progress.</dd>
 
-  <dt><dfn export id="navigation-status-status">status</dfn></dt>
+  <dt><dfn export for="WebDriver navigation status" id="navigation-status-status">status</dfn></dt>
     <dd>A status code that is either
       "<dfn export id="navigation-status-canceled"><code>canceled</code></dfn>",
       "<dfn export id="navigation-status-pending"><code>pending</code></dfn>", or
       "<dfn export id="navigation-status-complete"><code>complete</code></dfn>".
     </dd>
 
-  <dt><dfn export id="navigation-status-url">url</dfn></dt>
+  <dt><dfn export for="WebDriver navigation status" id="navigation-status-url">url</dfn></dt>
   <dd>The URL which is being loaded in the navigation</dd>
 </dl>
 
@@ -2543,6 +2774,7 @@ BrowsingContextCommand = (
   browsingContext.GetTree //
   browsingContext.HandleUserPrompt //
   browsingContext.Navigate //
+  browsingContext.Print //
   browsingContext.Reload
 )
 </pre>
@@ -2554,7 +2786,8 @@ BrowsingContextResult = (
   browsingContext.CaptureScreenshotResult //
   browsingContext.CreateResult //
   browsingContext.GetTreeResult //
-  browsingContext.NavigateResult
+  browsingContext.NavigateResult //
+  browsingContext.PrintResult
 )
 
 BrowsingContextEvent = (
@@ -2642,10 +2875,10 @@ TODO: make this return a list in document order
 1. Let |navigable| be the [=navigable=] whose [=navigable/active
    document=] is |browsing context|'s [=browsing context/active document=].
 
-1. Let |child navigables| be a set containing all navigables that are
+1. Let |child navigables| be a [=/set=] containing all navigables that are
    a [=child navigable=] of |navigable|.
 
-1. Let |child browsing contexts| be an empty set.
+1. Let |child browsing contexts| be an empty [=/set=].
 
 1. For each |child navigable| in |child navigables|:
 
@@ -2685,7 +2918,7 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
   1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null otherwise.
 
-  1. Set |child infos| to an empty list
+  1. Set |child infos| to an empty [=/list=].
 
   1. For each |context| of |child contexts|:
 
@@ -2694,7 +2927,7 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
     1. Append |info| to |child infos|
 
-1. Let |context info| be a [=map=] matching the
+1. Let |context info| be a [=/map=] matching the
    <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
    if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
@@ -2734,7 +2967,7 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 
 1. If |navigate status|'s status is "<code>complete</code>":
 
-  1. Let |body| be a [=map=] matching the
+  1. Let |body| be a [=/map=] matching the
      <code>browsingContext.NavigateResult</code> production, with the
      <code>navigation</code> field set to |navigation id|, and the
      <code>url</code> field set to the result of the [=URL serializer=] given
@@ -2755,7 +2988,7 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 
 1. If |wait condition| is "<code>none</code>":
 
-  1. Let |body| be a [=map=] matching the
+  1. Let |body| be a [=/map=] matching the
      <code>browsingContext.NavigateResult</code> production, with the
      <code>navigation</code> field set to |navigation id|, and the
      <code>url</code> field set to the result of the [=URL serializer=] given
@@ -2779,7 +3012,7 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
    where local ends parse the implementation-defined strings to figure out
    what actually went wrong?
 
-1. Let |body| be a [=map=] matching the
+1. Let |body| be a [=/map=] matching the
    <code>browsingContext.NavigateResult</code> production, with the
    <code>navigation</code> field set to |status|'s id, and the
    <code>url</code> field set to the result of the [=URL serializer=] given
@@ -2811,6 +3044,7 @@ TODO: Link to the definition in the HTML spec.
 browsingContext.NavigationInfo = {
   context: browsingContext.BrowsingContext,
   navigation: browsingContext.Navigation / null,
+  timestamp: js-uint,
   url: text,
 }
 </pre>
@@ -2824,13 +3058,15 @@ To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
 
 1. Let |navigation id| be |navigation status|'s id.
 
+1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
+
 1. Let |url| be |navigation status|'s url.
 
-1. Return a [=map=] matching the
-   <code>browsingContext.NavigationInfo</code> production, with the
-   <code>context</code> field set to |context id|, the <code>navigation</code>
-   field set to |navigation id|, and the <code>url</code> field set to the
-   result of the [=URL serializer=] given |url|.
+1. Return a [=/map=] matching the <code>browsingContext.NavigationInfo</code>
+   production, with the <code>context</code> field set to |context id|, the
+   <code>navigation</code> field set to |navigation id|, the
+   <code>timestamp</code> field set to |timestamp|, and the <code>url</code>
+   field set to the result of the [=URL serializer=] given |url|.
 
 </div>
 
@@ -2905,7 +3141,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
  1. Let |encoding result| be the result of [=trying=] to [=encode a canvas as
     Base64=] with |canvas|.
 
- 1. Let |body| be a [=map=] matching the
+ 1. Let |body| be a [=/map=] matching the
     <code>browsingContext.CaptureScreenshotResult</code> production, with the
     <code>data</code> field set to |encoding result|.
 
@@ -2954,6 +3190,8 @@ The [=remote end steps=] with |command parameters| are:
      [=error code=] [=invalid argument=].
 
   1. [=Close=] |context|.
+
+  1. Return [=success=] with data null.
 
 Issue(w3c/webdriver-bidi#170): There is an open discussion about the behavior
 when closing the last [=top-level browsing context=]. We could expect to close
@@ -3044,7 +3282,7 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |context id| be the [=browsing context id=] of the newly created
      [=/browsing context=].
 
-  1. Let |body| be a [=map=] matching the <code>browsingContext.CreateResult</code>
+  1. Let |body| be a [=/map=] matching the <code>browsingContext.CreateResult</code>
      production, with the <code>context</code> field set to |context id|.
 
   1. Return [=success=] with data |body|.
@@ -3091,13 +3329,13 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
    parameters| if present, or null otherwise.
 
-1. Let |contexts| be an empty list.
+1. Let |contexts| be an empty [=/list=].
 
 1. If |root id| is not null, append the result of [=trying=] to
    [=get a browsing context=] given |root id| to |contexts|.
    Otherwise append all [=top-level browsing contexts=] to |contexts|.
 
-1. Let |contexts info| be an empty list.
+1. Let |contexts info| be an empty [=/list=].
 
 1. For each |context| of |contexts|:
 
@@ -3106,7 +3344,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
   1. Append |info| to |contexts info|
 
-1. Let |body| be a [=map=] matching the <code>browsingContext.GetTreeResult</code>
+1. Let |body| be a [=/map=] matching the <code>browsingContext.GetTreeResult</code>
    production, with the <code>contexts</code> field set to |contexts info|.
 
 1. Return [=success=] with data |body|.
@@ -3245,6 +3483,150 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 </div>
 
+#### The browsingContext.print Command ####  {#command-browsingContext-print}
+
+The <dfn export for=commands>browsingContext.print</dfn> command
+creates a paginated representation of a document, and returns it as a
+PDF document represented as a Base64-encoded string.
+
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browsingContext.Print = {
+        method: "browsingContext.print",
+        params: browsingContext.PrintParameters
+      }
+
+      browsingContext.PrintParameters = {
+        context: browsingContext.BrowsingContext,
+        ?background: bool .default false,
+        ?margin: browsingContext.PrintMarginParameters,
+        ?orientation: ("portrait" / "landscape") .default "portrait",
+        ?page: browsingContext.PrintPageParameters,
+        ?pageRanges: [*(js-uint / text)],
+        ?scale: 0.1..2.0 .default 1.0,
+        ?shrinkToFit: bool .default true,
+      }
+
+      browsingContext.PrintMarginParameters = {
+        ?bottom: (float .ge 0.0) .default 1.0,
+        ?left: (float .ge 0.0) .default 1.0,
+        ?right: (float .ge 0.0) .default 1.0,
+        ?top: (float .ge 0.0) .default 1.0,
+      }
+
+      browsingContext.PrintPageParameters = {
+        ?height: (float .ge 0.0) .default 27.94,
+        ?width: (float .ge 0.0) .default 21.59,
+      }
+      </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        browsingContext.PrintResult = {
+          data: text
+        }
+    </pre>
+   </dd>
+</dl>
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. If the implementation is unable to provide a paginated representation of
+   |context| for any reason then return [=error=] with [=error code=]
+   [=unsupported operation=].
+
+1. Let |margin| be the value of the <code>margin</code> field of |command
+   parameters| if present, or otherwise a [=/map=] matching the
+   <code>browsingContext.PrintMarginParameters</code> with the fields set to
+   their default values.
+
+1. Let |page size| be the value of the <code>page</code> field of |command
+   parameters| if present, or otherwise a [=/map=] matching the
+   <code>browsingContext.PrintPageParameters</code> with the fields set to
+   their default values.
+
+1. Let |page ranges| be the value of the <code>pageRanges</code> field of
+   |command parameters| if present or an empty [=/list=] otherwise.
+
+1. Let |document| be |context|'s [=active document=].
+
+1. Immediately after the next invocation of the [=run the animation frame
+   callbacks=] algorithm for |document|:
+
+   Issue: This ought to be integrated into the update rendering algorithm
+   in some more explicit way.
+
+  1. Let |pdf data| be the result taking UA-specific steps to generate a
+     paginated representation of |document|, with the CSS [=media type=] set to
+     <code>print</code>, encoded as a PDF, with the following paper settings:
+
+     <table>
+       <tr>
+         <th>Property
+         <th>Value
+       <tr>
+         <td>Width in cm
+         <td>|page size|["<code>width</code>"] if
+             |command parameters|["<code>orientation</code>"] is
+             "<code>portrait</code>" otherwise |page size|["<code>height</code>"]
+       <tr>
+         <td>Height in cm
+         <td>|page size|["<code>height</code>"] if
+             |command parameters|["<code>orientation</code>"] is
+             "<code>portrait</code>" otherwise |page size|["<code>width</code>"]
+       <tr>
+         <td>Top margin, in cm
+         <td>|margin|["<code>top</code>"]
+       <tr>
+         <td>Bottom margin, in cm
+         <td>|margin|["<code>bottom</code>"]
+       <tr>
+         <td>Left margin, in cm
+         <td>|margin|["<code>left</code>"]
+       <tr>
+         <td>Right margin, in cm
+         <td>|margin|["<code>right</code>"]
+     </table>
+
+     In addition, the following formatting hints should be applied by the UA:
+       <dl>
+         <dt>If |command parameters|["<code>scale</code>"] is not equal to <code>1</code>:
+         <dd>Zoom the size of the content by a factor |command parameters|["<code>scale</code>"]
+         <dt>If |command parameters|["<code>background</code>"] is false:
+         <dd>Suppress output of background images
+         <dt>If |command parameters|["<code>shrinkToFit</code>"] is true:
+         <dd>Resize the content to match the page width, overriding any page
+             width specified in the content
+     </dl>
+
+  1. If |page ranges| is not [=list/empty=], let |pages| be the result of
+     [=trying=] to [=parse a page range=] with |page ranges| and the number of
+     pages contained in |pdf data|, then remove any pages from |pdf data|
+     whose one-based index is not contained in |pages|.
+
+  1. Let |encoding result| be the result of calling [=Base64 Encode=] on
+     |pdf data|.
+
+  1. Let |encoded data| be |encoding result|’s data.
+
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.PrintResult</code> production, with the
+     <code>data</code> field set to |encoded data|.
+
+  1. Return [=success=] with data |body|.
+
+</div>
+
 #### The browsingContext.reload Command ####  {#command-browsingContext-reload}
 
 The <dfn export for=commands>browsingContext.reload</dfn> command reloads a
@@ -3264,6 +3646,12 @@ browsing context.
         ?ignoreCache: bool,
         ?wait: browsingContext.ReadinessState,
       }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl">
+         EmptyResult
       </pre>
    </dd>
 </dl>
@@ -3294,6 +3682,8 @@ The [=remote end steps=] with |command parameters| are:
 1. Return the result of [=await a navigation=] with |context|, |request|, |wait
    condition|, history handling "<code>reload</code>", and ignore
    cache |ignore cache|.
+
+1. Return [=success=] with data null.
 
 </div>
 
@@ -3333,7 +3723,7 @@ To <dfn>Emit a context created event</dfn> given |session| and |context|:
 1. Let |params| be the result of [=get the browsing context info=] given
    |context|, 0, and true.
 
-1. Let |body| be a [=map=] matching the
+1. Let |body| be a [=/map=] matching the
    <code>browsingContext.ContextCreated</code> production, with the
    <code>params</code> field set to |params|.
 
@@ -3350,7 +3740,7 @@ When the [=create a new browsing context=] algorithm is invoked, after the
 
 1. Let |context| be the newly created browsing context.
 
-1. Let |related browsing contexts| be a set containing |context|.
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.contextCreated</code>" and |related browsing
@@ -3395,13 +3785,13 @@ Define the following [=browsing context tree discarded=] steps:
 1. Let |params| be the result of [=get the browsing context info=], given
    |context|, 0, and true.
 
-1. Let |body| be a [=map=] matching the
+1. Let |body| be a [=/map=] matching the
     <code>browsingContext.ContextDestroyed</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a set containing the result of
+1. Let |related browsing contexts| be a [=/set=] containing the result of
    [=get the parent browsing context=] with |context|, if that is not
-   null, or an empty set otherwise.
+   null, or an empty [=/set=] otherwise.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.contextDestroyed</code>" and |related browsing
@@ -3437,13 +3827,13 @@ started</dfn> steps given |context| and |navigation status|:
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
 
- 1. Let |body| be a [=map=] matching the
+ 1. Let |body| be a [=/map=] matching the
     <code>browsingContext.NavigationStarted</code> production, with the
     <code>params</code> field set to |params|.
 
 1. Let |navigation id| be |navigation status|'s id.
 
-1. Let |related browsing contexts| be a set containing |context|.
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. [=Resume=] with "<code>navigation started</code>", |navigation id|, and
    |navigation status|.
@@ -3476,13 +3866,13 @@ navigated</dfn> steps given |context| and |navigation status|:
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
 
-1. Let |body| be a [=map=] matching the
+1. Let |body| be a [=/map=] matching the
     <code>browsingContext.FragmentNavigated</code> production, with the
     <code>params</code> field set to |params|.
 
 1. Let |navigation id| be |navigation status|'s id.
 
-1. Let |related browsing contexts| be a set containing |context|.
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. [=Resume=] with "<code>fragment navigated</code>", |navigation id|, and
    |navigation status|.
@@ -3515,11 +3905,11 @@ loaded</dfn> steps given |context| and |navigation status|:
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
 
-1. Let |body| be a [=map=] matching the
+1. Let |body| be a [=/map=] matching the
    <code>browsingContext.DomContentLoaded</code> production, with the
    <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a set containing |context|.
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. Let |navigation id| be |navigation status|'s id.
 
@@ -3554,10 +3944,10 @@ complete</dfn> steps given |context| and |navigation status|:
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
 
-1. Let |body| be a [=map=] matching the <code>browsingContext.Load</code>
+1. Let |body| be a [=/map=] matching the <code>browsingContext.Load</code>
    production, with the <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a set containing |context|.
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. Let |navigation id| be |navigation status|'s id.
 
@@ -3592,13 +3982,13 @@ started</dfn> steps given |context| and |navigation status|:
  1. Let |params| be the result of [=get the navigation info=] given |context|
     and |navigation status|.
 
- 1. Let |body| be a [=map=] matching the
+ 1. Let |body| be a [=/map=] matching the
      <code>browsingContext.DownloadWillBegin</code> production, with the
      <code>params</code> field set to |params|.
 
  1. Let |navigation id| be |navigation status|'s id.
 
- 1. Let |related browsing contexts| be a set containing |context|.
+ 1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
  1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
 
@@ -3630,13 +4020,13 @@ aborted</dfn> steps given |context| and |navigation status|:
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
 
-1. Let |body| be a [=map=] matching the
+1. Let |body| be a [=/map=] matching the
     <code>browsingContext.NavigationAborted</code> production, with the
     <code>params</code> field set to |params|.
 
 1. Let |navigation id| be |navigation status|'s id.
 
-1. Let |related browsing contexts| be a set containing |context|.
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. [=Resume=] with "<code>navigation aborted</code>", |navigation id|, and |navigation status|.
 
@@ -3669,13 +4059,13 @@ failed</dfn> steps given |context| and |navigation status|:
 1. Let |params| be the result of [=get the navigation info=] given |context|
    and |navigation status|.
 
-1. Let |body| be a [=map=] matching the
+1. Let |body| be a [=/map=] matching the
     <code>browsingContext.NavigationFailed</code> production, with the
     <code>params</code> field set to |params|.
 
 1. Let |navigation id| be |navigation status|'s id.
 
-1. Let |related browsing contexts| be a set containing |context|.
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. [=Resume=] with "<code>navigation failed</code>", |navigation id|, and |navigation status|.
 
@@ -3715,17 +4105,17 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
-1. Let |params| be a [=map=] matching the
+1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptClosedParameters</code> production with the
    <code>context</code> field set to |context id|, the <code>accepted</code>
    field set to |accepted|, and the <code>userText</code> field set to |user
    text| if |user text| is not null or omitted otherwise.
 
-1. Let |body| be a [=map=] matching the
+1. Let |body| be a [=/map=] matching the
    <code>BrowsingContextUserPromptClosedEvent</code> production, with the
    <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a [=set=] containing |context|.
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.userPromptClosed</code>" and |related browsing contexts|:
@@ -3762,16 +4152,16 @@ opened</dfn> steps given |window|, |type| and |message|.
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
-1. Let |params| be a [=map=] matching the
+1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpenedParameters</code> production with the
    <code>context</code> field set to |context id|, the <code>type</code> field
    set to |type|, and the <code>message</code> field set to |message|.
 
-1. Let |body| be a [=map=] matching the
+1. Let |body| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpened</code> production, with the
    <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a [=set=] containing |context|.
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.userPromptOpened</code>" and |related browsing contexts|:
@@ -3791,10 +4181,12 @@ relating to script realms and execution.
 
 <pre class="cddl remote-cddl">
 ScriptCommand = (
+  script.AddPreloadScriptCommand //
   script.CallFunction //
   script.Disown //
   script.Evaluate //
   script.GetRealms
+  script.RemovePreloadScriptCommand
 )
 </pre>
 
@@ -3802,6 +4194,7 @@ ScriptCommand = (
 
 <pre class="cddl local-cddl">
 ScriptResult = (
+  script.AddPreloadScriptResult //
   script.EvaluateResult //
   script.GetRealmsResult
 )
@@ -3812,6 +4205,55 @@ ScriptEvent = (
 )
 </pre>
 
+### Preload Scripts ### {#preload-scripts}
+
+A <dfn>Preload script</dfn> is one which runs on creation of a new {{Window}},
+before any author-defined script have run.
+
+TODO: Extend this to scripts in other kinds of realms.
+
+A [=BiDi session=] has a <dfn>preload script map</dfn> which is a [=/map=] in
+which the keys are [[!RFC4122|UUID]]s, and the values are [=structs=] with an <a
+for=struct>item</a> named <code>expression</code>, which is a string, and an
+item named <code>sandbox</code> which is a string or null.
+
+<div algorithm>
+To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment settings|:
+
+1. Let |document| be |environment settings|' [=relevant global object=]'s
+   <a>associated <code>Document</code></a>.
+
+1. Let |browsing context| be |document|'s [=/browsing context=].
+
+1. For each |session| in [=active BiDi sessions=]:
+
+  1. For each |preload script| in |session|'s [=preload script map=]'s
+     [=values=]:
+
+    1. If |preload script|'s <code>sandbox</code> is not null, let |realm| be [=get
+       or create a sandbox realm=] with |preload script|'s <code>sandbox</code> and
+       |browsing context|. Otherwise let |realm| be |environment settings|'
+       [=realm execution context=]'s Realm component.
+
+    1. Let |source| be |preload script|'s <code>expression</code>.
+
+    1. Let |options| be the [=default classic script fetch options=].
+
+    1. Let |base URL| be the [=API base URL=] of |environment settings|.
+
+    1. Let |script| be the result of [=create a classic script=] with |source|,
+       |environment settings|, |base URL|, and |options|.
+
+    1. [=Prepare to run script=] with |environment settings|.
+
+    1. Let |evaluation status| be [=ScriptEvaluation=](|script|'s record).
+
+    1. If |evaluation status| is an [=abrupt completion=], then [=report the
+       exception=] given by |evaluation status|.\[[Value]] for |script|.
+
+    1. [=Clean up after running script=] with |environment settings|.
+
+</div>
 
 ### Types ### {#module-script-types}
 
@@ -3834,7 +4276,7 @@ The <code>script.ExceptionDetails</code> type represents a JavaScript exception.
 <div algorithm>
 
 To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
-|record| and an |ownership type|:
+|record|, an |ownership type| and a |session|:
 
 1. Assert: |record|.\[[Type]] is <code>throw</code>.
 
@@ -3844,9 +4286,13 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
    TODO: Tighten up the requirements here; people will probably try to parse
    this data with regex or something equally bad.
 
-1. Let |exception| be the result of [=serialize as a remote value=] given
-   |record|.\[[Value]], <code>1</code> as max depth, |ownership type|,
-   a new [=Map=] as serialization internal map and |realm|.
+1. Let |serialization options| be a [=/map=] matching the
+   <code>script.SerializationOptions</code> production with the fields set to
+   their default values.
+
+1. Let |exception| be the result of [=serialize as a remote value=] with
+   |record|.\[[Value]], |serialization options|, |ownership type|,
+   a new [=/map=] as serialization internal map, |realm| and |session|.
 
 1. Let |stack trace| be the [=stack trace for an exception=] given |record|.
 
@@ -3855,7 +4301,7 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
    the value of the <code>columnNumber</code> field |stack trace|[0]. Otherwise
    let |line number| and |column number| be 0.
 
-1. Let |exception details| be a map matching the
+1. Let |exception details| be a [=/map=] matching the
    <code>script.ExceptionDetails</code> production, with the <code>text</code>
    field set to |text|, the <code>exception</code> field set to |exception|, the
    <code>lineNumber</code> field set to |line number|, the
@@ -3865,6 +4311,17 @@ To <dfn>get exception details</dfn> given a |realm|, a [=completion record=]
 1. Return |exception details|.
 
 </div>
+
+#### The script.PreloadScript type #### {#type-script-PreloadScript}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+script.PreloadScript = text;
+</pre>
+
+The <code>script.PreloadScript</code> type represents a handle to a script that will run
+on realm creation.
 
 #### The script.Realm type #### {#type-script-Realm}
 
@@ -3971,6 +4428,22 @@ Note: there's a 1:1 relationship between the <code>script.RealmInfo</code>
 The <code>script.RealmInfo</code> type represents the properties of a realm.
 
 <div algorithm>
+To <dfn>get the browsing context</dfn> with given |realm|:
+
+1. Let |global object| be the [=realm/global object=] of the |realm|.
+
+1. Let |global object| be the [=unwrapped=] |global object|.
+
+1. If |global object| is not a {{Window}} object, return <code>null</code>.
+
+1. Let |document| be |global object|'s wrapped {{Window}}'s
+   <a>associated <code>Document</code></a>.
+
+1. Return |document|'s [=/browsing context=].
+
+</div>
+
+<div algorithm>
 To <dfn>get the realm info</dfn> given |environment settings|:
 
 1. Let |realm| be |environment settings|' [=realm execution context=]'s Realm component.
@@ -3984,13 +4457,13 @@ To <dfn>get the realm info</dfn> given |environment settings|:
 1. Run the steps under the first matching condition:
 
   <dl>
-    <dt>|global object| is a [=Window=] object
+    <dt>|global object| is a {{Window}} object
     <dd>
       1. Let |document| be |environment settings|' [=relevant global object=]'s
          <a>associated <code>Document</code></a>.
       1. Let |browsing context| be |document|'s [=/browsing context=].
       1. Let |context id| be the [=browsing context id=] for |browsing context|.
-      1. Let |realm info| be a map matching the <code>script.WindowRealmInfo</code> production,
+      1. Let |realm info| be a [=/map=] matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
          field set to |origin|, and the <code>context</code> field set to |context id|.
 
@@ -4005,7 +4478,7 @@ To <dfn>get the realm info</dfn> given |environment settings|:
       1. Let |sandbox name| be the result of [=get a sandbox name=] given
          |realm|.
       1. Assert: |sandbox name| is not null.
-      1. Let |realm info| be a map matching the <code>script.WindowRealmInfo</code> production,
+      1. Let |realm info| be a [=/map=] matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
          field set to |origin|, the <code>context</code> field set to |context id|,
          and the <code>sandbox</code> field set to |sandbox name|.
@@ -4013,43 +4486,43 @@ To <dfn>get the realm info</dfn> given |environment settings|:
 
     <dt>|global object| is a {{DedicatedWorkerGlobalScope}} object
     <dd>
-      1. Let |realm info| be a map matching the <code>script.DedicatedWorkerRealmInfo</code> production,
+      1. Let |realm info| be a [=/map=] matching the <code>script.DedicatedWorkerRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code> field
          set to |origin|.
 
     <dt>|global object| is a {{SharedWorkerGlobalScope}} object
     <dd>
-      1. Let |realm info| be a map matching the <code>script.SharedWorkerRealmInfo</code> production,
+      1. Let |realm info| be a [=/map=] matching the <code>script.SharedWorkerRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
     <dt>|global object| is a {{ServiceWorkerGlobalScope}} object
     <dd>
-      1. Let |realm info| be a map matching the <code>script.ServiceWorkerRealmInfo</code> production,
+      1. Let |realm info| be a [=/map=] matching the <code>script.ServiceWorkerRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code> field
          set to |origin|.
 
    <dt>|global object| is a {{WorkerGlobalScope}} object
    <dd>
-      1. Let |realm info| be a map matching the <code>script.WorkerRealmInfo</code> production,
+      1. Let |realm info| be a [=/map=] matching the <code>script.WorkerRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
    <dt>|global object| is a {{PaintWorkletGlobalScope}} object
    <dd>
-      1. Let |realm info| be a map matching the <code>script.PaintWorkletRealmInfo</code> production,
+      1. Let |realm info| be a [=/map=] matching the <code>script.PaintWorkletRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
    <dt>|global object| is a {{AudioWorkletGlobalScope}} object
    <dd>
-      1. Let |realm info| be a map matching the <code>script.AudioWorkletRealmInfo</code> production,
+      1. Let |realm info| be a [=/map=] matching the <code>script.AudioWorkletRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
    <dt>|global object| is a {{WorkletGlobalScope}} object
    <dd>
-      1. Let |realm info| be a map matching the <code>script.WorkletRealmInfo</code> production,
+      1. Let |realm info| be a [=/map=] matching the <code>script.WorkletRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
          field set to |origin|.
 
@@ -4142,7 +4615,7 @@ To <dfn>construct a stack trace</dfn>, with a list of stack frames |stack|:
    1. Let |url| be the result of running the [=URL serializer=], given
       the <a spec=url for=/>URL</a> of |frame|'s [=stackframe/script url=].
 
-   1. Let |frame info| be a new map matching the <code>script.StackFrame</code>
+   1. Let |frame info| be a new [=/map=] matching the <code>script.StackFrame</code>
       production, with the <code>url</code> field set to |url|, the
       <code>functionName</code> field set to |frame|'s [=stackframe/function=],
       the <code>lineNumber</code> field set to |frame|'s [=stackframe/line
@@ -4151,7 +4624,7 @@ To <dfn>construct a stack trace</dfn>, with a list of stack frames |stack|:
 
 1. Append |frame info| to |call frames|.
 
-1. Let |stack trace| be a new map matching the <code>script.StackTrace</code>
+1. Let |stack trace| be a new [=/map=] matching the <code>script.StackTrace</code>
    production, with the <code>callFrames</code> property set to |call frames|.
 
 1. Return |stack trace|.
@@ -4216,6 +4689,21 @@ script.ResultOwnership = "root" / "none"
 The <code>script.ResultOwnership</code> specifies how the serialized value
 ownership will be treated.
 
+#### The script.SerializationOptions type #### {#type-script-SerializationOptions}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl">
+script.SerializationOptions = {
+  ?maxDomDepth: (js-uint / null) .default 0,
+  ?maxObjectDepth: (js-uint / null) .default null,
+  ?includeShadowTree: ("none" / "open" / "all") .default "none",
+}
+</pre>
+
+The <code>script.SerializationOptions</code> allows specifying how ECMAScript
+objects will be serialized.
+
 #### The script.Source type #### {#type-script-Source}
 
 [=Local end definition=]
@@ -4249,7 +4737,7 @@ To <dfn>get the source</dfn> given |source realm|:
 
   Otherwise let |browsing context| be null.
 
-1. Let |source| be a [=map=] matching the
+1. Let |source| be a [=/map=] matching the
    <code>script.Source</code> production with the <code>realm</code>
    field set to |realm|, and the <code>context</code> field set
    to |context id| if |browsing context| is not null, or unset otherwise.
@@ -4322,6 +4810,57 @@ Issue: This has the wrong error code
 
 ### Commands ### {#module-script-commands}
 
+#### The script.addPreloadScript Command ####  {#command-script-addPreloadScript}
+
+The <dfn export for=commands>script.addPreloadScript</dfn> command adds a [=preload
+script=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      script.AddPreloadScriptCommand = {
+        method: "script.addPreloadScript",
+        params: script.AddPreloadScriptParameters
+      }
+
+      script.AddPreloadScriptParameters = {
+        expression: text;
+        ?sandbox: text
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      script.AddPreloadScriptResult = {
+        script: script.PreloadScript
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for script.addPreloadScript">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |expression| be the <code>expression</code> field of |command
+   parameters|.
+
+1. Let |script| be the string representation of a [[!RFC4122|UUID]].
+
+1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
+   parameters|, if present, or null otherwise.
+
+1. Let |preload script map| be |session|'s [=preload script map=].
+
+1. Set |preload script map|[|script|] to a struct with <code>expression</code>
+   |expression| and <code>sandbox</code> |sandbox|.
+
+1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
+   <code>script</code> field set to |script|.
+
+</div>
+
 #### The script.disown Command ####  {#command-script-disown}
 
 The <dfn export for=commands>script.disown</dfn> command disowns the given handles.
@@ -4343,6 +4882,12 @@ other handles or strong ECMAScript references.
       }
       </pre>
    </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl">
+         EmptyResult
+      </pre>
+   </dd>
 </dl>
 
 <div algorithm="remote end steps for script.disown">
@@ -4358,6 +4903,8 @@ The [=remote end steps=] with |command parameters| are:
    1. Let |handle map| be |realm|'s [=handle object map=]
 
    1. If |handle map| contains |handle id|, remove |handle id| from the |handle map|.
+
+1. Return [=success=] with data null.
 
 </div>
 
@@ -4381,12 +4928,13 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
       }
 
       script.CallFunctionParameters = {
-        functionDeclaration: text;
-        awaitPromise: bool;
-        target: script.Target;
-        ?arguments: [*script.ArgumentValue];
-        ?this: script.ArgumentValue;
-        ?resultOwnership: script.ResultOwnership;
+        functionDeclaration: text,
+        awaitPromise: bool,
+        target: script.Target,
+        ?arguments: [*script.ArgumentValue],
+        ?resultOwnership: script.ResultOwnership,
+        ?serializationOptions: script.SerializationOptions
+        ?this: script.ArgumentValue,
       }
 
       script.ArgumentValue = (
@@ -4408,14 +4956,15 @@ Issue: TODO: Add timeout argument as described in the script.evaluate.
 
 <div algorithm>
 
-To <dfn>deserialize arguments</dfn> given |realm| and |serialized arguments list|:
+To <dfn>deserialize arguments</dfn> with given |realm|, |serialized arguments list|
+and |session|:
 
-1. Let |deserialized arguments list| be an empty list.
+1. Let |deserialized arguments list| be an empty [=/list=].
 
 1. For each |serialized argument| of |serialized arguments list|:
 
   1. Let |deserialized argument| be the result of [=trying=] to [=deserialize local value=]
-     given |realm| and |serialized argument|.
+     given |serialized argument|, |realm| and |session|.
 
   1. Append |deserialized argument| to the |deserialized arguments list|.
 
@@ -4446,7 +4995,7 @@ Note: the |function declaration| is parenthesized and evaluated.
 </div>
 
 
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given the value of the <code>target</code> field of |command parameters|.
@@ -4459,10 +5008,10 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |command arguments| be the value of the <code>arguments</code> field
    of |command parameters|.
 
-1. Let |deserialized arguments| be an empty list.
+1. Let |deserialized arguments| be an empty [=/list=].
 
 1. If |command arguments| is not null, set |deserialized arguments| to the result of [=trying=] to
-   [=deserialize arguments=] given |realm| and |command arguments|.
+   [=deserialize arguments=] given |realm|, |command arguments| and |session|.
 
 1. Let |this parameter| be the value of the <code>this</code> field
    of |command parameters|.
@@ -4470,13 +5019,18 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |this object| be null.
 
 1. If |this parameter| is not null, set |this object| to the result of [=trying=] to
-   [=deserialize local value=] given |realm| and |this parameter|.
+   [=deserialize local value=] given |this parameter|, |realm| and |session|.
 
 1. Let |function declaration| be the value of the
    <code>functionDeclaration</code> field of |command parameters|.
 
 1. Let |await promise| be the value of the <code>awaitPromise</code> field of
    |command parameters|.
+
+1. Let |serialization options| be the value of the
+   <code>serializationOptions</code> field of |command parameters|, if present,
+   or otherwise a [=/map=] matching the <code>script.SerializationOptions</code>
+   production with the fields set to their default values.
 
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
@@ -4487,9 +5041,9 @@ The [=remote end steps=] with |command parameters| are:
 1. If |function body evaluation status|.\[[Type]] is <code>throw</code>:
 
    1. Let |exception details| be the result of [=get exception details=] given
-      |realm|, |function body evaluation status| and |result ownership|.
+      |realm|, |function body evaluation status|, |result ownership| and |session|.
 
-   1. Return a new map matching the <code>script.EvaluateResultException</code>
+   1. Return a new [=/map=] matching the <code>script.EvaluateResultException</code>
       production, with the <code>exceptionDetails</code> field set to
       |exception details|.
 
@@ -4515,21 +5069,23 @@ The [=remote end steps=] with |command parameters| are:
 1. If |evaluation status|.\[[Type]] is <code>throw</code>:
 
   1. Let |exception details| be the result of [=get exception details=] given
-     |realm|, |evaluation status| and |result ownership|.
+     |realm|, |evaluation status|, |result ownership| and |session|.
 
-  1. Return a new map matching the <code>script.EvaluateResultException</code>
+  1. Return a new [=/map=] matching the <code>script.EvaluateResultException</code>
      production, with the <code>exceptionDetails</code> field set to
      |exception details|.
 
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
-1. Let |result| be the result of [=serialize as a remote value=] given
-   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result
-   ownership|, <code>new map</code> as |serialization internal map| and |realm|.
+1. Let |result| be the result of [=serialize as a remote value=] with
+   |evaluation status|.\[[Value]], |serialization options|, |result ownership|,
+   a new [=/map=] as serialization internal map, |realm| and |session|.
 
-1. Return a new map matching the <code>script.EvaluateResultSuccess</code>
+1. Return a new [=/map=] matching the <code>script.EvaluateResultSuccess</code>
    production, with the <code>realm</code> field set to |realm id|,
    and the <code>result</code> field set to |result|.
+
+</div>
 
 #### The script.evaluate Command ####  {#command-script-evaluate}
 
@@ -4552,17 +5108,18 @@ the promise is returned.
       }
 
       script.EvaluateParameters = {
-        expression: text;
-        target: script.Target;
-        awaitPromise: bool;
-        ?resultOwnership: script.ResultOwnership;
+        expression: text,
+        target: script.Target,
+        awaitPromise: bool,
+        ?resultOwnership: script.ResultOwnership,
+        ?serializationOptions: script.SerializationOptions,
       }
       </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
     <pre class="cddl">
-    ScriptEvaluateResult
+    script.EvaluateResult
    </pre>
    </dd>
 </dl>
@@ -4571,7 +5128,7 @@ TODO: Add timeout argument. It's not totally clear how this ought to work; in
 Chrome it seems like the timeout doesn't apply to the promise resolve step, but
 that likely isn't what clients want.
 
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given the value of the <code>target</code> field of |command parameters|.
@@ -4586,6 +5143,11 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |await promise| be the value of the <code>awaitPromise</code> field of
    |command parameters|.
+
+1. Let |serialization options| be the value of the
+   <code>serializationOptions</code> field of |command parameters|, if present,
+   or otherwise a [=/map=] matching the <code>script.SerializationOptions</code>
+   production with the fields set to their default values.
 
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
@@ -4610,22 +5172,24 @@ The [=remote end steps=] with |command parameters| are:
 
 1. If |evaluation status|.\[[Type]] is <code>throw</code>:
 
-  1. Let |exception details| be the result of [=get exception details=] given
-     |realm|, |evaluation status| and |result ownership|.
+  1. Let |exception details| be the result of [=get exception details=] with
+     |realm|, |evaluation status|, |result ownership| and |session|.
 
-  1. Return a new map matching the <code>script.EvaluateResultException</code>
+  1. Return a new [=/map=] matching the <code>script.EvaluateResultException</code>
      production, with the <code>realm</code> field set to |realm id|, and the
      <code>exceptionDetails</code> field set to |exception details|.
 
 1. Assert: |evaluation status|.\[[Type]] is <code>normal</code>.
 
-1. Let |result| be the result of [=serialize as a remote value=] given
-   |evaluation status|.\[[Value]], <code>1</code> as |max depth|, |result
-   ownership|, <code>new map</code> as |serialization internal map| and |realm|.
+1. Let |result| be the result of [=serialize as a remote value=] with
+   |evaluation status|.\[[Value]], |serialization options|, |result ownership|,
+   a new [=/map=] as serialization internal map, |realm| and |session|.
 
-1. Return a new map matching the <code>script.EvaluateResultSuccess</code>
+1. Return a new [=/map=] matching the <code>script.EvaluateResultSuccess</code>
    production, with the with the <code>realm</code> field set to |realm id|, and
    the <code>result</code> field set to |result|.
+
+</div>
 
 #### The script.getRealms Command ####  {#command-script-getRealms}
 
@@ -4662,7 +5226,7 @@ realm associated with the [=document=] currently loaded in a specified
 <div algorithm="remote end steps for script.getRealms">
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
-1. Let |environment settings| be a list of all the [=environment settings objects=]
+1. Let |environment settings| be a [=/list=] of all the [=environment settings objects=]
    that have their [=execution ready flag=] set.
 
 1. If |command parameters| contains <code>context</code>:
@@ -4672,7 +5236,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
   1. Let |document| be |context|'s [=active document=].
 
-  1. Let |context environment settings| be a list.
+  1. Let |context environment settings| be a [=/list=].
 
   1. For each |settings| of |environment settings|:
 
@@ -4700,7 +5264,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
   1. If |realm info| is not null, append |realm info| to |realms|.
 
-1. Let |body| be a map matching the <code>script.GetRealmsResult</code> production,
+1. Let |body| be a [=/map=] matching the <code>script.GetRealmsResult</code> production,
    with the <code>realms</code> field set to |realms|.
 
 1. Return [=success=] with data |body|.
@@ -4712,6 +5276,51 @@ Issue: We might want to have a more sophisticated filter system than just a
        literal match.
 
 </div>
+
+#### The script.removePreloadScript Command ####  {#command-script-removePreloadScript}
+
+The <dfn export for=commands>script.removePreloadScript</dfn> command removes a
+[=preload script=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      script.RemovePreloadScriptCommand = {
+        method: "script.removePreloadScript",
+        params: script.RemovePreloadScriptParameters
+      }
+
+      script.RemovePreloadScriptParameters = {
+        script: script.PreloadScript
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for script.removePreloadScript">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |script| be the value of the "<code>script</code>" field in |command
+   parameters|.
+
+1. Let |preload script map| be |session|'s [=preload script map=].
+
+1. If |preload script map| does not <a for=map>contain</a> |script|, return
+   [=error=] with [=error code=] [=no such script=].
+
+1. <a for=set>Remove</a> |script| from |preload script map|.
+
+1. Return null
+
+</div>
+
 
 ### Events ### {#module-script-events}
 
@@ -4748,7 +5357,7 @@ object:
 1. Let |related browsing contexts| be the result of [=get related browsing
    contexts=] given |environment settings|.
 
-1. Let |body| be a map matching the <code>script.RealmCreated</code>
+1. Let |body| be a [=/map=] matching the <code>script.RealmCreated</code>
    production, with the <code>params</code> field set to |realm info|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
@@ -4768,7 +5377,7 @@ The [=remote end subscribe steps=] with [=subscribe priority=] 2, given
 
 1. For each |settings| of |environment settings|:
 
-  1. Let |related browsing contexts| be a new set.
+  1. Let |related browsing contexts| be a new [=/set=].
 
   1. If the <a>associated <code>Document</code></a> of |settings|'
      [=relevant global object=] is a [=Document=]:
@@ -4785,7 +5394,7 @@ The [=remote end subscribe steps=] with [=subscribe priority=] 2, given
 
   1. Let |realm info| be the result of [=get the realm info=] given |settings|
 
-  1. Let |body| be a map matching the <code>script.RealmCreated</code>
+  1. Let |body| be a [=/map=] matching the <code>script.RealmCreated</code>
      production, with the <code>params</code> field set to |realm info|.
 
   1. If [=event is enabled=] given |session|,
@@ -4820,7 +5429,7 @@ The [=remote end event trigger=] is:
 <div algorithm="remote end event trigger for script.realmDestroyed">
 Define the following [=unloading document cleanup steps=] with |document|:
 
-1. Let |related browsing contexts| be an empty set.
+1. Let |related browsing contexts| be an empty [=/set=].
 
 1. Append |document|'s [=Document/browsing context=] to |related browsing
    contexts|.
@@ -4831,10 +5440,10 @@ Define the following [=unloading document cleanup steps=] with |document|:
 
   1. Let |realm id| be the [=realm id=] for |realm|.
 
-  1. Let |params| be a map matching the <code>script.RealmDestroyedParameters</code>
+  1. Let |params| be a [=/map=] matching the <code>script.RealmDestroyedParameters</code>
      production, with the <code>realm</code> field set of |realm id|.
 
-  1. Let |body| be a map matching the <code>script.RealmDestroyed</code>
+  1. Let |body| be a [=/map=] matching the <code>script.RealmDestroyed</code>
      production, with the <code>params</code> field set to |params|.
 
   1. For each |session| in the [=set of sessions for which an event is enabled=]
@@ -4851,11 +5460,11 @@ Define the following [=unloading document cleanup steps=] with |document|:
 
 1. Let |realm id| be the [=realm id=] for |realm|.
 
-1. Let |params| be a map matching the
+1. Let |params| be a [=/map=] matching the
    <code>script.RealmDestroyedParameters</code> production, with the
    <code>realm</code> field set to |realm id|.
 
-1. Let |body| be a map matching the <code>script.RealmDestroyed</code>
+1. Let |body| be a [=/map=] matching the <code>script.RealmDestroyed</code>
    production, with the <code>params</code> field set to |params|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
@@ -4877,10 +5486,10 @@ worker=] algorithm:
 
 1. Let |realm id| be the [=realm id=] for |realm|.
 
-1. Let |params| be a map matching the <code>script.RealmDestroyedParameters</code>
+1. Let |params| be a [=/map=] matching the <code>script.RealmDestroyedParameters</code>
    production, with the <code>realm</code> field set of |realm id|.
 
-1. Let |body| be a map matching the <code>script.RealmDestroyed</code>
+1. Let |body| be a [=/map=] matching the <code>script.RealmDestroyed</code>
    production, with the <code>params</code> field set to |params|.
 
 </div>
@@ -4890,7 +5499,7 @@ worker=] algorithm:
 The <dfn export for=modules>log</dfn> module contains functionality and events
 related to logging.
 
-A [=BiDi Session=] has a <dfn>log event buffer</dfn> which is a [=map=] from
+A [=BiDi Session=] has a <dfn>log event buffer</dfn> which is a [=/map=] from
 [=browsing context id=] to a list of log events for that context that have not
 been emitted. User agents may impose a maximum size on this buffer, subject to
 the condition that if events A and B happen in the same context with A occuring
@@ -4911,7 +5520,7 @@ To <dfn>buffer a log event</dfn> given |session|, |contexts| and |event|:
 
 1. For each |context id| in |context ids|:
 
-  1. Let |other contexts| be an empty list
+  1. Let |other contexts| be an empty [=/list=]
 
   1. For each |other id| in |context ids|:
 
@@ -5014,67 +5623,72 @@ The [=remote end event trigger=] is:
 
 <div algorithm="remote end event trigger for log.entryAdded">
 
-Define the following [=console steps=] with |method|, |args|, and <var
-ignore>options</var>:
+Define the following [=console steps=] with |method|, |args|, and
+<var ignore>options</var>:
 
-1. If |method| is "<code>error</code>" or "<code>assert</code>", let |level| be
-   "<code>error</code>". If |method| is "<code>debug</code>" or "<code>trace</code>"
-   let |level| be "<code>debug</code>". If |method| is "<code>warn</code>", let
-   |level| be "<code>warn</code>". Otherwise let |level| be "<code>info</code>".
+1. For each |session| in [=active BiDI sessions=]:
 
-1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
+  1. If |method| is "<code>error</code>" or "<code>assert</code>", let |level| be
+     "<code>error</code>". If |method| is "<code>debug</code>" or "<code>trace</code>"
+     let |level| be "<code>debug</code>". If |method| is "<code>warn</code>", let
+     |level| be "<code>warn</code>". Otherwise let |level| be "<code>info</code>".
 
-1. Let |text| be an empty string.
+  1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
 
-1. If [=Type=](|args|[0]) is String, and |args|[0] contains a
-   [=formatting specifier=], let |formatted args| be [=Formatter=](|args|). Otherwise
-   let |formatted args| be |args|.
+  1. Let |text| be an empty string.
 
-   Note: The formatter operation is underdefined in the console specification,
-   formatting can be inconsistent between different implementations.
+  1. If [=Type=](|args|[0]) is String, and |args|[0] contains a
+     [=formatting specifier=], let |formatted args| be [=Formatter=](|args|). Otherwise
+     let |formatted args| be |args|.
 
-1. For each |arg| in |formatted args|:
+     Note: The formatter operation is underdefined in the console specification,
+     formatting can be inconsistent between different implementations.
 
-  1. If |arg| is not the first entry in |args|, append a U+0020 SPACE to |text|.
+  1. For each |arg| in |formatted args|:
 
-  1. If |arg| is a [=primitive ECMAScript value=], append [=ToString=](|arg|) to
-     |text|. Otherwise append an implementation-defined string to |text|.
+    1. If |arg| is not the first entry in |args|, append a U+0020 SPACE to |text|.
 
-1. Let |realm| be the [=realm id=] of the [=current Realm Record=].
+    1. If |arg| is a [=primitive ECMAScript value=], append [=ToString=](|arg|) to
+       |text|. Otherwise append an implementation-defined string to |text|.
 
-1. Let |serialized args| be a new list.
+  1. Let |realm| be the [=realm id=] of the [=current Realm Record=].
 
-1. For each |arg| of |args|:
-   1. Let |serialized arg| be the result of [=serialize as a remote value=] given
-      |arg| as value, <code>1</code> as max depth, <code>none</code> as
-      ownership type, a new [=Map=] as serialization internal map, and
-      |realm|.
+  1. Let |serialized args| be a new list.
 
-   1. Add |serialized arg| to |serialized args|.
+  1. Let |serialization options| be a [=/map=] matching the
+     <code>script.SerializationOptions</code> production with the fields set to
+     their default values.
 
-1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
+  1. For each |arg| of |args|:
 
-1. If |method| is "<code>assert</code>", "<code>error</code>",
-   "<code>trace</code>", or "<code>warn</code>", let |stack| be the [=current
-   stack trace=]. Otherwise let |stack| be null.
+     1. Let |serialized arg| be the result of [=serialize as a remote value=] with
+        |arg| as value, |serialization options|, <code>none</code> as
+        ownership type, a new [=/map=] as serialization internal map, |realm| and
+        |session|.
 
-1. Let |entry| be a map matching the <code>log.ConsoleLogEntry</code> production,
-   with the the <code>level</code> field set to |level|, the <code>text</code>
-   field set to |text|, the <code>timestamp</code> field set to |timestamp|, the
-   <code>stackTrace</code> field set to |stack| if |stack| is not null, or
-   omitted otherwise, the |method| field set to |method|, the <code>source</code>
-   field set to |source| and the <code>args</code> field set to |serialized
-   args|.
+     1. Add |serialized arg| to |serialized args|.
 
-1. Let |body| be a map matching the <code>log.EntryAdded</code> production, with
-   the <code>params</code> field set to |entry|.
+  1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
 
-1. Let |settings| be the [=current settings object=]
+  1. If |method| is "<code>assert</code>", "<code>error</code>",
+     "<code>trace</code>", or "<code>warn</code>", let |stack| be the [=current
+     stack trace=]. Otherwise let |stack| be null.
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |settings|.
+  1. Let |entry| be a [=/map=] matching the <code>log.ConsoleLogEntry</code> production,
+     with the the <code>level</code> field set to |level|, the <code>text</code>
+     field set to |text|, the <code>timestamp</code> field set to |timestamp|, the
+     <code>stackTrace</code> field set to |stack| if |stack| is not null, or
+     omitted otherwise, the |method| field set to |method|, the <code>source</code>
+     field set to |source| and the <code>args</code> field set to |serialized
+     args|.
 
-1. For each |session| in [=active BiDi sessions=]:
+  1. Let |body| be a [=/map=] matching the <code>log.EntryAdded</code> production, with
+     the <code>params</code> field set to |entry|.
+
+  1. Let |settings| be the [=current settings object=]
+
+  1. Let |related browsing contexts| be the result of [=get related browsing
+     contexts=] given |settings|.
 
   1. If [=event is enabled=] with |session|, "<code>log.entryAdded</code>" and
      |related browsing contexts|, [=emit an event=] with |session| and |body|.
@@ -5095,7 +5709,7 @@ ignore>line number</var>, <var ignore>column number</var>, |message| and
 
 1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
 
-1. Let |entry| be a map matching the <code>log.JavascriptLogEntry</code> production,
+1. Let |entry| be a [=/map=] matching the <code>log.JavascriptLogEntry</code> production,
    with <code>level</code> set to "<code>error</code>", <code>text</code> set to
    |message|, <code>source</code> set to |source|, and the <code>timestamp</code>
    field set to |timestamp|.
@@ -5151,6 +5765,313 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 10, given
 
 </div>
 
+## Input ## {#module-input}
+
+The <dfn export for=modules>input</dfn> module contains functionality for
+simulated user input.
+
+### Definition ### {#module-input-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+
+InputCommand = (
+  input.PerformActions //
+  input.ReleaseActions
+)
+</pre>
+
+### Types ### {#module-input-types}
+
+#### input.ElementOrigin #### {#type-input-origin}
+
+The <code>input.ElementOrigin</code> type represents an {{Element}} that will
+be used as a coordinate origin.
+
+<pre class="cddl remote-cddl">
+input.ElementOrigin = {
+  type: "element",
+  element: SharedReference
+}
+</pre>
+
+<div algorithm>
+The <dfn>is <code>input.ElementOrigin</code></dfn> steps given |object| are:
+
+1. If |object| is a [=/map=] matching the <code>input.ElementOrigin</code>
+   production, return true.
+
+1. Return false.
+
+</div>
+
+<div algorithm>To <dfn>get Element from <code>input.ElementOrigin</code>
+steps</dfn> given |session|:
+
+1. Return the following steps, given |origin| and |context|:
+
+  1. Assert: |origin| matches <code>input.ElementOrigin</code>.
+
+  <!-- converting to realm here is kind of silly since we immediately convert back
+       in [=deserialize remote reference=] -->
+  1. Let |document| be |context|'s [=active document=].
+
+  1. Let |reference| be |origin|["<code>element</code>"]
+
+  1. Let |environment settings| be the [=environment settings object=] whose
+     [=relevant global object=]'s <a>associated <code>Document</code></a> is
+     |document|.
+
+  1. Let |realm| be |environment settings|' [=realm execution context=]'s
+     Realm component.
+
+  1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
+     with |reference|, |realm|, and |session|.
+
+  1. If |element| doesn't implement {{Element}} return [=error=] with [=error code=]
+     [=no such element=].
+
+  1. Return [=success=] with data |element|.
+
+</div>
+
+### Commands ### {#module-input-commands}
+
+#### The input.performActions Command ####  {#command-input-performActions}
+
+The <dfn export for=commands>input.performActions</dfn> command performs a
+specified sequence of user input actions.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      input.PerformActions = {
+        method: "input.performActions",
+        params: input.PerformActionsParameters
+      };
+
+      input.PerformActionsParameters = {
+        context: browsingContext.BrowsingContext,
+        actions: [*input.SourceActions]
+      }
+
+      input.SourceActions = (
+        input.NoneSourceActions //
+        input.KeySourceActions //
+        input.PointerSourceActions //
+        input.WheelSourceActions
+      )
+
+      input.NoneSourceActions = {
+        type: "none",
+        actions: [*input.NoneSourceAction]
+      }
+
+      input.NoneSourceAction = input.PauseAction
+
+      input.KeySourceActions = {
+        type: "key",
+        actions: [*input.KeySourceAction]
+      }
+
+      input.KeySourceAction = (
+        input.PauseAction //
+        input.KeyDownAction //
+        input.KeyUpAction
+      )
+
+      input.PointerSourceActions = {
+        type: "pointer",
+        ? parameters: input.PointerParameters,
+        actions: [*input.PointerSourceAction]
+      }
+
+      input.PointerType = "mouse" / "pen" / "touch"
+
+      input.PointerParameters = {
+        ?pointerType: input.PointerType .default "mouse"
+      }
+
+      input.PointerSourceAction = (
+        input.PauseAction //
+        input.PointerDownAction //
+        input.PointerUpAction //
+        input.PointerMoveAction
+      )
+
+      input.WheelSourceActions = {
+        type: "wheel",
+        actions: [*input.WheelSourceAction]
+      }
+
+      input.WheelSourceAction = (
+        input.PauseAction //
+        input.WheelScrollAction
+      )
+
+      input.PauseAction = {
+        type: "pause",
+        ? duration: js-uint
+      }
+
+      input.KeyDownAction = {
+        type: "keyDown",
+        value: text
+      }
+
+      input.KeyUpAction = {
+        type: "keyUp",
+        value: text
+      }
+
+      input.PointerUpAction = {
+        type: "pointerUp",
+        button: js-uint,
+        input.PointerCommonProperties
+      }
+
+      input.PointerDownAction = {
+        type: "pointerDown",
+        button: js-uint,
+        input.PointerCommonProperties
+      }
+
+      input.PointerMoveAction = {
+        type: "pointerMove",
+        x: js-uint,
+        y: js-uint,
+        ? duration: js-uint,
+        ? origin: input.Origin,
+        input.PointerCommonProperties
+      }
+
+      input.WheelScrollAction = {
+        type: "scroll",
+        x: js-uint,
+        y: js-uint,
+        deltaX: js-int,
+        deltaY: js-int,
+        ? duration: js-uint,
+        ? origin: input.Origin .default "viewport",
+      }
+
+      input.PointerCommonProperties = (
+        ? width: js-uint .default 1,
+        ? height: js-uint .default 1,
+        ? pressure: float .default 0.0,
+        ? tangentialPressure: float .default 0.0,
+        ? twist: 0..359 .default 0,
+        (input.TiltProperties // input.AngleProperties)
+      )
+
+      input.AngleProperties = (
+        ? altitudeAngle: float .default 0.0,
+        ? azimuthAngle: float .default 0.0,
+      )
+
+      input.TiltProperties = (
+        ? tiltX: -90..90 .default 0,
+        ? tiltY: -90..90 .default 0,
+      )
+
+      input.Origin = "viewport" / "pointer" / input.ElementOrigin
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for input.performActions">
+
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Let |input state| be [=get the input state=] with |session| and |context|'s
+   [=top-level browsing context=].
+
+1. Let |actions options| be a new [=actions options=] with the [=is element
+   origin=] steps set to [=is input.ElementOrigin=], and the
+   [=get element origin=] steps set to the result of [=get Element from
+   input.ElementOrigin steps=] given |session|.
+
+1. Let |actions by tick| be the result of trying to [=extract an action
+   sequence=] with |input state|, |command parameters|, and |actions options|.
+
+1. [=Try=] to [=dispatch actions=] with |input state|, |actions by tick|,
+   |context|, and |actions options|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The input.releaseActions Command ####  {#command-input-releaseActions}
+
+The <dfn export for=commands>input.releaseActions</dfn> command resets the input
+state associated with the current session.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      input.ReleaseActions = {
+        method: "input.releaseActions",
+        params: input.ReleaseActionsParameters
+      };
+
+      input.ReleaseActionsParameters = {
+        context: browsingContext.BrowsingContext,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for input.releaseActions">
+
+The [=remote end steps=] given |session|, and |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Let |top-level context| be |context|'s [=top-level browsing context=].
+
+1. Let |input state| be [=get the input state=] with |session| and |top-level context|.
+
+1. Let |actions options| be a new [=actions options=] with the [=is element
+   origin=] steps set to [=is input.ElementOrigin=], and the
+   [=get element origin=] steps set to [=get Element from
+   input.ElementOrigin steps=] given |session|.
+
+1. Let |undo actions| be |input state|’s [=input cancel list=] in reverse order.
+
+1. [=Try=] to [=dispatch tick actions=] with |undo actions|, 0, |context|, and
+   |actions options|.
+
+1. [=Reset the input state=] with |session| and |top-level context|.
+
+1. Return [=success=] with data null.
+
+</div>
+
 # Patches to Other Specifications # {#patches}
 
 This specification requires some changes to external specifications to provide the necessary
@@ -5196,9 +6117,10 @@ Other specifications can define <dfn>console steps</dfn>. When any method of the
 {{console}} interface is called, with method name
 |method| and argument |args|:
 
+
 1. If that method does not call the [=Printer=] operation, call any [=console
-   steps=] defined in external specification with arguments |method|, |args|,
-   and undefined.
+   steps=] defined in external specification with arguments |method|,
+   |args|, and undefined.
 
    Otherwise, at the point when the [=Printer=] operation is called with
    arguments |name|, |printerArgs| and |options| (which is undefined if the
