@@ -40,8 +40,8 @@ This scenario sets up handlers for network events and then navigates to a web pa
 This scenario loads a web page, enters text into a form field via the keyboard, and submits the form via a mouse click before extracting the results from the page. In spec terms, this involves:
 
 - [x] Everything from the previous scenario
-- [ ] [Emulating keyboard input](https://github.com/w3c/webdriver-bidi/pull/175)
-- [ ] [Emulating mouse input](https://github.com/w3c/webdriver-bidi/pull/175)
+- [x] [Emulating keyboard input](https://github.com/w3c/webdriver-bidi/pull/175)
+- [x] [Emulating mouse input](https://github.com/w3c/webdriver-bidi/pull/175)
 
 ### Capturing screenshots
 
