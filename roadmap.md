@@ -40,8 +40,8 @@ This scenario sets up handlers for network events and then navigates to a web pa
 This scenario loads a web page, enters text into a form field via the keyboard, and submits the form via a mouse click before extracting the results from the page. In spec terms, this involves:
 
 - [x] Everything from the previous scenario
-- [x] [Emulating keyboard input](https://github.com/w3c/webdriver-bidi/pull/175)
-- [x] [Emulating mouse input](https://github.com/w3c/webdriver-bidi/pull/175)
+- [x] [Emulating keyboard input](https://w3c.github.io/webdriver-bidi/#command-input-performActions)
+- [x] [Emulating mouse input](https://w3c.github.io/webdriver-bidi/#command-input-performActions)
 
 ### Capturing screenshots
 
@@ -55,10 +55,10 @@ This scenario loads a web page and captures a screenshot. In spec terms, this in
 In this scenario a `MutationObserver` is installed by a bootstrap script as early as the document gets created. It watches for changes made to the DOM tree and sends the relevant updates to the client. In spec terms, this involves:
 
 - [x] Some items from the previous scenarios
-- [ ] [Adding a preload script](https://w3c.github.io/webdriver-bidi/#command-script-addPreloadScript)
-- [ ] [Installing the preload script](https://w3c.github.io/webdriver-bidi/#preload-scripts)
+- [x] [Adding a preload script](https://w3c.github.io/webdriver-bidi/#command-script-addPreloadScript)
+- [x] [Installing the preload script](https://w3c.github.io/webdriver-bidi/#preload-scripts)
 - [ ] [Back channel for communicating with the client](https://github.com/w3c/webdriver-bidi/pull/361)
-- [ ] [Removing a preload script](https://w3c.github.io/webdriver-bidi/#command-script-removePreloadScript)
+- [x] [Removing a preload script](https://w3c.github.io/webdriver-bidi/#command-script-removePreloadScript)
 
 ### Replacing resources with test data
 
@@ -80,13 +80,13 @@ This scenario loads a web page that is protected behind user credentials. In spe
 This scenario loads a web page with a registered `beforeunload` event handler. After updating the value of some form input elements it should be checked that navigating away opens the beforeonload prompt. In spec terms, this involves:
 
 - [x] Some items from the previous scenarios
-- [ ] [The event when a user prompt opens](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-opened)
-- [ ] [Handling the beforeunload prompt](https://w3c.github.io/webdriver-bidi/#command-browsingContext-handleUserPrompt)
-- [ ] [The event when a user prompt closes](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-closed)
+- [x] [The event when a user prompt opens](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-opened)
+- [x] [Handling the beforeunload prompt](https://w3c.github.io/webdriver-bidi/#command-browsingContext-handleUserPrompt)
+- [x] [The event when a user prompt closes](https://w3c.github.io/webdriver-bidi/#webdriver-bidi-user-prompt-closed)
 
 ### Printing to PDF
 
 This scenario loads a web page and prints it as a PDF. In spec terms, this involves:
 
 - [x] Some items from the previous milestones
-- [ ] [Printing to PDF as Base64-encoded string](https://github.com/w3c/webdriver-bidi/issues/210)
+- [x] [Printing to PDF as Base64-encoded string](https://w3c.github.io/webdriver-bidi/#command-browsingContext-print)
