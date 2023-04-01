@@ -8,7 +8,7 @@
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
   <meta content="Bikeshed version d9bd89757, updated Thu Mar 23 10:06:53 2023 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="a04ee5e3f7a77191d51c21d7070eda7653e2c59f" name="document-revision">
+  <meta content="9904e839925d2355ce7cec690682534e0ec74824" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -479,7 +479,7 @@ dfn > a.self-link::before      { content: "#"; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-03-30">30 March 2023</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-04-01">1 April 2023</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -4808,8 +4808,11 @@ ScriptEvent = (
 before any author-defined script have run.</p>
    <p>TODO: Extend this to scripts in other kinds of realms.</p>
    <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①③">BiDi session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="preload-script-map">preload script map</dfn> which is a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑥⑨">map</a> in
-which the keys are <a data-link-type="biblio" href="#biblio-rfc4122" title="A Universally Unique IDentifier (UUID) URN Namespace">UUID</a>s, and the values are <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#struct" id="ref-for-struct">structs</a> with an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#struct-item" id="ref-for-struct-item">item</a> named <code>expression</code>, which is a string, and an
-item named <code>sandbox</code> which is a string or null.</p>
+which the keys are <a data-link-type="biblio" href="#biblio-rfc4122" title="A Universally Unique IDentifier (UUID) URN Namespace">UUID</a>s, and the values are <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#struct" id="ref-for-struct">structs</a> with an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#struct-item" id="ref-for-struct-item">item</a> named <code>function declaration</code>, which is a string, <code>arguments</code>, and an item named <code>sandbox</code> which is a string
+or null.</p>
+   <p class="note" role="note"><span class="marker">Note:</span> If executing a <a data-link-type="dfn" href="#preload-script" id="ref-for-preload-script①">preload script</a> fails, either due to a syntax error, or
+a runtime exception, an <a data-link-type="biblio" href="#biblio-ecmascript" title="ECMAScript Language Specification">[ECMAScript]</a> exception is reported in the realm in
+which it was being executed, and other preload scripts run as normal.</p>
    <div class="algorithm" data-algorithm="run WebDriver BiDi preload scripts">
      To <dfn data-dfn-type="dfn" data-export id="run-webdriver-bidi-preload-scripts">run WebDriver BiDi preload scripts<a class="self-link" href="#run-webdriver-bidi-preload-scripts"></a></dfn> given <var>environment settings</var>: 
     <ol>
@@ -4827,22 +4830,34 @@ item named <code>sandbox</code> which is a string or null.</p>
           <p>If <var>preload script</var>’s <code>sandbox</code> is not null, let <var>realm</var> be <a data-link-type="dfn" href="#get-or-create-a-sandbox-realm" id="ref-for-get-or-create-a-sandbox-realm">get
  or create a sandbox realm</a> with <var>preload script</var>’s <code>sandbox</code> and <var>browsing context</var>. Otherwise let <var>realm</var> be <var>environment settings</var>’ <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context" id="ref-for-realm-execution-context①">realm execution context</a>'s Realm component.</p>
          <li data-md>
-          <p>Let <var>source</var> be <var>preload script</var>’s <code>expression</code>.</p>
+          <p>Let <var>base URL</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url" id="ref-for-api-base-url">API base URL</a> of <var>environment settings</var>.</p>
          <li data-md>
           <p>Let <var>options</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options" id="ref-for-default-classic-script-fetch-options">default classic script fetch options</a>.</p>
          <li data-md>
-          <p>Let <var>base URL</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url" id="ref-for-api-base-url">API base URL</a> of <var>environment settings</var>.</p>
+          <p>Let <var>function declaration</var> be <var>preload script</var>’s <code>function declaration</code>.</p>
          <li data-md>
-          <p>Let <var>script</var> be the result of <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script" id="ref-for-creating-a-classic-script">create a classic script</a> with <var>source</var>, <var>environment settings</var>, <var>base URL</var>, and <var>options</var>.</p>
+          <p>Let (<var>script</var>, <var>function body evaluation status</var>) be the result of <a data-link-type="dfn" href="#evaluate-function-body" id="ref-for-evaluate-function-body">evaluate function body</a> with <var>function declaration</var>, <var>environment settings</var>, <var>base URL</var>, and <var>options</var>.</p>
+         <li data-md>
+          <p>If <var>function body evaluation status</var> is an <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type②">abrupt completion</a>, then <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#report-the-exception" id="ref-for-report-the-exception">report the exception</a> given by <var>function body evaluation status</var>.[[Value]]
+ for <var>script</var>.</p>
+         <li data-md>
+          <p>Let <var>function object</var> be <var>function body evaluation status</var>.[[Value]].</p>
+         <li data-md>
+          <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-iscallable" id="ref-for-sec-iscallable①">IsCallable</a>(<var>function object</var>) is <code>false</code>:</p>
+          <ol>
+           <li data-md>
+            <p>Let <var>error</var> be a new <a data-link-type="dfn" href="https://www.w3.org/TR/WebCryptoAPI/#dfn-TypeError" id="ref-for-dfn-TypeError">TypeError</a> object in <var>realm</var>.</p>
+           <li data-md>
+            <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#report-the-exception" id="ref-for-report-the-exception①">Report the exception</a> <var>error</var>.</p>
+          </ol>
          <li data-md>
           <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#prepare-to-run-script" id="ref-for-prepare-to-run-script">Prepare to run script</a> with <var>environment settings</var>.</p>
          <li data-md>
-          <p>Let <var>evaluation status</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-runtime-semantics-scriptevaluation" id="ref-for-sec-runtime-semantics-scriptevaluation">ScriptEvaluation</a>(<var>script</var>’s record).</p>
-         <li data-md>
-          <p>If <var>evaluation status</var> is an <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type②">abrupt completion</a>, then <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#report-the-exception" id="ref-for-report-the-exception">report the
- exception</a> given by <var>evaluation status</var>.[[Value]] for <var>script</var>.</p>
+          <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-call" id="ref-for-sec-call①">Call</a>(<var>function object</var>, null, «»).</p>
          <li data-md>
           <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#clean-up-after-running-script" id="ref-for-clean-up-after-running-script">Clean up after running script</a> with <var>environment settings</var>.</p>
+         <li data-md>
+          <p>If <var>evaluation status</var> is an <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type③">abrupt completion</a>, then <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#report-the-exception" id="ref-for-report-the-exception②">report the exception</a> given by <var>evaluation status</var>.[[Value]] for <var>script</var>.</p>
         </ol>
       </ol>
     </ol>
@@ -4860,7 +4875,7 @@ item named <code>sandbox</code> which is a string or null.</p>
 </pre>
    <p>The <code>script.ExceptionDetails</code> type represents a JavaScript exception.</p>
    <div class="algorithm" data-algorithm="get exception details">
-    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-exception-details">get exception details</dfn> given a <var>realm</var>, a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type③">completion record</a> <var>record</var>, an <var>ownership type</var> and a <var>session</var>:</p>
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-exception-details">get exception details</dfn> given a <var>realm</var>, a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type④">completion record</a> <var>record</var>, an <var>ownership type</var> and a <var>session</var>:</p>
     <ol>
      <li data-md>
       <p class="assertion">Assert: <var>record</var>.[[Type]] is <code>throw</code>.</p>
@@ -5179,11 +5194,11 @@ frame</dfn> corresponding to execution of a statement or expression in a script 
    <p>The <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="current-stack-trace">current stack trace</dfn> is the result of <a data-link-type="dfn" href="#construct-a-stack-trace" id="ref-for-construct-a-stack-trace">construct a stack trace</a> given a <a data-link-type="dfn" href="#list-of-stack-frames" id="ref-for-list-of-stack-frames">list of stack frames</a> representing the callstack of the <a data-link-type="dfn" href="https://tc39.es/ecma262/#running-execution-context" id="ref-for-running-execution-context">running
 execution context</a>.</p>
    <div class="algorithm" data-algorithm="stack trace for an exception">
-    <p>The <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="stack-trace-for-an-exception">stack trace for an exception</dfn> with an exception, or a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type④">Completion
+    <p>The <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="stack-trace-for-an-exception">stack trace for an exception</dfn> with an exception, or a <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type⑤">Completion
 Record</a> of type <code>throw</code>, <var>exception</var>, is given by:</p>
     <ol>
      <li data-md>
-      <p>If <var>exception</var> is a value that has been thrown as an exception, let <var>record</var> be the <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type⑤">Completion Record</a> created to throw <var>exception</var>. Otherwise let <var>record</var> be <var>exception</var>.</p>
+      <p>If <var>exception</var> is a value that has been thrown as an exception, let <var>record</var> be the <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type⑥">Completion Record</a> created to throw <var>exception</var>. Otherwise let <var>record</var> be <var>exception</var>.</p>
      <li data-md>
       <p>Let <var>stack</var> be the <a data-link-type="dfn" href="#list-of-stack-frames" id="ref-for-list-of-stack-frames①">list of stack frames</a> corresponding to execution at the
  point <var>record</var> was created.</p>
@@ -5322,7 +5337,7 @@ associated with the context’s active document.</p>
    </div>
    <h4 class="heading settled" data-level="7.4.4" id="module-script-commands"><span class="secno">7.4.4. </span><span class="content">Commands</span><a class="self-link" href="#module-script-commands"></a></h4>
    <h5 class="heading settled" data-level="7.4.4.1" id="command-script-addPreloadScript"><span class="secno">7.4.4.1. </span><span class="content">The script.addPreloadScript Command</span><a class="self-link" href="#command-script-addPreloadScript"></a></h5>
-   <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptaddpreloadscript">script.addPreloadScript<a class="self-link" href="#commands-scriptaddpreloadscript"></a></dfn> command adds a <a data-link-type="dfn" href="#preload-script" id="ref-for-preload-script①">preload
+   <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptaddpreloadscript">script.addPreloadScript<a class="self-link" href="#commands-scriptaddpreloadscript"></a></dfn> command adds a <a data-link-type="dfn" href="#preload-script" id="ref-for-preload-script②">preload
 script</a>.</p>
    <dl>
     <dt>Command Type
@@ -5333,7 +5348,7 @@ script</a>.</p>
 }
 
 script.AddPreloadScriptParameters = {
-  expression: text;
+  functionDeclaration: text,
   ?sandbox: text
 }
 </pre>
@@ -5348,7 +5363,7 @@ script.AddPreloadScriptParameters = {
      The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①④">remote end steps</a> given <var>session</var> and <var>command parameters</var> are: 
     <ol>
      <li data-md>
-      <p>Let <var>expression</var> be the <code>expression</code> field of <var>command
+      <p>Let <var>function declaration</var> be the <code>functionDeclaration</code> field of <var>command
  parameters</var>.</p>
      <li data-md>
       <p>Let <var>script</var> be the string representation of a <a data-link-type="biblio" href="#biblio-rfc4122" title="A Universally Unique IDentifier (UUID) URN Namespace">UUID</a>.</p>
@@ -5358,7 +5373,8 @@ script.AddPreloadScriptParameters = {
      <li data-md>
       <p>Let <var>preload script map</var> be <var>session</var>’s <a data-link-type="dfn" href="#preload-script-map" id="ref-for-preload-script-map①">preload script map</a>.</p>
      <li data-md>
-      <p>Set <var>preload script map</var>[<var>script</var>] to a struct with <code>expression</code> <var>expression</var> and <code>sandbox</code> <var>sandbox</var>.</p>
+      <p>Set <var>preload script map</var>[<var>script</var>] to a struct with <code>function
+ declaration</code> <var>function declaration</var>, and <code>sandbox</code> <var>sandbox</var>.</p>
      <li data-md>
       <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑧⑤">map</a> matching the <code>script.AddPreloadScriptResult</code> with the <code>script</code> field set to <var>script</var>.</p>
     </ol>
@@ -5423,7 +5439,7 @@ script.CallFunctionParameters = {
   target: script.Target,
   ?arguments: [*script.ArgumentValue],
   ?resultOwnership: script.ResultOwnership,
-  ?serializationOptions: script.SerializationOptions
+  ?serializationOptions: script.SerializationOptions,
   ?this: script.ArgumentValue,
 }
 
@@ -5463,95 +5479,102 @@ script.ArgumentValue = (
      <li data-md>
       <p>Let <var>parenthesized function declaration</var> be <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string-concatenate" id="ref-for-string-concatenate">concatenate</a> «"<code>(</code>", <var>function declaration</var>, "<code>)</code>"»</p>
      <li data-md>
-      <p>Let <var>function script</var> be the result of <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script" id="ref-for-creating-a-classic-script①">create a classic script</a> with <var>parenthesized function declaration</var>, <var>environment settings</var>, <var>base URL</var>, and <var>options</var>.</p>
+      <p>Let <var>function script</var> be the result of <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script" id="ref-for-creating-a-classic-script">create a classic script</a> with <var>parenthesized function declaration</var>, <var>environment settings</var>, <var>base URL</var>, and <var>options</var>.</p>
      <li data-md>
       <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#prepare-to-run-script" id="ref-for-prepare-to-run-script①">Prepare to run script</a> with <var>environment settings</var>.</p>
      <li data-md>
-      <p>Let <var>function body evaluation status</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-runtime-semantics-scriptevaluation" id="ref-for-sec-runtime-semantics-scriptevaluation①">ScriptEvaluation</a>(<var>function script</var>’s record).</p>
+      <p>Let <var>function body evaluation status</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-runtime-semantics-scriptevaluation" id="ref-for-sec-runtime-semantics-scriptevaluation">ScriptEvaluation</a>(<var>function script</var>’s record).</p>
      <li data-md>
       <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#clean-up-after-running-script" id="ref-for-clean-up-after-running-script①">Clean up after running script</a> with <var>environment settings</var>.</p>
      <li data-md>
-      <p>Return <var>function body evaluation status</var>.</p>
+      <p>Return (<var>function script</var>, <var>function body evaluation status</var>).</p>
     </ol>
    </div>
-   <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①⑥">remote end steps</a> with <var>session</var> and <var>command parameters</var> are:</p>
-   <ol>
-    <li data-md>
-     <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②⑨">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target①">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
-    <li data-md>
-     <p>Let <var>realm id</var> be <var>realm</var>’s <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id⑤">realm id</a>.</p>
-    <li data-md>
-     <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object④">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context" id="ref-for-realm-execution-context⑤">realm execution context</a>'s Realm component is <var>realm</var>.</p>
-    <li data-md>
-     <p>Let <var>command arguments</var> be the value of the <code>arguments</code> field
+   <div class="algorithm" data-algorithm="remote end steps for script.callFunction">
+    <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①⑥">remote end steps</a> with <var>session</var> and <var>command parameters</var> are:</p>
+    <ol>
+     <li data-md>
+      <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②⑨">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target①">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
+     <li data-md>
+      <p>Let <var>realm id</var> be <var>realm</var>’s <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id⑤">realm id</a>.</p>
+     <li data-md>
+      <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object④">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context" id="ref-for-realm-execution-context⑤">realm execution context</a>'s Realm component is <var>realm</var>.</p>
+     <li data-md>
+      <p>Let <var>command arguments</var> be the value of the <code>arguments</code> field
  of <var>command parameters</var>.</p>
-    <li data-md>
-     <p>Let <var>deserialized arguments</var> be an empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list⑥">list</a>.</p>
-    <li data-md>
-     <p>If <var>command arguments</var> is not null, set <var>deserialized arguments</var> to the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⓪">trying</a> to <a data-link-type="dfn" href="#deserialize-arguments" id="ref-for-deserialize-arguments">deserialize arguments</a> given <var>realm</var>, <var>command arguments</var> and <var>session</var>.</p>
-    <li data-md>
-     <p>Let <var>this parameter</var> be the value of the <code>this</code> field
+     <li data-md>
+      <p>Let <var>deserialized arguments</var> be an empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list⑥">list</a>.</p>
+     <li data-md>
+      <p>If <var>command arguments</var> is not null, set <var>deserialized arguments</var> to the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⓪">trying</a> to <a data-link-type="dfn" href="#deserialize-arguments" id="ref-for-deserialize-arguments">deserialize arguments</a> given <var>realm</var>, <var>command arguments</var> and <var>session</var>.</p>
+     <li data-md>
+      <p>Let <var>this parameter</var> be the value of the <code>this</code> field
  of <var>command parameters</var>.</p>
-    <li data-md>
-     <p>Let <var>this object</var> be null.</p>
-    <li data-md>
-     <p>If <var>this parameter</var> is not null, set <var>this object</var> to the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③①">trying</a> to <a data-link-type="dfn" href="#deserialize-local-value" id="ref-for-deserialize-local-value④">deserialize local value</a> given <var>this parameter</var>, <var>realm</var> and <var>session</var>.</p>
-    <li data-md>
-     <p>Let <var>function declaration</var> be the value of the <code>functionDeclaration</code> field of <var>command parameters</var>.</p>
-    <li data-md>
-     <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>.</p>
-    <li data-md>
-     <p>Let <var>serialization options</var> be the value of the <code>serializationOptions</code> field of <var>command parameters</var>, if present,
+     <li data-md>
+      <p>Let <var>this object</var> be null.</p>
+     <li data-md>
+      <p>If <var>this parameter</var> is not null, set <var>this object</var> to the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③①">trying</a> to <a data-link-type="dfn" href="#deserialize-local-value" id="ref-for-deserialize-local-value④">deserialize local value</a> given <var>this parameter</var>, <var>realm</var> and <var>session</var>.</p>
+     <li data-md>
+      <p>Let <var>function declaration</var> be the value of the <code>functionDeclaration</code> field of <var>command parameters</var>.</p>
+     <li data-md>
+      <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>.</p>
+     <li data-md>
+      <p>Let <var>serialization options</var> be the value of the <code>serializationOptions</code> field of <var>command parameters</var>, if present,
  or otherwise a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑧⑥">map</a> matching the <code>script.SerializationOptions</code> production with the fields set to their default values.</p>
-    <li data-md>
-     <p>Let <var>result ownership</var> be the value of the <code>resultOwnership</code> field of <var>command parameters</var>, if present, or <code>none</code> otherwise.</p>
-    <li data-md>
-     <p>Let <var>function body evaluation status</var> be the result of <a data-link-type="dfn" href="#evaluate-function-body" id="ref-for-evaluate-function-body">evaluate function body</a> (<var>function declaration</var>, <var>environment settings</var>, <var>base URL</var>, and <var>options</var>).</p>
-    <li data-md>
-     <p>If <var>function body evaluation status</var>.[[Type]] is <code>throw</code>:</p>
-     <ol>
-      <li data-md>
-       <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details">get exception details</a> given <var>realm</var>, <var>function body evaluation status</var>, <var>result ownership</var> and <var>session</var>.</p>
-      <li data-md>
-       <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑧⑦">map</a> matching the <code>script.EvaluateResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
-     </ol>
-    <li data-md>
-     <p>Let <var>function object</var> be <var>function body evaluation status</var>.[[Value]].</p>
-    <li data-md>
-     <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-iscallable" id="ref-for-sec-iscallable①">IsCallable</a>(<var>function object</var>) is <code>false</code>:</p>
-     <ol>
-      <li data-md>
-       <p>Return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③①">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⓪">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑨">invalid argument</a></p>
-     </ol>
-    <li data-md>
-     <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#prepare-to-run-script" id="ref-for-prepare-to-run-script②">Prepare to run script</a> with <var>environment settings</var>.</p>
-    <li data-md>
-     <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-call" id="ref-for-sec-call①">Call</a>(<var>function object</var>, <var>this object</var>, <var>deserialized arguments</var>).</p>
-    <li data-md>
-     <p>If <var>evaluation status</var>.[[Type]] is <code>normal</code>, and <var>await promise</var> is <code>true</code>, and <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ispromise" id="ref-for-sec-ispromise①">IsPromise</a>(<var>evaluation status</var>.[[Value]]):</p>
-     <ol>
-      <li data-md>
-       <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#await" id="ref-for-await">Await</a>(<var>evaluation status</var>.[[Value]]).</p>
-     </ol>
-    <li data-md>
-     <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#clean-up-after-running-script" id="ref-for-clean-up-after-running-script②">Clean up after running script</a> with <var>environment settings</var>.</p>
-    <li data-md>
-     <p>If <var>evaluation status</var>.[[Type]] is <code>throw</code>:</p>
-     <ol>
-      <li data-md>
-       <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details①">get exception details</a> given <var>realm</var>, <var>evaluation status</var>, <var>result ownership</var> and <var>session</var>.</p>
-      <li data-md>
-       <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑧⑧">map</a> matching the <code>script.EvaluateResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
-     </ol>
-    <li data-md>
-     <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
-    <li data-md>
-     <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑥">serialize as a remote value</a> with <var>evaluation status</var>.[[Value]], <var>serialization options</var>, <var>result ownership</var>,
+     <li data-md>
+      <p>Let <var>result ownership</var> be the value of the <code>resultOwnership</code> field of <var>command parameters</var>, if present, or <code>none</code> otherwise.</p>
+     <li data-md>
+      <p>Let <var>base URL</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url" id="ref-for-api-base-url①">API base URL</a> of <var>environment settings</var>.</p>
+     <li data-md>
+      <p>Let <var>options</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options" id="ref-for-default-classic-script-fetch-options①">default classic script fetch options</a>.</p>
+     <li data-md>
+      <p>Let (<var>script</var>, <var>function body evaluation status</var>) be the
+ result of <a data-link-type="dfn" href="#evaluate-function-body" id="ref-for-evaluate-function-body①">evaluate function body</a> with <var>function declaration</var>, <var>environment settings</var>, <var>base URL</var>, and <var>options</var>.</p>
+     <li data-md>
+      <p>If <var>function body evaluation status</var>.[[Type]] is <code>throw</code>:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details">get exception details</a> given <var>realm</var>, <var>function body evaluation status</var>, <var>result ownership</var> and <var>session</var>.</p>
+       <li data-md>
+        <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑧⑦">map</a> matching the <code>script.EvaluateResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
+      </ol>
+     <li data-md>
+      <p>Let <var>function object</var> be <var>function body evaluation status</var>.[[Value]].</p>
+     <li data-md>
+      <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-iscallable" id="ref-for-sec-iscallable②">IsCallable</a>(<var>function object</var>) is <code>false</code>:</p>
+      <ol>
+       <li data-md>
+        <p>Return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③①">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⓪">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑨">invalid argument</a></p>
+      </ol>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#prepare-to-run-script" id="ref-for-prepare-to-run-script②">Prepare to run script</a> with <var>environment settings</var>.</p>
+     <li data-md>
+      <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-call" id="ref-for-sec-call②">Call</a>(<var>function object</var>, <var>this object</var>, <var>deserialized arguments</var>).</p>
+     <li data-md>
+      <p>If <var>evaluation status</var>.[[Type]] is <code>normal</code>, and <var>await promise</var> is <code>true</code>, and <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ispromise" id="ref-for-sec-ispromise①">IsPromise</a>(<var>evaluation status</var>.[[Value]]):</p>
+      <ol>
+       <li data-md>
+        <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#await" id="ref-for-await">Await</a>(<var>evaluation status</var>.[[Value]]).</p>
+      </ol>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#clean-up-after-running-script" id="ref-for-clean-up-after-running-script②">Clean up after running script</a> with <var>environment settings</var>.</p>
+     <li data-md>
+      <p>If <var>evaluation status</var>.[[Type]] is <code>throw</code>:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details①">get exception details</a> given <var>realm</var>, <var>evaluation status</var>, <var>result ownership</var> and <var>session</var>.</p>
+       <li data-md>
+        <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑧⑧">map</a> matching the <code>script.EvaluateResultException</code> production, with the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
+      </ol>
+     <li data-md>
+      <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
+     <li data-md>
+      <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑥">serialize as a remote value</a> with <var>evaluation status</var>.[[Value]], <var>serialization options</var>, <var>result ownership</var>,
  a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑧⑨">map</a> as serialization internal map, <var>realm</var> and <var>session</var>.</p>
-    <li data-md>
-     <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨⓪">map</a> matching the <code>script.EvaluateResultSuccess</code> production, with the <code>realm</code> field set to <var>realm id</var>,
+     <li data-md>
+      <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨⓪">map</a> matching the <code>script.EvaluateResultSuccess</code> production, with the <code>realm</code> field set to <var>realm id</var>,
  and the <code>result</code> field set to <var>result</var>.</p>
-   </ol>
+    </ol>
+   </div>
    <h5 class="heading settled" data-level="7.4.4.4" id="command-script-evaluate"><span class="secno">7.4.4.4. </span><span class="content">The script.evaluate Command</span><a class="self-link" href="#command-script-evaluate"></a></h5>
    <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptevaluate">script.evaluate<a class="self-link" href="#commands-scriptevaluate"></a></dfn> command evaluates a provided
 script in a given realm. For convenience a browsing context can be provided in
@@ -5584,60 +5607,62 @@ script.EvaluateParameters = {
    <p>TODO: Add timeout argument. It’s not totally clear how this ought to work; in
 Chrome it seems like the timeout doesn’t apply to the promise resolve step, but
 that likely isn’t what clients want.</p>
-   <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①⑦">remote end steps</a> with <var>session</var> and <var>command parameters</var> are:</p>
-   <ol>
-    <li data-md>
-     <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③②">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target②">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
-    <li data-md>
-     <p>Let <var>realm id</var> be <var>realm</var>’s <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id⑥">realm id</a>.</p>
-    <li data-md>
-     <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object⑤">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context" id="ref-for-realm-execution-context⑥">realm execution context</a>'s Realm component is <var>realm</var>.</p>
-    <li data-md>
-     <p>Let <var>source</var> be the value of the <code>expression</code> field of <var>command
+   <div class="algorithm" data-algorithm="remote end steps for script.evaluate">
+    <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps①⑦">remote end steps</a> given <var>session</var> and <var>command parameters</var> are:</p>
+    <ol>
+     <li data-md>
+      <p>Let <var>realm</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③②">trying</a> to <a data-link-type="dfn" href="#get-a-realm-from-a-target" id="ref-for-get-a-realm-from-a-target②">get a realm from a target</a> given the value of the <code>target</code> field of <var>command parameters</var>.</p>
+     <li data-md>
+      <p>Let <var>realm id</var> be <var>realm</var>’s <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id⑥">realm id</a>.</p>
+     <li data-md>
+      <p>Let <var>environment settings</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object" id="ref-for-environment-settings-object⑤">environment settings object</a> whose <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context" id="ref-for-realm-execution-context⑥">realm execution context</a>'s Realm component is <var>realm</var>.</p>
+     <li data-md>
+      <p>Let <var>source</var> be the value of the <code>expression</code> field of <var>command
  parameters</var>.</p>
-    <li data-md>
-     <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>.</p>
-    <li data-md>
-     <p>Let <var>serialization options</var> be the value of the <code>serializationOptions</code> field of <var>command parameters</var>, if present,
+     <li data-md>
+      <p>Let <var>await promise</var> be the value of the <code>awaitPromise</code> field of <var>command parameters</var>.</p>
+     <li data-md>
+      <p>Let <var>serialization options</var> be the value of the <code>serializationOptions</code> field of <var>command parameters</var>, if present,
  or otherwise a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨①">map</a> matching the <code>script.SerializationOptions</code> production with the fields set to their default values.</p>
-    <li data-md>
-     <p>Let <var>result ownership</var> be the value of the <code>resultOwnership</code> field of <var>command parameters</var>, if present, or <code>none</code> otherwise.</p>
-    <li data-md>
-     <p>Let <var>options</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options" id="ref-for-default-classic-script-fetch-options①">default classic script fetch options</a>.</p>
-    <li data-md>
-     <p>Let <var>base URL</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url" id="ref-for-api-base-url①">API base URL</a> of <var>environment settings</var>.</p>
-    <li data-md>
-     <p>Let <var>script</var> be the result of <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script" id="ref-for-creating-a-classic-script②">create a classic script</a> with <var>source</var>, <var>environment settings</var>, <var>base URL</var>, and <var>options</var>.</p>
-    <li data-md>
-     <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#prepare-to-run-script" id="ref-for-prepare-to-run-script③">Prepare to run script</a> with <var>environment settings</var>.</p>
-    <li data-md>
-     <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-runtime-semantics-scriptevaluation" id="ref-for-sec-runtime-semantics-scriptevaluation②">ScriptEvaluation</a>(<var>script</var>’s record).</p>
-    <li data-md>
-     <p>If <var>evaluation status</var>.[[Type]] is <code>normal</code>, <var>await promise</var> is
+     <li data-md>
+      <p>Let <var>result ownership</var> be the value of the <code>resultOwnership</code> field of <var>command parameters</var>, if present, or <code>none</code> otherwise.</p>
+     <li data-md>
+      <p>Let <var>options</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options" id="ref-for-default-classic-script-fetch-options②">default classic script fetch options</a>.</p>
+     <li data-md>
+      <p>Let <var>base URL</var> be the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url" id="ref-for-api-base-url②">API base URL</a> of <var>environment settings</var>.</p>
+     <li data-md>
+      <p>Let <var>script</var> be the result of <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script" id="ref-for-creating-a-classic-script①">create a classic script</a> with <var>source</var>, <var>environment settings</var>, <var>base URL</var>, and <var>options</var>.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#prepare-to-run-script" id="ref-for-prepare-to-run-script③">Prepare to run script</a> with <var>environment settings</var>.</p>
+     <li data-md>
+      <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-runtime-semantics-scriptevaluation" id="ref-for-sec-runtime-semantics-scriptevaluation①">ScriptEvaluation</a>(<var>script</var>’s record).</p>
+     <li data-md>
+      <p>If <var>evaluation status</var>.[[Type]] is <code>normal</code>, <var>await promise</var> is
  true, and <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ispromise" id="ref-for-sec-ispromise②">IsPromise</a>(<var>evaluation status</var>.[[Value]]):</p>
-     <ol>
-      <li data-md>
-       <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#await" id="ref-for-await①">Await</a>(<var>evaluation status</var>.[[Value]]).</p>
-     </ol>
-    <li data-md>
-     <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#clean-up-after-running-script" id="ref-for-clean-up-after-running-script③">Clean up after running script</a> with <var>environment settings</var>.</p>
-    <li data-md>
-     <p>If <var>evaluation status</var>.[[Type]] is <code>throw</code>:</p>
-     <ol>
-      <li data-md>
-       <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details②">get exception details</a> with <var>realm</var>, <var>evaluation status</var>, <var>result ownership</var> and <var>session</var>.</p>
-      <li data-md>
-       <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨②">map</a> matching the <code>script.EvaluateResultException</code> production, with the <code>realm</code> field set to <var>realm id</var>, and the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
-     </ol>
-    <li data-md>
-     <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
-    <li data-md>
-     <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑦">serialize as a remote value</a> with <var>evaluation status</var>.[[Value]], <var>serialization options</var>, <var>result ownership</var>,
+      <ol>
+       <li data-md>
+        <p>Set <var>evaluation status</var> to <a data-link-type="dfn" href="https://tc39.es/ecma262/#await" id="ref-for-await①">Await</a>(<var>evaluation status</var>.[[Value]]).</p>
+      </ol>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#clean-up-after-running-script" id="ref-for-clean-up-after-running-script③">Clean up after running script</a> with <var>environment settings</var>.</p>
+     <li data-md>
+      <p>If <var>evaluation status</var>.[[Type]] is <code>throw</code>:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>exception details</var> be the result of <a data-link-type="dfn" href="#get-exception-details" id="ref-for-get-exception-details②">get exception details</a> with <var>realm</var>, <var>evaluation status</var>, <var>result ownership</var> and <var>session</var>.</p>
+       <li data-md>
+        <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨②">map</a> matching the <code>script.EvaluateResultException</code> production, with the <code>realm</code> field set to <var>realm id</var>, and the <code>exceptionDetails</code> field set to <var>exception details</var>.</p>
+      </ol>
+     <li data-md>
+      <p class="assertion">Assert: <var>evaluation status</var>.[[Type]] is <code>normal</code>.</p>
+     <li data-md>
+      <p>Let <var>result</var> be the result of <a data-link-type="dfn" href="#serialize-as-a-remote-value" id="ref-for-serialize-as-a-remote-value⑦">serialize as a remote value</a> with <var>evaluation status</var>.[[Value]], <var>serialization options</var>, <var>result ownership</var>,
  a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨③">map</a> as serialization internal map, <var>realm</var> and <var>session</var>.</p>
-    <li data-md>
-     <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨④">map</a> matching the <code>script.EvaluateResultSuccess</code> production, with the with the <code>realm</code> field set to <var>realm id</var>, and
+     <li data-md>
+      <p>Return a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑨④">map</a> matching the <code>script.EvaluateResultSuccess</code> production, with the with the <code>realm</code> field set to <var>realm id</var>, and
  the <code>result</code> field set to <var>result</var>.</p>
-   </ol>
+    </ol>
+   </div>
    <h5 class="heading settled" data-level="7.4.4.5" id="command-script-getRealms"><span class="secno">7.4.4.5. </span><span class="content">The script.getRealms Command</span><a class="self-link" href="#command-script-getRealms"></a></h5>
    <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptgetrealms">script.getRealms<a class="self-link" href="#commands-scriptgetrealms"></a></dfn> command returns a list of
 all realms, optionally filtered to <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms⑥">realms</a> of a specific type, or to the
@@ -5717,7 +5742,7 @@ script.GetRealmsParameters = {
        literal match.</p>
    </div>
    <h5 class="heading settled" data-level="7.4.4.6" id="command-script-removePreloadScript"><span class="secno">7.4.4.6. </span><span class="content">The script.removePreloadScript Command</span><a class="self-link" href="#command-script-removePreloadScript"></a></h5>
-   <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptremovepreloadscript">script.removePreloadScript<a class="self-link" href="#commands-scriptremovepreloadscript"></a></dfn> command removes a <a data-link-type="dfn" href="#preload-script" id="ref-for-preload-script②">preload script</a>.</p>
+   <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-scriptremovepreloadscript">script.removePreloadScript<a class="self-link" href="#commands-scriptremovepreloadscript"></a></dfn> command removes a <a data-link-type="dfn" href="#preload-script" id="ref-for-preload-script③">preload script</a>.</p>
    <dl>
     <dt>Command Type
     <dd>
@@ -6794,9 +6819,9 @@ end:</p>
    <ul>
     <li><a href="#ref-for-sec-completion-record-specification-type">6.2.2.1. Deserialization</a>
     <li><a href="#ref-for-sec-completion-record-specification-type①">6.2.3.1. Serialization</a>
-    <li><a href="#ref-for-sec-completion-record-specification-type②">7.4.2. Preload Scripts</a>
-    <li><a href="#ref-for-sec-completion-record-specification-type③">7.4.3.1. The script.ExceptionDetails type</a>
-    <li><a href="#ref-for-sec-completion-record-specification-type④">7.4.3.7. The script.StackTrace type</a> <a href="#ref-for-sec-completion-record-specification-type⑤">(2)</a>
+    <li><a href="#ref-for-sec-completion-record-specification-type②">7.4.2. Preload Scripts</a> <a href="#ref-for-sec-completion-record-specification-type③">(2)</a>
+    <li><a href="#ref-for-sec-completion-record-specification-type④">7.4.3.1. The script.ExceptionDetails type</a>
+    <li><a href="#ref-for-sec-completion-record-specification-type⑤">7.4.3.7. The script.StackTrace type</a> <a href="#ref-for-sec-completion-record-specification-type⑥">(2)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-df77a5314887e43d15d1f002e041cec6" class="dfn-panel" data-for="df77a5314887e43d15d1f002e041cec6" id="infopanel-for-df77a5314887e43d15d1f002e041cec6">
@@ -6810,7 +6835,8 @@ end:</p>
    <span id="infopaneltitle-for-664d5dfcb76cca05487dc6cce044cd55" style="display:none">Info about the 'call' external reference.</span><a href="https://tc39.es/ecma262/#sec-call">https://tc39.es/ecma262/#sec-call</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-sec-call">6.2.3.1. Serialization</a>
-    <li><a href="#ref-for-sec-call①">7.4.4.3. The script.callFunction Command</a>
+    <li><a href="#ref-for-sec-call①">7.4.2. Preload Scripts</a>
+    <li><a href="#ref-for-sec-call②">7.4.4.3. The script.callFunction Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-aff3fd663844b745ed31eff07a7a7c88" class="dfn-panel" data-for="aff3fd663844b745ed31eff07a7a7c88" id="infopanel-for-aff3fd663844b745ed31eff07a7a7c88">
@@ -6818,9 +6844,9 @@ end:</p>
    <ul>
     <li><a href="#ref-for-sec-completion-record-specification-type">6.2.2.1. Deserialization</a>
     <li><a href="#ref-for-sec-completion-record-specification-type①">6.2.3.1. Serialization</a>
-    <li><a href="#ref-for-sec-completion-record-specification-type②">7.4.2. Preload Scripts</a>
-    <li><a href="#ref-for-sec-completion-record-specification-type③">7.4.3.1. The script.ExceptionDetails type</a>
-    <li><a href="#ref-for-sec-completion-record-specification-type④">7.4.3.7. The script.StackTrace type</a> <a href="#ref-for-sec-completion-record-specification-type⑤">(2)</a>
+    <li><a href="#ref-for-sec-completion-record-specification-type②">7.4.2. Preload Scripts</a> <a href="#ref-for-sec-completion-record-specification-type③">(2)</a>
+    <li><a href="#ref-for-sec-completion-record-specification-type④">7.4.3.1. The script.ExceptionDetails type</a>
+    <li><a href="#ref-for-sec-completion-record-specification-type⑤">7.4.3.7. The script.StackTrace type</a> <a href="#ref-for-sec-completion-record-specification-type⑥">(2)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-b16fca89350102f1bfbb9f54c573c4ee" class="dfn-panel" data-for="b16fca89350102f1bfbb9f54c573c4ee" id="infopanel-for-b16fca89350102f1bfbb9f54c573c4ee">
@@ -6911,7 +6937,8 @@ end:</p>
    <span id="infopaneltitle-for-e34b629650fa071276e07fe627fe1c92" style="display:none">Info about the 'iscallable' external reference.</span><a href="https://tc39.es/ecma262/#sec-iscallable">https://tc39.es/ecma262/#sec-iscallable</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-sec-iscallable">6.2.3.1. Serialization</a>
-    <li><a href="#ref-for-sec-iscallable①">7.4.4.3. The script.callFunction Command</a>
+    <li><a href="#ref-for-sec-iscallable①">7.4.2. Preload Scripts</a>
+    <li><a href="#ref-for-sec-iscallable②">7.4.4.3. The script.callFunction Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-c1ca003ee94494d9cd3cec96e0cd5e66" class="dfn-panel" data-for="c1ca003ee94494d9cd3cec96e0cd5e66" id="infopanel-for-c1ca003ee94494d9cd3cec96e0cd5e66">
@@ -6976,9 +7003,8 @@ end:</p>
   <aside aria-labelledby="infopaneltitle-for-c71aa160f2dc633a296d7180b2ab0124" class="dfn-panel" data-for="c71aa160f2dc633a296d7180b2ab0124" id="infopanel-for-c71aa160f2dc633a296d7180b2ab0124">
    <span id="infopaneltitle-for-c71aa160f2dc633a296d7180b2ab0124" style="display:none">Info about the 'scriptevaluation' external reference.</span><a href="https://tc39.es/ecma262/#sec-runtime-semantics-scriptevaluation">https://tc39.es/ecma262/#sec-runtime-semantics-scriptevaluation</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-sec-runtime-semantics-scriptevaluation">7.4.2. Preload Scripts</a>
-    <li><a href="#ref-for-sec-runtime-semantics-scriptevaluation①">7.4.4.3. The script.callFunction Command</a>
-    <li><a href="#ref-for-sec-runtime-semantics-scriptevaluation②">7.4.4.4. The script.evaluate Command</a>
+    <li><a href="#ref-for-sec-runtime-semantics-scriptevaluation">7.4.4.3. The script.callFunction Command</a>
+    <li><a href="#ref-for-sec-runtime-semantics-scriptevaluation①">7.4.4.4. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-e58dc8616de7d01917f2ff8f5c326ec1" class="dfn-panel" data-for="e58dc8616de7d01917f2ff8f5c326ec1" id="infopanel-for-e58dc8616de7d01917f2ff8f5c326ec1">
@@ -7004,9 +7030,9 @@ end:</p>
    <ul>
     <li><a href="#ref-for-sec-completion-record-specification-type">6.2.2.1. Deserialization</a>
     <li><a href="#ref-for-sec-completion-record-specification-type①">6.2.3.1. Serialization</a>
-    <li><a href="#ref-for-sec-completion-record-specification-type②">7.4.2. Preload Scripts</a>
-    <li><a href="#ref-for-sec-completion-record-specification-type③">7.4.3.1. The script.ExceptionDetails type</a>
-    <li><a href="#ref-for-sec-completion-record-specification-type④">7.4.3.7. The script.StackTrace type</a> <a href="#ref-for-sec-completion-record-specification-type⑤">(2)</a>
+    <li><a href="#ref-for-sec-completion-record-specification-type②">7.4.2. Preload Scripts</a> <a href="#ref-for-sec-completion-record-specification-type③">(2)</a>
+    <li><a href="#ref-for-sec-completion-record-specification-type④">7.4.3.1. The script.ExceptionDetails type</a>
+    <li><a href="#ref-for-sec-completion-record-specification-type⑤">7.4.3.7. The script.StackTrace type</a> <a href="#ref-for-sec-completion-record-specification-type⑥">(2)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-177afd319361f26633c0db484062d1eb" class="dfn-panel" data-for="177afd319361f26633c0db484062d1eb" id="infopanel-for-177afd319361f26633c0db484062d1eb">
@@ -7388,7 +7414,8 @@ end:</p>
    <span id="infopaneltitle-for-c882bc89f1141c15f3f863244b6a9ef0" style="display:none">Info about the 'api base url' external reference.</span><a href="https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url">https://html.spec.whatwg.org/multipage/webappapis.html#api-base-url</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-api-base-url">7.4.2. Preload Scripts</a>
-    <li><a href="#ref-for-api-base-url①">7.4.4.4. The script.evaluate Command</a>
+    <li><a href="#ref-for-api-base-url①">7.4.4.3. The script.callFunction Command</a>
+    <li><a href="#ref-for-api-base-url②">7.4.4.4. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-04e6c32034490f45e4757ead7871de18" class="dfn-panel" data-for="04e6c32034490f45e4757ead7871de18" id="infopanel-for-04e6c32034490f45e4757ead7871de18">
@@ -7463,9 +7490,8 @@ end:</p>
   <aside aria-labelledby="infopaneltitle-for-ac66544155c7c7170e1f697df1098b8d" class="dfn-panel" data-for="ac66544155c7c7170e1f697df1098b8d" id="infopanel-for-ac66544155c7c7170e1f697df1098b8d">
    <span id="infopaneltitle-for-ac66544155c7c7170e1f697df1098b8d" style="display:none">Info about the 'create a classic script' external reference.</span><a href="https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script">https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-creating-a-classic-script">7.4.2. Preload Scripts</a>
-    <li><a href="#ref-for-creating-a-classic-script①">7.4.4.3. The script.callFunction Command</a>
-    <li><a href="#ref-for-creating-a-classic-script②">7.4.4.4. The script.evaluate Command</a>
+    <li><a href="#ref-for-creating-a-classic-script">7.4.4.3. The script.callFunction Command</a>
+    <li><a href="#ref-for-creating-a-classic-script①">7.4.4.4. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-680a4c7af1c58dbb8fe64581cbfa6011" class="dfn-panel" data-for="680a4c7af1c58dbb8fe64581cbfa6011" id="infopanel-for-680a4c7af1c58dbb8fe64581cbfa6011">
@@ -7484,7 +7510,8 @@ end:</p>
    <span id="infopaneltitle-for-24f3dec3c1041a1c611f606ec953595f" style="display:none">Info about the 'default classic script fetch options' external reference.</span><a href="https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options">https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options</a><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-default-classic-script-fetch-options">7.4.2. Preload Scripts</a>
-    <li><a href="#ref-for-default-classic-script-fetch-options①">7.4.4.4. The script.evaluate Command</a>
+    <li><a href="#ref-for-default-classic-script-fetch-options①">7.4.4.3. The script.callFunction Command</a>
+    <li><a href="#ref-for-default-classic-script-fetch-options②">7.4.4.4. The script.evaluate Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-d815dc723d8b4fe4b1166e2013ec62b7" class="dfn-panel" data-for="d815dc723d8b4fe4b1166e2013ec62b7" id="infopanel-for-d815dc723d8b4fe4b1166e2013ec62b7">
@@ -7661,7 +7688,7 @@ end:</p>
   <aside aria-labelledby="infopaneltitle-for-1dd34ad89f7e6a0a3e2ead5b13af8e51" class="dfn-panel" data-for="1dd34ad89f7e6a0a3e2ead5b13af8e51" id="infopanel-for-1dd34ad89f7e6a0a3e2ead5b13af8e51">
    <span id="infopaneltitle-for-1dd34ad89f7e6a0a3e2ead5b13af8e51" style="display:none">Info about the 'report the exception' external reference.</span><a href="https://html.spec.whatwg.org/multipage/webappapis.html#report-the-exception">https://html.spec.whatwg.org/multipage/webappapis.html#report-the-exception</a><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-report-the-exception">7.4.2. Preload Scripts</a>
+    <li><a href="#ref-for-report-the-exception">7.4.2. Preload Scripts</a> <a href="#ref-for-report-the-exception①">(2)</a> <a href="#ref-for-report-the-exception②">(3)</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-9975dcbf6edcaa4e4545626d4ec14e5c" class="dfn-panel" data-for="9975dcbf6edcaa4e4545626d4ec14e5c" id="infopanel-for-9975dcbf6edcaa4e4545626d4ec14e5c">
@@ -8176,6 +8203,12 @@ end:</p>
     <li><a href="#ref-for-AudioWorkletGlobalScope">7.4.3.4. The script.RealmInfo type</a>
    </ul>
   </aside>
+  <aside aria-labelledby="infopaneltitle-for-96a5f6340566007603d93d2b282507d6" class="dfn-panel" data-for="96a5f6340566007603d93d2b282507d6" id="infopanel-for-96a5f6340566007603d93d2b282507d6">
+   <span id="infopaneltitle-for-96a5f6340566007603d93d2b282507d6" style="display:none">Info about the 'typeerror' external reference.</span><a href="https://www.w3.org/TR/WebCryptoAPI/#dfn-TypeError">https://www.w3.org/TR/WebCryptoAPI/#dfn-TypeError</a><b>Referenced in:</b>
+   <ul>
+    <li><a href="#ref-for-dfn-TypeError">7.4.2. Preload Scripts</a>
+   </ul>
+  </aside>
   <aside aria-labelledby="infopaneltitle-for-034fdc6cb2142481d0851c703f6044f6" class="dfn-panel" data-for="034fdc6cb2142481d0851c703f6044f6" id="infopanel-for-034fdc6cb2142481d0851c703f6044f6">
    <span id="infopaneltitle-for-034fdc6cb2142481d0851c703f6044f6" style="display:none">Info about the 'actions options' external reference.</span><a href="https://w3c.github.io/webdriver/#dfn-actions-options">https://w3c.github.io/webdriver/#dfn-actions-options</a><b>Referenced in:</b>
    <ul>
@@ -8669,7 +8702,7 @@ end:</p>
      <li><span class="dfn-paneled" id="85fe07e4f1cdf460ba74bb28784ee298">value</span>
     </ul>
    <li>
-    <a data-link-type="biblio">[ECMASCRIPT]</a> defines the following terms:
+    <a data-link-type="biblio">[ECMAScript]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="03b441c041699089d5c30cf6816d8d9b">abrupt completion</span>
      <li><span class="dfn-paneled" id="df77a5314887e43d15d1f002e041cec6">await</span>
@@ -8925,6 +8958,11 @@ end:</p>
      <li><span class="dfn-paneled" id="71d988093d91a028e1fe94f8b463bf3b">AudioWorkletGlobalScope</span>
     </ul>
    <li>
+    <a data-link-type="biblio">[WebCryptoAPI]</a> defines the following terms:
+    <ul>
+     <li><span class="dfn-paneled" id="96a5f6340566007603d93d2b282507d6">typeerror</span>
+    </ul>
+   <li>
     <a data-link-type="biblio">[WEBDRIVER]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="034fdc6cb2142481d0851c703f6044f6">actions options</span>
@@ -8991,7 +9029,7 @@ end:</p>
    <dd>Ian Kilpatrick; Dean Jackson. <a href="https://drafts.css-houdini.org/css-paint-api-1/"><cite>CSS Painting API Level 1</cite></a>. URL: <a href="https://drafts.css-houdini.org/css-paint-api-1/">https://drafts.css-houdini.org/css-paint-api-1/</a>
    <dt id="biblio-dom">[DOM]
    <dd>Anne van Kesteren. <a href="https://dom.spec.whatwg.org/"><cite>DOM Standard</cite></a>. Living Standard. URL: <a href="https://dom.spec.whatwg.org/">https://dom.spec.whatwg.org/</a>
-   <dt id="biblio-ecmascript">[ECMASCRIPT]
+   <dt id="biblio-ecmascript">[ECMAScript]
    <dd><a href="https://tc39.es/ecma262/multipage/"><cite>ECMAScript Language Specification</cite></a>. URL: <a href="https://tc39.es/ecma262/multipage/">https://tc39.es/ecma262/multipage/</a>
    <dt id="biblio-encoding">[ENCODING]
    <dd>Anne van Kesteren. <a href="https://encoding.spec.whatwg.org/"><cite>Encoding Standard</cite></a>. Living Standard. URL: <a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>
@@ -9023,6 +9061,8 @@ end:</p>
    <dd>Anne van Kesteren. <a href="https://url.spec.whatwg.org/"><cite>URL Standard</cite></a>. Living Standard. URL: <a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>
    <dt id="biblio-webaudio">[WEBAUDIO]
    <dd>Paul Adenot; Hongchan Choi. <a href="https://webaudio.github.io/web-audio-api/"><cite>Web Audio API</cite></a>. URL: <a href="https://webaudio.github.io/web-audio-api/">https://webaudio.github.io/web-audio-api/</a>
+   <dt id="biblio-webcryptoapi">[WebCryptoAPI]
+   <dd>Mark Watson. <a href="https://w3c.github.io/webcrypto/"><cite>Web Cryptography API</cite></a>. URL: <a href="https://w3c.github.io/webcrypto/">https://w3c.github.io/webcrypto/</a>
    <dt id="biblio-webdriver">[WEBDRIVER]
    <dd>Simon Stewart; David Burns. <a href="https://w3c.github.io/webdriver/"><cite>WebDriver</cite></a>. URL: <a href="https://w3c.github.io/webdriver/">https://w3c.github.io/webdriver/</a>
    <dt id="biblio-webidl">[WEBIDL]
@@ -9938,8 +9978,9 @@ request sent' definition.</span><b><a href="#webdriver-bidi-before-request-sent"
    <span id="infopaneltitle-for-preload-script" style="display:none">Info about the 'Preload script' definition.</span><b><a href="#preload-script">#preload-script</a></b><b>Referenced in:</b>
    <ul>
     <li><a href="#ref-for-preload-script">3.5. Errors</a>
-    <li><a href="#ref-for-preload-script①">7.4.4.1. The script.addPreloadScript Command</a>
-    <li><a href="#ref-for-preload-script②">7.4.4.6. The script.removePreloadScript Command</a>
+    <li><a href="#ref-for-preload-script①">7.4.2. Preload Scripts</a>
+    <li><a href="#ref-for-preload-script②">7.4.4.1. The script.addPreloadScript Command</a>
+    <li><a href="#ref-for-preload-script③">7.4.4.6. The script.removePreloadScript Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-preload-script-map" class="dfn-panel" data-for="preload-script-map" id="infopanel-for-preload-script-map">
@@ -10070,7 +10111,8 @@ frame' definition.</span><b><a href="#stack-frame">#stack-frame</a></b><b>Refere
   <aside aria-labelledby="infopaneltitle-for-evaluate-function-body" class="dfn-panel" data-for="evaluate-function-body" id="infopanel-for-evaluate-function-body">
    <span id="infopaneltitle-for-evaluate-function-body" style="display:none">Info about the 'evaluate function body' definition.</span><b><a href="#evaluate-function-body">#evaluate-function-body</a></b><b>Referenced in:</b>
    <ul>
-    <li><a href="#ref-for-evaluate-function-body">7.4.4.3. The script.callFunction Command</a>
+    <li><a href="#ref-for-evaluate-function-body">7.4.2. Preload Scripts</a>
+    <li><a href="#ref-for-evaluate-function-body①">7.4.4.3. The script.callFunction Command</a>
    </ul>
   </aside>
   <aside aria-labelledby="infopaneltitle-for-log-event-buffer" class="dfn-panel" data-for="log-event-buffer" id="infopanel-for-log-event-buffer">
