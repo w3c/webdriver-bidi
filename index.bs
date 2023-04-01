@@ -5038,8 +5038,13 @@ TODO: Extend this to scripts in other kinds of realms.
 
 A [=BiDi session=] has a <dfn>preload script map</dfn> which is a [=/map=] in
 which the keys are [[!RFC4122|UUID]]s, and the values are [=structs=] with an <a
-for=struct>item</a> named <code>expression</code>, which is a string, and an
-item named <code>sandbox</code> which is a string or null.
+for=struct>item</a> named <code>function declaration</code>, which is a string,
+<code>arguments</code>, and an item named <code>sandbox</code> which is a string
+or null.
+
+Note: If executing a [=preload script=] fails, either due to a syntax error, or
+a runtime exception, an [[ECMAScript]] exception is reported in the realm in
+which it was being executed, and other preload scripts run as normal.
 
 <div algorithm>
 To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment settings|:
@@ -5059,23 +5064,37 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
        |browsing context|. Otherwise let |realm| be |environment settings|'
        [=realm execution context=]'s Realm component.
 
-    1. Let |source| be |preload script|'s <code>expression</code>.
+    1. Let |base URL| be the [=API base URL=] of |environment settings|.
 
     1. Let |options| be the [=default classic script fetch options=].
 
-    1. Let |base URL| be the [=API base URL=] of |environment settings|.
+    1. Let |function declaration| be |preload script|'s <code>function declaration</code>.
 
-    1. Let |script| be the result of [=create a classic script=] with |source|,
+    1. Let (|script|, |function body evaluation status|) be the result of
+       [=evaluate function body=] with |function declaration|,
        |environment settings|, |base URL|, and |options|.
+
+    1. If |function body evaluation status| is an [=abrupt completion=], then
+       [=report the exception=] given by |function body evaluation status|.\[[Value]]
+       for |script|.
+
+    1. Let |function object| be |function body evaluation status|.\[[Value]].
+
+    1. If [=IsCallable=](|function object|) is <code>false</code>:
+
+       1. Let |error| be a new [=TypeError=] object in |realm|.
+
+       1. [=Report the exception=] |error|.
 
     1. [=Prepare to run script=] with |environment settings|.
 
-    1. Let |evaluation status| be [=ScriptEvaluation=](|script|'s record).
-
-    1. If |evaluation status| is an [=abrupt completion=], then [=report the
-       exception=] given by |evaluation status|.\[[Value]] for |script|.
+    1. Set |evaluation status| to
+       [=Call=](|function object|, null, «»).
 
     1. [=Clean up after running script=] with |environment settings|.
+
+    1. If |evaluation status| is an [=abrupt completion=], then
+       [=report the exception=] given by |evaluation status|.\[[Value]] for |script|.
 
 </div>
 
@@ -5649,7 +5668,7 @@ script=].
       }
 
       script.AddPreloadScriptParameters = {
-        expression: text;
+        functionDeclaration: text,
         ?sandbox: text
       }
       </pre>
@@ -5667,7 +5686,7 @@ script=].
 <div algorithm="remote end steps for script.addPreloadScript">
 The [=remote end steps=] given |session| and |command parameters| are:
 
-1. Let |expression| be the <code>expression</code> field of |command
+1. Let |function declaration| be the <code>functionDeclaration</code> field of |command
    parameters|.
 
 1. Let |script| be the string representation of a [[!RFC4122|UUID]].
@@ -5677,8 +5696,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |preload script map| be |session|'s [=preload script map=].
 
-1. Set |preload script map|[|script|] to a struct with <code>expression</code>
-   |expression| and <code>sandbox</code> |sandbox|.
+1. Set |preload script map|[|script|] to a struct with <code>function
+   declaration</code> |function declaration|, and <code>sandbox</code> |sandbox|.
 
 1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
@@ -5757,7 +5776,7 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
         target: script.Target,
         ?arguments: [*script.ArgumentValue],
         ?resultOwnership: script.ResultOwnership,
-        ?serializationOptions: script.SerializationOptions
+        ?serializationOptions: script.SerializationOptions,
         ?this: script.ArgumentValue,
       }
 
@@ -5814,10 +5833,12 @@ Note: the |function declaration| is parenthesized and evaluated.
 
 1. [=Clean up after running script=] with |environment settings|.
 
-1. Return |function body evaluation status|.
+1. Return (|function script|, |function body evaluation status|).
 
 </div>
 
+
+<div algorithm="remote end steps for script.callFunction">
 
 The [=remote end steps=] with |session| and |command parameters| are:
 
@@ -5859,8 +5880,13 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |result ownership| be the value of the <code>resultOwnership</code> field of
    |command parameters|, if present, or <code>none</code> otherwise.
 
-1. Let |function body evaluation status| be the result of [=evaluate function body=]
-   (|function declaration|, |environment settings|, |base URL|, and |options|).
+1. Let |base URL| be the [=API base URL=] of |environment settings|.
+
+1. Let |options| be the [=default classic script fetch options=].
+
+1. Let (<var ignore>script</var>, |function body evaluation status|) be the
+   result of [=evaluate function body=] with |function declaration|,
+   |environment settings|, |base URL|, and |options|.
 
 1. If |function body evaluation status|.\[[Type]] is <code>throw</code>:
 
@@ -5952,7 +5978,9 @@ TODO: Add timeout argument. It's not totally clear how this ought to work; in
 Chrome it seems like the timeout doesn't apply to the promise resolve step, but
 that likely isn't what clients want.
 
-The [=remote end steps=] with |session| and |command parameters| are:
+<div algorithm="remote end steps for script.evaluate">
+
+The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given the value of the <code>target</code> field of |command parameters|.
