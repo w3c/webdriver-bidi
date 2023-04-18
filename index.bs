@@ -4279,6 +4279,51 @@ To <dfn>deserialize local value</dfn> given |local protocol value|, |realm| and
 </div>
 
 
+#### The script.PreloadScript Type #### {#type-script-PreloadScript}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+script.PreloadScript = text;
+</pre>
+
+The <code>script.PreloadScript</code> type represents a handle to a script that will run
+on realm creation.
+
+#### The script.Realm Type #### {#type-script-Realm}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+script.Realm = text;
+</pre>
+
+Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
+uniquely identifying that realm. This is implicitly set when the realm is
+created.
+
+The [=realm id=] for a realm is opaque and must not be derivable from the handle
+id of the corresponding global object in the [=handle object map=] or, where
+relevant, from the [=browsing context id=] of any [=/browsing context=].
+
+Note: this is to ensure that users do not rely on implementation-specific
+relationships between different ids.
+
+<div algorithm>
+To <dfn>get a realm</dfn> given |realm id|:
+
+1. If |realm id| is null, return [=success=] with data null.
+
+1. If there is no [=realm=] with [=realm id|id=] |realm id| return
+   [=error=] with [=error code=] [=no such frame=]
+
+1. Let |realm| be the [=realm=] with [=realm id|id=] |realm id|.
+
+1. Return [=success=] with data |realm|
+
+Issue: This has the wrong error code
+</div>
+
 #### The script.PrimitiveProtocolValue Type #### {#type-script-PrimitiveProtocolValue}
 
 [=Remote end definition=] and [=local end definition=]
@@ -4445,52 +4490,6 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
 
 1. Return [=error=] with [=error code=] [=invalid argument=]
 
-</div>
-
-
-#### The script.PreloadScript Type #### {#type-script-PreloadScript}
-
-[=Remote end definition=] and [=local end definition=]
-
-<pre class="cddl remote-cddl local-cddl">
-script.PreloadScript = text;
-</pre>
-
-The <code>script.PreloadScript</code> type represents a handle to a script that will run
-on realm creation.
-
-#### The script.Realm Type #### {#type-script-Realm}
-
-[=Remote end definition=] and [=local end definition=]
-
-<pre class="cddl remote-cddl local-cddl">
-script.Realm = text;
-</pre>
-
-Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
-uniquely identifying that realm. This is implicitly set when the realm is
-created.
-
-The [=realm id=] for a realm is opaque and must not be derivable from the handle
-id of the corresponding global object in the [=handle object map=] or, where
-relevant, from the [=browsing context id=] of any [=/browsing context=].
-
-Note: this is to ensure that users do not rely on implementation-specific
-relationships between different ids.
-
-<div algorithm>
-To <dfn>get a realm</dfn> given |realm id|:
-
-1. If |realm id| is null, return [=success=] with data null.
-
-1. If there is no [=realm=] with [=realm id|id=] |realm id| return
-   [=error=] with [=error code=] [=no such frame=]
-
-1. Let |realm| be the [=realm=] with [=realm id|id=] |realm id|.
-
-1. Return [=success=] with data |realm|
-
-Issue: This has the wrong error code
 </div>
 
 #### The script.RealmInfo Type ####  {#type-script-RealmInfo}
@@ -5485,6 +5484,30 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |serialization options|,
 
 </div>
 
+#### The script.ResultOwnership Type #### {#type-script-ResultOwnership}
+
+<pre class="cddl remote-cddl local-cddl">
+script.ResultOwnership = "root" / "none"
+</pre>
+
+The <code>script.ResultOwnership</code> specifies how the serialized value
+ownership will be treated.
+
+#### The script.SerializationOptions Type #### {#type-script-SerializationOptions}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl">
+script.SerializationOptions = {
+  ?maxDomDepth: (js-uint / null) .default 0,
+  ?maxObjectDepth: (js-uint / null) .default null,
+  ?includeShadowTree: ("none" / "open" / "all") .default "none",
+}
+</pre>
+
+The <code>script.SerializationOptions</code> allows specifying how ECMAScript
+objects will be serialized.
+
 #### The script.SharedId Type #### {#type-script-SharedId}
 
 [=Remote end definition=] and [=local end definition=]
@@ -5494,7 +5517,7 @@ script.SharedId = text;
 </pre>
 
 The <code>script.SharedId</code> type represents a reference to a DOM {{Node}} that
-is usable in any realm (including [=Sandbox Realms=]).
+is usable in any realm (including <a href=#sandbox-realm>Sandbox Realms</a>).
 
 #### The script.StackFrame Type #### {#type-script-StackFrame}
 
@@ -5598,30 +5621,6 @@ Record=] of type <code>throw</code>, |exception|, is given by:
 1. Return [=construct a stack trace=] given |stack|.
 
 </div>
-
-#### The script.ResultOwnership Type #### {#type-script-ResultOwnership}
-
-<pre class="cddl remote-cddl local-cddl">
-script.ResultOwnership = "root" / "none"
-</pre>
-
-The <code>script.ResultOwnership</code> specifies how the serialized value
-ownership will be treated.
-
-#### The script.SerializationOptions Type #### {#type-script-SerializationOptions}
-
-[=Remote end definition=]
-
-<pre class="cddl remote-cddl">
-script.SerializationOptions = {
-  ?maxDomDepth: (js-uint / null) .default 0,
-  ?maxObjectDepth: (js-uint / null) .default null,
-  ?includeShadowTree: ("none" / "open" / "all") .default "none",
-}
-</pre>
-
-The <code>script.SerializationOptions</code> allows specifying how ECMAScript
-objects will be serialized.
 
 #### The script.Source Type #### {#type-script-Source}
 
