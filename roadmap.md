@@ -33,7 +33,7 @@ This scenario loads a web page within a new tab, and uses script evaluation to e
 This scenario sets up handlers for network events and then navigates to a web page. The provided timing information from the emitted events can be used to measure the page load performance by storing the relevant data eg. in a HAR file. In spec terms, this involves:
 
 - [x] Some items from the previous scenario
-- [ ] [Network events for the request to be sent, and response started and completed](https://github.com/w3c/webdriver-bidi/pull/204)
+- [x] [Network events for the request to be sent, and response started and completed](https://w3c.github.io/webdriver-bidi/#module-network)
 
 ### Submitting forms
 
@@ -57,7 +57,7 @@ In this scenario a `MutationObserver` is installed by a bootstrap script as earl
 - [x] Some items from the previous scenarios
 - [x] [Adding a preload script](https://w3c.github.io/webdriver-bidi/#command-script-addPreloadScript)
 - [x] [Installing the preload script](https://w3c.github.io/webdriver-bidi/#preload-scripts)
-- [ ] [Back channel for communicating with the client](https://github.com/w3c/webdriver-bidi/pull/361)
+- [x] [Back channel for communicating with the client](https://w3c.github.io/webdriver-bidi/#type-script-Channel)
 - [x] [Removing a preload script](https://w3c.github.io/webdriver-bidi/#command-script-removePreloadScript)
 
 ### Replacing resources with test data
