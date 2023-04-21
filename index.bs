@@ -24,6 +24,7 @@ spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
     text: %x1 denotes a text frame; url: section-5.2
     text: Send a WebSocket Message; url: section-6.1
     text: A WebSocket Message Has Been Received; url: section-6.2
+    text: Start The WebSocket Closing Handshake; url: section-7.1.2
     text: The WebSocket Closing Handshake is Started; url: section-7.1.3
     text: The WebSocket Connection is Closed; url: section-7.1.4
     text: Fail the WebSocket Connection; url: section-7.1.7
@@ -40,6 +41,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: additional WebDriver capability; url: dfn-additional-webdriver-capability
     text: additional capability deserialization algorithm; url: dfn-additional-capability-deserialization-algorithm
     text: capability name; url: dfn-capability-name
+    text: close the session; url: dfn-close-the-session
     text: create a session; url: dfn-create-a-session
     text: dispatch actions; url: dfn-dispatch-actions
     text: dispatch tick actions; url: dfn-dispatch-tick-actions
@@ -287,6 +289,7 @@ Command = {
 }
 
 CommandData = (
+  BrowserCommand //
   BrowsingContextCommand //
   InputCommand //
   NetworkCommand //
@@ -470,6 +473,12 @@ with the following additional codes:
   <dd>Tried to deserialize an unknown <code>SharedReference</code>.
 </dl>
 
+<dl>
+  <dt><dfn>unable to close browser</dfn>
+  <dd>Tried to close the browser, but failed to do so.
+</dl>
+
+
 <pre class="cddl local-cddl">
 ErrorCode = ("invalid argument" /
              "invalid session id" /
@@ -479,6 +488,7 @@ ErrorCode = ("invalid argument" /
              "no such node" /
              "no such script" /
              "session not created" /
+             "unable to close browser" /
              "unknown command" /
              "unknown error" /
              "unsupported operation")
@@ -827,6 +837,8 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
    an error response=] given |connection|, null, and [=invalid argument=], and
    finally return.
 
+1. If |session| is not null and not in [=active sessions=] then return.
+
 1. Match |parsed| against the [=remote end definition=]. If this results in a
    match:
 
@@ -976,6 +988,23 @@ Note: This does not end any [=/session=].
 
 Issue: Need to hook in to the session ending to allow the UA to close
 the listener if it wants.
+
+</div>
+
+<div algorithm>
+
+To <dfn>close the WebSocket connections</dfn> given |session|:
+
+1. For each |connection| in |session|'s[=session WebSocket
+   connections=]:
+
+  1. [=Start the WebSocket closing handshake=] with |connection|.
+
+     Note: this will result in the steps in [=handle a connection closing=]
+     being run for |connection|, which will clean up resources associated with
+     |connection|.
+
+</div>
 
 ## Establishing a Connection ## {#establishing}
 
@@ -1172,6 +1201,7 @@ events for monitoring the status of the remote end.
 
 <pre class="cddl remote-cddl">
 SessionCommand = (
+  session.End //
   session.New //
   session.Status //
   session.Subscribe //
@@ -1186,7 +1216,26 @@ SessionResult = (session.StatusResult)
 </pre>
 
 <div algorithm>
+To <dfn>end the session</dfn> given |session|:
 
+1. Remove |session| from [=active sessions=].
+
+1. If [=active sessions=] is [=list/empty=], set the [=webdriver-active flag=]
+   to false.
+
+</div>
+
+<div algorithm>
+
+To <dfn>cleanup the session</dfn> given |session|:
+
+1. [=Close the WebSocket connections=] with |session|.
+
+1. Perform any implementation-specific cleanup steps.
+
+</div>
+
+<div algorithm>
 To <dfn>update the event map</dfn>, given
 |session|, |requested event names|, |browsing contexts|, and |enabled|:
 
@@ -1479,6 +1528,50 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
+#### The session.end Command #### {#command-session-end}
+
+The <dfn export for=commands>session.end</dfn> command ends the current
+[=/session=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      session.End = {
+        method: "session.end",
+        params: EmptyParams
+      }
+
+      </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+      <pre class="cddl">
+      EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for session.end">
+
+The [=remote end steps=] given |session| and <var ignore>command parameters</var> are:
+
+1. [=End the session=] with |session|.
+
+1. Return [=success=] with data null, and in parallel run the following steps:
+
+  1. Wait until the [=Send a WebSocket message=] steps have been called with the
+     response to this command.
+
+     Issue: this is rather imprecise language, but hopefully it's clear that the
+     intent is that we send the response to the command before starting shutdown
+     of the connections.
+
+  1. [=Cleanup the session=] with |session|.
+
+</div>
+
+
 #### The session.subscribe Command #### {#command-session-subscribe}
 
 The <dfn export for=commands>session.subscribe</dfn> command enables certain events
@@ -1588,6 +1681,102 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 </div>
 
+## The browser Module ## {#module-browser}
+
+The <dfn export for=modules>browser</dfn> module contains commands for
+managing the remote end browser process.
+
+### Definition ### {#module-browser-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+BrowserCommand = (
+  browser.Close
+)
+</pre>
+
+[=local end definition=]
+
+<!-- Nothing yet -->
+<pre class="cddl local-cddl">
+</pre>
+
+
+### Commands ### {#module-browser-commands}
+
+#### The browser.close Command #### {#command-browser-close}
+
+The <dfn export for=commands>browser.close</dfn> command terminates all
+WebDriver sessions and cleans up automation state in the remote browser instance.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browser.Close = {
+        method: "browser.close",
+        params: EmptyParams,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl">
+      EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.close">
+The [=remote end steps=] with |session| and <var ignore>command parameters</var> are:
+
+1. [=End the session=] with |session|.
+
+1. If [=active sessions=] is not [=list/empty=] an implementation may
+   return [=error=] with [=error code=] [=unable to close browser=], and then
+   run the following steps [=in parallel=]:
+
+    1. Wait until the [=Send a WebSocket message=] steps have been called with the
+       response to this command.
+
+    1. [=Cleanup the session=] with |session|.
+
+   Note: The behaviour in cases where the browser has multiple automation
+   sessions is currently unspecified. It might be that any session can close the
+   browser, or that only the final open session can actually close the browser,
+   or only the first session started can. This behaviour might be fully
+   specified in a future version of this specification.
+
+1. For each |active session| in [=active sessions=]:
+
+  1. [=End the session=] |active session|.
+
+  1. [=Cleanup the session=] with |active session|
+
+1. Return [=success=] with data null, and run the following steps [=in parallel=].
+
+  1. Wait until the [=Send a WebSocket message=] steps have been called with the
+     response to this command.
+
+  1. [=Cleanup the session=] with |session|.
+
+  1. [=Close=] any [=top-level browsing contexts=] without [=prompting to unload=].
+
+     Note: This implicitly only affects browsing contexts that were under
+     automation in the first place.
+
+  1. Perform implementation defined steps to clean up resources associated with
+     the [=remote end=] under automation.
+
+     Note: For example this might include cleanly shutting down any OS-level
+     processes associated with the browser under automation, removing temporary
+     state, such as user profile data, created by the [=remote end=] while under
+     automation, or shutting down the [=WebSocket Listener=]. Because of
+     differences between browsers and operating systems it is not possible to
+     specify in detail precise invariants [=local ends=] can depend on here.
+
+</div>
 
 ## The browsingContext Module ## {#module-browsingContext}
 
