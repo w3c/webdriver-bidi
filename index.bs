@@ -862,9 +862,10 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 
     1. If |method| is "<code>session.new</code>", let |session| be the entry in
        the list of [=active sessions=] whose [=session ID=] is equal to the
-       "<code>sessionId</code>" property of |value|, let |session|'s
-       [=WebSocket connection=] be |connection|, and remove |connection| from
-       [=WebSocket connections not associated with a session=].
+       "<code>sessionId</code>" property of |value|, [=set/append=]
+       |connection| to |session|'s [=session WebSocket connections=], and
+       remove |connection| from the [=WebSocket connections not associated with
+       a session=].
 
     1. Let |response| be a new [=/map=] matching the <code>CommandResponse</code>
        production in the [=local end definition=] with the <code>id</code>
@@ -920,14 +921,12 @@ To <dfn>get related browsing contexts</dfn> given an [=script/settings object=]
 1. [=Assert=]: |body| has [=map/size=] 2 and [=map/contains=] "<code>method</code>"
    and "<code>params</code>".
 
-1. Let |connection| be |session|'s [=WebSocket connection=].
-
-1. If |connection| is null, return.
-
 1. Let |serialized| be the result of [=serialize an infra value to JSON
    bytes=] given |body|.
 
-1. [=Send a WebSocket message=] comprised of |serialized| over |connection|.
+1. [=list/For each=] |connection| in |session|'s [=session WebSocket connections=]:
+
+  1. [=Send a WebSocket message=] comprised of |serialized| over |connection|.
 
 </div>
 
