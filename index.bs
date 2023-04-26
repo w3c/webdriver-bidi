@@ -4048,8 +4048,8 @@ TODO: Extend this to scripts in other kinds of realms.
 A [=BiDi session=] has a <dfn>preload script map</dfn> which is a [=/map=] in
 which the keys are [[!RFC4122|UUID]]s, and the values are [=structs=] with an <a
 for=struct>item</a> named <code>function declaration</code>, which is a string,
-<code>arguments</code>, and an item named <code>sandbox</code> which is a string
-or null.
+<code>arguments</code>, an item named <code>sandbox</code> which is a string
+or null, and an item named <code>context</code> which is a string or null.
 
 Note: If executing a [=preload script=] fails, either due to a syntax error, or
 a runtime exception, an [[ECMAScript]] exception is reported in the realm in
@@ -4089,6 +4089,13 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
     1. Let |options| be the [=default classic script fetch options=].
 
     1. Let |function declaration| be |preload script|'s <code>function declaration</code>.
+
+    1. Let |context id| be |preload script|'s <code>context</code>.
+
+    1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+       with |context id|.
+
+    // TODO: Need to use |context| somewhere.
 
     1. Let (|script|, |function body evaluation status|) be the result of
        [=evaluate function body=] with |function declaration|,
@@ -5933,7 +5940,8 @@ script=].
       script.AddPreloadScriptParameters = {
         functionDeclaration: text,
         ?arguments: [*script.ChannelValue],
-        ?sandbox: text
+        ?sandbox: text,
+        ?context: browsingContext.BrowsingContext
       }
       </pre>
    </dd>
@@ -5956,16 +5964,20 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |arguments| be the <code>arguments</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
-1. Let |script| be the string representation of a [[!RFC4122|UUID]].
-
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |script| be the string representation of a [[!RFC4122|UUID]].
 
 1. Let |preload script map| be |session|'s [=preload script map=].
 
 1. Set |preload script map|[|script|] to a struct with <code>function
    declaration</code> |function declaration|, <code>arguments</code>
-   |arguments|, and <code>sandbox</code> |sandbox|.
+   |arguments|, <code>sandbox</code> |sandbox| and <code>context</code>
+   |context id|.
 
 1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
