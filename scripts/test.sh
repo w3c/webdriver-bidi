@@ -1,8 +1,8 @@
-#! /bin/bash
+#!/bin/bash
 set -ex
 
-SCRIPT_DIR=$(cd $(dirname "$0") && pwd -P)
-ROOT=$(dirname $SCRIPT_DIR)
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd -P)"
+ROOT="$(dirname "$SCRIPT_DIR")"
 
 if ! [ -x "$(command -v cddl)" ] || [ "$1" = "--upgrade" ]; then
   echo 'Installing cddl'
@@ -15,7 +15,7 @@ if [[ "$(npm list parse5)" =~ "empty" ]] || [ "$1" = "--upgrade" ]; then
 fi
 
 # Extract CDDL content from spec into files
-$ROOT/scripts/cddl/generate.js
+"$ROOT"/scripts/cddl/generate.js
 
 cddl compile-cddl --cddl local.cddl
 cddl compile-cddl --cddl remote.cddl
