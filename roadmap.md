@@ -90,3 +90,10 @@ This scenario loads a web page and prints it as a PDF. In spec terms, this invol
 
 - [x] Some items from the previous milestones
 - [x] [Printing to PDF as Base64-encoded string](https://w3c.github.io/webdriver-bidi/#command-browsingContext-print)
+
+### Device emulation
+
+This scenario allows to emulate a device, e.g. a mobile phone, and its capabilities, e.g. screen size and pixel density. In spec terms, this involves:
+- [x] Some items from the previous milestones
+- [ ] Emulating width, height, deviceScaleFactor of the view port
+- [ ] Emulating of custom user agent
