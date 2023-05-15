@@ -90,3 +90,10 @@ This scenario loads a web page and prints it as a PDF. In spec terms, this invol
 
 - [x] Some items from the previous milestones
 - [x] [Printing to PDF as Base64-encoded string](https://w3c.github.io/webdriver-bidi/#command-browsingContext-print)
+
+### Incognito mode
+
+This scenario creates a session with browser in incognito mode. In spec terms, this involves:
+
+- [x] Some items from the previous milestones
+- [ ] Create session with isolation and deleting of cookies, site data, and browsing history.
