@@ -115,3 +115,11 @@ This scenario changes the browser window dimensions and position, maximizes/mini
 
 - [x] Some items from the previous milestones
 - [ ] [Add commands for resizing and positioning browser windows](https://github.com/w3c/webdriver-bidi/issues/398)
+
+### Web extensions
+
+This scenario loads a web extension and accesses its background page. In spec terms, this involves:
+
+- [x] Some items from the previous milestones
+- [ ] Loading a web extension.
+- [ ] Accessing the background page of a web extension.
