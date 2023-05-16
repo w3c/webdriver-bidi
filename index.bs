@@ -291,6 +291,7 @@ Command = {
 CommandData = (
   BrowserCommand //
   BrowsingContextCommand //
+  EmulationCommand //
   InputCommand //
   NetworkCommand //
   ScriptCommand //
@@ -3209,6 +3210,76 @@ opened</dfn> steps given |window|, |type| and |message|.
    given "<code>browsingContext.userPromptOpened</code>" and |related browsing contexts|:
 
   1. [=Emit an event=] with |session| and |body|.
+
+</div>
+
+## Emulation ## {#module-emulation}
+
+The <dfn export for=modules>emulation</dfn> module contains functionality for
+emulating device-dependent and system-dependent parameters.
+
+### Definition ### {#module-emulation-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+
+EmulationCommand = (
+  emulation.SetViewport
+)
+</pre>
+
+### Types ### {#module-emulation-types}
+
+### Commands ### {#module-emulation-commands}
+
+#### The emulation.setViewport Command ####  {#command-emulation-setViewport}
+
+The <dfn export for=commands>emulation.setViewport</dfn> command turns the emulation of the specified viewport on.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      emulation.SetViewport = {
+        method: "emulation.setViewport",
+        params: emulation.SetViewportParameters
+      };
+
+      emulation.SetViewportParameters = {
+        context: browsingContext.BrowsingContext,
+        ? viewport: emulation.Viewport
+      }
+
+      emulation.Viewport = {
+        ? width: js-uint,
+        ? height: js-uint,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for emulation.setViewport">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Let |viewport| be value of the <code>viewport</code> field of |command parameters| in [[webdriver#dfn-css-pixels]].
+
+1. Apply |viewport| as the actual vieport as defined in [[css-viewport#the-viewport]] to the |context| and all current and future sub-contexts that have a concept of a viewport.
+
+1. Return [=success=] with data null.
 
 </div>
 
