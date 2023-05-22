@@ -3235,7 +3235,7 @@ EmulationCommand = (
 
 #### The emulation.setViewport Command ####  {#command-emulation-setViewport}
 
-The <dfn export for=commands>emulation.setViewport</dfn> command turns the emulation of the specified viewport on.
+The <dfn export for=commands>emulation.setViewport</dfn> command turns the emulation of the viewport on.
 
 <dl>
    <dt>Command Type</dt>
@@ -3252,8 +3252,8 @@ The <dfn export for=commands>emulation.setViewport</dfn> command turns the emula
       }
 
       emulation.Viewport = {
-        ? width: js-uint,
-        ? height: js-uint,
+        width: js-uint,
+        height: js-uint,
       }
     </pre>
    </dd>
@@ -3272,13 +3272,20 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |context id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
 
-1. Let |viewport| be value of the <code>viewport</code> field of |command parameters| in [[webdriver#dfn-css-pixels]].
+1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=unsupported operation=].
 
-1. Apply |viewport| as the actual vieport as defined in [[css-viewport#the-viewport]] to the |context| and all current and future sub-contexts that have a concept of a viewport.
-
+1. If |command parameters| [=map/contains=] "<code>viewport</code>", then:
+    1. Let |viewport parameters| be the <code>viewport</code> attribute of |command parameters|.
+    1. If |viewport parameters| [=map/contains=] "<code>width</code>" and |viewport parameters| [=map/contains=] "<code>height</code>", then:
+        1. Let |width| be the <code>width</code> attribute of |viewport parameters| in CSS pixels.
+        1. Let |height| be the <code>height</code> attribute of |viewport parameters| in CSS pixels.
+        1. Change the layout viewport of the |context| to be |width| pixels wide and |height| pixels high and run the [[cssom-view-1#resizing-viewports]] steps.
+    1. Else:
+        1. Return [=error=] with [=error code=] [=invalid argument=].
+1. Else:
+    1. Reset any previously emulated viewport on the |context|.
 1. Return [=success=] with data null.
 
 </div>
