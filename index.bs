@@ -1979,7 +1979,7 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
 <div algorithm>
 To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, and optionally
-|history handling| (default: "<code>default</code>") and |ignore cache| (default: false):
+|history handling| (default: "<code>default</code>") and |ignore cache|:
 
 1. Let |navigation id| be the string representation of a
    [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
@@ -2257,7 +2257,7 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
 
       browsingContext.CreateParameters = {
         type: browsingContext.CreateType,
-        ?referenceContext: browsingContext.BrowsingContext
+        ?referenceContext: browsingContext.BrowsingContext .default null
       }
       </pre>
    </dd>
@@ -2278,7 +2278,7 @@ The [=remote end steps=] with |command parameters| are:
      |command parameters|.
 
   1. Let |reference context id| be the value of the <code>referenceContext</code>
-     field of |command parameters|, if present, or null otherwise.
+     field of |command parameters|.
 
   1. If |reference context id| is not null, let |reference context| be the
      result of [=trying=] to [=get a browsing context=] with
@@ -2344,8 +2344,8 @@ or all top-level contexts when no parent is provided.
       }
 
       browsingContext.GetTreeParameters = {
-        ?maxDepth: js-uint,
-        ?root: browsingContext.BrowsingContext,
+        ?maxDepth: js-uint .default null,
+        ?root: browsingContext.BrowsingContext .default null,
       }
       </pre>
    </dd>
@@ -2363,10 +2363,10 @@ or all top-level contexts when no parent is provided.
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
 1. Let |root id| be the value of the <code>root</code> field of
-   |command parameters| if present, or null otherwise.
+   |command parameters|.
 
 1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
-   parameters| if present, or null otherwise.
+   parameters|.
 
 1. Let |contexts| be an empty [=/list=].
 
@@ -2406,8 +2406,8 @@ command allows closing an open prompt
 
       browsingContext.HandleUserPromptParameters = {
         context: browsingContext.BrowsingContext,
-        ? accept: bool,
-        ? userText: text,
+        ? accept: bool .default true,
+        ? userText: text .default "",
       }
       </pre>
    </dd>
@@ -2430,10 +2430,10 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    with |context id|.
 
 1. Let |accept| be the value of the <code>accept</code> field of |command
-   parameters| if present, or true otherwise.
+   parameters|.
 
-1. Let |text| be the value of the <code>text</code> field of |command
-   parameters| if present, or the empty string otherwise.
+1. Let |text| be the value of the <code>userText</code> field of |command
+   parameters|.
 
 1. If |context| is currently showing a simple dialog from a call to [=alert=] then
    acknowledge the prompt.
@@ -2473,7 +2473,7 @@ browsing context to the given URL.
       browsingContext.NavigateParameters = {
         context: browsingContext.BrowsingContext,
         url: text,
-        ?wait: browsingContext.ReadinessState,
+        ?wait: browsingContext.ReadinessState .default "none",
       }
       </pre>
    </dd>
@@ -2500,7 +2500,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Assert: |context| is not null.
 
 1. Let |wait condition| be the value of the <code>wait</code> field of |command
-   parameters| if present, or "<code>none</code>" otherwise.
+   parameters|.
 
 1. Let |url| be the value of the <code>url</code> field of |command
    parameters|.
@@ -2682,8 +2682,8 @@ browsing context.
 
       browsingContext.ReloadParameters = {
         context: browsingContext.BrowsingContext,
-        ?ignoreCache: bool,
-        ?wait: browsingContext.ReadinessState,
+        ?ignoreCache: bool .default false,
+        ?wait: browsingContext.ReadinessState .default "none",
       }
       </pre>
    </dd>
@@ -2707,10 +2707,9 @@ The [=remote end steps=] with |command parameters| are:
 1. Assert: |context| is not null.
 
 1. Let |ignore cache| be the the value of the <code>ignoreCache</code> field of |command
-   parameters| if present, or false otherwise.
+   parameters|.
 
-1. Let |wait condition| be the value of the <code>wait</code> field of |command
-   parameters| if present, or "<code>none</code>" otherwise.
+1. Let |wait condition| be the value of the <code>wait</code> field of |command parameters|.
 
 1. Let |document| be |context|'s [=active document=].
 
@@ -5933,7 +5932,7 @@ script=].
       script.AddPreloadScriptParameters = {
         functionDeclaration: text,
         ?arguments: [*script.ChannelValue],
-        ?sandbox: text
+        ?sandbox: text .default null
       }
       </pre>
    </dd>
@@ -5959,7 +5958,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |script| be the string representation of a [[!RFC4122|UUID]].
 
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
-   parameters|, if present, or null otherwise.
+   parameters|.
 
 1. Let |preload script map| be |session|'s [=preload script map=].
 
