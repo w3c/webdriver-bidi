@@ -14,6 +14,8 @@ WebDriver BiDi is not ready. Here's what we have so far:
 
 [![test](https://github.com/w3c/webdriver-bidi/actions/workflows/test.yml/badge.svg)](https://github.com/w3c/webdriver-bidi/actions/workflows/test.yml)
 
+[![pre-commit](https://github.com/w3c/webdriver-bidi/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/w3c/webdriver-bidi/actions/workflows/pre-commit.yml)
+
 ## How to build the specification locally
 
 We use [bikeshed](https://tabatkins.github.io/bikeshed/) to generate the specification.
