@@ -291,7 +291,6 @@ Command = {
 CommandData = (
   BrowserCommand //
   BrowsingContextCommand //
-  EmulationCommand //
   InputCommand //
   NetworkCommand //
   ScriptCommand //
@@ -2730,6 +2729,62 @@ The [=remote end steps=] with |command parameters| are:
 
 </div>
 
+#### The browsingContext.setViewport Command ####  {#command-browsingContext-setViewport}
+
+The <dfn export for=commands>browsingContext.setViewport</dfn> command  specific viewport characteristics (e.g. viewport width and viewport height) on the given top-level browsing context.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      browsingContext.SetViewport = {
+        method: "browsingContext.setViewport",
+        params: browsingContext.SetViewportParameters
+      };
+
+      browsingContext.SetViewportParameters = {
+        context: browsingContext.BrowsingContext,
+        viewport: browsingContext.Viewport / null,
+      }
+
+      browsingContext.Viewport = {
+        width: js-uint,
+        height: js-uint,
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.setViewport">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |context id| be the value of the |command parameters|["<code>context</code>"] field.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+
+1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |viewport parameter| be the |command parameters|["<code>viewport</code>"] field.
+
+1. If |viewport parameter| is not null:
+    1. Let |width| be the |viewport parameter|'s["<code>width</code>""] field in CSS pixels.
+    1. Let |height| be the |viewport parameter|'s["<code>height</code>""] field in CSS pixels.
+    1. If the |width| or |height| is outside of the implementation-specific or runtime constraints, return an [=error=] with the [=error code=] [=unsupported operation=].
+    1. Set the layout [[css2#viewport]] of the |context| to be |width| pixels wide and |height| pixels high.
+1. Else:
+    1. Set the layout [[css2#viewport]] of |context| to the implementation-defined default layout viewport for |context|.
+1. Run the [[cssom-view-1#resizing-viewports]] steps.
+1. Return [=success=] with data null.
+
+</div>
+
 
 ### Events ### {#module-contexts-events}
 
@@ -3213,81 +3268,6 @@ opened</dfn> steps given |window|, |type| and |message|.
 
 </div>
 
-## Emulation ## {#module-emulation}
-
-The <dfn export for=modules>emulation</dfn> module contains functionality for
-emulating device-dependent and system-dependent parameters.
-
-### Definition ### {#module-emulation-definition}
-
-[=remote end definition=]
-
-<pre class="cddl remote-cddl">
-
-EmulationCommand = (
-  emulation.SetViewport
-)
-</pre>
-
-### Types ### {#module-emulation-types}
-
-### Commands ### {#module-emulation-commands}
-
-#### The emulation.setViewport Command ####  {#command-emulation-setViewport}
-
-The <dfn export for=commands>emulation.setViewport</dfn> command emulates specific viewport characteristics (e.g. viewport width and viewport height) on the given top-level browsing context.
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-    <pre class="cddl remote-cddl">
-      emulation.SetViewport = {
-        method: "emulation.setViewport",
-        params: emulation.SetViewportParameters
-      };
-
-      emulation.SetViewportParameters = {
-        context: browsingContext.BrowsingContext,
-        viewport: emulation.Viewport / null,
-      }
-
-      emulation.Viewport = {
-        width: js-uint,
-        height: js-uint,
-      }
-    </pre>
-   </dd>
-   <dt>Result Type</dt>
-   <dd>
-    <pre class="cddl">
-     EmptyResult
-    </pre>
-   </dd>
-</dl>
-
-<div algorithm="remote end steps for emulation.setViewport">
-
-The [=remote end steps=] with |command parameters| are:
-
-1. Let |context id| be the value of the |command parameters|["<code>context</code>"] field.
-
-1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
-
-1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
-
-1. Let |viewport parameter| be the |command parameters|["<code>viewport</code>"] field.
-
-1. If |viewport parameter| is not null:
-    1. Let |width| be the |viewport parameter|'s["<code>width</code>""] field in CSS pixels.
-    1. Let |height| be the |viewport parameter|'s["<code>height</code>""] field in CSS pixels.
-    1. If the |width| or |height| is outside of the implementation-specific or runtime constraints, return an [=error=] with the [=error code=] [=unsupported operation=].
-    1. Set the layout [[css2#viewport]] of the |context| to be |width| pixels wide and |height| pixels high.
-1. Else:
-    1. Set the layout [[css2#viewport]] of |context| to the implementation-defined default layout viewport for |context|.
-1. Run the [[cssom-view-1#resizing-viewports]] steps.
-1. Return [=success=] with data null.
-
-</div>
 
 ## The network Module ## {#module-network}
 
