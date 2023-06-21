@@ -5221,8 +5221,13 @@ script.NodeProperties = {
 
 script.WindowProxyRemoteValue = {
   type: "window",
+  value: script.WindowProxyProperties,
   ? handle: script.Handle,
-  ? internalId: script.InternalId,
+  ? internalId: script.InternalId
+}
+
+script.WindowProxyProperties = {
+  context: browsingContext.BrowsingContext
 }
 </pre>
 
@@ -5370,14 +5375,14 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
     1. Let |flags| be [=ToString=]([=Get=](|value|, "flags")).
 
-    1. Let |value| be a [=/map=] matching the <code>script.RegExpValue</code> production in the
+    1. Let |serialized| be a [=/map=] matching the <code>script.RegExpValue</code> production in the
        [=local end definition=], with the <code>pattern</code> property set to the
        |pattern| and the the <code>flags</code> property set to the |flags|.
 
     1. Let |remote value| be a [=/map=] matching the <code>script.RegExpRemoteValue</code>
        production in the [=local end definition=], with the <code>handle</code>
        property set to |handle id| if it's not null, or omitted otherwise, and
-       the <code>value</code> property set to |value|.
+       the <code>value</code> property set to |serialized|.
 
     <dt>|value| has a \[[DateValue]] [=internal slot=].
     <dd>
@@ -5576,9 +5581,22 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
          |serialized|.
 
     <dt>|value| is a [=platform object=] that implements {{WindowProxy}}
-    <dd>1. Let |remote value| be a [=/map=] matching the <code>script.WindowProxyRemoteValue</code>
-           production in the [=local end definition=], with the <code>handle</code>
-           property set to |handle id| if it's not null, or omitted otherwise.
+    <dd>
+    1. Let |window| be the value of |value|'s \[[WindowProxy]] [=internal
+       slot=].
+
+    1. Let |browsing context| be |window|'s [=Window/browsing context=].
+
+    1. Let |context id| be the [=browsing context id=] for |browsing context|.
+
+    1. Let |serialized| be a [=/map=] matching the
+       <code>script.WindowProxyProperties</code> production in the [=local end
+       definition=] with the <code>context</code> property set to |context id|.
+
+    1. Let |remote value| be a [=/map=] matching the <code>script.WindowProxyRemoteValue</code>
+       production in the [=local end definition=], with the <code>handle</code>
+       property set to |handle id| if it's not null, or omitted otherwise, and
+       the <code>value</code> property set to |serialized|.
 
     <dt>|value| is a [=platform object=]
     <dd>1. Let |remote value| be a [=/map=] matching the <code>script.ObjectRemoteValue</code>
