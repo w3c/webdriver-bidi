@@ -152,7 +152,7 @@ spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
     text: 2D; url: canvas.html#concept-canvas-2d
-    text: 2D context creation algorithm; url: canvas.html/#2d-context-creation-algorithm
+    text: 2D context creation algorithm; url: canvas.html#2d-context-creation-algorithm
     text: a browsing context is discarded; url: window-object.html#a-browsing-context-is-discarded
     text: active browsing context; url: document-sequences.html#nav-bc
     text: active document; for: browsing context; url: document-sequences.html#active-document
@@ -2325,62 +2325,62 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    coordinate=] 0, [=width dimension=] |viewport| width, and [=height
    dimension=] |viewport| height.
 
-  1. If |command parameters| contains "<code>clip</code>":
+1. Let |clip rect| be |viewport rect|.
 
-    1. Let |clip| be |command parameters|["<code>clip</code>"].
+1. If |command parameters| contains "<code>clip</code>":
 
-    1. If |clip| matches the <code>browsingContext.ElementClipRectangle</code>
+  1. Let |clip| be |command parameters|["<code>clip</code>"].
+
+  1. Run the steps under the first matching condition:
+     <dl>
+       <dt>|clip| matches the <code>browsingContext.ElementClipRectangle</code>
        production:
+       <dd>
+       1. Let |environment settings| be the [=environment settings object=] whose
+          [=relevant global object=]'s <a>associated <code>Document</code></a> is
+         |document|.
 
-      1. Let |environment settings| be the [=environment settings object=] whose
-         [=relevant global object=]'s <a>associated <code>Document</code></a> is
-        |document|.
+       1. Let |realm| be |environment settings|' [=realm execution context=]'s
+          Realm component.
 
-      1. Let |realm| be |environment settings|' [=realm execution context=]'s
-         Realm component.
+       1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
+          with |clip|["<code>element</code>"], |realm|, and |session|.
 
-      1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
-         with |clip|["<code>element</code>"], |realm|, and |session|.
+       1. If |element| doesn't implement {{Element}} return [=error=] with [=error code=]
+          [=no such element=].
 
-      1. If |element| doesn't implement {{Element}} return [=error=] with [=error code=]
-         [=no such element=].
+       1. If |element|'s [=node document=] is not |document|, return [=error=] with
+          [=error code=] [=no such element=].
 
-      1. If |element|'s [=node document=] is not |document|, return [=error=] with
-         [=error code=] [=no such element=].
+       1. If |clip| contains "<code>scrollIntoView</code>" and
+          |clip|["<code>scrollIntoView</code>"]:
 
-      1. If |clip| contains "<code>scrollIntoView</code>" and
-         |clip|["<code>scrollIntoView</code>"]:
+         1. [=Scroll into view=] with |element|.
 
-        1. [=Scroll into view=] with |element|.
+       1. Let |clip rect| be [=get the bounding box=] for |element|.
 
-      1. Let |clip rect| be [=get the bounding box=] for |element|.
+       <dt>|clip| matches the <code>browsingContext.BoxClipRectangle</code> production:
+       <dd>
+       1. Let |clip rect| be a {{DOMRectReadOnly}} with x coordinate |clip|["<code>x</code>"],
+          y coordinate |clip|["<code>y</code>"], width |clip|["<code>width</code>"],
+          and height |clip|["<code>height</code>"].
+     </dl>
 
-    Otherwise, |clip| matches the
-    <code>browsingContext.BoxClipRectange</code> production:
+1. Let |rect| be the [=rectangle intersection=] of |viewport rect| and |clip rect|.
 
-      1. Let |clip rect| be a {{DOMRectReadOnly}} with x coordinate |clip|["<code>x</code>"],
-        y coordinate |clip|["<code>y</code>"], width |clip|["<code>width</code>"],
-        and height |clip|["<code>height</code>"].
+1. If |rect|'s [=width dimension=] is 0 or |rect|'s [=height dimension=] is 0,
+   return [=error=] with error code [=unable to capture screen=].
 
-  Otherwise:
+1. Let |canvas| be [=render viewport to a canvas=] with |viewport| and |rect|.
 
-   1. Let |clip rect| be |viewport rect|.
+1. Let |encoding result| be the result of [=trying=] to [=encode a canvas as
+   Base64=] with |canvas|.
 
- 1. Let |rect| be the [=rectangle intersection=] of |viewport rect| and |clip rect|.
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.CaptureScreenshotResult</code> production, with the
+   <code>data</code> field set to |encoding result|.
 
- 1. If |rect|'s [=width dimension=] is 0 or |rect|'s [=height dimension=] is 0,
-    return [=error=] with error code [=unable to capture screen=].
-
- 1. Let |canvas| be [=render viewport to a canvas=] with |viewport| and |rect|.
-
- 1. Let |encoding result| be the result of [=trying=] to [=encode a canvas as
-    Base64=] with |canvas|.
-
- 1. Let |body| be a [=/map=] matching the
-    <code>browsingContext.CaptureScreenshotResult</code> production, with the
-    <code>data</code> field set to |encoding result|.
-
- 1. Return [=success=] with data |body|.
+1. Return [=success=] with data |body|.
 
 #### The browsingContext.close Command ####  {#command-browsingContext-close}
 
