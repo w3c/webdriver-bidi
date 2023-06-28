@@ -183,6 +183,11 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
+    text: traversable navigable; url:document-sequences.html#traversable-navigable
+    text: system visibility state; url: document-sequences.html#system-visibility-state
+    text: visible; url: document-sequences.html#system-visibility-state
+    text: hidden; url: document-sequences.html#system-visibility-state
+    text: navigables; url: document-sequences.html#navigables
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
     text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
@@ -2173,7 +2178,11 @@ The [=remote end steps=] with |command parameters| are:
 
 1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
 
-1. Run implementation-specific steps to bring the |context| to the top of the implementation-specific view hierarchy.
+1. Run implementation-specific steps so that |context|'s [=traversable navigable=]'s [=system visibility state=] becomes [=visible=]. If this is not possible return [=error=] with error code [=unsupported operation=].
+
+    Note: This can have the side effect of making currently [=visible=] [=navigables=] [=hidden=].
+
+    Issue: It's not clear if we should have explicit requirements for cases like a minimized window; should that cause the window to become unminimized?
 
 1. Run implementation-specific steps to set the [=top-level traversable/system focus=] on the |context| if it is not focused.
 
