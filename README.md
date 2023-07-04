@@ -3,7 +3,7 @@
 WebDriver BiDi is a bidirectional protocol for browser automation,
 building on and extending [WebDriver](https://w3c.github.io/webdriver/).
 
-For more info, consult these resources:
+WebDriver BiDi is a living standard that continuously gets new features added. For more info, consult these resources:
 
 - An [explainer](./explainer.md) with more background and goals
 - A [roadmap](./roadmap.md) based on real-world end-to-end user scenarios
