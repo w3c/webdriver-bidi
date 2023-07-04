@@ -1,14 +1,14 @@
 # WebDriver BiDi
 
-WebDriver BiDi is a proposed bidirectional protocol for browser automation,
+WebDriver BiDi is a bidirectional protocol for browser automation,
 building on and extending [WebDriver](https://w3c.github.io/webdriver/).
 
-WebDriver BiDi is not ready. Here's what we have so far:
+WebDriver BiDi is a living standard that continuously gets new features added. For more info, consult these resources:
 
 - An [explainer](./explainer.md) with more background and goals
 - A [roadmap](./roadmap.md) based on real-world end-to-end user scenarios
 - Detailed [proposals](./proposals/) for the initial protocol
-- A [unofficial spec draft](https://w3c.github.io/webdriver-bidi/) waiting to be fleshed out
+- A [spec](https://w3c.github.io/webdriver-bidi/) under active development
 
 ## Status
 
@@ -26,7 +26,7 @@ Now you can run in your terminal:
 ./scripts/build.sh
 ```
 
-This script will install `bikeshed` (if not installed yet) and generate an
+This script installs `bikeshed` (if not installed yet) and generates an
 `index.html` file for the specification.
 
 Later on, you can use the `--upgrade` argument to force installing a newer version.
@@ -42,8 +42,8 @@ Now you can run in your terminal:
 ./scripts/test.sh
 ```
 
-This script will install required npm and cargo packages (if not installed yet)
-and generate the CDDL files for the remote end (`remote.cddl`) and the client
+This script installs required `npm` and `cargo` packages (if not installed yet)
+and generates the CDDL files for the remote end (`remote.cddl`) and the client
 (`local.cddl`).
 
 Later on, you can use the `--upgrade` argument to force installing newer versions.
