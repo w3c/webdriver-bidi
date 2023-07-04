@@ -19,3 +19,4 @@ fi
 
 cddl compile-cddl --cddl local.cddl
 cddl compile-cddl --cddl remote.cddl
+cddl compile-cddl --cddl all.cddl
