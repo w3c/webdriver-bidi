@@ -42,7 +42,7 @@ Now you can run in your terminal:
 ./scripts/test.sh
 ```
 
-This script installs required npm and cargo packages (if not installed yet)
+This script installs required `npm` and `cargo` packages (if not installed yet)
 and generates the CDDL files for the remote end (`remote.cddl`) and the client
 (`local.cddl`).
 
