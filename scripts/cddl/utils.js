@@ -11,13 +11,13 @@
  * @param {Array<string>} remote Array to fill with remote CDDL definitions.
  */
 function getCDDLNodes(nodes) {
-  const entries = { local: [], remote: [] };
+  const entries = { local: [], remote: [], all: [] };
 
   nodes.forEach((node) => {
-    if (node.nodeName === 'pre') {
-      const nodeClass = node.attrs.find((attr) => attr.name === 'class')
-      if (nodeClass && nodeClass.value.includes('cddl')) {
-        const content = node.childNodes.map((child) => child.value).join('');
+    if (node.nodeName === "pre") {
+      const nodeClass = node.attrs.find((attr) => attr.name === "class");
+      if (nodeClass && nodeClass.value.includes("cddl")) {
+        const content = node.childNodes.map((child) => child.value).join("");
 
         if (nodeClass.value.includes("local-cddl")) {
           entries.local.push(content);
@@ -26,17 +26,25 @@ function getCDDLNodes(nodes) {
         if (nodeClass.value.includes("remote-cddl")) {
           entries.remote.push(content);
         }
+
+        if (
+          nodeClass.value.includes("local-cddl") ||
+          nodeClass.value.includes("remote-cddl")
+        ) {
+          entries.all.push(content);
+        }
       }
     }
 
     if (node.childNodes) {
-      const { local, remote } = getCDDLNodes(node.childNodes);
+      const { local, remote, all } = getCDDLNodes(node.childNodes);
       entries.local.push(...local);
       entries.remote.push(...remote);
+      entries.all.push(...all);
     }
   });
 
   return entries;
 }
 
-module.exports = { getCDDLNodes }
+module.exports = { getCDDLNodes };
