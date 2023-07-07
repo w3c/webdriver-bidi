@@ -74,6 +74,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: remote end steps; url: dfn-remote-end-steps
     text: remote end; url: dfn-remote-ends
     text: reset the input state; url: dfn-reset-the-input-state
+    text: scroll into view; url: dfn-scrolls-into-view
     text: session ID; url: dfn-session-id
     text: session not created; url: dfn-session-not-created
     text: session; url: dfn-sessions
@@ -81,6 +82,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: success; url: dfn-success
     text: try; url: dfn-try
     text: trying; url: dfn-try
+    text: unable to capture screen; url: dfn-unable-to-capture-screen
     text: unknown command; url: dfn-unknown-command
     text: unknown error; url: dfn-unknown-error
     text: unsupported operation; url: dfn-unsupported-operation
@@ -143,8 +145,14 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
 spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
   type: dfn
     text: rectangle; url: rectangle
+    text: x coordinate; url: rectangle-x-coordinate
+    text: y coordinate; url: rectangle-y-coordinate
+    text: width dimension; url: rectangle-width-dimension
+    text: height dimension; url: rectangle-height-dimension
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
+    text: 2D; url: canvas.html#concept-canvas-2d
+    text: 2D context creation algorithm; url: canvas.html#2d-context-creation-algorithm
     text: a browsing context is discarded; url: window-object.html#a-browsing-context-is-discarded
     text: active browsing context; url: document-sequences.html#nav-bc
     text: active document; for: browsing context; url: document-sequences.html#active-document
@@ -154,6 +162,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: create a classic script; url: webappapis.html#creating-a-classic-script
     text: create a new browsing context; url: browsers.html#creating-a-new-browsing-context
     text: confirm; url: timers-and-user-prompts.html#dom-confirm
+    text: context mode; url: /canvas.html#offscreencanvas-context-mode
     text: default classic script fetch options; url: webappapis.html#default-classic-script-fetch-options
     text: environment settings object's Realm; url: webappapis.html#environment-settings-object's-realm
     text: handled; url: webappapis.html#concept-error-handled
@@ -183,6 +192,9 @@ spec: HR-TIME; urlPrefix: https://w3c.github.io/hr-time/
 spec: RFC4648; urlPrefix: https://tools.ietf.org/html/rfc4648
   type: dfn
     text: Base64 Encode; url: section-4
+spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
+  type: dfn
+    text: visual viewport; url: #visual-viewport
 </pre>
 
 <pre class="biblio">
@@ -480,18 +492,21 @@ with the following additional codes:
 
 
 <pre class="cddl local-cddl">
-ErrorCode = ("invalid argument" /
-             "invalid session id" /
-             "no such alert" /
-             "no such frame" /
-             "no such handle" /
-             "no such node" /
-             "no such script" /
-             "session not created" /
-             "unable to close browser" /
-             "unknown command" /
-             "unknown error" /
-             "unsupported operation")
+ErrorCode = "invalid argument" /
+            "invalid session id" /
+            "move target out of bounds" /
+            "no such alert" /
+            "no such element" /
+            "no such frame" /
+            "no such handle" /
+            "no such node" /
+            "no such script" /
+            "session not created" /
+            "unable to capture screen" /
+            "unable to close browser" /
+            "unknown command" /
+            "unknown error" /
+            "unsupported operation"
 </pre>
 
 ## Events ## {#events}
@@ -1383,7 +1398,7 @@ session.CapabilityRequest = {
 };
 </pre>
 
-The <code>session.CapabilityRequest</code> type represents a sepecific set of
+The <code>session.CapabilityRequest</code> type represents a specific set of
 requested capabilities.
 
 #### The session.SubscriptionRequest Type #### {#type-session-SubscriptionRequest}
@@ -1818,7 +1833,8 @@ BrowsingContextCommand = (
   browsingContext.HandleUserPrompt //
   browsingContext.Navigate //
   browsingContext.Print //
-  browsingContext.Reload
+  browsingContext.Reload //
+  browsingContext.SetViewport
 )
 </pre>
 
@@ -2140,7 +2156,27 @@ Base64-encoded string.
       }
 
       browsingContext.CaptureScreenshotParameters = {
-        context: browsingContext.BrowsingContext
+        context: browsingContext.BrowsingContext,
+        ? clip: browsingContext.ClipRectangle
+      }
+
+      browsingContext.ClipRectangle = (
+        browsingContext.BoxClipRectangle //
+        browsingContext.ElementClipRectangle
+      )
+
+      browsingContext.ElementClipRectangle = {
+        type: "element",
+        element: script.SharedReference,
+        ? scrollIntoView: bool
+      }
+
+      browsingContext.BoxClipRectangle = {
+         type: "viewport",
+         x: float,
+         y: float,
+         width: float,
+         height: float
       }
       </pre>
    </dd>
@@ -2156,10 +2192,121 @@ Base64-encoded string.
 
 TODO: Full page screenshots, and multiple output formats
 
+<div algorithm>
+To <dfn>normalise rect</dfn> given |rect|:
+
+Note: This ensures that the resulting rect has positive [=width dimension=] and
+[=height dimension=].
+
+1. Let |x| be |rect|'s [=x coordinate=].
+
+1. Let |y| be |rect|'s [=y coordinate=].
+
+1. Let |width| be |rect|'s [=width dimension=].
+
+1. Let |height| be |rect|'s [=height dimension=].
+
+1. If |width| is less than 0, set |x| to |x| + |width| and then set |width| to
+   -|width|.
+
+1. If |height| is less than 0, set |y| to |y| + |height| and then set |height|
+   to -|height|.
+
+1. Return a new {{DOMRectReadOnly}} with [=x coordinate=] |x|, [=y coordinate=]
+   |y|, [=width dimension=] |width| and [=height dimension=] |height|.
+
+</div>
+
+<div algorithm>
+To <dfn>rectangle intersection</dfn> given |rect1| and |rect2|
+
+1. Let |rect1| be [=normalise rect=] with |rect1|.
+
+1. Let |rect2| be [=normalise rect=] with |rect2|.
+
+1. Let |x1_0| be |rect1|'s [=x coordinate=].
+
+1. Let |x2_0| be |rect2|'s [=x coordinate=].
+
+1. Let |x1_1| be |rect1|'s [=x coordinate=] plus |rect1|'s [=width dimension=].
+
+1. Let |x2_1| be |rect2|'s [=x coordinate=] plus |rect2|'s [=width dimension=].
+
+1. Let |x_0| be the maximum element of «|x1_0|, |x2_0|».
+
+1. Let |x_1| be the minimum element of «|x1_1|, |x2_1|».
+
+1. Let |y1_0| be |rect1|'s [=y coordinate=].
+
+1. Let |y2_0| be |rect2|'s [=y coordinate=].
+
+1. Let |y1_1| be |rect1|'s [=y coordinate=] plus |rect1|'s [=height dimension=].
+
+1. Let |y2_1| be |rect2|'s [=y coordinate=] plus |rect2|'s [=height dimension=].
+
+1. Let |y_0| be the maximum element of «|y1_0|, |y2_0|».
+
+1. Let |y_1| be the minimum element of «|y1_1|, |y2_1|».
+
+1. If |x_1| is less than |x_0|, let |width| be 0. Otherwise let |width| be
+   |x_1| - |x_0|.
+
+1. If |y_1| is less than |y_0|, let |height| be 0. Otherwise let |height| be
+   |y_1| - |y_0|.
+
+1. Return a new {{DOMRectReadOnly}} with [=x coordinate=] |x_0|, [=y coordinate=]
+   |y_0|, [=width dimension=] |width| and [=height dimension=] |height|.
+
+</div>
+
+<div algorithm>
+To <dfn>render viewport to a canvas</dfn> given |viewport| and |rect|:
+
+1. Assert: |rect| is normalized and represents a non-empty sub-region of |viewport|,
+   i.e. all the following hold:
+     * |rect|'s [=x coordinate=] is greater than or equal to 0.
+     * |rect|'s [=width dimension=] is greater than 0.
+     * |rect|'s [=y coordinate=] is greater than or equal to 0.
+     * |rect|'s [=height dimension=] is greater than 0.
+     * |rect|'s [=x coordinate=] plus |rect|'s [=width dimension=] is less than
+       or equal to |viewport|'s width.
+     * |rect|'s [=y coordinate=] plus |rect|'s [=height dimension=] is less than
+       or equal to |viewport|'s height.
+
+1. Let |scale| be [=determine the device pixel ratio=] for the output device of |viewport|.
+
+1. Let |paint width| be |rect|'s [=width dimension=] multiplied by |scale|,
+   rounded to the nearest integer, so it matches the width of |rect| in device
+   pixels.
+
+1. Let |paint height| be |rect|'s [=height dimension=] multiplied by |scale|,
+   rounded to the nearest integer, so it matches the height of |rect| in device
+   pixels.
+
+1. Let |canvas| be a new {{HTMLCanvasElement}} with {{HTMLCanvasElement/width}} |paint
+   width| and {{HTMLCanvasElement/height}} |paint height|.
+
+1. Let |context| be the result of running the [=2D context creation algorithm=]
+   with |canvas| and null.
+
+1. Set |canvas|'s [=context mode=] to [=2D=].
+
+1. Complete implementation specific steps equivalent to drawing the region of
+   the framebuffer representing the region of |viewport| covered by |rect| to
+   |context|, such that each pixel in the framebuffer corresponds to a pixel in
+   |context| with (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
+   viewport coordinates corresponding to (0,0) in |context| and (|rect|'s
+   [=x coordinate=] + |rect|'s [=width dimension=], |rect|'s
+   [=y coordinate=] + |rect|'s [=height dimension=]) corresponding to (|paint
+   width|, |paint height|).
+
+1. Return [=canvas=].
+
+</div>
+
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
-   |command parameters|.
+1. Let |context id| be |command parameters|["<code>context</code>"].
 
 1. Let |context| be the result of [=trying=] to [=get a browsing context=]
    with |context id|.
@@ -2169,25 +2316,74 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |document| be |context|'s [=active document=].
 
+1. Let |viewport| be |document|'s [=visual viewport=].
+
 1. Immediately after the next invocation of the [=run the animation frame
    callbacks=] algorithm for |document|:
 
    Issue: This ought to be integrated into the update rendering algorithm
    in some more explicit way.
 
- 1. Let |root rect| be |document|’s [=document element=]'s [=rectangle=].
+1. Let |viewport rect| be a {{DOMRectReadOnly}} with [=x coordinate=] 0, [=y
+   coordinate=] 0, [=width dimension=] |viewport| width, and [=height
+   dimension=] |viewport| height.
 
- 1. Let |canvas| be the result of [=trying=] to [=draw a bounding box from the
-    framebuffer=] with |root rect|.
+1. Let |clip rect| be |viewport rect|.
 
- 1. Let |encoding result| be the result of [=trying=] to [=encode a canvas as
-    Base64=] with |canvas|.
+1. If |command parameters| contains "<code>clip</code>":
 
- 1. Let |body| be a [=/map=] matching the
-    <code>browsingContext.CaptureScreenshotResult</code> production, with the
-    <code>data</code> field set to |encoding result|.
+  1. Let |clip| be |command parameters|["<code>clip</code>"].
 
- 1. Return [=success=] with data |body|.
+  1. Run the steps under the first matching condition:
+     <dl>
+       <dt>|clip| matches the <code>browsingContext.ElementClipRectangle</code>
+       production:
+       <dd>
+       1. Let |environment settings| be the [=environment settings object=] whose
+          [=relevant global object=]'s <a>associated <code>Document</code></a> is
+         |document|.
+
+       1. Let |realm| be |environment settings|' [=realm execution context=]'s
+          Realm component.
+
+       1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
+          with |clip|["<code>element</code>"], |realm|, and |session|.
+
+       1. If |element| doesn't implement {{Element}} return [=error=] with [=error code=]
+          [=no such element=].
+
+       1. If |element|'s [=node document=] is not |document|, return [=error=] with
+          [=error code=] [=no such element=].
+
+       1. If |clip| contains "<code>scrollIntoView</code>" and
+          |clip|["<code>scrollIntoView</code>"]:
+
+         1. [=Scroll into view=] with |element|.
+
+       1. Let |clip rect| be [=get the bounding box=] for |element|.
+
+       <dt>|clip| matches the <code>browsingContext.BoxClipRectangle</code> production:
+       <dd>
+       1. Let |clip rect| be a {{DOMRectReadOnly}} with x coordinate |clip|["<code>x</code>"],
+          y coordinate |clip|["<code>y</code>"], width |clip|["<code>width</code>"],
+          and height |clip|["<code>height</code>"].
+     </dl>
+
+1. Let |rect| be the [=rectangle intersection=] of |viewport rect| and |clip rect|.
+
+1. If |rect|'s [=width dimension=] is 0 or |rect|'s [=height dimension=] is 0,
+   return [=error=] with error code [=unable to capture screen=].
+
+1. Let |canvas| be [=render viewport to a canvas=] with |viewport| and |rect|.
+
+1. Let |encoding result| be the result of [=trying=] to [=encode a canvas as
+   Base64=] with |canvas|.
+
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.CaptureScreenshotResult</code> production, with the
+   <code>data</code> field set to |encoding result|.
+
+1. Return [=success=] with data |body|.
 
 #### The browsingContext.close Command ####  {#command-browsingContext-close}
 
@@ -2548,7 +2744,7 @@ PDF document represented as a Base64-encoded string.
         ? orientation: ("portrait" / "landscape") .default "portrait",
         ? page: browsingContext.PrintPageParameters,
         ? pageRanges: [*(js-uint / text)],
-        ? scale: 0.1..2.0 .default 1.0,
+        ? scale: (0.1..2.0) .default 1.0,
         ? shrinkToFit: bool .default true,
       }
 
@@ -2725,6 +2921,62 @@ The [=remote end steps=] with |command parameters| are:
    condition|, history handling "<code>reload</code>", and ignore
    cache |ignore cache|.
 
+1. Return [=success=] with data null.
+
+</div>
+
+#### The browsingContext.setViewport Command ####  {#command-browsingContext-setViewport}
+
+The <dfn export for=commands>browsingContext.setViewport</dfn> command  specific viewport characteristics (e.g. viewport width and viewport height) on the given top-level browsing context.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      browsingContext.SetViewport = {
+        method: "browsingContext.setViewport",
+        params: browsingContext.SetViewportParameters
+      };
+
+      browsingContext.SetViewportParameters = {
+        context: browsingContext.BrowsingContext,
+        viewport: browsingContext.Viewport / null,
+      }
+
+      browsingContext.Viewport = {
+        width: js-uint,
+        height: js-uint,
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.setViewport">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |context id| be the value of the |command parameters|["<code>context</code>"] field.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+
+1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |viewport parameter| be the |command parameters|["<code>viewport</code>"] field.
+
+1. If |viewport parameter| is not null:
+    1. Let |width| be the |viewport parameter|["<code>width</code>"]
+    1. Let |height| be the |viewport parameter|["<code>height</code>"]
+    1. If the |width| or |height| is outside of the implementation-specific or runtime constraints, return an [=error=] with the [=error code=] [=unsupported operation=].
+    1. Set the layout [[css2#viewport]] of the |context| to be |width| CSS pixels wide and |height| CSS pixels high.
+1. Else:
+    1. Set the layout [[css2#viewport]] of |context| to the implementation-defined default layout viewport for |context|.
+1. Run the [[cssom-view-1#resizing-viewports]] steps.
 1. Return [=success=] with data null.
 
 </div>
@@ -3253,13 +3505,13 @@ empty map.  It's used to track the network events for which a
 #### The network.BaseParameters Type #### {#type-network-BaseParameters}
 
 <pre class="cddl local-cddl">
-network.BaseParameters = {
+network.BaseParameters = (
     context: browsingContext.BrowsingContext / null,
     navigation: browsingContext.Navigation / null,
     redirectCount: js-uint,
     request: network.RequestData,
     timestamp: js-uint,
-}
+)
 </pre>
 
 The <code>network.BaseParameters</code> type is an abstract type representing
@@ -4036,6 +4288,7 @@ ScriptResult = (
 )
 
 ScriptEvent = (
+  script.Message //
   script.RealmCreated //
   script.RealmDestroyed
 )
@@ -4699,10 +4952,10 @@ script.RealmInfo = (
   script.WorkletRealmInfo
 )
 
-script.BaseRealmInfo = {
+script.BaseRealmInfo = (
   realm: script.Realm,
   origin: text
-}
+)
 
 script.WindowRealmInfo = {
   script.BaseRealmInfo,
@@ -5050,16 +5303,14 @@ script.FunctionRemoteValue = {
 }
 
 script.RegExpRemoteValue = {
-  script.RegExpLocalValue,
   ? handle: script.Handle,
   ? internalId: script.InternalId,
-}
+} .and script.RegExpLocalValue
 
 script.DateRemoteValue = {
-  script.DateLocalValue,
   ? handle: script.Handle,
   ? internalId: script.InternalId,
-}
+} .and script.DateLocalValue
 
 script.MapRemoteValue = {
   type: "map",
@@ -5165,8 +5416,13 @@ script.NodeProperties = {
 
 script.WindowProxyRemoteValue = {
   type: "window",
+  value: script.WindowProxyProperties,
   ? handle: script.Handle,
-  ? internalId: script.InternalId,
+  ? internalId: script.InternalId
+}
+
+script.WindowProxyProperties = {
+  context: browsingContext.BrowsingContext
 }
 </pre>
 
@@ -5314,14 +5570,14 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
     1. Let |flags| be [=ToString=]([=Get=](|value|, "flags")).
 
-    1. Let |value| be a [=/map=] matching the <code>script.RegExpValue</code> production in the
+    1. Let |serialized| be a [=/map=] matching the <code>script.RegExpValue</code> production in the
        [=local end definition=], with the <code>pattern</code> property set to the
        |pattern| and the the <code>flags</code> property set to the |flags|.
 
     1. Let |remote value| be a [=/map=] matching the <code>script.RegExpRemoteValue</code>
        production in the [=local end definition=], with the <code>handle</code>
        property set to |handle id| if it's not null, or omitted otherwise, and
-       the <code>value</code> property set to |value|.
+       the <code>value</code> property set to |serialized|.
 
     <dt>|value| has a \[[DateValue]] [=internal slot=].
     <dd>
@@ -5520,9 +5776,22 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
          |serialized|.
 
     <dt>|value| is a [=platform object=] that implements {{WindowProxy}}
-    <dd>1. Let |remote value| be a [=/map=] matching the <code>script.WindowProxyRemoteValue</code>
-           production in the [=local end definition=], with the <code>handle</code>
-           property set to |handle id| if it's not null, or omitted otherwise.
+    <dd>
+    1. Let |window| be the value of |value|'s \[[WindowProxy]] [=internal
+       slot=].
+
+    1. Let |browsing context| be |window|'s [=Window/browsing context=].
+
+    1. Let |context id| be the [=browsing context id=] for |browsing context|.
+
+    1. Let |serialized| be a [=/map=] matching the
+       <code>script.WindowProxyProperties</code> production in the [=local end
+       definition=] with the <code>context</code> property set to |context id|.
+
+    1. Let |remote value| be a [=/map=] matching the <code>script.WindowProxyRemoteValue</code>
+       production in the [=local end definition=], with the <code>handle</code>
+       property set to |handle id| if it's not null, or omitted otherwise, and
+       the <code>value</code> property set to |serialized|.
 
     <dt>|value| is a [=platform object=]
     <dd>1. Let |remote value| be a [=/map=] matching the <code>script.ObjectRemoteValue</code>
@@ -5565,9 +5834,6 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
 Issue: |children| and child nodes are different things. Either <code>childNodeCount</code> should
 reference to <code>childNodes</code>, or it should be renamed to <code>childrenCount</code>.
-
-Issue: <code>nodeValue</code> can be null. Omit the field in such a case, or adjust type to allow
-null value.
 
 </div>
 
@@ -5990,7 +6256,7 @@ other handles or strong ECMAScript references.
       }
 
       script.DisownParameters = {
-        handles: [script.Handle]
+        handles: [*script.Handle]
         target: script.Target;
       }
       </pre>
@@ -6599,7 +6865,7 @@ Issue: Should the order here be better defined?
    <dd>
       <pre class="cddl local-cddl">
        script.RealmDestroyed = {
-         method: "script.realmDestoyed",
+         method: "script.realmDestroyed",
          params: script.RealmDestroyedParameters
        }
 
@@ -6688,7 +6954,7 @@ related to logging.
 A [=BiDi Session=] has a <dfn>log event buffer</dfn> which is a [=/map=] from
 [=browsing context id=] to a list of log events for that context that have not
 been emitted. User agents may impose a maximum size on this buffer, subject to
-the condition that if events A and B happen in the same context with A occuring
+the condition that if events A and B happen in the same context with A occurring
 before B, and both are added to the buffer, the entry for B must not be removed
 before the entry for A.
 
@@ -6754,13 +7020,13 @@ log.Entry = (
   log.JavascriptLogEntry
 )
 
-log.BaseLogEntry = {
+log.BaseLogEntry = (
   level: log.Level,
   source: script.Source,
   text: text / null,
   timestamp: js-uint,
   ? stackTrace: script.StackTrace,
-}
+)
 
 log.GenericLogEntry = {
   log.BaseLogEntry,
@@ -7152,7 +7418,7 @@ specified sequence of user input actions.
         ? height: js-uint .default 1,
         ? pressure: float .default 0.0,
         ? tangentialPressure: float .default 0.0,
-        ? twist: 0..359 .default 0,
+        ? twist: (0..359) .default 0,
         (input.TiltProperties // input.AngleProperties)
       )
 
@@ -7162,8 +7428,8 @@ specified sequence of user input actions.
       )
 
       input.TiltProperties = (
-        ? tiltX: -90..90 .default 0,
-        ? tiltY: -90..90 .default 0,
+        ? tiltX: (-90..90) .default 0,
+        ? tiltY: (-90..90) .default 0,
       )
 
       input.Origin = "viewport" / "pointer" / input.ElementOrigin
