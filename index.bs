@@ -68,7 +68,6 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such alert; url: dfn-no-such-alert
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
-    text: parse a page range; url: dfn-parse-a-page-range
     text: process capabilities; url: dfn-processing-capabilities
     text: readiness state; url: dfn-readiness-state
     text: remote end steps; url: dfn-remote-end-steps
@@ -2737,25 +2736,29 @@ PDF document represented as a Base64-encoded string.
         params: browsingContext.PrintParameters
       }
 
+      browsingContext.PageNumber = js-uint
+
+      browsingContext.PageRange = [browsingContext.PageNumber / null, browsingContext.PageNumber / null]
+
       browsingContext.PrintParameters = {
         context: browsingContext.BrowsingContext,
         ? background: bool .default false,
-        ? margin: browsingContext.PrintMarginParameters,
+        ? margin: browsingContext.PageMargin,
         ? orientation: ("portrait" / "landscape") .default "portrait",
-        ? page: browsingContext.PrintPageParameters,
-        ? pageRanges: [*(js-uint / text)],
+        ? dimensions: browsingContext.PageDimensions,
+        ? range: [*(browsingContext.PageNumber / browsingContext.PageRange)],
         ? scale: (0.1..2.0) .default 1.0,
         ? shrinkToFit: bool .default true,
       }
 
-      browsingContext.PrintMarginParameters = {
+      browsingContext.PageMargin = {
         ? bottom: (float .ge 0.0) .default 1.0,
         ? left: (float .ge 0.0) .default 1.0,
         ? right: (float .ge 0.0) .default 1.0,
         ? top: (float .ge 0.0) .default 1.0,
       }
 
-      browsingContext.PrintPageParameters = {
+      browsingContext.PageDimensions = {
         ? height: (float .ge 0.0) .default 27.94,
         ? width: (float .ge 0.0) .default 21.59,
       }
@@ -2785,15 +2788,15 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |margin| be the value of the <code>margin</code> field of |command
    parameters| if present, or otherwise a [=/map=] matching the
-   <code>browsingContext.PrintMarginParameters</code> with the fields set to
+   <code>browsingContext.PageMargin</code> with the fields set to
    their default values.
 
-1. Let |page size| be the value of the <code>page</code> field of |command
+1. Let |page dimensions| be the value of the <code>page</code> field of |command
    parameters| if present, or otherwise a [=/map=] matching the
-   <code>browsingContext.PrintPageParameters</code> with the fields set to
+   <code>browsingContext.PageDimensions</code> with the fields set to
    their default values.
 
-1. Let |page ranges| be the value of the <code>pageRanges</code> field of
+1. Let |page range| be the value of the <code>range</code> field of
    |command parameters| if present or an empty [=/list=] otherwise.
 
 1. Let |document| be |context|'s [=active document=].
@@ -2814,14 +2817,14 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
          <th>Value
        <tr>
          <td>Width in cm
-         <td>|page size|["<code>width</code>"] if
+         <td>|page dimensions|["<code>width</code>"] if
              |command parameters|["<code>orientation</code>"] is
-             "<code>portrait</code>" otherwise |page size|["<code>height</code>"]
+             "<code>portrait</code>" otherwise |page dimensions|["<code>height</code>"]
        <tr>
          <td>Height in cm
-         <td>|page size|["<code>height</code>"] if
+         <td>|page dimensions|["<code>height</code>"] if
              |command parameters|["<code>orientation</code>"] is
-             "<code>portrait</code>" otherwise |page size|["<code>width</code>"]
+             "<code>portrait</code>" otherwise |page dimensions|["<code>width</code>"]
        <tr>
          <td>Top margin, in cm
          <td>|margin|["<code>top</code>"]
@@ -2847,10 +2850,9 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
              width specified in the content
      </dl>
 
-  1. If |page ranges| is not [=list/empty=], let |pages| be the result of
-     [=trying=] to [=parse a page range=] with |page ranges| and the number of
-     pages contained in |pdf data|, then remove any pages from |pdf data|
-     whose one-based index is not contained in |pages|.
+  1. If |page range| is not [=list/empty=], let |pages| be the result of
+     [=trying=] to [=obtain a page set=] with |page range| and the number of
+     pages contained in |pdf data|. Remove any pages from |pdf data| whose one-based index is not contained in |pages|.
 
   1. Let |encoding result| be the result of calling [=Base64 Encode=] on
      |pdf data|.
@@ -2862,6 +2864,27 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
      <code>data</code> field set to |encoded data|.
 
   1. Return [=success=] with data |body|.
+
+</div>
+
+<div algorithm>
+To <dfn>obtain a page set</dfn> given |page range| and |total pages|,
+
+1. Let |pages| be an empty {{Set}}.
+
+1. For each |range| in |page range|, run the following steps:
+
+  1. If |range| is a {{Number}}, let |start| and |end| be |range|. Otherwise, let |start| and |end| be the first and second element of |range|.
+
+  1. If |start| is [=null=], set |start| to <code>1</code>.
+
+  1. If |end| is [=null=], set |end| to |total pages|.
+
+  1. If |end| is greater than |start|, return [=error=] with [=error code|code=] [=invalid argument=].
+
+  1. Append all integers in the inclusive range |start| to |end| to |pages|
+
+1. Return [=success=] with <code>data</code> |pages|.
 
 </div>
 
