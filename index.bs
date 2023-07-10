@@ -302,8 +302,8 @@ the remainder of the specification.
 <pre class="cddl remote-cddl">
 Command = {
   id: js-uint,
+  ? metadata: Metadata,
   CommandData,
-  Extensible,
 }
 
 CommandData = (
@@ -316,7 +316,7 @@ CommandData = (
 )
 
 EmptyParams = {
-   Extensible
+  ? metadata: Metadata,
 }
 </pre>
 
@@ -332,7 +332,7 @@ Message = (
 CommandResponse = {
   id: js-uint,
   result: ResultData,
-  Extensible
+  ? metadata: Metadata,
 }
 
 ErrorResponse = {
@@ -340,7 +340,7 @@ ErrorResponse = {
   error: ErrorCode,
   message: text,
   ? stacktrace: text,
-  Extensible
+  ? metadata: Metadata,
 }
 
 ResultData = (
@@ -352,12 +352,12 @@ ResultData = (
 )
 
 EmptyResult = {
-  Extensible
+  ? metadata: Metadata,
 }
 
 Event = {
   EventData,
-  Extensible
+  ? metadata: Metadata,
 }
 
 EventData = (
@@ -371,8 +371,6 @@ EventData = (
 [=Remote end definition=] and [=Local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-Extensible = (*text => any)
-
 js-int = -9007199254740991..9007199254740991
 js-uint = 0..9007199254740991
 </pre>
@@ -645,6 +643,23 @@ To <dfn>emit events</dfn> given |body| and |related browsing contexts|:
   1. [=Emit an event=] with |session| and |body|.
 
 </div>
+
+## Metadata ## {#metadata}
+
+[=Remote end definition=] and [=Local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+Metadata = (*text => any)
+</pre>
+
+Implementations may use the <code>Metadata</code> type in some production to
+pass implementation-specific [=/metadata=] to clients that
+the clients might find useful.
+
+Implementations must not require [=/metadata=] to maintain functionality; in
+other words, any productions allowing [=/metadata=] must maintain
+functionality as defined in this specification whether or not
+[=/metadata=] is provided.
 
 # Transport # {#transport}
 
@@ -1400,7 +1415,7 @@ session.CapabilityRequest = {
     ? socksProxy: text,
     ? socksVersion: 0..255,
   },
-  Extensible
+  ? metadata: Metadata,
 };
 </pre>
 
@@ -1424,9 +1439,7 @@ subscribe to or unsubscribe from a specific set of events.
 #### The session.status Command #### {#command-session-status}
 
 The <dfn export for=commands>session.status</dfn> command returns information about
-whether a remote end is in a state in which it can create new sessions,
-but may additionally include arbitrary meta information that is specific
-to the implementation.
+whether a remote end is in a state in which it can create new sessions.
 
 This is a [=static command=].
 
@@ -1515,7 +1528,7 @@ This is a [=static command=].
             ? socksVersion: 0..255,
           },
           setWindowRect: bool,
-          Extensible
+          ? metadata: Metadata,
         }
       }
       </pre>
@@ -5200,17 +5213,14 @@ script.RemoteReference = (
 
 script.SharedReference = {
    sharedId: script.SharedId
-   <!-- Ensure that if we have a handle, it at least has the correct type -->
    ? handle: script.Handle,
-   Extensible
+   ? metadata: Metadata,
 }
 
 script.RemoteObjectReference = {
    handle: script.Handle,
-   <!-- This shouldn't ever match. The problem is that Extensible would
-   otherwise allow this to match a non-text sharedId -->
    ? sharedId: script.SharedId
-   Extensible
+   ? metadata: Metadata,
 }
 </pre>
 
