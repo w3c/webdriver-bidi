@@ -3614,6 +3614,60 @@ To <dfn>get the base network event data</dfn> given |request| and |redirect coun
 
 </div>
 
+#### The network.BytesValue Type #### {#type-network-BytesValue}
+
+<pre class="cddl local-cddl remote-cddl">
+network.BytesValue = network.StringValue / network.Base64Value;
+
+network.StringValue = {
+  type: "string",
+  value: text,
+}
+
+network.Base64Value = {
+  type: "base64",
+  value: text,
+}
+</pre>
+
+The <code>network.BytesValue</code> type represents binary data sent over the
+network. Valid UTF-8 is represented with the <code>network.StringValue</code>
+type, any other data is represented in Base64-encoded form as
+<code>network.Base64Value</code>.
+
+<div algorithm>
+To <dfn ignore>deserialize protocol bytes</dfn> given |protocol bytes|:
+
+Note: this takes bytes encoded as a <code>network.BytesValue</code> and returns
+a [=byte sequence=].
+
+1. If |protocol bytes| matches the <code>network.StringValue</code> production,
+   let |bytes| be [=UTF-8 encode=] |protocol bytes|["<code>value</code>"].
+
+1. Otherwise if |protocol bytes| matches the <code>network.Base64Value</code>
+   production. Let |bytes| be [=forgiving-base64 decode=] |protocol
+   bytes|["<code>value</code>"].
+
+1. Return |bytes|.
+
+</div>
+
+<div algorithm>
+To <dfn>serialize protocol bytes</dfn> given |bytes|:
+
+Note: this takes a [=byte sequence=] and returns a <code>network.BytesValue</code>.
+
+1. Let |text| be [=UTF-8 decode without BOM or fail=] |bytes|.
+
+1. If |text| is failure, return a [=/map=] matching the
+   <code>network.Base64Value</code> production, with |value| set to
+   [=forgiving-base64 encode=] |bytes|.
+
+1. Return a [=/map=] matching the <code>network.StringValue</code> production,
+   with |value| set to |text|.
+
+</div>
+
 #### The network.Cookie Type #### {#type-network-Cookie}
 
 [=Remote end definition=] and [=local end definition=]
@@ -3621,8 +3675,7 @@ To <dfn>get the base network event data</dfn> given |request| and |redirect coun
 <pre class="cddl local-cddl">
 network.Cookie = {
     name: text,
-    ? value: text,
-    ? binaryValue: [ uint ]
+    value: network.BytesValue,
     domain: text,
     path: text,
     ? expires: js-uint,
@@ -3635,11 +3688,6 @@ network.Cookie = {
 
 The <code>network.Cookie</code> type represents a cookie.
 
-If the cookie value can be represented as a UTF-8 encoded string, the
-<code>value</code> field will be present. Otherwise the <code>binaryValue</code>
-field will be present and consist of an array of integers representing the bytes
-of the cookie value.
-
 <div algorithm>
 To <dfn>get a cookie</dfn> given |stored cookie|:
 
@@ -3648,18 +3696,7 @@ samesite-flag, which is from [[SAME-SITE-COOKIES]].
 
 1. Let |name| be the result of [=UTF-8 decode=] with |stored cookie|'s name field.
 
-1. Let |utf8 decoded value| be the result of [=UTF-8 decode without BOM or fail=]
-   with |stored cookie|'s value.
-
-1. If |utf8 decoded value| is failure, then:
-
-    1. Let |value| be null and |binary value| be an empty list.
-
-    1. For each |byte| in |stored cookie|'s value:
-
-      1. Append the [=byte/value=] of |byte| to |binary value|.
-
-   Otherwise: Let |value| be |utf8 decoded value| and |binary value| be null.
+1. Let |value| be [=serialize protocol bytes=] with |stored cookie|'s value.
 
 1. Let |domain| be |stored cookie|'s domain field.
 
@@ -3683,9 +3720,7 @@ samesite-flag, which is from [[SAME-SITE-COOKIES]].
 
 1. Return a map matching the <code>network.Cookie</code> production,
    with the <code>name</code> field set to |name|, the <code>value</code> field
-   set to |value| if it's not null or omitted otherwise, the
-   <code>binaryValue</code> field set to |binary value| if it's not null or
-   omitted otherwise, the <code>domain</code> field set to |domain|, the
+   set to |value|, the <code>domain</code> field set to |domain|, the
    <code>path</code> field set to |path|, the <code>expires</code> field set to
    |expires| if it's not null, or omitted otherwise, the <code>size</code> field
    set to |size|, the <code>httpOnly</code> field set to |http only|, the
@@ -3796,45 +3831,25 @@ TODO: Add service worker fields
 
 <pre class="cddl local-cddl">
 network.Header = {
-    name: text,
-    ? value: text,
-    ? binaryValue: [ uint ]
-};
+  name: text,
+  value: network.BytesValue,
+}
 </pre>
 
 The <code>network.Header</code> type represents a single request header.
 
-If the header value can be represented as a UTF-8 encoded string, the
-<code>value</code> field will be present. Otherwise the <code>binaryValue</code>
-field will be present and consist of an array of integers representing the bytes
-of the header.
-
 <div algorithm>
-To <dfn>get a header</dfn> given |name bytes| and |value bytes|:
+To <dfn>serialize header</dfn> given |name bytes| and |value bytes|:
 
 1. Let |name| be the result of [=UTF-8 decode=] with |name bytes|.
 
    Assert: Since header names are constrained to be ASCII-only this cannot fail.
 
-1. Let |utf8 decoded value| be the result of [=UTF-8 decode without BOM or fail=]
-   with |value bytes|.
-
-1. If |utf8 decoded value| is failure, then:
-
-    1. Let |value| be null and |binary value| be an empty list.
-
-    1. For each |byte| in |value bytes|:
-
-      1. Append the [=byte/value=] of |byte| to |binary value|.
-
-   Otherwise: let |value| be |utf8 decoded value| and let |binary value|
-   be null.
+1. Let |value| be [=serialize protocol bytes=] with |value bytes|.
 
 1. Return a map matching the <code>network.Header</code> production, with the
-   <code>name</code> field set to |name|, the <code>value</code> field
-   set to |value| if it's not null, or omitted otherwise, and the
-   <code>binaryValue</code> field set to |binary value| if it's not null, or
-   omitted otherwise.
+   <code>name</code> field set to |name|, and the <code>value</code> field
+   set to |value|.
 
 </div>
 
@@ -3957,7 +3972,7 @@ To <dfn>get the request data</dfn> given |request|:
 
 1. For each (|name|, |value|) in |request|'s [=request/headers list=]:
 
-  1. Append the result of [=get a header=] with |name| and |value| to |headers|.
+  1. Append the result of [=serialize header=] with |name| and |value| to |headers|.
 
   1. If |name| is a [=byte-case-insensitive=] match for "<code>Cookie</code>" then:
 
@@ -4092,7 +4107,7 @@ To <dfn>get the response data</dfn> given |response|:
 
 1. For each (|name|, |value|) in |response|'s [=response/headers list=]:
 
-  1. Append the result of [=get a header=] with |name| and |value| to |headers|.
+  1. Append the result of [=serialize header=] with |name| and |value| to |headers|.
 
 1. Let |bytes received| be the total number of bytes transmitted as part of the
    HTTP response associated with |response|.
