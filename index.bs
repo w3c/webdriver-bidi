@@ -4440,7 +4440,7 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 script.Channel = text;
 </pre>
 
-The <code>script.Channel</code> type represents the id of a specific channel
+The <code><dfn>script.Channel</dfn></code> type represents the id of a specific channel
 used to send custom messages from the [=remote end=] to the [=local end=].
 
 #### The script.ChannelValue Type #### {#type-script-ChannelValue}
@@ -4580,11 +4580,13 @@ strong [=/map=] from handle ids to their corresponding objects.
 
 #### The script.LocalValue Type #### {#type-script-LocalValue}
 
-[=Remote end definition=] and [=local end definition=]
+[=Remote end definition=]
 
-<pre class="cddl remote-cddl local-cddl">
+<pre class="cddl remote-cddl">
 script.LocalValue = (
+  script.RemoteReference //
   script.PrimitiveProtocolValue //
+  script.ChannelValue //
   script.ArrayLocalValue //
   script.DateLocalValue //
   script.MapLocalValue //
@@ -4633,9 +4635,10 @@ script.SetLocalValue = {
 }
 </pre>
 
-The <code>script.LocalValue</code> type represents both primitive and
-non-primitive values which can be deserialized to ECMAScript without reference
-to existing objects.
+The <code><dfn export>script.LocalValue</dfn></code> type represents values which can be
+deserialized into ECMAScript. This includes both primitive and non-primitive
+values as well as [=script.RemoteReference|remote references=] and
+[=script.Channel|channels=].
 
 <div algorithm>
 
@@ -5212,7 +5215,7 @@ script.RemoteObjectReference = {
 }
 </pre>
 
-The <dfn>script.RemoteReference</dfn> type is either a
+The <code><dfn>script.RemoteReference</dfn></code> type is either a
 <code>script.RemoteObjectReference</code> representing a remote reference to an
 existing ECMAScript object in [=handle object map=] in the given [=Realm=], or
 is a <code>script.SharedReference</code> representing a reference to a [=node=].
@@ -6364,18 +6367,11 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
         functionDeclaration: text,
         awaitPromise: bool,
         target: script.Target,
-        ? arguments: [*script.ArgumentValue],
+        ? arguments: [*script.LocalValue],
         ? resultOwnership: script.ResultOwnership,
         ? serializationOptions: script.SerializationOptions,
-        ? this: script.ArgumentValue,
+        ? this: script.LocalValue,
       }
-
-      script.ArgumentValue = (
-        script.RemoteReference //
-        script.LocalValue //
-        script.ChannelValue
-      );
-
     </pre>
    </dd>
    <dt>Result Type</dt>
