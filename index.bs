@@ -183,6 +183,12 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
+    text: traversable navigable; url:document-sequences.html#traversable-navigable
+    text: system visibility state; url: document-sequences.html#system-visibility-state
+    text: focused area of the document; url: document-sequences.html#focused-area-of-the-document
+    text: visible; url: document-sequences.html#system-visibility-state
+    text: hidden; url: document-sequences.html#system-visibility-state
+    text: navigables; url: document-sequences.html#navigables
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
     text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
@@ -2139,6 +2145,56 @@ The <code>browsingContext.ReadinessState</code> type represents the stage of
 document loading at which a navigation command will return.
 
 ### Commands ### {#module-browsingContext-commands}
+
+#### The browsingContext.activate Command ####  {#command-browsingContext-activate}
+
+The <dfn export for=commands>browsingContext.activate</dfn> command activates and focuses the given top-level browsing context.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      browsingContext.Activate = {
+        method: "browsingContext.activate",
+        params: browsingContext.ActivateParameters
+      };
+
+      browsingContext.ActivateParameters = {
+        context: browsingContext.BrowsingContext
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.activate">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |context id| be the value of the |command parameters|["<code>context</code>"] field.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+
+1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
+
+1. Run implementation-specific steps so that |context|'s [=traversable navigable=]'s [=system visibility state=] becomes [=visible=]. If this is not possible return [=error=] with error code [=unsupported operation=].
+
+    Note: This can have the side effect of making currently [=visible=] [=navigables=] [=hidden=].
+
+    Note: This can change the underlying OS state by causing the window to become unminimized or by other side effects related to changing the [=system visibility state=].
+
+1. Run implementation-specific steps to set the [=top-level traversable/system focus=] on the |context| if it is not focused.
+
+    Note: This does not change the [=focused area of the document=] except as required to by other specifications.
+
+1. Return [=success=] with data null.
+
+</div>
 
 #### The browsingContext.captureScreenshot Command ####  {#command-browsingContext-captureScreenshot}
 
