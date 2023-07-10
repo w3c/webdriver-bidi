@@ -3598,14 +3598,14 @@ To <dfn>serialize protocol bytes</dfn> given |bytes|:
 
 Note: this takes a [=byte sequence=] and returns a <code>network.BytesValue</code>.
 
-1. If |bytes| matches the <code>network.StringValue</code> production,
-   let |protocol value| be [=UTF-8 encode=] |bytes|["<code>value</code>"].
+1. Let |text| be [=UTF-8 decode without BOM or fail=] |bytes|.
 
-1. Otherwise if |bytes| matches the <code>network.Base64Value</code>
-   production. Let |protocol value| be [=forgiving-base64 decode=]
-   |bytes|["<code>value</code>"].
+1. If |text| is failure, return a [=/map=] matching the
+   <code>network.Base64Value</code> production, with |value| set to
+   [=forgiving-base64 encode=] |bytes|.
 
-1. Return |protocol value|.
+1. Return a [=/map=] matching the <code>network.StringValue</code> production,
+   with |value| set to |text|.
 
 </div>
 
