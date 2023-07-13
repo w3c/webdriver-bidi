@@ -96,6 +96,6 @@ This scenario loads a web page and prints it as a PDF. In spec terms, this invol
 This scenario loads a web page and gets and sets its cookies. In spec terms, this involves:
 
 - [x] Some items from the previous milestones
-- [ ] Get cookies
-- [ ] Set cookies
-- [ ] Delete cookies
+- [ ] Getting cookies
+- [ ] Setting cookies
+- [ ] Deleting cookies
