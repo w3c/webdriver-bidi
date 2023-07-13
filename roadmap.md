@@ -90,3 +90,10 @@ This scenario loads a web page and prints it as a PDF. In spec terms, this invol
 
 - [x] Some items from the previous milestones
 - [x] [Printing to PDF as Base64-encoded string](https://w3c.github.io/webdriver-bidi/#command-browsingContext-print)
+
+### Sandbox session mode
+
+This scenario initiates a browsing session in sandbox mode (analogue to Chrome's Incognito mode, Firefox's Private Browsing or Safari's Private mode), ensuring that no noticeable side effects result from the creation of such a session. In spec terms, this involves:
+
+- [x] Some items from the previous milestones
+- [ ] Create session with isolation and deleting of cookies, site data, and browsing history.
