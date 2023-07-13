@@ -93,7 +93,7 @@ This scenario loads a web page and prints it as a PDF. In spec terms, this invol
 
 ### Cookies
 
-This scenario loads a web page and gets and sets its cookies. In spec terms, this involves:
+This scenario loads a web page, reads the cookies set by the server and the page, updates and deletes some of the cookies, and triggers an action to verify that modified cookies are processed correctly. In spec terms, this involves:
 
 - [x] Some items from the previous milestones
 - [ ] Getting cookies
