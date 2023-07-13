@@ -2189,6 +2189,13 @@ The [=remote end steps=] with |command parameters| are:
 
 1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
 
+1. Return [=activate a context=] with |context|.
+
+</div>
+
+<div algorithm>
+To <dfn>activate a context</dfn> given |context|:
+
 1. Run implementation-specific steps so that |context|'s [=traversable navigable=]'s [=system visibility state=] becomes [=visible=]. If this is not possible return [=error=] with error code [=unsupported operation=].
 
     Note: This can have the side effect of making currently [=visible=] [=navigables=] [=hidden=].
@@ -2197,7 +2204,7 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Run implementation-specific steps to set the [=top-level traversable/system focus=] on the |context| if it is not focused.
 
-    Note: This does not change the [=focused area of the document=] except as required to by other specifications.
+    Note: This does not change the [=focused area of the document=] except as <span class=allow-2119>required</span> to by other specifications.
 
 1. Return [=success=] with data null.
 
@@ -2519,7 +2526,8 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
 
       browsingContext.CreateParameters = {
         type: browsingContext.CreateType,
-        ? referenceContext: browsingContext.BrowsingContext
+        ? referenceContext: browsingContext.BrowsingContext,
+        ? background: bool
       }
       </pre>
    </dd>
@@ -2557,10 +2565,8 @@ The [=remote end steps=] with |command parameters| are:
   1. Create a new [=top-level browsing context=] by running the [=window open
      steps=] with <var ignore>url</var> set to "<code>about:blank</code>",
      <var ignore>target</var> set to the empty string, and
-     <var ignore>features</var> set to "<code>noopener</code>". This must be
-     done without invoking the [=/focusing steps=] for the created browsing
-     context. Which OS window the new [=/browsing context=] is created in
-     depends on |type| and |reference context|:
+     <var ignore>features</var> set to "<code>noopener</code>". Which OS window the new [=/browsing context=] 
+     is created in depends on |type| and |reference context|:
 
      * If |type| is "<code>tab</code>" and the implementation supports
        multiple browsing contexts in the same OS window:
@@ -2579,6 +2585,14 @@ The [=remote end steps=] with |command parameters| are:
 
      * Otherwise, the details of how the browsing context is presented to the
        user are implementation defined.
+
+  1. If the value of the |command parameters|' <code>background</code> field is not present or false:
+
+    1. Let |activate result| be the result of [=activate a context=] with the newly created [=/browsing context=].
+
+    1. If |activate result| is an [=error=], return |activate result|.
+
+    Note: Do no invoke the [=/focusing steps=] for the created browsing context if background is true.
 
   1. Let |context id| be the [=browsing context id=] of the newly created
      [=/browsing context=].
