@@ -90,3 +90,10 @@ This scenario loads a web page and prints it as a PDF. In spec terms, this invol
 
 - [x] Some items from the previous milestones
 - [x] [Printing to PDF as Base64-encoded string](https://w3c.github.io/webdriver-bidi/#command-browsingContext-print)
+
+### Window management
+
+This scenario changes the browser window dimensions and position, maximizes, minimizes the window and toggles the full screen mode. 
+
+- [x] Some items from the previous milestones
+- [] [Add commands for resizing and positioning browser windowsg](https://github.com/w3c/webdriver-bidi/issues/398)
