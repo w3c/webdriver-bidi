@@ -96,4 +96,4 @@ This scenario loads a web page and prints it as a PDF. In spec terms, this invol
 This scenario changes the browser window dimensions and position, maximizes/minimizes the window, and toggles full-screen mode. 
 
 - [x] Some items from the previous milestones
-- [] [Add commands for resizing and positioning browser windowsg](https://github.com/w3c/webdriver-bidi/issues/398)
+- [ ] [Add commands for resizing and positioning browser windowsg](https://github.com/w3c/webdriver-bidi/issues/398)
