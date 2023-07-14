@@ -90,3 +90,10 @@ This scenario loads a web page and prints it as a PDF. In spec terms, this invol
 
 - [x] Some items from the previous milestones
 - [x] [Printing to PDF as Base64-encoded string](https://w3c.github.io/webdriver-bidi/#command-browsingContext-print)
+
+### Multi page automation
+
+This scenario creates multiple web pages at the same time and performs tests that require switching between multple pages.
+
+- [x] Some items from the previous milestones
+- [x] [Activating a top-level context](https://w3c.github.io/webdriver-bidi/#command-browsingContext-activate)
