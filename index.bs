@@ -316,7 +316,8 @@ CommandData = (
   InputCommand //
   NetworkCommand //
   ScriptCommand //
-  SessionCommand
+  SessionCommand //
+  StorageCommand
 )
 
 EmptyParams = {
@@ -354,7 +355,8 @@ ResultData = (
   EmptyResult //
   NetworkResult //
   ScriptResult //
-  SessionResult
+  SessionResult //
+  StorageResult
 )
 
 EmptyResult = {
@@ -1848,10 +1850,7 @@ BrowsingContextCommand = (
   browsingContext.Navigate //
   browsingContext.Print //
   browsingContext.Reload //
-  browsingContext.SetViewport //
-  browsingContext.GetCookie //
-  browsingContext.SetCookie //
-  browsingContext.DeleteCookie
+  browsingContext.SetViewport
 )
 </pre>
 
@@ -1863,9 +1862,7 @@ BrowsingContextResult = (
   browsingContext.CreateResult //
   browsingContext.GetTreeResult //
   browsingContext.NavigateResult //
-  browsingContext.PrintResult //
-  browsingContext.GetCookieResult //
-  browsingContext.SetCookieResult
+  browsingContext.PrintResult
 )
 
 BrowsingContextEvent = (
@@ -2156,25 +2153,6 @@ browsingContext.ReadinessState = "none" / "interactive" / "complete"
 
 The <code>browsingContext.ReadinessState</code> type represents the stage of
 document loading at which a navigation command will return.
-
-#### The browsingContext.Cookie Type #### {#type-browsingContext-Cookie}
-
-[=remote end definition=] and [=local end definition=]
-
-<pre class="cddl local-cddl remote-cddl">
-browsingContext.Cookie = {
-    name: text;
-    value: text;
-    host: text;
-    partitionKey: text|undefined;
-}
-
-</pre>
-
-The <code>browsingContext.Cookie</code> type provides details of a given cookie.
-
-Issue Confirm if `cookie` type should be consolidated in one place `browsingContext.Cookie` or `Network.Cookie`
-
 
 ### Commands ### {#module-browsingContext-commands}
 
@@ -3083,65 +3061,6 @@ The [=remote end steps=] with |command parameters| are:
 
 </div>
 
-#### The browsingContext.getCookie Command ####  {#command-browsingContext-getCookie}
-
-The <dfn export for=commands>browsingContext.getCookie</dfn> command  specific cookie characteristics (e.g. ) on the given top-level browsing context.
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-    <pre class="cddl remote-cddl">
-        browsingContext.GetCookie = {
-
-        }
-    </pre>
-   </dd>
-   <dt>Result Type</dt>
-   <dd>
-    <pre class="cddl local-cddl">
-      browsingContext.GetCookieResult = {
-        data: text
-      }
-    </pre>
-   </dd>
-</dl>
-
-#### The browsingContext.setCookie Command ####  {#command-browsingContext-setCookie}
-
-The <dfn export for=commands>browsingContext.setCookie</dfn> command  specific cookie characteristics (e.g. ) on the
-given top-level browsing context.
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-    <pre class="cddl remote-cddl">
-        browsingContext.SetCookie = {
-
-        }
-    </pre>
-   </dd>
-   <dt>Result Type</dt>
-   <dd>
-    <pre class="cddl local-cddl">
-      browsingContext.SetCookieResult = {
-        data: text
-      }
-    </pre>
-   </dd>
-</dl>
-
-#### The browsingContext.deleteCookie Command ####  {#command-browsingContext-deleteCookie}
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-    <pre class="cddl remote-cddl">
-        browsingContext.DeleteCookie = {
-
-        }
-    </pre>
-   </dd>
-</dl>
 
 ### Events ### {#module-contexts-events}
 
@@ -7117,6 +7036,116 @@ worker=] algorithm:
    production, with the <code>params</code> field set to |params|.
 
 </div>
+
+## The storage Module ## {#module-storage}
+
+The <dfn export for=modules>storage</dfn> module contains functionality and
+events related to storage.
+
+### Definition ### {#module-storage-definition}
+
+[=Local end definition=]
+
+### Types ### {#module-storage-types}
+
+#### The storage.Cookie Type #### {#type-storage-Cookie}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl">
+StorageCommand = (
+  storage.GetCookie //
+  storage.SetCookie //
+  storage.DeleteCookie
+)
+</pre>
+
+[=Local end definition=]
+
+<pre class="cddl local-cddl">
+StorageResult = (
+  storage.GetCookieResult //
+  storage.SetCookieResult
+)
+</pre>
+
+[=Remote end definition=] and [=Local end definition=]
+
+<pre class="cddl local-cddl remote-cddl">
+storage.Cookie = {
+    name: text;
+    value: text;
+    host: text;
+    partitionKey: text|undefined;
+}
+</pre>
+
+The <code>storage.Cookie</code> type provides details of a given cookie.
+
+Issue: Confirm if <code>cookie</code> type should be consolidated in one place <code>storage.Cookie</code> or <code>Network.Cookie</code>.
+
+### Commands ### {#module-storage-commands}
+
+#### The storage.getCookie Command ####  {#command-storage-getCookie}
+
+The <dfn export for=commands>storage.getCookie</dfn> command  specific cookie characteristics (e.g. ) on the given top-level browsing context.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+        storage.GetCookie = {
+
+        }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      storage.GetCookieResult = {
+        data: text
+      }
+    </pre>
+   </dd>
+</dl>
+
+#### The storage.setCookie Command ####  {#command-storage-setCookie}
+
+The <dfn export for=commands>storage.setCookie</dfn> command  specific cookie characteristics (e.g. ) on the
+given top-level browsing context.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+        storage.SetCookie = {
+
+        }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      storage.SetCookieResult = {
+        data: text
+      }
+    </pre>
+   </dd>
+</dl>
+
+#### The storage.deleteCookie Command ####  {#command-storage-deleteCookie}
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+        storage.DeleteCookie = {
+
+        }
+    </pre>
+   </dd>
+</dl>
+
 
 ## The log Module ## {#module-log}
 
