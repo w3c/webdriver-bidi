@@ -73,7 +73,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
     text: parse a page range; url: dfn-parse-a-page-range
-    text: process capabilities; url: dfn-processing-capabilities
+    text: process classic capabilities; url: dfn-processing-capabilities
     text: readiness state; url: dfn-readiness-state
     text: remote end steps; url: dfn-remote-end-steps
     text: remote end; url: dfn-remote-ends
@@ -1375,6 +1375,40 @@ filter only those that ought to be returned to the local end.
 
 </div>
 
+<div algorithm>
+
+To <dfn>process BiDi capabilities</dfn> given |command parameters| and |flags|:
+
+1. Let |capabilities| be the result of [=trying=] to [=process classic
+   capabilities=] with |command parameters| and |flags|.
+
+1. If |capabilities| is null, return |capabilities|.
+
+1. [=Assert=]: |capabilities| is an [=Object=].
+
+1. Let |keys| be a new [=Object=].
+
+1. For each |key| in [=storage partition keys=]:
+
+  1. Let |schema| be a new [=Object=].
+
+  1. If [=default values for storage partition keys=][|key|] exists:
+
+    1. [=Set a property=] on |schema| named "<code>default</code>" to [=default values for storage partition keys=][|key|].
+
+  1. Otherwise:
+
+    1. [=Set a property=] on |schema| named "<code>required</code>" to true.
+
+  1. [=Set a property=] on |keys| named |key| to |schema|.
+
+1. [=Set a property=] on |capabilities| named
+   "<code>storagePartitionKeys</code>" to |keys|.
+
+1. Return |capabilities|.
+
+</div>
+
 ### Types ### {#module-session-types}
 
 #### The session.CapabilitiesRequest Type #### {#type-session-CapabilitiesRequest}
@@ -1524,6 +1558,9 @@ This is a [=static command=].
             ? socksVersion: 0..255,
           },
           setWindowRect: bool,
+          storagePartitionKeys: {
+            Extensible
+          },
           Extensible
         }
       }
@@ -1542,7 +1579,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |flags| be a [=/set=] containing "<code>bidi</code>".
 
-1. Let |capabilities| be the result of [=trying=] to [=process capabilities=]
+1. Let |capabilities| be the result of [=trying=] to [=process BiDi capabilities=]
    with |command parameters| and |flags|.
 
 1. Let |session| be the result of [=trying=] to [=create a session=] with
@@ -7084,6 +7121,10 @@ The <code>storage.Cookie</code> type provides details of a given cookie.
 
 Issue: Confirm if <code>cookie</code> type should be consolidated in one place <code>storage.Cookie</code> or <code>Network.Cookie</code>.
 
+A [=remote end=] has a [=/set=] of <dfn>storage partition keys</dfn> which contains zero or more implementation-defined string values.
+
+A [=remote end=] has a [=/map=] of <dfn>default values for storage partition keys</dfn> which contains zero or more implementation-defined entries. Each key must be a member of the [=storage partition keys=] which the [=remote end=] does not require as input to [=storage.getCookie=], [=storage.setCookie=], and [=storage.deleteCookie=]; the corresponding value is a the value which the [=remote end=] uses when one is not provided.
+
 ### Commands ### {#module-storage-commands}
 
 #### The storage.getCookie Command ####  {#command-storage-getCookie}
@@ -7134,6 +7175,8 @@ given top-level browsing context.
 </dl>
 
 #### The storage.deleteCookie Command ####  {#command-storage-deleteCookie}
+
+The <dfn export for=commands>storage.deleteCookie</dfn> command removes the specified cookie.
 
 <dl>
    <dt>Command Type</dt>
