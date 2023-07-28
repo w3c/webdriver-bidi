@@ -186,6 +186,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: set up a worker environment settings object; url: workers.html#set-up-a-worker-environment-settings-object
     text: set up a worklet environment settings object; url: worklets.html#set-up-a-worklet-environment-settings-object
     text: shared worker; url: workers.html#shared-workers
+    text: traverse the history by a delta; url: browsing-the-web.html#traverse-the-history-by-a-delta
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
@@ -3100,24 +3101,24 @@ traverses the history of a given context by a delta.
 <div algorithm="remote end steps for browsingContext.traverseHistory">
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
-   |command parameters|.
+1. Let |browsing context| be the result of [=trying=] to [=get a browsing context=]
+   with |command parameters|["<code>context</code>"]|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Assert: |browsing context| is not null.
 
-1. Assert: |context| is not null.
+1. Let |navigable| be the [=/navigable=] whose [=navigable/active
+   document=] is |browsing context|'s [=browsing context/active document=].
 
-1. Let |delta| be the value of the <code>delta</code> field of |command
-   parameters|.
+1. Let |delta| be |command parameters|["<code>delta</code>"].
 
-1. Let |wait condition| be the value of the <code>wait</code> field of |command
-   parameters| if present, or "<code>none</code>" otherwise.
+1. If |command parameters| [=map/contains=] "<code>wait</code>, let |wait
+   condition| be |command parameters|["<code>wait</code>"]. Otherwise let |wait
+   condition| be "<code>none</code>".
 
 1. Let |navigation id| be the string representation of a
    [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
 
-1. [=Traverse the history by a delta=] given |delta|, |context|, and
+1. [=Traverse the history by a delta=] given |delta|, |navigable|, and
    |navigation id|.
 
 1.  Let (|event received|, |navigate status|) be [=await=] given
@@ -3129,8 +3130,8 @@ The [=remote end steps=] with |command parameters| are:
 
 1. If |navigate status|'s status is "<code>complete</code>":
 
-  1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextTraverseHistoryResult</code> production, with the
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.TraverseHistoryResult</code> production, with the
      <code>navigation</code> field set to |navigation id|, and the
      <code>url</code> field set to the result of the [=URL serializer=] given
      |navigate status|'s url.
@@ -3145,8 +3146,8 @@ The [=remote end steps=] with |command parameters| are:
 
 1. If |wait condition| is "<code>none</code>":
 
-  1. Let |body| be a [=map=] matching the
-     <code>BrowsingContextTraverseHistoryResult</code> production, with the
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.TraverseHistoryResult</code> production, with the
      <code>navigation</code> field set to |navigation id|, and the
      <code>url</code> field set to the result of the [=URL serializer=] given
      |navigate status|'s url.
@@ -3166,8 +3167,8 @@ The [=remote end steps=] with |command parameters| are:
 1. If event received is "<code>page show</code>", let |persisted| be true,
    otherwise let |persisted| be false.
 
-1. Let |body| be a [=map=] matching the
-   <code>BrowsingContextTraverseHistoryResult</code> production, with the
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.TraverseHistoryResult</code> production, with the
    <code>navigation</code> field set to |status|'s id, the
    <code>persisted</code> field set to |persisted|, and the <code>url</code>
    field set to the result of the [=URL serializer=] given |status|'s url.
@@ -3185,8 +3186,6 @@ Issue: Do we want to expose a `browsingContext.pageShow event? In that case we'd
 need to call this whenever `pageshow` is going to be emitted, not just on
 bfcache restore, and also add the persisted status to the data.
 
- 1. If the [=current session=] is null, return.
-
  1. Let |navigation id| be |navigation status|'s id.
 
  1. [=Resume=] with "<code>page show</code>", |navigation id|, and
@@ -3198,8 +3197,6 @@ bfcache restore, and also add the persisted status to the data.
 
 The <dfn export>WebDriver BiDi pop state</dfn> steps given <var
 ignore>context</var> and |navigation status| are:
-
- 1. If the [=current session=] is null, return.
 
  1. Let |navigation id| be |navigation status|'s id.
 
