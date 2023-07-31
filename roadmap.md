@@ -90,3 +90,12 @@ This scenario loads a web page and prints it as a PDF. In spec terms, this invol
 
 - [x] Some items from the previous milestones
 - [x] [Printing to PDF as Base64-encoded string](https://w3c.github.io/webdriver-bidi/#command-browsingContext-print)
+
+### Cookies
+
+This scenario sets cookies to be used when loading a web page and its subresources, loads that page, and verifies that the correct cookies were sent with the requests. It also inspects the cookies set by the responses, and clears all cookies to reset the state. In spec terms, this involves:
+
+- [x] Some items from the previous milestones
+- [ ] Getting cookies
+- [ ] Setting cookies
+- [ ] Deleting cookies
