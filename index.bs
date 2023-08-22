@@ -4554,6 +4554,12 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
 
 1. Let |has hostname| be true.
 
+1. Let |has port| be true.
+
+1. Let |has pathname| be true.
+
+1. Let |has search| be true.
+
 1. If |pattern| matches the <code>network.UrlPatternPattern</code> production:
 
   1. Let |pattern url| be the empty string.
@@ -4642,6 +4648,10 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
 
     1. Append |port| to |pattern url|.
 
+  1. Otherwise:
+
+    1. Set |has port| to false.
+
   1. If |pattern| [=map/contains=] "<code>pathname</code>":
 
     1. Let |pathname| be the result of [=trying=] to [=unescape URL Pattern=] with
@@ -4659,6 +4669,10 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
 
     1. Append |pathname| to |pattern url|.
 
+  1. Otherwise:
+
+    1. Set |has pathname| to false.
+
   1. If |pattern| [=map/contains=] "<code>search</code>":
 
     1. Let |search| be the result of [=trying=] to [=unescape URL pattern=] with
@@ -4674,6 +4688,10 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
         1. Return [=error=] with [=error code=] [=invalid argument=].
 
     1. Append |search| to |pattern url|.
+
+  1. Otherwise:
+
+    1. Set |has search| to false.
 
 1. Otherwise, if |pattern| matches the <code>network.UrlPatternString</code> production:
 
@@ -4692,26 +4710,40 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
      <dd>|url|'s [=url/host=] if |has hostname| is true, or null otherwise.
      <dt>port
      <dd>
-     1. If |url|'s [=url/scheme=] [=is special=] and |url|'s
-   [=url/scheme=]'s [=default port=] is not null, and |url|'s [=url/port=] is
-   null or is equal to [=url/scheme=]'s [=default port=]:
-
-       1. The empty string.
-
-     1. Otherwise, if |url|'s [=url/port=] is not null:
-
-       1. [=Serialize an integer=] with |url|'s [=url/port=].
-
-     1. Otherwise:
+     1. If |has port| is false:
 
        1. null.
 
+     1. Otherwise:
+
+       1. If |url|'s [=url/scheme=] [=is special=] and |url|'s [=url/scheme=]'s
+          [=default port=] is not null, and |url|'s [=url/port=] is null or is
+          equal to [=url/scheme=]'s [=default port=]:
+
+         1. The empty string.
+
+       1. Otherwise, if |url|'s [=url/port=] is not null:
+
+         1. [=Serialize an integer=] with |url|'s [=url/port=].
+
+       1. Otherwise:
+
+         1. null.
+
      <dt>pathname
-     <dd>The result of running the [=URL path serializer=] with |url|, if
+     <dd>
+     1. If |has pathname| is false:
+
+       1. null.
+
+     1. Otherwise:
+
+       1. The result of running the [=URL path serializer=] with |url|, if
          |url|'s [=url/path=] is not the empty string and is not [=list/empty=],
          or null otherwise.
+
      <dt>search
-     <dd>|url|'s [=url/query=].
+     <dd>|url|'s [=url/query=] if |has search| is true, or null otherwise.
    </dl>
 
 1. Return [=success=] with data |parsed|.
