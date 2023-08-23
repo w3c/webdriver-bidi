@@ -2470,7 +2470,8 @@ The <dfn export for=commands>browsingContext.close</dfn> command closes a
       }
 
       browsingContext.CloseParameters = {
-        context: browsingContext.BrowsingContext
+        context: browsingContext.BrowsingContext,
+        ? promptUnload: bool .default false
       }
       </pre>
    </dd>
@@ -2489,6 +2490,9 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |context id| be the value of the <code>context</code> field of
      |command parameters|.
 
+  1. Let |prompt unload| be the value of the <code>promptUnload</code> field of
+     |command parameters|.
+
   1. Let |context| be the result of [=trying=] to [=get a browsing context=]
      with |context id|.
 
@@ -2497,7 +2501,13 @@ The [=remote end steps=] with |command parameters| are:
   1. If |context| is not a [=top-level browsing context=], return [=error=] with
      [=error code=] [=invalid argument=].
 
-  1. [=Close=] |context|.
+  1. If |prompt unload| is true:
+     
+     1. [=Close=] |context|.
+
+  1. Else:
+   
+     1. [=Close=] |context| without [=prompting to unload=].
 
   1. Return [=success=] with data null.
 
