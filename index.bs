@@ -5702,7 +5702,7 @@ TODO: Extend this to scripts in other kinds of realms.
 A [=BiDi session=] has a <dfn>preload script map</dfn> which is a [=/map=] in
 which the keys are [[!RFC4122|UUID]]s, and the values are [=structs=] with an <a
 for=struct>item</a> named <code>function declaration</code>, which is a string,
-<code>arguments</code>, and an item named <code>sandbox</code> which is a string
+<code>arguments</code>, <code>contexts</code>, which is a list or null, and an item named <code>sandbox</code> which is a string
 or null.
 
 Note: If executing a [=preload script=] fails, either due to a syntax error, or
@@ -5721,6 +5721,14 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 
   1. For each |preload script| in |session|'s [=preload script map=]'s
      [=values=]:
+
+    1. If |preload script|'s <code>contexts</code> is not null:
+
+       1. Let |top level context| be |browsing context|’s [=top-level browsing context=].
+
+       1. Let |context id| be |top level context|'s id.
+
+       1. If <code>contexts</code> does not [=list/contains|contain=] |context id|, return.
 
     1. If |preload script|'s <code>sandbox</code> is not null, let |realm| be [=get
        or create a sandbox realm=] with |preload script|'s <code>sandbox</code> and
@@ -7597,6 +7605,7 @@ script=].
       script.AddPreloadScriptParameters = {
         functionDeclaration: text,
         ? arguments: [*script.ChannelValue],
+        ? contexts: [*browsingContext.BrowsingContext],
         ? sandbox: text
       }
       </pre>
@@ -7620,16 +7629,27 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |arguments| be the <code>arguments</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
-1. Let |script| be the string representation of a [[!RFC4122|UUID]].
+1. Let the |contexts| be the value of the <code>contexts</code> field of |command parameters| if it is present or null if it isn’t.
+
+1. If |contexts| is not null:
+
+   1. For each |context id| of |contexts|:
+
+      1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+
+      1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
+
+1. Let |script| be the string representation of a [[!RFC4122|UUID]].
 
 1. Let |preload script map| be |session|'s [=preload script map=].
 
 1. Set |preload script map|[|script|] to a struct with <code>function
    declaration</code> |function declaration|, <code>arguments</code>
-   |arguments|, and <code>sandbox</code> |sandbox|.
+   |arguments|, <code>contexts</code>
+   |contexts|, and <code>sandbox</code> |sandbox|.
 
 1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
