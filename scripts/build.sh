@@ -3,7 +3,7 @@ set -ex
 
 if ! [ -x "$(command -v bikeshed)" ] || [ "$1" = "--upgrade" ]; then
     echo 'Installing bikeshed'
-    pip install bikeshed
+    python3 -m pip install bikeshed
 fi
 
 bikeshed update
