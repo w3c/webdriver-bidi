@@ -97,3 +97,20 @@ This scenario opens multiple web pages at the same time, and performs tests that
 
 - [x] Some items from the previous milestones
 - [x] [Activating a top-level context](https://w3c.github.io/webdriver-bidi/#command-browsingContext-activate)
+
+
+### Interacting with cookies
+
+This scenario sets cookies to be used when loading a web page and its subresources, loads that page, and verifies that the correct cookies were sent with the requests. It also inspects the cookies set by the responses, and clears all cookies to reset the state. In spec terms, this involves:
+
+- [x] Some items from the previous milestones
+- [ ] Getting cookies
+- [ ] Setting cookies
+- [ ] Deleting cookies
+
+### Managing windows
+
+This scenario changes the browser window dimensions and position, maximizes/minimizes the window, and toggles full-screen mode while testing the side effects of these actions on the web page. 
+
+- [x] Some items from the previous milestones
+- [ ] [Add commands for resizing and positioning browser windows](https://github.com/w3c/webdriver-bidi/issues/398)

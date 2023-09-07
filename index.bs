@@ -118,11 +118,13 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: Date.toISOString; url: sec-date.prototype.toisostring
     text: EnumerableOwnPropertyNames; url: sec-enumerableownpropertynames
     text: Get; url: sec-get
+    text: GetIterator; url: sec-getiterator
     text: HasProperty; url: sec-hasproperty
     text: IsArray; url: sec-isarray
     text: IsCallable; url: sec-iscallable
     text: IsPromise; url: sec-ispromise
     text: IsRegExp; url: sec-isregexp
+    text: IteratorToList; url: sec-iteratortolist
     text: LengthOfArrayLike; url: sec-lengthofarraylike
     text: Map; url: #sec-map-iterable; for: constructor
     text: Number; url: sec-number-constructor
@@ -193,6 +195,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: visible; url: document-sequences.html#system-visibility-state
     text: hidden; url: document-sequences.html#system-visibility-state
     text: navigables; url: document-sequences.html#navigables
+    text: activation notification; url: interaction.html#activation-notification
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
     text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
@@ -328,8 +331,8 @@ EmptyParams = {
 
 <pre class="cddl local-cddl">
 Message = (
-  CommandResponse //
-  ErrorResponse //
+  CommandResponse /
+  ErrorResponse /
   Event
 )
 
@@ -350,10 +353,10 @@ ErrorResponse = {
 }
 
 ResultData = (
-  BrowsingContextResult //
-  EmptyResult //
-  NetworkResult //
-  ScriptResult //
+  BrowsingContextResult /
+  EmptyResult /
+  NetworkResult /
+  ScriptResult /
   SessionResult
 )
 
@@ -395,9 +398,9 @@ A <dfn>BiDi session</dfn> is a [=/session=] which has the [=BiDi flag=]
 set to true.
 
 <div algorithm>
-The set of <dfn>active BiDi sessions</dfn> is given by:
+The list of <dfn>active BiDi sessions</dfn> is given by:
 
-1. Let |BiDi sessions| be a new [=/set=].
+1. Let |BiDi sessions| be a new [=/list=].
 
 1. For each |session| in [=active sessions=]:
 
@@ -484,25 +487,24 @@ WebDriver BiDi extends the set of [=error codes=] from [[WEBDRIVER|WebDriver]]
 with the following additional codes:
 
 <dl>
-  <dt><dfn>no such script</dfn>
-  <dd>Tried to remove an unknown [=preload script=].
-</dl>
-
-<dl>
   <dt><dfn>no such handle</dfn>
   <dd>Tried to deserialize an unknown <code>RemoteObjectReference</code>.
-</dl>
 
-<dl>
+  <dt><dfn>no such intercept</dfn>
+  <dd>Tried to remove an unknown [=network intercept=].
+
   <dt><dfn>no such node</dfn>
   <dd>Tried to deserialize an unknown <code>SharedReference</code>.
-</dl>
 
-<dl>
+  <dt><dfn>no such request</dfn>
+  <dd>Tried to continue an unknown [=/request=].
+
+  <dt><dfn>no such script</dfn>
+  <dd>Tried to remove an unknown [=preload script=].
+
   <dt><dfn>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
 </dl>
-
 
 <pre class="cddl local-cddl">
 ErrorCode = "invalid argument" /
@@ -512,7 +514,9 @@ ErrorCode = "invalid argument" /
             "no such element" /
             "no such frame" /
             "no such handle" /
+            "no such intercept" /
             "no such node" /
+            "no such request" /
             "no such script" /
             "session not created" /
             "unable to capture screen" /
@@ -637,19 +641,6 @@ To <dfn>obtain a set of event names</dfn> given an |name|:
    |events|.
 
 1. Return [=success=] with data |events|.
-
-</div>
-
-<div algorithm>
-To <dfn>emit events</dfn> given |body| and |related browsing contexts|:
-
-1. [=Assert=]: |body| has [=map/size=] 2 and [=contains=] "<code>method</code>"
-   and "<code>params</code>".
-
-1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given |body|["method"] and |related browsing contexts|:
-
-  1. [=Emit an event=] with |session| and |body|.
 
 </div>
 
@@ -1241,7 +1232,7 @@ SessionCommand = (
 
 <pre class="cddl local-cddl">
 SessionResult = (
-   session.NewResult //
+   session.NewResult /
    session.StatusResult
 )
 </pre>
@@ -1441,10 +1432,10 @@ This is a [=static command=].
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      session.Status = {
+      session.Status = (
         method: "session.status",
         params: EmptyParams,
-      }
+      )
       </pre>
    </dd>
    <dt>Result Type</dt>
@@ -1491,10 +1482,10 @@ This is a [=static command=].
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      session.New = {
+      session.New = (
         method: "session.new",
         params: session.NewParameters
-      }
+      )
 
       session.NewParameters = {
         capabilities: session.CapabilitiesRequest
@@ -1568,10 +1559,10 @@ The <dfn export for=commands>session.end</dfn> command ends the current
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      session.End = {
+      session.End = (
         method: "session.end",
         params: EmptyParams
-      }
+      )
 
       </pre>
    </dd>
@@ -1614,10 +1605,10 @@ Issue: This needs to be generalized to work with realms too
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      session.Subscribe = {
+      session.Subscribe = (
         method: "session.subscribe",
         params: session.SubscriptionRequest
-      }
+      )
       </pre>
    </dd>
    <dt>Result Type</dt>
@@ -1682,10 +1673,10 @@ Issue: This needs to be generalised to work with realms too
    <dt>Command Type</dt>
    <dd>
      <pre class="cddl remote-cddl">
-     session.Unsubscribe = {
+     session.Unsubscribe = (
        method: "session.unsubscribe",
        params: session.SubscriptionRequest
-     }
+     )
      </pre>
    </dd>
    <dt>Result Type</dt>
@@ -1745,10 +1736,10 @@ WebDriver sessions and cleans up automation state in the remote browser instance
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browser.Close = {
+      browser.Close = (
         method: "browser.close",
         params: EmptyParams,
-      }
+      )
       </pre>
    </dd>
    <dt>Return Type</dt>
@@ -1839,6 +1830,7 @@ navigation status</dfn> struct, which has the following items:
 
 <pre class="cddl remote-cddl">
 BrowsingContextCommand = (
+  browsingContext.Activate //
   browsingContext.CaptureScreenshot //
   browsingContext.Close //
   browsingContext.Create //
@@ -1855,10 +1847,10 @@ BrowsingContextCommand = (
 
 <pre class="cddl local-cddl">
 BrowsingContextResult = (
-  browsingContext.CaptureScreenshotResult //
-  browsingContext.CreateResult //
-  browsingContext.GetTreeResult //
-  browsingContext.NavigateResult //
+  browsingContext.CaptureScreenshotResult /
+  browsingContext.CreateResult /
+  browsingContext.GetTreeResult /
+  browsingContext.NavigateResult /
   browsingContext.PrintResult
 )
 
@@ -2161,10 +2153,10 @@ The <dfn export for=commands>browsingContext.activate</dfn> command activates an
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      browsingContext.Activate = {
+      browsingContext.Activate = (
         method: "browsingContext.activate",
         params: browsingContext.ActivateParameters
-      };
+      )
 
       browsingContext.ActivateParameters = {
         context: browsingContext.BrowsingContext
@@ -2220,10 +2212,10 @@ Base64-encoded string.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browsingContext.CaptureScreenshot = {
+      browsingContext.CaptureScreenshot = (
         method: "browsingContext.captureScreenshot",
         params: browsingContext.CaptureScreenshotParameters
-      }
+      )
 
       browsingContext.CaptureScreenshotParameters = {
         context: browsingContext.BrowsingContext,
@@ -2231,7 +2223,7 @@ Base64-encoded string.
       }
 
       browsingContext.ClipRectangle = (
-        browsingContext.BoxClipRectangle //
+        browsingContext.BoxClipRectangle /
         browsingContext.ElementClipRectangle
       )
 
@@ -2263,7 +2255,7 @@ Base64-encoded string.
 TODO: Full page screenshots, and multiple output formats
 
 <div algorithm>
-To <dfn>normalise rect</dfn> given |rect|:
+To <dfn>normalize rect</dfn> given |rect|:
 
 Note: This ensures that the resulting rect has positive [=width dimension=] and
 [=height dimension=].
@@ -2290,9 +2282,9 @@ Note: This ensures that the resulting rect has positive [=width dimension=] and
 <div algorithm>
 To <dfn>rectangle intersection</dfn> given |rect1| and |rect2|
 
-1. Let |rect1| be [=normalise rect=] with |rect1|.
+1. Let |rect1| be [=normalize rect=] with |rect1|.
 
-1. Let |rect2| be [=normalise rect=] with |rect2|.
+1. Let |rect2| be [=normalize rect=] with |rect2|.
 
 1. Let |x1_0| be |rect1|'s [=x coordinate=].
 
@@ -2464,10 +2456,10 @@ The <dfn export for=commands>browsingContext.close</dfn> command closes a
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browsingContext.Close = {
+      browsingContext.Close = (
         method: "browsingContext.close",
         params: browsingContext.CloseParameters
-      }
+      )
 
       browsingContext.CloseParameters = {
         context: browsingContext.BrowsingContext
@@ -2517,10 +2509,10 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browsingContext.Create = {
+      browsingContext.Create = (
         method: "browsingContext.create",
         params: browsingContext.CreateParameters
-      }
+      )
 
       browsingContext.CreateType = "tab" / "window"
 
@@ -2565,7 +2557,7 @@ The [=remote end steps=] with |command parameters| are:
   1. Create a new [=top-level browsing context=] by running the [=window open
      steps=] with <var ignore>url</var> set to "<code>about:blank</code>",
      <var ignore>target</var> set to the empty string, and
-     <var ignore>features</var> set to "<code>noopener</code>". Which OS window the new [=/browsing context=] 
+     <var ignore>features</var> set to "<code>noopener</code>". Which OS window the new [=/browsing context=]
      is created in depends on |type| and |reference context|:
 
      * If |type| is "<code>tab</code>" and the implementation supports
@@ -2614,10 +2606,10 @@ or all top-level contexts when no parent is provided.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browsingContext.GetTree = {
+      browsingContext.GetTree = (
         method: "browsingContext.getTree",
         params: browsingContext.GetTreeParameters
-      }
+      )
 
       browsingContext.GetTreeParameters = {
         ? maxDepth: js-uint,
@@ -2675,10 +2667,10 @@ command allows closing an open prompt
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browsingContext.HandleUserPrompt = {
+      browsingContext.HandleUserPrompt = (
         method: "browsingContext.handleUserPrompt",
         params: browsingContext.HandleUserPromptParameters
-      }
+      )
 
       browsingContext.HandleUserPromptParameters = {
         context: browsingContext.BrowsingContext,
@@ -2708,7 +2700,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |accept| be the value of the <code>accept</code> field of |command
    parameters| if present, or true otherwise.
 
-1. Let |text| be the value of the <code>text</code> field of |command
+1. Let |userText| be the value of the <code>userText</code> field of |command
    parameters| if present, or the empty string otherwise.
 
 1. If |context| is currently showing a simple dialog from a call to [=alert=] then
@@ -2719,7 +2711,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    negatively if |accept| is false.
 
    Otherwise if |context| is currently showing a simple dialog from a call to
-   [=prompt=], then respond with the string value |text| if |accept| is
+   [=prompt=], then respond with the string value |userText| if |accept| is
    true, or abort if |accept| is false.
 
    Otherwise, if |context| is currently showing a prompt as part of the [=prompt
@@ -2741,10 +2733,10 @@ browsing context to the given URL.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browsingContext.Navigate = {
+      browsingContext.Navigate = (
         method: "browsingContext.navigate",
         params: browsingContext.NavigateParameters
-      }
+      )
 
       browsingContext.NavigateParameters = {
         context: browsingContext.BrowsingContext,
@@ -2809,10 +2801,10 @@ PDF document represented as a Base64-encoded string.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browsingContext.Print = {
+      browsingContext.Print = (
         method: "browsingContext.print",
         params: browsingContext.PrintParameters
-      }
+      )
 
       browsingContext.PrintParameters = {
         context: browsingContext.BrowsingContext,
@@ -2951,10 +2943,10 @@ browsing context.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browsingContext.Reload = {
+      browsingContext.Reload = (
         method: "browsingContext.reload",
         params: browsingContext.ReloadParameters
-      }
+      )
 
       browsingContext.ReloadParameters = {
         context: browsingContext.BrowsingContext,
@@ -2966,7 +2958,7 @@ browsing context.
    <dt>Return Type</dt>
    <dd>
       <pre class="cddl">
-         EmptyResult
+      browsingContext.NavigateResult
       </pre>
    </dd>
 </dl>
@@ -2998,8 +2990,6 @@ The [=remote end steps=] with |command parameters| are:
    condition|, history handling "<code>reload</code>", and ignore
    cache |ignore cache|.
 
-1. Return [=success=] with data null.
-
 </div>
 
 #### The browsingContext.setViewport Command ####  {#command-browsingContext-setViewport}
@@ -3010,10 +3000,10 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command  specific
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      browsingContext.SetViewport = {
+      browsingContext.SetViewport = (
         method: "browsingContext.setViewport",
         params: browsingContext.SetViewportParameters
-      };
+      )
 
       browsingContext.SetViewportParameters = {
         context: browsingContext.BrowsingContext,
@@ -3067,10 +3057,10 @@ The [=remote end steps=] with |command parameters| are:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.ContextCreated = {
+        browsingContext.ContextCreated = (
          method: "browsingContext.contextCreated",
          params: browsingContext.Info
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -3138,10 +3128,10 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 1, given
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.ContextDestroyed = {
+        browsingContext.ContextDestroyed = (
          method: "browsingContext.contextDestroyed",
          params: browsingContext.Info
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -3183,10 +3173,10 @@ become inaccessible but not yet get discarded because bfcache.
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.NavigationStarted = {
+        browsingContext.NavigationStarted = (
          method: "browsingContext.navigationStarted",
          params: browsingContext.NavigationInfo
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -3222,10 +3212,10 @@ started</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.FragmentNavigated = {
+        browsingContext.FragmentNavigated = (
          method: "browsingContext.fragmentNavigated",
          params: browsingContext.NavigationInfo
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -3261,10 +3251,10 @@ navigated</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.DomContentLoaded = {
+        browsingContext.DomContentLoaded = (
          method: "browsingContext.domContentLoaded",
          params: browsingContext.NavigationInfo
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -3300,10 +3290,10 @@ loaded</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.Load = {
+        browsingContext.Load = (
          method: "browsingContext.load",
          params: browsingContext.NavigationInfo
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -3338,10 +3328,10 @@ complete</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.DownloadWillBegin = {
+        browsingContext.DownloadWillBegin = (
          method: "browsingContext.downloadWillBegin",
          params: browsingContext.NavigationInfo
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -3376,10 +3366,10 @@ started</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.NavigationAborted = {
+        browsingContext.NavigationAborted = (
          method: "browsingContext.navigationAborted",
          params: browsingContext.NavigationInfo
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -3415,10 +3405,10 @@ aborted</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.NavigationFailed = {
+        browsingContext.NavigationFailed = (
          method: "browsingContext.navigationFailed",
          params: browsingContext.NavigationInfo
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -3453,10 +3443,10 @@ failed</dfn> steps given |context| and |navigation status|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.UserPromptClosed = {
+        browsingContext.UserPromptClosed = (
           method: "browsingContext.userPromptClosed",
           params: browsingContext.UserPromptClosedParameters
-        }
+        )
 
         browsingContext.UserPromptClosedParameters = {
           context: browsingContext.BrowsingContext,
@@ -3501,15 +3491,16 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        browsingContext.UserPromptOpened = {
+        browsingContext.UserPromptOpened = (
           method: "browsingContext.userPromptOpened",
           params: browsingContext.UserPromptOpenedParameters
-        }
+        )
 
         browsingContext.UserPromptOpenedParameters = {
           context: browsingContext.BrowsingContext,
           type: "alert" / "confirm" / "prompt" / "beforeunload",
-          message: text
+          message: text,
+          ? defaultValue: text
         }
       </pre>
    </dd>
@@ -3517,7 +3508,8 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
-opened</dfn> steps given |window|, |type| and |message|.
+opened</dfn> steps given |window|, |type|, |message|, and optional |default value|
+(default: null).
 
 1. Let |context| be |window|'s [=/browsing context=].
 
@@ -3526,7 +3518,9 @@ opened</dfn> steps given |window|, |type| and |message|.
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpenedParameters</code> production with the
    <code>context</code> field set to |context id|, the <code>type</code> field
-   set to |type|, and the <code>message</code> field set to |message|.
+   set to |type|, the <code>message</code> field set to |message|, and the 
+   <code>defaultValue</code> field set to |default value| if |default value| is 
+   not null or omitted otherwise.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpened</code> production, with the
@@ -3553,6 +3547,13 @@ relating to network requests.
 <pre class="cddl remote-cddl">
 
 NetworkCommand = (
+  network.AddIntercept //
+  network.ContinueRequest //
+  network.ContinueResponse //
+  network.ContinueWithAuth //
+  network.FailRequest //
+  network.ProvideResponse //
+  network.RemoveIntercept
 )
 
 </pre>
@@ -3562,13 +3563,15 @@ NetworkCommand = (
 <pre class="cddl local-cddl">
 
 NetworkResult = (
+   network.AddInterceptResult
 )
 
 NetworkEvent = (
+    network.AuthRequired //
     network.BeforeRequestSent //
     network.FetchError //
-    network.ResponseStarted //
-    network.ResponseCompleted
+    network.ResponseCompleted //
+    network.ResponseStarted
 )
 
 </pre>
@@ -3577,17 +3580,148 @@ A [=remote end=] has a <dfn>before request sent map</dfn> which is initially an
 empty map.  It's used to track the network events for which a
 <code>network.beforeRequestSent</code> event has already been sent.
 
+### Network Intercepts ### {#network-intercepts}
+
+A <dfn>network intercept</dfn> is a mechanism to allow remote ends to intercept
+and modify network requests and responses.
+
+A [=BiDi session=] has an <dfn>intercept map</dfn> which is a [=/map=] between
+intercept id and a [=struct=] with fields <code>url patterns</code> and
+<code>phases</code> that define the properties of active network intercepts. It
+is initially empty.
+
+A [=BiDi session=] has a <dfn>blocked request map</dfn>, used to track the
+requests which are actively being blocked. It is an [=/map=] between request id
+and a [=struct=] with fields <code>request</code>, <code>phase</code>, and
+<code>response</code>. It is initially empty.
+
+<div algorithm>
+
+To <dfn>get the network intercepts</dfn> given |session|, |event|, and |request|:
+
+1. Let |session intercepts| be |session|'s [=intercept map=].
+
+1. Let |intercepts| be an empty list.
+
+1. Run the steps under the first matching condition:
+  <dl>
+    <dt>|event| is "<code>network.beforeRequestSent</code>"
+    <dd>Set |phase| to the "<code>beforeRequestSent</code>".
+    <dt>|event| is "<code>network.responseStarted</code>"
+    <dd>Set |phase| to "<code>responseStarted</code>".
+    <dt>|event| is "<code>network.authRequired</code>"
+    <dd>Set |phase| to "<code>authRequired</code>".
+    <dt>|event| is "<code>network.responseCompleted</code>"
+    <dd>Return |intercepts|.
+  </dl>
+
+1. Let |url| be the result of running the [=URL serializer=] with |request|'s
+   [=request/URL=].
+
+1. For each |intercept id| → |intercept| of |session intercepts|:
+
+  1. If |intercept|'s <code>phases</code> [=set/contains=] |phase|:
+
+    1. Let |url patterns| be |intercept|'s <code>url patterns</code>.
+
+    1. If |url patterns| is [=list/empty=]:
+
+      1. [=list/Append=] |intercept id| to |intercepts|.
+
+      1. Continue.
+
+    1. For each |url pattern| in |url patterns|:
+
+      1. If [=match URL pattern=] with |url pattern| and |url|:
+
+        1. [=list/Append=] |intercept id| to |intercepts|.
+
+        1. Continue.
+
+1. Return |intercepts|.
+
+</div>
+
 ### Types ### {#module-network-types}
+
+#### The network.AuthChallenge Type #### {#type-network-AuthChallenge}
+
+<pre class="cddl local-cddl">
+network.AuthChallenge = {
+  scheme: text,
+  realm: text,
+}
+</pre>
+
+<div algorithm>
+
+To <dfn>extract challenges</dfn> given |response|:
+
+Issue: Should we include parameters other than realm?
+
+1. If |response|'s [=response/status=] is 401, let |header name| be
+   `<code>WWW-Authenticate</code>`. Otherwise if |response|'s [=response/status=] is 407, let
+   |header name| be `<code>Proxy-Authenticate</code>`. Otherwise return null.
+
+1. Let |challenges| be a new [=/list=].
+
+1. For each (|name|, |value|) in |response|'s [=response/header list=]:
+
+   Issue: as in Fetch it's unclear if this is the right way to handle multiple
+   headers, parsing issues, etc.
+
+  1. If |name| is a [=byte-case-insensitive=] match for |header name|:
+
+    1. Let |header challenges| be the result of parsing |value| into a list of
+       challenges, each consisting of a scheme and a list of parameters, each of
+       which is a [=tuple=] (name, value), according to the rules of [[!RFC9110]].
+
+    1. For each |header challenge| in |header challenges|:
+
+      1. Let |scheme| be |header challenge|'s scheme.
+
+      1. Let |realm| be the empty string.
+
+      1. For each (|param name|, |param value|) in |header challenge|'s
+         parameters:
+            1. If |param name| equals `<code>realm</code>` let |realm| be
+               [=UTF-8 decode=] |param value|.
+
+      1. Let |challenge| be a new [=/map=] matching the
+         <code>network.AuthChallenge</code> production, with the
+         <code>scheme</code> field set to |scheme| and the <code>realm</code>
+         field set to |realm|.
+
+     1. [=list/Append=] |challenge| to |challenges|.
+
+1. Return |challenges|.
+
+</div>
+
+#### The network.AuthCredentials Type #### {#type-network-AuthCredentials}
+
+<pre class="cddl remote-cddl">
+network.AuthCredentials = {
+  type: "password",
+  username: text,
+  password: text,
+}
+</pre>
+
+The <code>network.AuthCredentials</code> type represents the response to a
+request for authorization credentials.
 
 #### The network.BaseParameters Type #### {#type-network-BaseParameters}
 
 <pre class="cddl local-cddl">
 network.BaseParameters = (
     context: browsingContext.BrowsingContext / null,
+    isBlocked: bool,
     navigation: browsingContext.Navigation / null,
     redirectCount: js-uint,
     request: network.RequestData,
     timestamp: js-uint,
+    ? intercepts: [+network.Intercept]
 )
 </pre>
 
@@ -3598,7 +3732,10 @@ Issue: Consider including the `sharedId` of the document node that initiated the
 request in addition to the context.
 
 <div algorithm>
-To <dfn>get the base network event data</dfn> given |request| and |redirect count|:
+To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
+
+1. Let |intercepts| be the result of [=get the network intercepts=] with
+   |session|, |event|, and |request|.
 
 1. Let |request data| be the result of [=get the request data=] with |request|.
 
@@ -3606,11 +3743,6 @@ To <dfn>get the base network event data</dfn> given |request| and |redirect coun
 1. Let |navigation| be |request|'s [=navigation id=].
 
 1. Let |context id| be null.
-
-1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
-   be the result of [=get related browsing contexts=] with |request|'s
-   [=request/client=]. Otherwise let |related browsing contexts| be an empty
-   set.
 
 1. If |request|'s [=request/window=] is an [=environment settings object=]:
 
@@ -3620,15 +3752,22 @@ To <dfn>get the base network event data</dfn> given |request| and |redirect coun
      settings|' [=environment settings object/global object=], let |context id|
      be the [=browsing context id=] for that context.
 
+1. Let |redirect count| be |request|'s [=redirect count=].
+
 1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
+
+1. If |intercepts| is not [=list/empty=], let |is blocked| be true, otherwise
+   let |is blocked| be false.
 
 1. Let |params| be [=/map=] matching the <code>network.BaseParameters</code>
    production, with the <code>request</code> field set to |request data|, the
    |navigation| field set to <code>navigation</code>, the <code>context</code>
    field set to |context id|, the <code>timestamp</code> field set to
-   |timestamp|, and the <code>redirectCount</code> field set to |redirect count|.
+   |timestamp|, the <code>redirectCount</code> field set to |redirect count|, the
+   <code>isBlocked</code> field set to |is blocked|, and <code>intercepts</code>
+   field set to |intercepts| if |is blocked| is true, or omitted otherwise.
 
-1. Return (|related browsing contexts|, |params|)
+1. Return |params|
 
 </div>
 
@@ -3654,7 +3793,7 @@ type, any other data is represented in Base64-encoded form as
 <code>network.Base64Value</code>.
 
 <div algorithm>
-To <dfn ignore>deserialize protocol bytes</dfn> given |protocol bytes|:
+To <dfn>deserialize protocol bytes</dfn> given |protocol bytes|:
 
 Note: this takes bytes encoded as a <code>network.BytesValue</code> and returns
 a [=byte sequence=].
@@ -3690,24 +3829,24 @@ Note: this takes a [=byte sequence=] and returns a <code>network.BytesValue</cod
 
 [=Remote end definition=] and [=local end definition=]
 
-<pre class="cddl local-cddl">
+<pre class="cddl local-cddl remote-cddl">
 network.Cookie = {
     name: text,
     value: network.BytesValue,
     domain: text,
     path: text,
-    ? expires: js-uint,
     size: js-uint,
     httpOnly: bool,
     secure: bool,
     sameSite: "strict" / "lax" / "none",
+    ? expires: js-uint,
 };
 </pre>
 
 The <code>network.Cookie</code> type represents a cookie.
 
 <div algorithm>
-To <dfn>get a cookie</dfn> given |stored cookie|:
+To <dfn>serialize cookie</dfn> given |stored cookie|:
 
 Note: The definitions of |stored cookie|'s fields are from [[COOKIES]], except
 samesite-flag, which is from [[SAME-SITE-COOKIES]].
@@ -3733,7 +3872,7 @@ samesite-flag, which is from [[SAME-SITE-COOKIES]].
    otherwise.
 
 1. Let |same site| be "<code>none</code>" if |stored cookie|'s samesite-flag is
-   "<code>None</code>", "<code>lax</code>" if it is "<code>Lax</code>, or
+   "<code>None</code>", "<code>lax</code>" if it is "<code>Lax</code>", or
    "<code>strict</code>" if it is "<code>Strict</code>".
 
 1. Return a map matching the <code>network.Cookie</code> production,
@@ -3744,6 +3883,35 @@ samesite-flag, which is from [[SAME-SITE-COOKIES]].
    set to |size|, the <code>httpOnly</code> field set to |http only|, the
    <code>secure</code> field set to |secure|, and the <code>sameSite</code>
    field set to |same site|.
+
+</div>
+
+#### The network.CookieHeader Type #### {#type-network-CookieHeader}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl">
+network.CookieHeader = {
+    name: text,
+    value: network.BytesValue,
+};
+</pre>
+
+The <code>network.CookieHeader</code> type represents the subset of cookie data
+that's in a <code>Cookie</code> request header.
+
+<div algorithm>
+To <dfn>serialize cookie header</dfn> given |protocol cookie|:
+
+1. Let |name| be [=UTF-8 encode=] |protocol cookie|["<code>name</code>"].
+
+1. Let |value| be [=deserialize protocol bytes=] with |protocol
+   cookie|["<code>value</code>"].
+
+1. Let |header value| be the [=byte sequence=] formed by concatenating |name|,
+   `<code>=</code>`, and |value|
+
+1. Return |header value|.
 
 </div>
 
@@ -3847,7 +4015,7 @@ TODO: Add service worker fields
 
 [=Remote end definition=] and [=local end definition=]
 
-<pre class="cddl local-cddl">
+<pre class="cddl local-cddl remote-cddl">
 network.Header = {
   name: text,
   value: network.BytesValue,
@@ -3868,6 +4036,18 @@ To <dfn>serialize header</dfn> given |name bytes| and |value bytes|:
 1. Return a map matching the <code>network.Header</code> production, with the
    <code>name</code> field set to |name|, and the <code>value</code> field
    set to |value|.
+
+</div>
+
+<div algorithm>
+To <dfn>deserialize header</dfn> given |protocol header|:
+
+1. Let |name| be [=UTF-8 encode=] |protocol header|["<code>name</code>"].
+
+1. Let |value| be [=deserialize protocol bytes=] with |protocol
+   header|["<code>value</code>"].
+
+1. Return a [=/header=] (|name|, |value|).
 
 </div>
 
@@ -3927,6 +4107,16 @@ To <dfn>get the initiator</dfn> given |request|:
    to |request id|.
 
 </div>
+
+#### The network.Intercept Type #### {#type-network-Intercept}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl remote-cddl">
+network.Intercept = text
+</pre>
+
+The <code>network.Intercept</code> type represents the id of a [=network intercept=].
 
 #### The network.Request Type #### {#type-network-Request}
 
@@ -4001,7 +4191,7 @@ To <dfn>get the request data</dfn> given |request|:
        the store can be included in a request, but user agents are free to
        impose additional constraints.
 
-       1. Append the result of [=get a cookie=] given |cookie| to |cookies|.
+       1. Append the result of [=serialize cookie=] given |cookie| to |cookies|.
 
 1. Let |timings| be [=get the fetch timings=] with |request|.
 
@@ -4056,7 +4246,8 @@ network.ResponseData = {
     bytesReceived: js-uint,
     headersSize: js-uint / null,
     bodySize: js-uint / null,
-    content: network.ResponseContent
+    content: network.ResponseContent,
+    ?authChallenge: network.AuthChallenge,
 };
 </pre>
 
@@ -4137,6 +4328,8 @@ To <dfn>get the response data</dfn> given |response|:
 
 1. Let |content| be the result of [=get the response content info=] with |response|.
 
+1. Let |auth challenges| be the result of [=extract challenges=] with |response|.
+
 1. Return a [=/map=] matching the <code>network.ResponseData</code> production,
    with the <code>url</code> field set to |url|, the <code>protocol</code> field
    set to |protocol|, the <code>status</code> field set to |status|, the
@@ -4145,22 +4338,1059 @@ To <dfn>get the response data</dfn> given |response|:
    field set to |headers|, the <code>mimeType</code> field set to |mime type|, the
    <code>bytesReceived</code> field set to |bytes received|, the
    <code>headersSize</code> field set to |headers size|, the
-   <code>bodySize</code> field set to |body size|, and the <code>content</code>
-   field set to |content|.
+   <code>bodySize</code> field set to |body size|, <code>content</code>
+   field set to |content|, and the <code>authChallenges</code> field set to
+   |auth challenges| if it's not null, or omitted otherwise.
 
 </div>
 
+#### The network.SetCookieHeader Type #### {#type-network-SetCookieHeader}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl">
+network.SetCookieHeader = {
+    name: text,
+    value: network.BytesValue,
+    ? domain: text,
+    ? httpOnly: bool,
+    ? expires: text,
+    ? maxAge: js-int,
+    ? path: text,
+    ? sameSite: "strict" / "lax" / "none",
+    ? secure: bool,
+}
+</pre>
+
+The <code>network.SetCookieHeader</code> represents the data in a
+<code>Set-Cookie</code> response header.
+
+<div algorithm>
+<!-- TODO: move something like this into infra -->
+To <dfn>serialize an integer</dfn> given |input| that is an integer:
+
+Note: This produces the shortest representation of |input| as a string of
+decimal digits.
+
+1. Let |serialized| be an empty string.
+
+1. Let |value| be |input|.
+
+1. While |value| is greater than 0:
+
+  1. Let |x| be |value| divided by 10.
+
+  1. Let |most significant digits| be the integer part of |x|.
+
+  1. Let |y| be |most significant digits| multiplied by 10.
+
+  1. Let |least significant digit| be |value| - |y|.
+
+  1. Assert: |least significant digit| is an integer in the range 0 to 9,
+     inclusive.
+
+  1. Let |codepoint| be the [=code point=] whose [=code point/value=] is U+0030
+     DIGIT ZERO's [=code point/value=] + |least significant digit|.
+
+  1. Prepend |codepoint| to |serialized|.
+
+  1. Let |value| be |most significant digits|.
+
+1. Return |serialized|.
+
+</div>
+
+<div algorithm>
+To <dfn>serialize set-cookie header</dfn> given |protocol cookie|:
+
+1. Let |name| be [=UTF-8 encode=] |protocol cookie|["<code>name</code>"].
+
+1. Let |value| be [=deserialize protocol bytes=] with |protocol
+   cookie|["<code>value</code>"].
+
+1. Let |header value| be the [=byte sequence=] formed by concatenating |name|,
+   `<code>=</code>`, and |value|.
+
+1. If |protocol cookie| [=map/contains=] "<code>expires</code>:
+
+  1. Let |attribute| be `<code>;Expires=</code>`
+
+  1. Append [=UTF-8 encode=] |protocol cookie|["<code>expires</code>"] to
+     |attribute|.
+
+  1. Append |attribute| to |header value|.
+
+1. If |protocol cookie| [=map/contains=] "<code>maxAge</code>:
+
+  1. Let |attribute| be `<code>;Max-Age=</code>`
+
+  1. Let |max age string| be [=serialize an integer=] |protocol
+    cookie|["<code>maxAge</code>"].
+
+  1. Append [=UTF-8 encode=] |max age string| to |attribute|.
+
+  1. Append |attribute| to |header value|.
+
+1. If |protocol cookie| [=map/contains=] "<code>domain</code>":
+
+  1. Let |attribute| be `<code>;Domain=</code>`
+
+  1. Append [=UTF-8 encode=] |protocol cookie|["<code>domain</code>"] to
+     |attribute|.
+
+  1. Append |attribute| to |header value|.
+
+1. If |protocol cookie| [=map/contains=] "<code>path</code>":
+
+  1. Let |attribute| be `<code>;Path=</code>`
+
+  1. Append [=UTF-8 encode=] |protocol cookie|["<code>path</code>"] to
+     |attribute|.
+
+  1. Append |attribute| to |header value|.
+
+1. If |protocol cookie| [=map/contains=] "<code>secure</code>" and |protocol
+   cookie|["<code>secure</code>"] is true:
+
+  1. Append `<code>;Secure</code>` to |header value|.
+
+1. If |protocol cookie| [=map/contains=] "<code>httpOnly</code>" and |protocol
+   cookie|["<code>httpOnly</code>"] is true:
+
+  1. Append `<code>;HttpOnly</code>` to |header value|.
+
+1. If |protocol cookie| [=map/contains=] "<code>sameSite</code>":
+
+  1. Let |attribute| be `<code>;SameSite=</code>`
+
+  1. Append [=UTF-8 encode=] |protocol cookie|["<code>sameSite</code>"] to
+     |attribute|.
+
+  1. Append |attribute| to |header value|.
+
+1. Return |header value|.
+
+</div>
+
+#### The network.UrlPattern Type #### {#type-network-UrlPattern}
+
+[=Remote end definition=]
+
+<pre class="cddl remote-cddl">
+network.UrlPattern = (
+  network.UrlPatternPattern /
+  network.UrlPatternString
+)
+
+network.UrlPatternPattern = {
+    type: "pattern",
+    ?protocol: text,
+    ?hostname: text,
+    ?port: text,
+    ?pathname: text,
+    ?search: text,
+}
+
+
+network.UrlPatternString = {
+    type: "string",
+    pattern: text,
+}
+
+</pre>
+
+A <code>network.UrlPattern</code> represents a pattern used for matching request
+URLs for [=network intercepts=].
+
+When URLs are matched against a <code>network.UrlPattern</code> the URL is
+parsed, and each component is comapred for equality with the corresponding field
+in the pattern, if present. Missing fields from the pattern always match.
+
+Note: This syntax is designed with future extensibility in mind. In particular
+the syntax forbids characters that are treated specially in the [[URLPattern]]
+specification. These can be escaped by prefixing them with a U+005C (\) character.
+
+<div algorithm>
+To <dfn>unescape URL pattern</dfn> given |pattern|
+
+1. Let |forbidden characters| be the [=/set=] of codepoints «U+0028 ((), U+0029
+   ()), U+002A (*), U+007B ({), U+007D (})»
+
+1. Let |result| be the empty string.
+
+1. Let |is escaped character| be false.
+
+1. For each |codepoint| in |pattern|:
+
+  1. If |is escaped character| is false:
+
+    1. If |forbidden characters| [=set/contains=] |codepoint|, return [=error=]
+       with [=error code=] [=invalid argument=].
+
+    1. If |codepoint| is U+005C (\):
+
+        1. Set |is escaped character| to true.
+
+        1. Continue.
+
+  1. Append |codepoint| to result.
+
+  1. Set |is escaped character| to false.
+
+1. Return [=success=] with data |result|.
+
+</div>
+
+<div algorithm>
+To <dfn>parse URL pattern</dfn>, given |pattern|:
+
+1. Let |has protocol| be true.
+
+1. Let |has hostname| be true.
+
+1. If |pattern| matches the <code>network.UrlPatternPattern</code> production:
+
+  1. Let |pattern url| be the empty string.
+
+  1. If |pattern| [=map/contains=] "<code>protocol</code>":
+
+    1. If |pattern|["<code>protocol</code>"] is the empty string, return [=error=]
+       with [=error code=] [=invalid argument=].
+
+    1. Let |protocol| be the result of [=trying=] to [=unescape
+       URL Pattern=] with |pattern|["<code>protocol</code>"].
+
+    1. For each |codepoint| in |protocol|:
+
+      1. If |codepoint| is not [=ASCII alphanumeric=] and «U+002B (+), U+002D
+         (-), U+002E (.)» does not [=set/contains|contain=] |codepoint|:
+
+        1. Return [=error=] with [=error code=] invalid argument.
+
+    1. Append |protocol| to |pattern url|.
+
+  1. Otherwise:
+
+    1. Set |has protocol| to false.
+
+    1. Append "<code>http</code>" to |pattern url|.
+
+  1. Let |scheme| be [=ASCII lowercase=] with |pattern url|.
+
+  1. Append "<code>:</code>" to |pattern url|.
+
+  1. If |scheme| [=is special=], append "<code>//</code>" to |pattern url|.
+
+  1. If |pattern| [=map/contains=] "<code>hostname</code>":
+
+    1. If |pattern|["<code>hostname</code>"] is the empty string, return [=error=]
+       with [=error code=] [=invalid argument=].
+
+    1. If |scheme| is "<code>file</code>" return [=error=] with [=error code=]
+       [=invalid argument=].
+
+    1. Let |hostname| be the result of [=trying=] to [=unescape
+       URL Pattern=] with |pattern|["<code>hostname</code>"].
+
+    1. Let |inside brackets| be false.
+
+    1. For each |codepoint| in |hostname|:
+
+      1. If «U+002F (/), U+003F (?), U+0023 (#)» [=set/contains=]
+         |codepoint|:
+
+        1. Return [=error=] with [=error code=] [=invalid argument=].
+
+      1. If |inside brackets| is false and |codepoint| is U+003A (:):
+
+        1. Return [=error=] with [=error code=] [=invalid argument=].
+
+      1. If |codepoint| is U+005B ([), set |inside brackets| to true.
+
+      1. If |codepoint| is U+005D (]), set |inside brackets| to false.
+
+    1. Append |hostname| to |pattern url|.
+
+  1. Otherwise:
+
+    1. If |scheme| is not "<code>file</code>", append "<code>placeholder</code>" to
+       |pattern url|.
+
+    1. Set |has hostname| to false.
+
+  1. If |pattern| [=map/contains=] "<code>port</code>":
+
+    1. If |pattern|["<code>port</code>"] is the empty string, return [=error=]
+       with [=error code=] [=invalid argument=].
+
+    1. Let |port| be the result of [=trying=] to [=unescape
+       URL Pattern=] with |pattern|["<code>port</code>"].
+
+    1. Append "<code>:</code>" to |pattern url|.
+
+    1. For each |codepoint| in |port|:
+
+      1. If |codepoint| is not an [=ASCII digit=]:
+
+        1. Return [=error=] with [=error code=] [=invalid argument=].
+
+    1. Append |port| to |pattern url|.
+
+  1. If |pattern| [=map/contains=] "<code>pathname</code>":
+
+    1. Let |pathname| be the result of [=trying=] to [=unescape URL Pattern=] with
+       |pattern|["<code>pathname</code>"].
+
+    1. If |pathname| does not [=string/starts with|start with=] U+002F (/), then
+       append "<code>/</code>" to pattern.
+
+    1. For each |codepoint| in |pathname|:
+
+      1. If «U+003F (?), U+0023 (#)» [=set/contains=]
+         |codepoint|:
+
+        1. Return [=error=] with [=error code=] [=invalid argument=].
+
+    1. Append |pathname| to |pattern url|.
+
+  1. If |pattern| [=map/contains=] "<code>search</code>":
+
+    1. Let |search| be the result of [=trying=] to [=unescape URL pattern=] with
+       |pattern|["<code>search</code>"].
+
+    1. If |search| does not [=string/starts with|start with=] U+003F (?), then
+       append "<code>?</code>" to |pattern url|.
+
+    1. For each |codepoint| in |search|:
+
+      1. If |codepoint| is U+0023 (#):
+
+        1. Return [=error=] with [=error code=] [=invalid argument=].
+
+    1. Append |search| to |pattern url|.
+
+1. Otherwise, if |pattern| matches the <code>network.UrlPatternString</code> production:
+
+  1. Let |pattern url| be the result of [=trying=] to [=unescape URL
+     pattern=] with |pattern|["<code>pattern</code>"].
+
+1. Let |url| be the result of [=URL Parser|parsing=] |pattern url|.
+
+1. If |url| is failure, return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |parsed| be a struct with the following fields:
+   <dl>
+     <dt>protocol
+     <dd>|url|'s [=url/scheme=] if |has protocol| is true, or null otherwise.
+     <dt>hostname
+     <dd>|url|'s [=url/host=] if |has hostname| is true, or null otherwise.
+     <dt>port
+     <dd>
+     1. If |url|'s [=url/scheme=] [=is special=] and |url|'s
+   [=url/scheme=]'s [=default port=] is not null, and |url|'s [=url/port=] is
+   null or is equal to [=url/scheme=]'s [=default port=]:
+
+       1. The empty string.
+
+     1. Otherwise, if |url|'s [=url/port=] is not null:
+
+       1. [=Serialize an integer=] with |url|'s [=url/port=].
+
+     1. Otherwise:
+
+       1. null.
+
+     <dt>pathname
+     <dd>The result of running the [=URL path serializer=] with |url|, if
+         |url|'s [=url/path=] is not the empty string and is not [=list/empty=],
+         or null otherwise.
+     <dt>search
+     <dd>|url|'s [=url/query=].
+   </dl>
+
+1. Return [=success=] with data |parsed|.
+
+</div>
+
+<div algorithm>
+To <dfn>match URL pattern</dfn> given |url pattern| and |url string|:
+
+1. Let |url| be the result of [=URL parser|parsing=] |url string|.
+
+1. If |url pattern|'s protocol is not null and is not equal to |url|'s
+   [=url/scheme=], return false.
+
+1. If |url pattern|'s hostname is not null and is not equal to |url|'s
+   [=url/host=], return false.
+
+1. If |url pattern|'s port is not null:
+
+   1. Let |port| be null.
+
+   1. If |url|'s [=url/scheme=] [=is special=] and |url|'s
+      [=url/scheme=]'s [=default port=] is not null, and |url|'s [=url/port=] is
+      null or is equal to [=url/scheme=]'s [=default port=]:
+
+     1. Set |port| to the empty string.
+
+   1. Otherwise, if |url|'s [=url/port=], is not null:
+
+     1. Set |port| to [=serialize an integer=] with |url|'s [=url/port=].
+
+   1. If |url pattern|'s port is not equal to |port|, return false.
+
+1. If |url pattern|'s pathname is not null and is not equal to the result of
+   running the [=URL path serializer=] with |url|, return false.
+
+1. If |url pattern|'s search is not null and is not equal to |url|'s
+   [=url/query=], return false.
+
+1. Return true.
+
+</div>
+
+### Commands ### {#module-network-commands}
+
+#### The network.addIntercept Command ####  {#command-network-addIntercept}
+
+The <dfn export for=commands>network.addIntercept</dfn> command adds a
+[=network intercept=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      network.AddIntercept = (
+        method: "network.addIntercept",
+        params: network.AddInterceptParameters
+      )
+
+      network.AddInterceptParameters = {
+        phases: [+network.InterceptPhase],
+        ? urlPatterns: [*network.UrlPattern],
+      }
+
+      network.InterceptPhase = "beforeRequestSent" / "responseStarted" /
+                               "authRequired"
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      network.AddInterceptResult = {
+        intercept: network.Intercept
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.addRequestIntercept">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |intercept| be the string representation of a [[!RFC4122|UUID]].
+
+1. Let |url patterns| be the <code>urlPatterns</code> field of |command
+   parameters| if present, or an empty [=/list=] otherwise.
+
+1. Let |intercept map| be |session|'s [=intercept map=].
+
+1. Let |parsed patterns| be an empty [=/list=].
+
+1. For each |url pattern| in |url patterns|:
+
+  1. Let |parsed| be the result of [=trying=] to [=parse url pattern=] with |url
+     pattern|.
+
+  1. [=list/Append=] |parsed| to |parsed patterns|.
+
+1. Set |intercept map|[|intercept|] to a struct with <code>url patterns</code>
+   |parsed patterns| and <code>phases</code> |command parameters|["<code>phases</code>"].
+
+1. Return a new [=/map=] matching the
+   <code>network.AddInterceptResult</code> production with the
+   <code>intercept</code> field set to |intercept|.
+
+</div>
+
+#### The network.continueRequest Command ####  {#command-network-continueRequest}
+
+The <dfn export for=commands>network.continueRequest</dfn> command continues a request
+that's blocked by a [=network intercept=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      network.ContinueRequest = (
+        method: "network.continueRequest",
+        params: network.ContinueRequestParameters
+      )
+
+      network.ContinueRequestParameters = {
+        request: network.Request,
+        ?body: network.BytesValue,
+        ?cookies: [*network.CookieHeader],
+        ?headers: [*network.Header],
+        ?method: text,
+        ?url: text,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.continueRequest">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |blocked requests| be |session|'s [=blocked request map=].
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. If |blocked requests| does not [=map/contain=] |request id| then return
+   [=error=] with [=error code=] [=no such request=].
+
+1. Let (|request|, |phase|, <var ignore>response</var>) be |blocked requests|[|request id|].
+
+1. If |phase| is not "<code>beforeRequestSent</code>", then return [=error=]
+   with [=error code=] [=invalid argument=].
+
+   Issue: consider a "<code>request already sent</code>" error.
+
+<!-- this has to be first because it's the only fallible operation-->
+
+1. If |command parameters| [=map/contains=] "<code>url</code>":
+
+  1. Let |url record| be the result of applying the [=URL parser=] to |command
+     parameters|["<code>url</code>"], with [=base URL=] null.
+
+  1. If |url record| is failure, return [=error=] with [=error code=] [=invalid
+     argument=].
+
+     TODO: Should we also resume here?
+
+  1. Let |request|'s [=request/url=] be |url record|.
+
+1. If |command parameters| [=map/contains=] "<code>method</code>":
+
+  1. Let |request|'s [=request/method=] be |command
+     parameters|["<code>method</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>headers</code>":
+
+  1. Let |headers| be an empty [=/header list=].
+
+  1. For |header| in |command parameters|["<code>headers</code>"]:
+
+    1. Append [=deserialize header=] with |header| to |headers|.
+
+  1. Set |request|'s [=request/headers list=] to |headers|.
+
+1. If |command parameters| [=map/contains=] "<code>cookies</code>":
+
+  1. Let |cookie header| be an empty [=byte sequence=].
+
+  1. For each |cookie| in |command parameters|:
+
+    1. If |cookie header| is not empty, append `<code>;</code>` to |cookie
+       header|.
+
+    1. Append [=serialize cookie header=] with |cookie| to |cookie header|.
+
+  1. Let |found cookie header| be false.
+
+  1. For each |header| in |request|'s [=request/headers list=]:
+
+    1. Let |name| be |header|'s name.
+
+    1. If [=byte-lowercase=] |name| is `<code>cookie</code>`:
+
+      1. Set |header|'s value to |cookie header|.
+
+      1. Set |found cookie header| to true.
+
+      1. Break.
+
+  1. If |found cookie header| is false:
+
+    1. Append the [=header=] (`<code>Cookie</code>`, |cookie header|) to
+       |request|'s [=request/headers list=].
+
+1. If |command parameters| [=map/contains=] "<code>body</code>":
+
+  1. Let |body| be [=deserialize protocol bytes=] with |command
+     parameters|["<code>body</code>"].
+
+  1. Set |request|'s [=request/body=] to |body|.
+
+1. [=Resume=] with "<code>continue request</code>", |request id|, and (null,
+   "<code>incomplete</code>").
+
+1. Return [=success=] with [=data=] null.
+
+</div>
+
+#### The network.continueResponse Command ####  {#command-network-continueResponse}
+
+The <dfn export for=commands>network.continueResponse</dfn> command continues a
+response that's blocked by a [=network intercept=]. It can be called in the
+<code>responseStarted</code> phase, to modify the status and headers of the
+response, but still provide the network response body.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      network.ContinueResponse = (
+        method: "network.continueResponse",
+        params: network.ContinueResponseParameters
+      )
+
+      network.ContinueResponseParameters = {
+        request: network.Request,
+        ?cookies: [*network.SetCookieHeader]
+        ?credentials: network.AuthCredentials,
+        ?headers: [*network.Header],
+        ?reasonPhrase: text,
+        ?statusCode: js-uint,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+To <dfn>update the response</dfn> given |session|, |command| and |command parameters|:
+
+1. Let |blocked requests| be |session|'s [=blocked request map=].
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. If |blocked requests| does not [=map/contain=] |request id| then return
+   [=error=] with [=error code=] [=no such request=].
+
+1. Let (<var ignore>request</var>, |phase|, |response|) be |blocked requests|[|request id|].
+
+1. If |phase| is "<code>beforeRequestSent</code>" and |command| is
+   "<code>continueResponse</code>", return [=error=] with [=error code=]
+   "<code>invalid argument</code>".
+
+    TODO: Consider a different error
+
+1. If |response| is null:
+
+  <!-- We can end up with non-null response for beforeRequestSent if we have
+  multiple sessions that all intercept the same request -->
+  1. Assert: |phase| is "<code>beforeRequestSent</code>".
+
+  1. Set |response| to a new [=/response=].
+
+1. If |command parameters| [=map/contains=] "<code>statusCode</code>":
+
+  1. Set |responses|'s [=response/status=] be |command
+     parameters|["<code>statusCode</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>reasonPhrase</code>":
+
+  1. Set |responses|'s [=response/status message=] be [=UTF-8 encode=] with
+     |command parameters|["<code>reasonPhrase</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>headers</code>":
+
+  1. Let |headers| be an empty [=/header list=].
+
+  1. For |header| in |command parameters|["<code>headers</code>"]:
+
+    1. Append [=deserialize header=] with |header| to |headers|.
+
+  1. Set |response|'s [=response/header list=] to |headers|.
+
+1. If |command parameters| [=map/contains=] "<code>cookies</code>":
+
+  1. If |command parameters| [=map/contains=] "<code>headers</code>", let
+     |headers| be |response|'s [=response/header list=].
+
+     Otherwise:
+
+     1. Let |headers| be an empty [=/header list=].
+
+     1. For each |header| in |response|'s [=response/headers list=]:
+
+       1. Let |name| be |header|'s name.
+
+       1. If [=byte-lowercase=] |name| is not `<code>set-cookie</code>`:
+
+         1. Append |header| to |headers|
+
+  1. For |cookie| in |command parameters|["<code>cookies</code>"]:
+
+    1. Let |header value| be [=serialize set-cookie header=] with |cookie|.
+
+    1. Append (`<code>Set-Cookie</code>`, |header value|) to |headers|.
+
+    1. Set |response|'s [=response/header list=] to |headers|.
+
+1. If |command parameters| [=map/contains=] "<code>credentials</code>":
+
+   Issue: This doesn't have a way to cancel the auth.
+
+   1. Let |credentials| be |command parameters|["<code>credentials</code>"].
+
+   1. Assert: |credentials|{"<code>type</code>"] is "<code>password</code>".
+
+   1. Set |response|'s authentication credentials <!--TODO: link--> to
+      (|credentials|["<code>username</code>"], |credentials|["<code>password</code>"])
+
+1. Return |response|
+
+</div>
+
+<div algorithm="remote end steps for network.continueResponse">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. Let |response| be the result of [=trying=] to [=update the response=] with
+   |session|, "<code>continueResponse</code>" and |command parameters|.
+
+1. [=Resume=] with "<code>continue request</code>", |request id|, and
+   (|response|, "<code>incomplete</code>").
+
+1. Return [=success=] with [=data=] null.
+
+</div>
+
+#### The network.continueWithAuth Command ####  {#command-network-continueWithAuth}
+
+The <dfn export for=commands>network.continueWithAuth</dfn> command continues a
+response that's blocked by a [=network intercept=] at the
+<code>authRequired</code> phase.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      network.ContinueWithAuth = (
+        method: "network.continueWithAuth",
+        params: network.ContinueWithAuthParameters
+      )
+
+      network.ContinueWithAuthParameters = {
+        request: network.Request,
+        (network.ContinueWithAuthCredentials // network.ContinueWithAuthNoCredentials)
+      }
+
+      network.ContinueWithAuthCredentials = (
+        action: "provideCredentials", <!-- or "provide credentials" or
+      "providecredentials" or something else -->
+        credentials: network.AuthCredentials
+      )
+
+      network.ContinueWithAuthNoCredentials = (
+        action: "default" / "cancel"
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.continueWithAuth">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |blocked requests| be |session|'s [=blocked request map=].
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. If |blocked requests| does not [=map/contain=] |request id| then return
+   [=error=] with [=error code=] [=no such request=].
+
+1. Let (<var ignore>request</var>, |phase|, |response|) be |blocked requests|[|request id|].
+
+1. If |phase| is not "<code>authRequired</code>", then return [=error=]
+   with [=error code=] [=invalid argument=].
+
+1. If |command parameters| "<code>action</code> is "<code>cancel</code>", set
+   |response|'s authentication credentials <!--TODO: link--> to
+   "<code>cancelled</code>".
+
+1. If |command parameters| "<code>action</code>" is
+   "<code>provideCredentials</code>":
+
+   1. Let |credentials| be |command parameters|["<code>credentials</code>"].
+
+   1. Assert: |credentials|["<code>type</code>"] is "<code>password</code>".
+
+   1. Set |response|'s authentication credentials <!--TODO: link--> to
+      (|credentials|["<code>username</code>"], |credentials|["<code>password</code>"])
+
+1. [=Resume=] with "<code>continue request</code>", |request id|, and
+   (|response|, "<code>incomplete</code>").
+
+1. Return [=success=] with [=data=] null.
+
+</div>
+
+#### The network.failRequest Command ####  {#command-network-failRequest}
+
+The <dfn export for=commands>network.failRequest</dfn> command fails a
+fetch that's blocked by a [=network intercept=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      network.FailRequest = (
+        method: "network.failRequest",
+        params: network.FailRequestParameters
+      )
+
+      network.FailRequestParameters = {
+        request: network.Request,
+      }
+      </pre>
+  </dd>
+  <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.failRequest">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |blocked requests| be |session|'s [=blocked request map=].
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. If |blocked requests| does not [=map/contain=] |request id| then return
+   [=error=] with [=error code=] [=no such request=].
+
+1. Let (<var ignore>request</var>, |phase|, <var ignore>response</var>) be
+   |blocked requests|[|request id|].
+
+1. If |phase| is "<code>authRequired</code>", then return [=error=]
+   with [=error code=] [=invalid argument=].
+
+1. Let |response| be a new [=network error=].
+
+1. Issue(508): Allow setting the precise kind of error
+
+1. [=Resume=] with "<code>continue request</code>", |request id|, and
+   (|response|, "<code>complete</code>").
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The network.provideResponse Command ####  {#command-network-provideResponse}
+
+The <dfn export for=commands>network.provideResponse</dfn> command continues a
+request that's blocked by a [=network intercept=], by providing a complete
+response.
+
+Note: This will not prevent the request going through the normal request
+lifecycle, and therefore emitting other events as it progresses.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      network.ProvideResponse = (
+        method: "network.provideResponse",
+        params: network.ProvideResponseParameters
+      )
+
+      network.ProvideResponseParameters = {
+        request: network.Request,
+        ?body: network.BytesValue,
+        ?cookies: [*network.SetCookieHeader],
+        ?headers: [*network.Header],
+        ?reasonPhrase: text,
+        ?statusCode: js-uint,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.provideResponse">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. Let |response| be the result of [=trying=] to [=update the response=] with
+   |session|, "<code>provideResponse</code>", and |command parameters|.
+
+1. If |command parameters| [=map/contains=] "<code>body</code>":
+
+  1. Let |body| be [=deserialize protocol bytes=] with |command
+     parameters|["<code>body</code>"].
+
+  1. Set |response|'s [=response/body=] to |body| [=as a body=].
+
+1. [=Resume=] with "<code>continue request</code>", |request id|, and
+   (|response|,"<code>complete</code>").
+
+1. Return [=success=] with [=data=] null.
+
+</div>
+
+
+#### The network.removeIntercept Command ####  {#command-network-removeIntercept}
+
+The <dfn export for=commands>network.removeIntercept</dfn> command removes a
+[=network intercept=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      network.RemoveIntercept = (
+        method: "network.removeIntercept",
+        params: network.RemoveInterceptParameters
+      )
+
+      network.RemoveInterceptParameters = {
+        intercept: network.Intercept
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.removeIntercept">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |intercept| be the value of the "<code>intercept</code>" field in |command
+   parameters|.
+
+1. Let |intercept map| be |session|'s [=intercept map=].
+
+1. If |intercept map| does not [=map/contain=] |intercept|, return
+   [=error=] with [=error code=] [=no such intercept=].
+
+1. [=map/Remove=] |intercept| from |intercept map|.
+
+1. Return [=success=] with data [=null=].
+
+</div>
+
+
 ### Events ### {#module-network-event}
+
+#### The network.authRequired Event ####  {#event-network-authRequired}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+      network.AuthRequired = (
+        method: "network.authRequired",
+        params: network.AuthRequiredParameters
+      )
+
+      network.AuthRequiredParameters = {
+        network.BaseParameters,
+        response: network.ResponseData
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+This event is emitted when the user agent is going to prompt for authorization
+credentials.
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi auth required</dfn>
+steps given |request| and |response|:
+
+1. Let |redirect count| be |request|'s [=redirect count=].
+
+1. Assert: [=before request sent map=][|request|] is equal to |redirect count|.
+
+   Note: This implies that every caller needs to ensure that the [=WebDriver BiDi
+   before request sent=] steps are invoked with |request| before these steps.
+
+1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
+   be the result of [=get related browsing contexts=] with |request|'s
+   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+   set.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>network.authRequired</code>" and |related browsing contexts|:
+
+  1. Let |params| be the result of [=process a network event=] with |session|
+     "<code>network.authRequired</code>", and |request|.
+
+  1. Let |response data| be the result of [=get the response data=] with |response|.
+
+  1. Assert: |response data| [=map/contains=] "<code>authChallenge</code>".
+
+  1. Set the <code>response</code> field of |params| to |response data|.
+
+  1. Assert: |params| matches the <code>network.AuthRequiredParameters</code>
+     production.
+
+  1. Let |body| be a map matching the <code>network.AuthRequired</code>
+     production, with the <code>params</code> field set to |params|.
+
+  1. [=Emit an event=] with |session| and |body|.
+
+  1. If |params|["<code>isBlocked</code>"] is true:
+
+    1. Let |blocked requests| be |session|'s [=blocked request map=].
+
+    1. Let |request id| be |request|'s [=request id=].
+
+    1. Set |blocked requests|[|request id|] to (|request|,
+       "<code>authRequired</code>", |response|).
+
+    <!-- We can ignore the return value here, since we update response -->
+    1. [=Await=] with «"<code>continue request</code>"», and |request id|.
+
+</div>
 
 #### The network.beforeRequestSent Event #### {#event-network-beforeSendRequest}
 <dl>
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        network.BeforeRequestSent = {
+        network.BeforeRequestSent = (
          method: "network.beforeRequestSent",
          params: network.BeforeRequestSentParameters
-       }
+        )
 
        network.BeforeRequestSentParameters = {
          network.BaseParameters,
@@ -4184,20 +5414,54 @@ request sent</dfn> steps given |request|:
 
 1. Add |redirect count| to [=before request sent map=][|request|].
 
-1. Let (|related browsing contexts|, |params|) be the result of [=get the base
-   network event data=] with |request|, and |redirect count|.
+1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
+   be the result of [=get related browsing contexts=] with |request|'s
+   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+   set.
 
-1. Let |initiator| be the result of [=get the initiator=] with |request|.
+1. Let |response| be null.
 
-1. Set the <code>initiator</code> field of |params| to |initiator|.
+1. Let |response status| be "<code>incomplete</code>".
 
-1. Assert: |params| matches the <code>network.BeforeRequestSentParameters</code>
-   production.
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>network.beforeRequestSent</code>" and |related browsing contexts|:
 
-1. Let |body| be a map matching the <code>network.BeforeRequestSent</code>
-   production, with the <code>params</code> field set to |params|.
+  1. Let |params| be the result of [=process a network event=] with |session|,
+     "<code>network.beforeRequestSent</code>", and |request|.
 
-1. [=Emit events=] with |body| and |related browsing contexts|.
+  1. If |params| is null then continue.
+
+  1. Let |initiator| be the result of [=get the initiator=] with |request|.
+
+  1. Set the <code>initiator</code> field of |params| to |initiator|.
+
+  1. Assert: |params| matches the <code>network.BeforeRequestSentParameters</code>
+     production.
+
+  1. Let |body| be a map matching the <code>network.BeforeRequestSent</code>
+     production, with the <code>params</code> field set to |params|.
+
+  1. [=Emit an event=] with |session| and |body|.
+
+  1. If |params|["<code>isBlocked</code>"] is true, then:
+
+    1. Let |blocked requests| be |session|'s [=blocked request map=].
+
+    1. Let |request id| be |request|'s [=request id=].
+
+    1. Set |blocked requests|[|request id|] to (|request|,
+       "<code>beforeRequestSent</code>", null).
+
+    1. Let (|response|, |status|) be [=await=] with «"<code>continue
+       request</code>"», and |request|'s [=request id=].
+
+    1. If |status| is "<code>complete</code>" set |response status| to |status|.
+
+    1. [=map/Remove=] |blocked requests|[|request id|].
+
+    Note: While waiting, no further processing of the request occurs.
+
+1. Return (|response|, |response status|).
 
 </div>
 
@@ -4207,10 +5471,10 @@ request sent</dfn> steps given |request|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        network.FetchError = {
+        network.FetchError = (
          method: "network.fetchError",
          params: network.FetchErrorParameters
-       }
+        )
 
        network.FetchErrorParameters = {
          network.BaseParameters,
@@ -4223,7 +5487,6 @@ request sent</dfn> steps given |request|:
 This event is emitted when a network request ends in an error.
 
 <div algorithm>
-
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fetch
 error</dfn> steps given |request|:
 
@@ -4236,18 +5499,27 @@ error</dfn> steps given |request|:
    caller needing to explicitly invoke the [=WebDriver BiDi before request
    sent=] steps on every error path.
 
-1. Let (|related browsing contexts|, |params|) be the result of [=get the
-   base network event data=] given |request|.
+1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
+   be the result of [=get related browsing contexts=] with |request|'s
+   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+   set.
 
-1. TODO: Set the <code>errorText</code> field of |params|.
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>network.fetchError</code>" and |related browsing contexts|:
 
-1. Assert: |params| matches the <code>network.FetchErrorParameters</code>
-   production.
+  1. Let |params| be the result of [=process a network event=] with |session|
+     "<code>network.fetchError</code>", and |request|.
 
-1. Let |body| be a map matching the <code>network.FetchError</code>
-   production, with the <code>params</code> field set to |params|.
 
-1. [=Emit events=] with |body| and |related browsing contexts|.
+  1. TODO: Set the <code>errorText</code> field of |params|.
+
+  1. Assert: |params| matches the <code>network.FetchErrorParameters</code>
+     production.
+
+  1. Let |body| be a map matching the <code>network.FetchError</code>
+     production, with the <code>params</code> field set to |params|.
+
+  1. [=Emit an event=] with |session| and |body|.
 
 </div>
 
@@ -4257,10 +5529,10 @@ error</dfn> steps given |request|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        network.ResponseCompleted = {
+        network.ResponseCompleted = (
          method: "network.responseCompleted",
          params: network.ResponseCompletedParameters
-       }
+        )
 
        network.ResponseCompletedParameters = {
          network.BaseParameters,
@@ -4283,20 +5555,30 @@ completed</dfn> steps given |request| and |response|:
    Note: This implies that every caller needs to ensure that the [=WebDriver BiDi
    before request sent=] steps are invoked with |request| before these steps.
 
-1. Let (|related browsing contexts|, |params|) be the result of [=get the
-   base network event data=] given |request| and |redirect count|.
+1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
+   be the result of [=get related browsing contexts=] with |request|'s
+   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+   set.
 
-1. Let |response data| be the result of [=get the response data=] with |response|.
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>network.responseCompleted</code>" and |related browsing contexts|:
 
-1. Set the <code>response</code> field of |params| to |response data|.
+  1. Let |params| be the result of [=process a network event=] with |session|
+     "<code>network.responseCompleted</code>", and |request|.
 
-1. Assert: |params| matches the <code>network.ResponseCompletedParameters</code>
-   production.
+  1. Assert: |params|["<code>isBlocked</code>"] is false.
 
-1. Let |body| be a map matching the <code>network.ResponseCompleted</code>
-   production, with the <code>params</code> field set to |params|.
+  1. Let |response data| be the result of [=get the response data=] with |response|.
 
-1. [=Emit events=] with |body| and |related browsing contexts|.
+  1. Set the <code>response</code> field of |params| to |response data|.
+
+  1. Assert: |params| matches the <code>network.ResponseCompletedParameters</code>
+     production.
+
+  1. Let |body| be a map matching the <code>network.ResponseCompleted</code>
+     production, with the <code>params</code> field set to |params|.
+
+  1. [=Emit an event=] with |session| and |body|.
 
 </div>
 
@@ -4306,10 +5588,10 @@ completed</dfn> steps given |request| and |response|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        network.ResponseStarted = {
+        network.ResponseStarted = (
          method: "network.responseStarted",
          params: network.ResponseStartedParameters
-       }
+        )
 
        network.ResponseStartedParameters = {
          network.BaseParameters,
@@ -4333,20 +5615,46 @@ started</dfn> steps given |request| and |response|:
    Note: This implies that every caller needs to ensure that the [=WebDriver BiDi
    before request sent=] steps are invoked with |request| before these steps.
 
-1. Let (|related browsing contexts|, |params|) be the result of [=get the base
-   network event data=] with |request| and |redirect count|.
+1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
+   be the result of [=get related browsing contexts=] with |request|'s
+   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+   set.
 
-1. Let |response data| be the result of [=get the response data=] with |response|.
+1. Let |response status| be "<code>incomplete</code>".
 
-1. Set the <code>response</code> field of |params| to |response data|.
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>network.responseStarted</code>" and |related browsing contexts|:
 
-1. Assert: |params| matches the <code>network.ResponseStartedParameters</code>
-   production.
+  1. Let |params| be the result of [=process a network event=] with |session|
+     "<code>network.responseStarted</code>", and |request|.
 
-1. Let |body| be a map matching the <code>network.ResponseStarted</code>
-   production, with the <code>params</code> field set to |params|.
+  1. Let |response data| be the result of [=get the response data=] with |response|.
 
-1. [=Emit events=] with |body| and |related browsing contexts|.
+  1. Set the <code>response</code> field of |params| to |response data|.
+
+  1. Assert: |params| matches the <code>network.ResponseStartedParameters</code>
+     production.
+
+  1. Let |body| be a map matching the <code>network.ResponseStarted</code>
+     production, with the <code>params</code> field set to |params|.
+
+  1. [=Emit an event=] with |session| and |body|.
+
+  1. If |params|["<code>isBlocked</code>"] is true:
+
+    1. Let |blocked requests| be |session|'s [=blocked request map=].
+
+    1. Let |request id| be |request|'s [=request id=].
+
+    1. Set |blocked requests|[|request id|] to (|request|,
+       "<code>beforeRequestSent</code>", |response|).
+
+    1. Let (|response|, |status|) be [=await=] with «"<code>continue request</code>"», and
+       |request id|.
+
+    1. If |status| is "<code>complete</code>", set |response status| to |status|.
+
+1. Return (|response|, |response status|).
 
 </div>
 
@@ -4361,12 +5669,12 @@ relating to script realms and execution.
 
 <pre class="cddl remote-cddl">
 ScriptCommand = (
-  script.AddPreloadScriptCommand //
+  script.AddPreloadScript //
   script.CallFunction //
   script.Disown //
   script.Evaluate //
   script.GetRealms //
-  script.RemovePreloadScriptCommand
+  script.RemovePreloadScript
 )
 </pre>
 
@@ -4374,8 +5682,8 @@ ScriptCommand = (
 
 <pre class="cddl local-cddl">
 ScriptResult = (
-  script.AddPreloadScriptResult //
-  script.EvaluateResult //
+  script.AddPreloadScriptResult /
+  script.EvaluateResult /
   script.GetRealmsResult
 )
 
@@ -4396,7 +5704,7 @@ TODO: Extend this to scripts in other kinds of realms.
 A [=BiDi session=] has a <dfn>preload script map</dfn> which is a [=/map=] in
 which the keys are [[!RFC4122|UUID]]s, and the values are [=structs=] with an <a
 for=struct>item</a> named <code>function declaration</code>, which is a string,
-<code>arguments</code>, and an item named <code>sandbox</code> which is a string
+<code>arguments</code>, <code>contexts</code>, which is a list or null, and an item named <code>sandbox</code> which is a string
 or null.
 
 Note: If executing a [=preload script=] fails, either due to a syntax error, or
@@ -4415,6 +5723,14 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 
   1. For each |preload script| in |session|'s [=preload script map=]'s
      [=values=]:
+
+    1. If |preload script|'s <code>contexts</code> is not null:
+
+       1. Let |top level context| be |browsing context|’s [=top-level browsing context=].
+
+       1. Let |context id| be |top level context|'s id.
+
+       1. If <code>contexts</code> does not [=list/contains|contain=] |context id|, return.
 
     1. If |preload script|'s <code>sandbox</code> is not null, let |realm| be [=get
        or create a sandbox realm=] with |preload script|'s <code>sandbox</code> and
@@ -4522,7 +5838,7 @@ To <dfn>create a channel</dfn> given |session|, |realm| and |protocol value|:
 
 <pre class="cddl remote-cddl local-cddl">
 script.EvaluateResult = (
-  script.EvaluateResultSuccess //
+  script.EvaluateResultSuccess /
   script.EvaluateResultException
 )
 
@@ -4620,14 +5936,14 @@ strong [=/map=] from handle ids to their corresponding objects.
 
 <pre class="cddl remote-cddl">
 script.LocalValue = (
-  script.RemoteReference //
-  script.PrimitiveProtocolValue //
-  script.ChannelValue //
-  script.ArrayLocalValue //
-  script.DateLocalValue //
-  script.MapLocalValue //
-  script.ObjectLocalValue //
-  script.RegExpLocalValue //
+  script.RemoteReference /
+  script.PrimitiveProtocolValue /
+  script.ChannelValue /
+  script.ArrayLocalValue /
+  script.DateLocalValue /
+  script.MapLocalValue /
+  script.ObjectLocalValue /
+  script.RegExpLocalValue /
   script.SetLocalValue
 )
 
@@ -4704,13 +6020,10 @@ and |session|:
    1. Append [=CreateArrayFromList=](«|deserialized key|, |deserialized value|») to
       |deserialized key-value list|.
 
-1. Return [=success=] with data [=CreateArrayFromList=](|deserialized key-value list|).
+1. Return [=success=] with data |deserialized key-value list|.
 
 </div>
-
 <div algorithm>
-
-Issue: TODO distinguish between `List` and `Array`.
 
 To <dfn>deserialize value list</dfn> given |serialized value list|, |realm| and
 |session|:
@@ -4869,11 +6182,11 @@ Issue: This has the wrong error code
 
 <pre class="cddl remote-cddl local-cddl">
 script.PrimitiveProtocolValue = (
-  script.UndefinedValue //
-  script.NullValue //
-  script.StringValue //
-  script.NumberValue //
-  script.BooleanValue //
+  script.UndefinedValue /
+  script.NullValue /
+  script.StringValue /
+  script.NumberValue /
+  script.BooleanValue /
   script.BigIntValue
 )
 
@@ -5037,13 +6350,13 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
 
 <pre class="cddl local-cddl">
 script.RealmInfo = (
-  script.WindowRealmInfo //
-  script.DedicatedWorkerRealmInfo //
-  script.SharedWorkerRealmInfo //
-  script.ServiceWorkerRealmInfo //
-  script.WorkerRealmInfo //
-  script.PaintWorkletRealmInfo //
-  script.AudioWorkletRealmInfo //
+  script.WindowRealmInfo /
+  script.DedicatedWorkerRealmInfo /
+  script.SharedWorkerRealmInfo /
+  script.ServiceWorkerRealmInfo /
+  script.WorkerRealmInfo /
+  script.PaintWorkletRealmInfo /
+  script.AudioWorkletRealmInfo /
   script.WorkletRealmInfo
 )
 
@@ -5096,8 +6409,7 @@ script.WorkletRealmInfo = {
 </pre>
 
 Note: there's a 1:1 relationship between the <code>script.RealmInfo</code>
-      variants and values of
-      <a href="#type-script-RealmType"><code>script.RealmType</code></a>.
+      variants and values of <code>script.RealmType</code>.
 
 The <code>script.RealmInfo</code> type represents the properties of a realm.
 
@@ -5233,7 +6545,7 @@ The <code>script.RealmType</code> type represents the different types of Realm.
 <!-- This is specifically ordered in the order in which matches need to be -->
 <!-- evaluated, since the definitions are overlapping -->
 script.RemoteReference = (
-  script.SharedReference //
+  script.SharedReference /
   script.RemoteObjectReference
 )
 
@@ -5341,27 +6653,27 @@ To <dfn>deserialize shared reference</dfn> given |shared reference|, |realm| and
 
 <pre class="cddl remote-cddl local-cddl">
 script.RemoteValue = (
-  script.PrimitiveProtocolValue //
-  script.SymbolRemoteValue //
-  script.ArrayRemoteValue //
-  script.ObjectRemoteValue //
-  script.FunctionRemoteValue //
-  script.RegExpRemoteValue //
-  script.DateRemoteValue //
-  script.MapRemoteValue //
-  script.SetRemoteValue //
-  script.WeakMapRemoteValue //
-  script.WeakSetRemoteValue //
-  script.IteratorRemoteValue //
-  script.GeneratorRemoteValue //
-  script.ErrorRemoteValue //
-  script.ProxyRemoteValue //
-  script.PromiseRemoteValue //
-  script.TypedArrayRemoteValue //
-  script.ArrayBufferRemoteValue //
-  script.NodeListRemoteValue //
-  script.HTMLCollectionRemoteValue //
-  script.NodeRemoteValue //
+  script.PrimitiveProtocolValue /
+  script.SymbolRemoteValue /
+  script.ArrayRemoteValue /
+  script.ObjectRemoteValue /
+  script.FunctionRemoteValue /
+  script.RegExpRemoteValue /
+  script.DateRemoteValue /
+  script.MapRemoteValue /
+  script.SetRemoteValue /
+  script.WeakMapRemoteValue /
+  script.WeakSetRemoteValue /
+  script.IteratorRemoteValue /
+  script.GeneratorRemoteValue /
+  script.ErrorRemoteValue /
+  script.ProxyRemoteValue /
+  script.PromiseRemoteValue /
+  script.TypedArrayRemoteValue /
+  script.ArrayBufferRemoteValue /
+  script.NodeListRemoteValue /
+  script.HTMLCollectionRemoteValue /
+  script.NodeRemoteValue /
   script.WindowProxyRemoteValue
 )
 
@@ -5968,7 +7280,7 @@ To <dfn>serialize as a list</dfn> given |iterable|, |serialization options|, |ow
 
 1. Let |serialized| be a new list.
 
-1. For each |child value| in |iterable|:
+1. For each |child value| in [=IteratorToList=]([=GetIterator=](|iterable|, sync)):
 
   1. Let |child serialization options| be a [=map/clone=] of
      |serialization options|.
@@ -5988,9 +7300,8 @@ To <dfn>serialize as a list</dfn> given |iterable|, |serialization options|, |ow
 
 </div>
 
-Issue: this assumes for-in works on iterators
-
 <div algorithm>
+
 To <dfn>serialize as a mapping</dfn> given |iterable|, |serialization options|,
 |ownership type|, |serialization internal map|, |realm|, and |session|:
 
@@ -6000,7 +7311,7 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |serialization options|,
 
 1. Let |serialized| be a new list.
 
-1. For |item| in |iterable|:
+1. For |item| in [=IteratorToList=]([=GetIterator=](|iterable|, sync)):
 
   1. Assert: [=IsArray=](|item|)
 
@@ -6178,10 +7489,10 @@ Record=] of type <code>throw</code>, |exception|, is given by:
 [=Local end definition=]
 
 <pre class="cddl local-cddl">
-script.Source = (
+script.Source = {
   realm: script.Realm,
   ? context: browsingContext.BrowsingContext
-);
+}
 </pre>
 
 The <code>script.Source</code> type represents a <code>script.Realm</code> with
@@ -6230,7 +7541,7 @@ script.ContextTarget = {
 }
 
 script.Target = (
-  script.RealmTarget //
+  script.RealmTarget /
   script.ContextTarget
 );
 </pre>
@@ -6288,14 +7599,15 @@ script=].
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      script.AddPreloadScriptCommand = {
+      script.AddPreloadScript = (
         method: "script.addPreloadScript",
         params: script.AddPreloadScriptParameters
-      }
+      )
 
       script.AddPreloadScriptParameters = {
         functionDeclaration: text,
         ? arguments: [*script.ChannelValue],
+        ? contexts: [*browsingContext.BrowsingContext],
         ? sandbox: text
       }
       </pre>
@@ -6319,16 +7631,27 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |arguments| be the <code>arguments</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
-1. Let |script| be the string representation of a [[!RFC4122|UUID]].
+1. Let the |contexts| be the value of the <code>contexts</code> field of |command parameters| if it is present or null if it isn’t.
+
+1. If |contexts| is not null:
+
+   1. For each |context id| of |contexts|:
+
+      1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+
+      1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
+
+1. Let |script| be the string representation of a [[!RFC4122|UUID]].
 
 1. Let |preload script map| be |session|'s [=preload script map=].
 
 1. Set |preload script map|[|script|] to a struct with <code>function
    declaration</code> |function declaration|, <code>arguments</code>
-   |arguments|, and <code>sandbox</code> |sandbox|.
+   |arguments|, <code>contexts</code>
+   |contexts|, and <code>sandbox</code> |sandbox|.
 
 1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
@@ -6345,10 +7668,10 @@ other handles or strong ECMAScript references.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      script.Disown = {
+      script.Disown = (
         method: "script.disown",
         params: script.DisownParameters
-      }
+      )
 
       script.DisownParameters = {
         handles: [*script.Handle]
@@ -6396,10 +7719,10 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      script.CallFunction = {
+      script.CallFunction = (
         method: "script.callFunction",
         params: script.CallFunctionParameters
-      }
+      )
 
       script.CallFunctionParameters = {
         functionDeclaration: text,
@@ -6409,6 +7732,7 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
         ? resultOwnership: script.ResultOwnership,
         ? serializationOptions: script.SerializationOptions,
         ? this: script.LocalValue,
+        ? userActivation: bool .default false,
       }
     </pre>
    </dd>
@@ -6528,6 +7852,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
    1. Return an [=error=] with [=error code=] [=invalid argument=]
 
+1. If |command parameters|["<code>userActivation</code>"] is true, run [=activation notification=] steps.
+
 1. [=Prepare to run script=] with |environment settings|.
 
 1. Set |evaluation status| to
@@ -6577,10 +7903,10 @@ the promise is returned.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      script.Evaluate = {
+      script.Evaluate = (
         method: "script.evaluate",
         params: script.EvaluateParameters
-      }
+      )
 
       script.EvaluateParameters = {
         expression: text,
@@ -6588,6 +7914,7 @@ the promise is returned.
         awaitPromise: bool,
         ? resultOwnership: script.ResultOwnership,
         ? serializationOptions: script.SerializationOptions,
+        ? userActivation: bool .default false,
       }
       </pre>
    </dd>
@@ -6636,6 +7963,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |script| be the result of [=create a classic script=] with |source|,
    |environment settings|, |base URL|, and |options|.
 
+1. If |command parameters|["<code>userActivation</code>"] is true, run [=activation notification=] steps.
+
 1. [=Prepare to run script=] with |environment settings|.
 
 1. Set |evaluation status| to [=ScriptEvaluation=](|script|'s record).
@@ -6679,10 +8008,10 @@ realm associated with the [=document=] currently loaded in a specified
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      script.GetRealms = {
+      script.GetRealms = (
         method: "script.getRealms",
         params: script.GetRealmsParameters
-      }
+      )
 
       script.GetRealmsParameters = {
         ? context: browsingContext.BrowsingContext,
@@ -6763,10 +8092,10 @@ The <dfn export for=commands>script.removePreloadScript</dfn> command removes a
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      script.RemovePreloadScriptCommand = {
+      script.RemovePreloadScript = (
         method: "script.removePreloadScript",
         params: script.RemovePreloadScriptParameters
-      }
+      )
 
       script.RemovePreloadScriptParameters = {
         script: script.PreloadScript
@@ -6807,10 +8136,10 @@ The [=remote end steps=] given |session| and |command parameters| are:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        script.Message = {
+        script.Message = (
          method: "script.message",
          params: script.MessageParameters
-       }
+        )
 
        script.MessageParameters = {
          channel: script.Channel,
@@ -6870,10 +8199,10 @@ given |session|, |realm|, |channel properties|, and |message|:
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        script.RealmCreated = {
+        script.RealmCreated = (
          method: "script.realmCreated",
          params: script.RealmInfo
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -6952,10 +8281,10 @@ Issue: Should the order here be better defined?
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-       script.RealmDestroyed = {
+       script.RealmDestroyed = (
          method: "script.realmDestroyed",
          params: script.RealmDestroyedParameters
-       }
+       )
 
        script.RealmDestroyedParameters = {
          realm: script.Realm
@@ -7103,8 +8432,8 @@ LogEvent = (
 log.Level = "debug" / "info" / "warn" / "error"
 
 log.Entry = (
-  log.GenericLogEntry //
-  log.ConsoleLogEntry //
+  log.GenericLogEntry /
+  log.ConsoleLogEntry /
   log.JavascriptLogEntry
 )
 
@@ -7151,10 +8480,10 @@ provide additional fields specific to the entry type.
    <dt>Event Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-        log.EntryAdded = {
+        log.EntryAdded = (
          method: "log.entryAdded",
          params: log.Entry,
-       }
+        )
       </pre>
    </dd>
 </dl>
@@ -7387,10 +8716,10 @@ specified sequence of user input actions.
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      input.PerformActions = {
+      input.PerformActions = (
         method: "input.performActions",
         params: input.PerformActionsParameters
-      };
+      )
 
       input.PerformActionsParameters = {
         context: browsingContext.BrowsingContext,
@@ -7398,9 +8727,9 @@ specified sequence of user input actions.
       }
 
       input.SourceActions = (
-        input.NoneSourceActions //
-        input.KeySourceActions //
-        input.PointerSourceActions //
+        input.NoneSourceActions /
+        input.KeySourceActions /
+        input.PointerSourceActions /
         input.WheelSourceActions
       )
 
@@ -7419,8 +8748,8 @@ specified sequence of user input actions.
       }
 
       input.KeySourceAction = (
-        input.PauseAction //
-        input.KeyDownAction //
+        input.PauseAction /
+        input.KeyDownAction /
         input.KeyUpAction
       )
 
@@ -7438,9 +8767,9 @@ specified sequence of user input actions.
       }
 
       input.PointerSourceAction = (
-        input.PauseAction //
-        input.PointerDownAction //
-        input.PointerUpAction //
+        input.PauseAction /
+        input.PointerDownAction /
+        input.PointerUpAction /
         input.PointerMoveAction
       )
 
@@ -7451,7 +8780,7 @@ specified sequence of user input actions.
       }
 
       input.WheelSourceAction = (
-        input.PauseAction //
+        input.PauseAction /
         input.WheelScrollAction
       )
 
@@ -7568,10 +8897,10 @@ state associated with the current session.
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      input.ReleaseActions = {
+      input.ReleaseActions = (
         method: "input.releaseActions",
         params: input.ReleaseActionsParameters
-      };
+      )
 
       input.ReleaseActionsParameters = {
         context: browsingContext.BrowsingContext,
