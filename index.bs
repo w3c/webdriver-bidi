@@ -493,6 +493,9 @@ WebDriver BiDi extends the set of [=error codes=] from [[WEBDRIVER|WebDriver]]
 with the following additional codes:
 
 <dl>
+  <dt><dfn>no such file dialog</dfn>
+  <dd>Tried to interact with an unknown [=current file dialog|file dialog=]</code>.
+
   <dt><dfn>no such handle</dfn>
   <dd>Tried to deserialize an unknown <code>RemoteObjectReference</code>.
 
@@ -8960,9 +8963,157 @@ The [=remote end steps=] given |session|, and |command parameters| are:
 
 </div>
 
+#### The input.interceptFileDialogs Command ####  {#command-input-interceptFileDialogs}
+
+The <dfn export for=commands>input.interceptFileDialogs</dfn> command
+enables/disables interception of file dialogs emitted within a given browsing
+context.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      input.InterceptFileDialogs = (
+        method: "input.interceptFileDialogs",
+        params: input.InterceptFileDialogsParameters
+      )
+
+      input.InterceptFileDialogsParameters = {
+         ? enabled: bool .default true,
+         ? contexts: [*browsingContext.BrowsingContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+Each [=/browsing context=] has a <dfn>file dialog interception
+flag</dfn>, which is false unless otherwise stated.
+
+Each [=/browsing context=] has a <dfn>current file dialog</dfn>, which is
+the [=Attr/element=] corresponding to the current [=show the picker|file picker=]
+prompt, if any. Unless stated otherwise, this is [=null=].
+
+<div algorithm="remote end steps for input.interceptFileDialogs">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let the |list of contexts| be the value of the <code>contexts</code> field of
+   |command parameters| if it is present or null if it isn't.
+
+1. Let |enabled| be the value of the <code>enabled</code> field of |command
+   parameters|.
+
+1. If |enabled| is null, set |enabled| to true.
+
+1. For each |context| in |list of contexts|:
+
+   1. Set the [=file dialog interception flag=] for |context| to |enabled|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The input.displayFileDialog Command ####  {#command-input-displayFileDialog}
+
+The <dfn export for=commands>input.displayFileDialog</dfn> command displays a
+given file dialog to the user.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      input.DisplayFileDialog = (
+        method: "input.displayFileDialog",
+        params: input.FileDialogInfo
+      )
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for input.DisplayFileDialog">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
+   |context id|.
+
+1. Let |element| be the [=current file dialog=] for |context|.
+
+1. If |element| is null, return [=error=] with [=error code=] [=no such file
+   dialog=]
+
+1. Set the [=current file dialog=] to [=null=] for |context|.
+
+1. [=show the picker|Show the file dialog=] prompt with |element|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The input.dismissFileDialog Command ####  {#command-input-dismissFileDialog}
+
+The <dfn export for=commands>input.dismissFileDialog</dfn> command dismisses the
+given file dialog.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      input.DismissFileDialog = (
+        method: "input.dismissFileDialog",
+        params: input.FileDialogInfo
+      )
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for input.DismissFileDialog">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
+   |context id|.
+
+1. Let |element| be the [=current file dialog=] for |context|.
+
+1. If |element| is null, return [=error=] with [=error code=] [=no such file
+   dialog=]
+
+1. Set the [=current file dialog=] to [=null=] for |context|.
+
+1. Perform step 3.4 of the [=show the picker=] algorithm with |element|.
+
+1. Return [=success=] with data null.
+
+</div>
+
 #### The input.setFiles Command ####  {#command-input-setFiles}
 
-The <dfn export for=commands>input.setFiles</dfn> command sets a given file
+The <dfn export for=commands>input.setFiles</dfn> command sets the files for the current a given file
 input with a given set of file paths.
 
 <dl>
@@ -8970,14 +9121,12 @@ input with a given set of file paths.
    <dd>
     <pre class="cddl remote-cddl">
       input.SetFiles = (
-        method: "input.setFiles",
-        params: input.SetFilesParameters
+         method: "input.setFiles",
+         params: input.SetFilesParameters
       )
 
-      input.SetFilesParameters = {
-        context: browsingContext.BrowsingContext,
-        element: script.SharedReference,
-        files: [*text]
+      input.SetFilesParameters = input.FileDialogInfo .and {
+         files: [*text]
       }
     </pre>
    </dd>
@@ -8991,41 +9140,80 @@ input with a given set of file paths.
 
 <div algorithm="remote end steps for input.setFiles">
 
-The [=remote end steps=] given |session|, and |command parameters| are:
+The [=remote end steps=] given |command parameters| are:
 
 1. Let |context id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
+   |context id|.
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |element| be the [=current file dialog=] for |context|.
 
-1. Let |environment settings| be the [=environment settings object=] whose
-   [=relevant global object=]'s <a>associated <code>Document</code></a> is
-   |document|.
-
-1. Let |realm| be |environment settings|' [=realm execution context=]'s
-   Realm component.
-
-1. Let |reference| be the value of the <code>element</code> field of
-   |command parameters|.
-
-1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
-   with |reference|, |realm|, and |session|.
-
-1. If |element| doesn't implement {{HTMLInputElement}} return [=error=] with [=error code=]
-   [=unable to set file input=].
-
-1. If the [=input type=] of |element| doesn't match <code>"file"</code> return [=error=] with [=error code=]
-   [=unable to set file input=].
+1. If |element| is null, return [=error=] with [=error code=] [=no such file
+   dialog=]
 
 1. Let |files| be the value of the <code>files</code> field of |command parameters|.
 
-1. [=Update the file selection=] for |element| with |files| as if a user
-   selected |files| through the [=show the picker|file picker=] prompt.
+1. Perform implementation-specific steps to [=update the file selection=] for
+   |element| with |files| as if a user selected |files| through a [=show the
+   picker|file picker=] prompt.
+
+   1. If the implementation is unable to [=update the file selection=], return
+      [=error=] with [=error code=] [=unable to set file input=].
 
 1. Return [=success=] with data null.
+
+</div>
+
+### Events ### {#module-input-events}
+
+#### The input.fileDialogIntercepted Event #### {#event-input-fileDialogIntercepted}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl remote-cddl">
+         input.FileDialogIntercepted = (
+            method: "input.fileDialogIntercepted",
+            params: input.FileDialogInfo
+         )
+
+         input.FileDialogInfo = {
+            context: browsingContext.BrowsingContext
+         }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+
+The [=remote end event trigger=] is the <dfn export>intercept WebDriver BiDi
+file dialog</dfn> steps given |context| and |element|.
+
+1. If [=file dialog interception flag=] for |context| is false, then return false.
+
+1. Set the [=current file dialog=] to |element| for |context|.
+
+1. Let |context id| be the [=browsing context id=] for |context|.
+
+1. Let |params| be a [=/map=] matching the
+   <code>input.FileDialogInfo</code> production, with the
+   <code>context</code> field set to |context id|.
+
+1. Let |body| be a [=/map=] matching the
+   <code>input.FileDialogIntercepted</code> production, with the
+   <code>params</code> field set to |params|.
+
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>input.fileDialogIntercepted</code>" and |related browsing
+   contexts|:
+
+  1. [=Emit an event=] with |session| and |body|.
+
+1. Return true.
 
 </div>
 
