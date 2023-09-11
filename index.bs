@@ -196,6 +196,9 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: hidden; url: document-sequences.html#system-visibility-state
     text: navigables; url: document-sequences.html#navigables
     text: activation notification; url: interaction.html#activation-notification
+    text: input type; url: input.html#dom-input-type
+    text: update the file selection; url: input.html#update-the-file-selection
+    text: show the picker; url: input.html#show-the-picker,-if-applicable
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
     text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
@@ -507,6 +510,9 @@ with the following additional codes:
 
   <dt><dfn>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
+
+  <dt><dfn>unable to set file input</dfn>
+  <dd>Tried to set a file input, but failed to do so.
 </dl>
 
 <pre class="cddl local-cddl">
@@ -8642,7 +8648,7 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 10, given
 
 </div>
 
-## Input ## {#module-input}
+## The input module ## {#module-input}
 
 The <dfn export for=modules>input</dfn> module contains functionality for
 simulated user input.
@@ -8655,7 +8661,8 @@ simulated user input.
 
 InputCommand = (
   input.PerformActions //
-  input.ReleaseActions
+  input.ReleaseActions //
+  input.SetFiles
 )
 </pre>
 
@@ -8948,6 +8955,75 @@ The [=remote end steps=] given |session|, and |command parameters| are:
    |actions options|.
 
 1. [=Reset the input state=] with |session| and |top-level context|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The input.setFiles Command ####  {#command-input-setFiles}
+
+The <dfn export for=commands>input.setFiles</dfn> command sets a given file
+input with a given set of file paths.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      input.SetFiles = (
+        method: "input.setFiles",
+        params: input.SetFilesParameters
+      )
+
+      input.SetFilesParameters = {
+        context: browsingContext.BrowsingContext,
+        element: script.SharedReference,
+        files: [*text]
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for input.setFiles">
+
+The [=remote end steps=] given |session|, and |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Let |document| be |context|'s [=active document=].
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=relevant global object=]'s <a>associated <code>Document</code></a> is
+   |document|.
+
+1. Let |realm| be |environment settings|' [=realm execution context=]'s
+   Realm component.
+
+1. Let |reference| be the value of the <code>element</code> field of
+   |command parameters|.
+
+1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
+   with |reference|, |realm|, and |session|.
+
+1. If |element| doesn't implement {{HTMLInputElement}} return [=error=] with [=error code=]
+   [=unable to set file input=].
+
+1. If the [=input type=] of |element| doesn't match <code>"file"</code> return [=error=] with [=error code=]
+   [=unable to set file input=].
+
+1. Let |files| be the value of the <code>files</code> field of |command parameters|.
+
+1. [=Update the file selection=] for |element| with |files| as if a user
+   selected |files| through the [=show the picker|file picker=] prompt.
 
 1. Return [=success=] with data null.
 
