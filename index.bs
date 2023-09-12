@@ -179,7 +179,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: report an error; url: webappapis.html#report-the-error
     text: remove a browsing context; url: browsers.html#bcg-remove
-    text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
+    text: requestAnimationFrame; url: imagebitmap-and-animations.html#dom-animationframeprovider-requestanimationframe
     text: same origin domain; url: browsers.html#same-origin-domain
     text: session history; url: history.html#session-history
     text: set up a window environment settings object; url: window-object.html#set-up-a-window-environment-settings-object
@@ -2369,6 +2369,24 @@ To <dfn>render viewport to a canvas</dfn> given |viewport| and |rect|:
 
 </div>
 
+<div algorithm>
+To <dfn>await the next animation frame</dfn> given |window|:
+
+1. Let |render id| be the string representation of a
+   [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
+
+1. Let |steps| be the following steps:
+
+  1. [=Resume=] with "<code>animation frame</code>", |render id|, and ().
+
+1. Let |callback| be [=CreateBuiltinFunction=](|steps|, 0, "", « »).
+
+1. [=Call=]([=requestAnimationFrame=], |window|, «|callback|»).
+
+1. [=Await=] with «"<code>animation frame</code>"», and |render id|.
+
+</div>
+
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
 1. Let |context id| be |command parameters|["<code>context</code>"].
@@ -2383,11 +2401,9 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |viewport| be |document|'s [=visual viewport=].
 
-1. Immediately after the next invocation of the [=run the animation frame
-   callbacks=] algorithm for |document|:
+1. Let |window| be |context|'s [=active window=].
 
-   Issue: This ought to be integrated into the update rendering algorithm
-   in some more explicit way.
+1. [=Await the next animation frame=] with |window|.
 
 1. Let |viewport rect| be a {{DOMRectReadOnly}} with [=x coordinate=] 0, [=y
    coordinate=] 0, [=width dimension=] |viewport| width, and [=height
@@ -2875,11 +2891,9 @@ Note: The minimum page size is 1 point, which is (2.54 / 72) cm as per
 
 1. Let |document| be |context|'s [=active document=].
 
-1. Immediately after the next invocation of the [=run the animation frame
-   callbacks=] algorithm for |document|:
+1. Let |window| be |context|'s [=active window=].
 
-   Issue: This ought to be integrated into the update rendering algorithm
-   in some more explicit way.
+1. [=Await the next animation frame=] with |window|.
 
   1. Let |pdf data| be the result taking UA-specific steps to generate a
      paginated representation of |document|, with the CSS [=media type=] set to
