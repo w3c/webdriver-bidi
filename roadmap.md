@@ -111,4 +111,4 @@ This scenario changes the browser window dimensions and position, maximizes/mini
 
 This scenario automates user granting permission for a browser to access different private information.
 
-- [ ] Device access: bluetooth
+- [ ] Bluetooth device chooser
