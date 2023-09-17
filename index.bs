@@ -2787,6 +2787,9 @@ list of all nodes matching the specified locators.
       browsingContext.LocateNodesParameters = {
          context: browsingContext.BrowsingContext,
          locators: [ + browsingContext.Locator ],
+         ? maxNodes: js-uint,
+         ? ownership: script.ResultOwnership,
+         ? sandbox: text,
          ? startNode: script.SharedReference,
          ? waitTimeout: js-uint
       }
@@ -2804,16 +2807,16 @@ list of all nodes matching the specified locators.
 </dl>
 
 <div algorithm="locate nodes using CSS">
-To <dfn>locate nodes using CSS</dfn> with given |context|, |context nodes|,
+To <dfn>locate nodes using CSS</dfn> with given |context target|, |context nodes|,
 |selector| and <var ignore>session</var>:
 
 1. Let |returned nodes| be an empty array.
 
 1. For each |context node| of |context nodes|:
 
-  1. Let |elements| be the result of calling querySelectorAll() on |context| with |context node|
-     as this and |selector| as the argument. If this causes an exception to be thrown,
-     return [=error=] with [=error code=] [=invalid selector=]. 
+  1. Let |elements| be the result of calling querySelectorAll() on |context target|
+     with |context node| as this and |selector| as the argument. If this causes an
+     exception to be thrown, return [=error=] with [=error code=] [=invalid selector=]. 
 
   1. Append |elements| to |returned nodes|
 
@@ -2822,15 +2825,16 @@ To <dfn>locate nodes using CSS</dfn> with given |context|, |context nodes|,
 </div>
 
 <div algorithm="locate nodes using XPath">
-To <dfn>locate nodes using XPath</dfn> with given |context|, |context nodes|
-|selector| and <var ignore>session</var>:
+To <dfn>locate nodes using XPath</dfn> with given |context target|,
+|context nodes|, |selector| and <var ignore>session</var>:
 
 1. Let |returned nodes| be an empty array.
 
 1. For each |context node| of |context nodes|:
 
-   1. Let |evaluateResult| be the result of calling evaluate on |context|, with arguments |selector|,
-      |context node|, null, ORDERED_NODE_SNAPSHOT_TYPE, and null.
+   1. Let |evaluateResult| be the result of calling evaluate on |context target|,
+      with arguments |selector|, |context node|, null, ORDERED_NODE_SNAPSHOT_TYPE,
+      and null.
 
    1. Let |index| be 0.
 
@@ -2856,16 +2860,16 @@ To <dfn>locate nodes using XPath</dfn> with given |context|, |context nodes|
 </div>
 
 <div algorithm="locate nodes using text">
-To <dfn>locate nodes using text</dfn> with given |context|, |context nodes|,
+To <dfn>locate nodes using text</dfn> with given |context target|, |context nodes|,
 |selector|, |match| and <var ignore>session</var>:
 
 1. Let |returned nodes| be an empty array.
 
 1. For each |context node| of |context nodes|:
 
-  1. Let |element nodes| be the result of calling querySelectorAll() on |context| with |context node|
-     as this and "*" as the argument. If this causes an exception to be thrown,
-     return [=error=] with [=error code=] [=invalid selector=]. 
+  1. Let |element nodes| be the result of calling querySelectorAll() on |context target|
+     with |context node| as this and "*" as the argument. If this causes an exception
+     to be thrown, return [=error=] with [=error code=] [=invalid selector=]. 
 
   1. Let |elements| be the result of converting |element nodes| to an array.
 
@@ -2879,15 +2883,16 @@ To <dfn>locate nodes using text</dfn> with given |context|, |context nodes|,
 </div>
 
 <div algorithm="locate nodes using script">
-To <dfn>locate nodes using script</dfn> with given |context|, |context nodes|,
+To <dfn>locate nodes using script</dfn> with given |context target|, |context nodes|,
 |function declaration| and <var ignore>session</var>:
 
 1. Let |returned nodes| be an empty array.
 
 1. For each |context node| of |context nodes|:
 
-   1. Let |script result| be the result of executing the function in |context| defined
-      by the |function declaration| using |context node| as an argument.
+   1. Let |script result| be the result of executing the function against
+      |context target| defined by the |function declaration| using
+      |context node| as an argument.
 
    1. If |script result| is an error, return [=error=] with
       [=error code=] [=invalid selector=].
@@ -2902,8 +2907,8 @@ To <dfn>locate nodes using script</dfn> with given |context|, |context nodes|,
 </div>
 
 <div algorithm="locate a frame context">
-To <dfn>locate a frame context</dfn> with given |context|, |context nodes|
-and |session|:
+To <dfn>locate a frame context</dfn> with given |context target|, |context nodes|,
+|result ownership| and |session|:
 
 1. If length of |context nodes| is not equal to 1, return [=error=] with
    [=error code=] [=invalid selector=].
@@ -2913,12 +2918,6 @@ and |session|:
 1. Let |serialization options| be a [=/map=] matching the 
    <code>script.SerializationOptions</code> production with the fields
    set to their default values.
-
-1. Let |result ownership| be none.
-
-1. Let |context target| be the a [=/map=] matching of the
-   <code>script.ContextTarget</code> production with the context field
-   set to the [=browsing context id=] of |context|.
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given |context target|.
@@ -2942,6 +2941,20 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Assert: |context| is not null.
 
+1. Let |maximum returned nodes| be the value of the <code>maxNodes</code>
+   field of |command parameters|, if present, or 0 otherwise.
+
+1. Let |result ownership| be the value of the <code>ownership</code>
+   field of |command parameters|, if present, or <code>none</code> otherwise.
+
+1. Let |sandbox| be the value of the <code>sandbox</code> field of
+   |command parameters|.
+
+1. Let |current context target| be the a [=/map=] matching of the
+   <code>script.ContextTarget</code> production with the 
+   <code>context</code> field set to the [=browsing context id=]
+   of |context| and the <code>sandbox</code> field set to |sandbox|.
+
 1. Let |locators| be the value of the <code>locators</code> field
    of |command parameters|.
 
@@ -2950,12 +2963,12 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Assert: |locators| length is > 0.
 
 1. Let |start node parameter| be the value of the <code>startNode</code> field
-   of |command parameters|.
+   of |command parameters|, if present, or null otherwise.
 
-1. Let |start node| be the node corresponding to the documentElement of |context|.
-
-1. If |start node parameter| is not null, set |start node| to the result of [=trying=] to
-   [=deserialize local value=] given |start node parameter|, and |session|.
+1. Let |start node| be the result of [=trying=] to [=deserialize local value=] given
+   |start node parameter| and |session|, if |start node parameter| is not null, or the
+   node corresponding to the <code>documentElement</code> property of |context|'s
+   [=active document=] otherwise.
 
 1. Let |wait timeout| be the value of the <code>waitTimeout</code> field of |command
    parameters| if present, or 0 otherwise.
@@ -2985,26 +2998,35 @@ The [=remote end steps=] with |session| and |command parameters| are:
               1. Let |selector| be the value of the value property of |locator|.
 
               1. Let |context nodes| be a result of [=trying=] to [=locate nodes using css=]
-                 given |context|, |context nodes|, |selector| and |session|.
+                 given |current context target|, |context nodes|, |selector| and |session|.
 
            <dt>|type| is the string "<code>xpath</code>"
            <dd>
               1. Let |selector| be the value of the value property of |locator|.
 
               1. Let |context nodes| be a result of [=trying=] to [=locate nodes using xpath=]
-                 given |context|, |context nodes|, |selector| and |session|.
+                 given |current context target|, |context nodes|, |selector| and |session|.
  
            <dt>|type| is the string "<code>frame</code>"
            <dd>
               1. Let |window proxy| be the result of [=trying=] to [=locate a frame context=]
-                 given |context|, |context nodes|, |selector| and |session|.
+                 given |current context target|, |context nodes|, |selector| and |session|.
 
-              1. Let |context| be the context property of the value property of |window proxy|.
+              1. Let |frame context id| be the <code>context property</code> of the 
+                 <code>value</code> property of |window proxy|.
+
+              1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+                 with |frame context id|.
+
+              1. Let |current context target| be the a [=/map=] matching of the 
+                 <code>script.ContextTarget</code> production with the <code>context</code>
+                 field set to |frame context id| and the <code>sandbox</code> field set to
+                 |sandbox|.
 
               1. Let |context nodes| be an empty array.
 
-              1. Append the node corresponding to the documentElement of |context| to
-                 |context nodes|.
+              1. Append the node corresponding to the <code>documentElement</code> property
+                 of |context|'s [=active document=] to |context nodes|.
 
            <dt>|type| is the string "<code>script</code>"
            <dd>
@@ -3012,7 +3034,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
                  property of |locator|.
 
               1. Let |context nodes| be a result of [=trying=] to [=locate nodes using script=]
-                 given |context|, |context nodes|, |function declaration| and |session|.
+                 given |current context target|, |context nodes|, |function declaration| and
+                 |session|.
 
            <dt>|type| is the string "<code>text</code>"
            <dd>
@@ -3022,27 +3045,26 @@ The [=remote end steps=] with |session| and |command parameters| are:
                  present, otherwise "full".
 
               1. Let |context nodes| be a result of [=trying=] to [=locate nodes using text=]
-                 given |context|, |context nodes|, |selector|, |match| and |session|
+                 given |current context target|, |context nodes|, |selector|, |match| and
+                 |session|.
 
-   1. Append |context nodes| to |result nodes|
+   1. Append |context nodes| to |result nodes|.
+
+1. If |maximum returned nodes| is greater than 0, truncate |result nodes| to the
+   first |maximum returned nodes| values.
 
 1. Let |serialization options| be a [=/map=] matching the 
    <code>script.SerializationOptions</code> production with the fields
    set to their default values.
 
-1. Let |result ownership| be none.
-
-1. Let |context target| be the a [=/map=] matching of the
-   <code>script.ContextTarget</code> production with the context field
-   set to the [=browsing context id=] of |context|.
-
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
-   given |context target|.
+   given |current context target|.
 
 1. Let |result| be a [=/map=] matching the <code>browsingContext.LocateNodesResult</code>
-   production, with the <code>context</code> field set to |context| and the <code>nodes</code>
-   field set to the result of [=serialize as a remote value=] with |result nodes|,
-   |serialization options|, |result ownership|, a new map as <var ignore>serialization internal map</var>,
+   production, with the <code>context</code> field set to the [=browsing context id=] of
+   |current context| and the <code>nodes</code> field set to the result of
+   [=serialize as a remote value=] with |result nodes|, |serialization options|,
+   |result ownership|, a new map as <var ignore>serialization internal map</var>,
    |realm| and |session|.
 
 1. Return [=success=] with data |result|.
