@@ -107,8 +107,8 @@ This scenario changes the browser window dimensions and position, maximizes/mini
 - [x] Some items from the previous milestones
 - [ ] [Add commands for resizing and positioning browser windows](https://github.com/w3c/webdriver-bidi/issues/398)
 
-### Managing permissions
+### Extensions
 
-This scenario automates user granting permission for a browser to access different private information.
+[Define how extension modules could be created.](https://github.com/w3c/webdriver-bidi/issues/506)
 
-- [ ] Bluetooth device chooser
+- [ ] Document a general device access pattern (for use with Web Bluetooth and other APIs)
