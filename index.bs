@@ -2790,6 +2790,8 @@ list of all nodes matching the specified locators.
          locator: browsingContext.Locator,
          startNodes: [ * script.SharedReference ],
          ? maxNodes: js-uint,
+         ? ownership: script.ResultOwnership,
+         ? serializationOptions: script.SerializationOptions
       }
       </pre>
    </dd>
@@ -2798,7 +2800,7 @@ list of all nodes matching the specified locators.
     <pre class="cddl local-cddl">
         browsingContext.LocateNodesResult = {
             context: browsingContext.BrowsingContext,
-            nodeSharedIds: [ * script.SharedId ]
+            nodes: [ * script.RemoteNodeValue ]
         }
     </pre>
    </dd>
@@ -2852,9 +2854,6 @@ To <dfn>locate nodes using XPath</dfn> with given |context target|,
       1. Let |node| be the result of calling [=snapshotItem=] with |evaluateResult|
          as this and |index| as the argument.
 
-      1. If |node| is not an element return [=error=] with [=error code=]
-         [=invalid selector=].
-      
       1. Append |node| to |returned nodes|.
       
       1. Increment |index| by 1. 
@@ -2964,26 +2963,21 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. If |maximum returned nodes| is greater than 0, truncate |result nodes| to the
    first |maximum returned nodes| values.
 
-1. Let |serialization options| be a [=/map=] matching the 
+1. Let |serialization options| be the <code>serializationOptions</code> field of
+   |command parameters| if present, otherwise a [=/map=] matching the 
    <code>script.SerializationOptions</code> production with the fields
    set to their default values.
 
-1. Let |result ownership| be "none".
+1. Let |result ownership| be the value of the <code>ownership</code> field of
+   |command parameters|, if it exits, otherwise "none".
 
-1. Let |serialized result| be the result of [=serialize as a remote value=] with
+1. Let |serialized nodes| be the result of [=serialize as a remote value=] with
    |result nodes|, |serialization options|, |result ownership|, a new map as
    <var ignore>serialization internal map</var>, |realm| and |session|.
 
-1. Let |serialized shared ids| be a new array.
-
-1. For each |serialized result node| in |serialized result|:
-
-   1. Append the value of the <code>sharedId</code> field of |serialized result node|
-      to |serialized shared ids|.
-
 1. Let |result| be a [=/map=] matching the <code>browsingContext.LocateNodesResult</code>
    production, with the <code>context</code> field set to the |context id|
-   and the <code>nodeSharedIds</code> field set |serialized shared ids|.
+   and the <code>nodes</code> field set |serialized nodes|.
 
 1. Return [=success=] with data |result|.
 
