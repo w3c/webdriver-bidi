@@ -179,7 +179,6 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: report an error; url: webappapis.html#report-the-error
     text: remove a browsing context; url: browsers.html#bcg-remove
-    text: requestAnimationFrame; url: imagebitmap-and-animations.html#dom-animationframeprovider-requestanimationframe
     text: same origin domain; url: browsers.html#same-origin-domain
     text: session history; url: history.html#session-history
     text: set up a window environment settings object; url: window-object.html#set-up-a-window-environment-settings-object
@@ -1888,6 +1887,11 @@ implicitly set when the context is created. For browsing contexts with an
 associated WebDriver [=window handle=] the [=/browsing context id=] must be the
 same as the [=window handle=].
 
+Each [=/browsing context=] has an associated <dfn>list of suspended rendering
+ids</dfn>, which is initially an empty list. It is used to track pending
+invocations of [=browsingContext.captureScreenshot=] and
+[=browsingContext.print=].
+
 <div algorithm>
 To <dfn>get a browsing context</dfn> given |context id|:
 
@@ -1899,6 +1903,17 @@ To <dfn>get a browsing context</dfn> given |context id|:
 1. Let |context| be the browsing context with id |context id|.
 
 1. Return [=success=] with data |context|
+
+</div>
+
+<div algorithm>
+To <dfn export>resume suspended renderings</dfn> for a given |browsing context|.
+
+1. Let |rendering ids| be |browsing context|'s [=list of suspended rendering ids=].
+
+1. For each |rendering id| in |rendering ids|:
+
+  1. [=Resume=] with "<code>animation frame</code>", |rendering id|, and ().
 
 </div>
 
@@ -2370,20 +2385,13 @@ To <dfn>render viewport to a canvas</dfn> given |viewport| and |rect|:
 </div>
 
 <div algorithm>
-To <dfn>await the next animation frame</dfn> given |window|:
+To <dfn>await the next animation frame</dfn> given |browsing context|:
 
-1. Let |render id| be the string representation of a
-   [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
+1. Let |rendering id| be a new unique opaque string.
 
-1. Let |steps| be the following steps:
+1. [=list/Append=] |rendering id| to |browsing context|'s [=list of suspended rendering ids=].
 
-  1. [=Resume=] with "<code>animation frame</code>", |render id|, and ().
-
-1. Let |callback| be [=CreateBuiltinFunction=](|steps|, 0, "", « »).
-
-1. [=Call=]([=requestAnimationFrame=], |window|, «|callback|»).
-
-1. [=Await=] with «"<code>animation frame</code>"», and |render id|.
+1. [=Await=] with «"<code>animation frame</code>"», and |rendering id|.
 
 </div>
 
@@ -2401,9 +2409,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |viewport| be |document|'s [=visual viewport=].
 
-1. Let |window| be |context|'s [=active window=].
-
-1. [=Await the next animation frame=] with |window|.
+1. [=Await the next animation frame=] with |context|.
 
 1. Let |viewport rect| be a {{DOMRectReadOnly}} with [=x coordinate=] 0, [=y
    coordinate=] 0, [=width dimension=] |viewport| width, and [=height
@@ -2891,9 +2897,7 @@ Note: The minimum page size is 1 point, which is (2.54 / 72) cm as per
 
 1. Let |document| be |context|'s [=active document=].
 
-1. Let |window| be |context|'s [=active window=].
-
-1. [=Await the next animation frame=] with |window|.
+1. [=Await the next animation frame=] with |context|.
 
   1. Let |pdf data| be the result taking UA-specific steps to generate a
      paginated representation of |document|, with the CSS [=media type=] set to
