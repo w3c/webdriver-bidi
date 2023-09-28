@@ -109,6 +109,6 @@ This scenario changes the browser window dimensions and position, maximizes/mini
 
 ### Extensions
 
-[Define how extension modules could be created.](https://github.com/w3c/webdriver-bidi/issues/506)
+[As a spec author I want to extend WebDriver BiDi functionality, therefore I define a WebDriver BiDi extension in the spec following WebDriver BiDi extension guidelines.](https://github.com/w3c/webdriver-bidi/issues/506)
 
-- [ ] Document a general device access pattern (for use with Web Bluetooth and other APIs)
+- [ ] [Manage Bluetooth device permissions](https://github.com/WebBluetoothCG/web-bluetooth/issues/613)
