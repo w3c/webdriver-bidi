@@ -19,6 +19,9 @@ Test Suite: https://github.com/web-platform-tests/wpt/tree/master/webdriver/test
 </pre>
 
 <pre class=anchors>
+spec: RFC2397; urlPrefix: https://tools.ietf.org/html/rfc2397
+  type: dfn
+    text: data url; url: section-2
 spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
   type: dfn
     text: WebSocket URI; url: section-3
@@ -50,7 +53,6 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: dispatch actions; url: dfn-dispatch-actions
     text: dispatch tick actions; url: dfn-dispatch-tick-actions
     text: draw a bounding box from the framebuffer; url: dfn-draw-a-bounding-box-from-the-framebuffer
-    text: encode a canvas as Base64; url: dfn-encoding-a-canvas-as-base64
     text: endpoint node; url: dfn-endpoint-node
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
@@ -160,6 +162,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: 2D context creation algorithm; url: canvas.html#2d-context-creation-algorithm
     text: 2D; url: canvas.html#concept-canvas-2d
     text: a browsing context is discarded; url: window-object.html#a-browsing-context-is-discarded
+    text: a serialization of the bitmap as a file; url: canvas.html#a-serialisation-of-the-bitmap-as-a-file
     text: activation notification; url: interaction.html#activation-notification
     text: active browsing context; url: document-sequences.html#nav-bc
     text: active document; for: browsing context; url: document-sequences.html#active-document
@@ -178,6 +181,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
+    text: origin-clean; url: canvas.html#concept-canvas-origin-clean
     text: parent; for:navigable; url: document-sequences.html#nav-parent
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: prompt; url: timers-and-user-prompts.html#dom-prompt
@@ -196,6 +200,9 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
+spec: INFRA: urlPrefix: https://infra.spec.whatwg.org/
+  type: dfn
+    text: forgiving-base64 encode; url: forgiving-base64-encode
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
     text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
@@ -2220,7 +2227,25 @@ Base64-encoded string.
 
       browsingContext.CaptureScreenshotParameters = {
         context: browsingContext.BrowsingContext,
-        ? clip: browsingContext.ClipRectangle
+        ? format: (
+            browsingContext.PngFormat /
+            browsingContext.WebpFormat /
+            browsingContext.JpegFormat
+          ),
+        ? clip: browsingContext.ClipRectangle,
+      }
+
+      browsingContext.PngFormat = {
+         type: "png",
+      }
+
+      browsingContext.WebpFormat = {
+         type: "webp",
+      }
+
+      browsingContext.JpegFormat = {
+         type: "jpeg",
+         ? quality: 0.0..1.0,
       }
 
       browsingContext.ClipRectangle = (
@@ -2253,7 +2278,7 @@ Base64-encoded string.
    </dd>
 </dl>
 
-TODO: Full page screenshots, and multiple output formats
+TODO: Full page screenshots
 
 <div algorithm>
 To <dfn>normalize rect</dfn> given |rect|:
@@ -2367,6 +2392,42 @@ To <dfn>render viewport to a canvas</dfn> given |viewport| and |rect|:
 
 </div>
 
+<div algorithm>
+To <dfn>encode a canvas as Base64</dfn> given |canvas| and |format|:
+
+1. If the |canvas|’s bitmap’s [=origin-clean=] flag is set to false, return
+   [=error=] with error code [=unable to capture screen=].
+
+1. If the |canvas|’s bitmap has no pixels (i.e. either its horizontal dimension
+   or vertical dimension is zero), return [=error=] with error code [=unable to
+   capture screen=].
+
+1. Let |quality| be [=undefined=].
+
+1. Let |type| be "image/png".
+
+1. If |format| is not null:
+
+  1. If |format| matches the <code>browsingContext.WebpFormat</code>, set |type|
+     to "image/webp".
+
+  1. Otherwise, if |format| matches the <code>browsingContext.JpegFormat</code>
+     production, set |type| to "image/jpeg" and set |quality| to the
+     <code>quality</code> field of |format|.
+
+  1. Otherwise, if |format| does not match the
+     <code>browsingContext.PngFormat</code>, return [=error=] with error code
+     [=invalid argument=].
+
+1. Let |file| be [=a serialization of the bitmap as a file|a serialization of
+   the |canvas| element’s bitmap as a file=] with |type| and |quality|.
+
+1. Let |encoded string| be the [=forgiving-base64 encode=] of |file|.
+
+1. Return success with data |encoded string|.
+
+</div>
+
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
 1. Let |context id| be |command parameters|["<code>context</code>"].
@@ -2439,8 +2500,10 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |canvas| be [=render viewport to a canvas=] with |viewport| and |rect|.
 
+1. Let |format| be the <code>format</code> field of |command parameters|.
+
 1. Let |encoding result| be the result of [=trying=] to [=encode a canvas as
-   Base64=] with |canvas|.
+   Base64=] with |canvas| and |format|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.CaptureScreenshotResult</code> production, with the
