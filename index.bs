@@ -174,6 +174,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: create a classic script; url: webappapis.html#creating-a-classic-script
     text: create a new browsing context; url: browsers.html#creating-a-new-browsing-context
     text: default classic script fetch options; url: webappapis.html#default-classic-script-fetch-options
+    text: default view; url: nav-history-apis.html#dom-document-defaultview
     text: environment settings object's Realm; url: webappapis.html#environment-settings-object's-realm
     text: focused area of the document; url: document-sequences.html#focused-area-of-the-document
     text: handled; url: webappapis.html#concept-error-handled
@@ -218,6 +219,11 @@ spec: CSS-VALUES-3; urlPrefix: https://drafts.csswg.org/css-values-3/
 spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
   type: dfn
     text: visual viewport; url: #visual-viewport
+    text: scroll height; url: #dom-element-scrollheight
+    text: scroll width; url: #dom-element-scrollwidth
+spec: DOM; urlPrefix: https://dom.spec.whatwg.org/
+  type: dfn
+    text: document element; url: #ref-for-dom-document-documentelement
 </pre>
 
 <pre class="biblio">
@@ -2232,7 +2238,8 @@ Base64-encoded string.
             browsingContext.WebpFormat /
             browsingContext.JpegFormat
           ),
-        ? clip: browsingContext.ClipRectangle,
+        ? origin: ("viewport" / "document") .default "viewport",
+        ? clip: browsingContext.ClipRectangle
       }
 
       browsingContext.PngFormat = {
@@ -2260,7 +2267,7 @@ Base64-encoded string.
       }
 
       browsingContext.BoxClipRectangle = {
-         type: "viewport",
+         type: "box",
          x: float,
          y: float,
          width: float,
@@ -2277,8 +2284,6 @@ Base64-encoded string.
     </pre>
    </dd>
 </dl>
-
-TODO: Full page screenshots
 
 <div algorithm>
 To <dfn>normalize rect</dfn> given |rect|:
@@ -2348,26 +2353,16 @@ To <dfn>rectangle intersection</dfn> given |rect1| and |rect2|
 </div>
 
 <div algorithm>
-To <dfn>render viewport to a canvas</dfn> given |viewport| and |rect|:
+To <dfn>render document to a canvas</dfn> given |document| and |rect|:
 
-1. Assert: |rect| is normalized and represents a non-empty sub-region of |viewport|,
-   i.e. all the following hold:
-     * |rect|'s [=x coordinate=] is greater than or equal to 0.
-     * |rect|'s [=width dimension=] is greater than 0.
-     * |rect|'s [=y coordinate=] is greater than or equal to 0.
-     * |rect|'s [=height dimension=] is greater than 0.
-     * |rect|'s [=x coordinate=] plus |rect|'s [=width dimension=] is less than
-       or equal to |viewport|'s width.
-     * |rect|'s [=y coordinate=] plus |rect|'s [=height dimension=] is less than
-       or equal to |viewport|'s height.
+1. Let |ratio| be [=determine the device pixel ratio=] given |document|'s
+   [=default view=].
 
-1. Let |scale| be [=determine the device pixel ratio=] for the output device of |viewport|.
-
-1. Let |paint width| be |rect|'s [=width dimension=] multiplied by |scale|,
+1. Let |paint width| be |rect|'s [=width dimension=] multiplied by |ratio|,
    rounded to the nearest integer, so it matches the width of |rect| in device
    pixels.
 
-1. Let |paint height| be |rect|'s [=height dimension=] multiplied by |scale|,
+1. Let |paint height| be |rect|'s [=height dimension=] multiplied by |ratio|,
    rounded to the nearest integer, so it matches the height of |rect| in device
    pixels.
 
@@ -2380,7 +2375,7 @@ To <dfn>render viewport to a canvas</dfn> given |viewport| and |rect|:
 1. Set |canvas|'s [=context mode=] to [=2D=].
 
 1. Complete implementation specific steps equivalent to drawing the region of
-   the framebuffer representing the region of |viewport| covered by |rect| to
+   the framebuffer representing the region of |document| covered by |rect| to
    |context|, such that each pixel in the framebuffer corresponds to a pixel in
    |context| with (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
    viewport coordinates corresponding to (0,0) in |context| and (|rect|'s
@@ -2428,31 +2423,55 @@ To <dfn>encode a canvas as Base64</dfn> given |canvas| and |format|:
 
 </div>
 
+<div algorithm>
+To <dfn>get the origin rectangle</dfn> given |document| and |origin|:
+
+1. If |origin| is <code>"viewport"</code>:
+
+   1. Let |viewport| be |document|'s [=visual viewport=].
+
+   1. Let |viewport rect| be a {{DOMRectReadOnly}} with [=x coordinate=] 0, [=y
+      coordinate=] 0, [=width dimension=] |viewport| width, and [=height
+      dimension=] |viewport| height.
+
+   1. Return [=success=] with data |viewport rect|.
+
+1. If |origin| is not <code>"document"</code>, return [=error=] with [=error
+   code=] [=invalid argument=].
+
+1. Let |document element| be the [=document element=] for |document|.
+
+1. Let |document rect| be a {{DOMRectReadOnly}} with [=x coordinate=] 0, [=y
+   coordinate=] 0, [=width dimension=] |document element| [=scroll height=],
+   and [=height dimension=] |document element| [=scroll width=].
+
+1. Return [=success=] with data |document rect|.
+
+</div>
+
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
-1. Let |context id| be |command parameters|["<code>context</code>"].
-
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters| if present, or null otherwise.
 
 1. If the implementation is unable to capture a screenshot of |context| for any
    reason then return [=error=] with [=error code=] [=unsupported operation=].
 
 1. Let |document| be |context|'s [=active document=].
 
-1. Let |viewport| be |document|'s [=visual viewport=].
-
 1. Immediately after the next invocation of the [=run the animation frame
    callbacks=] algorithm for |document|:
 
-   Issue: This ought to be integrated into the update rendering algorithm
-   in some more explicit way.
+   Issue: This ought to be integrated into the update rendering algorithm in
+   some more explicit way.
 
-1. Let |viewport rect| be a {{DOMRectReadOnly}} with [=x coordinate=] 0, [=y
-   coordinate=] 0, [=width dimension=] |viewport| width, and [=height
-   dimension=] |viewport| height.
+1. Let |origin| be the value of the <code>context</code> field of |command
+   parameters| if present, or "viewport" otherwise.
 
-1. Let |clip rect| be |viewport rect|.
+1. Let |origin rect| be the result of [=trying=] to [=get the origin rectangle=]
+   given |origin| and |document|.
+
+1. Let |clip rect| be |origin rect|.
 
 1. If |command parameters| contains "<code>clip</code>":
 
@@ -2493,12 +2512,12 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
           and height |clip|["<code>height</code>"].
      </dl>
 
-1. Let |rect| be the [=rectangle intersection=] of |viewport rect| and |clip rect|.
+1. Let |rect| be the [=rectangle intersection=] of |origin rect| and |clip rect|.
 
 1. If |rect|'s [=width dimension=] is 0 or |rect|'s [=height dimension=] is 0,
    return [=error=] with error code [=unable to capture screen=].
 
-1. Let |canvas| be [=render viewport to a canvas=] with |viewport| and |rect|.
+1. Let |canvas| be [=render document to a canvas=] with |document| and |rect|.
 
 1. Let |format| be the <code>format</code> field of |command parameters|.
 
