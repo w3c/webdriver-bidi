@@ -1321,7 +1321,7 @@ events are disabled, the return value is always empty.
   1. For each |context id| in |browsing contexts|:
 
     1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-       with |context id|.
+       with |session| and |context id|.
 
     1. Let |top-level context| be the [=top-level browsing context=] for |context|.
 
@@ -1804,7 +1804,15 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
 ## The browsingContext Module ## {#module-browsingContext}
 
 The <dfn export for=modules>browsingContext</dfn> module contains commands and
-events relating to browsing contexts.
+events relating to [=navigables=].
+
+Note: For historic reasons this module is called <code>browsingContext</code>
+rather than <code>navigable</code>, and the protocol uses the term
+<code>context</code> to refer to navigables, particularly as a field in command
+and response parameters.
+
+Issue: Update the spec to use [=navigable=] consistently and remove
+uses of [=/browsing context=].
 
 The progress of navigation is communicated using an immutable <dfn export>WebDriver
 navigation status</dfn> struct, which has the following items:
@@ -1880,23 +1888,54 @@ BrowsingContextEvent = (
 browsingContext.BrowsingContext = text;
 </pre>
 
-Each [=/browsing context=] has an associated <dfn export>browsing context
-id</dfn>, which is a string uniquely identifying that browsing context. This is
-implicitly set when the context is created. For browsing contexts with an
-associated WebDriver [=window handle=] the [=/browsing context id=] must be the
-same as the [=window handle=].
+A [=/navigable=] is associated with a <dfn export>context id</dfn>, which is a
+string uniquely identifying that browsing context within a specific [=bidi
+session=].
+
+A [=BiDi session=] has a <dfn>context id map</dfn> which is a weak map between
+[=navigables=] and their corresponding [=context id=]. When the session is
+created this map is empty.
 
 <div algorithm>
-To <dfn>get a browsing context</dfn> given |context id|:
+To <dfn>get context id</dfn> given |session| and |context|:
+
+1. Let |navigable| be |context|'s [=active document=]'s [=node document=]'s
+   [=node navigable=].
+
+1. If |navigable| is null, return [=error=] with [=error code=] [=no such
+   frame=].
+
+   TODO: Once we change the callers to use navigables throughout the condition
+   will become unreachable.
+
+1. Let |context id map| be |session|'s [=context id map=].
+
+1. If |context id map| doesn't [=map/contain=] |navigable|:
+
+  1. If |navigable| is a [=navigable/top-level traversable=] and |session| is a
+     [=HTTP session=], let |context id| be the [=window handle=] for
+     |navigable|.  Othereise, let |context id| be a new, unique, string.
+
+  1. [=map/Set=] |context id map|[|navigable|] to |context id|.
+
+1. Return [=success=] with data |context id map|[|navigable|].
+
+</div>
+
+<div algorithm>
+To <dfn>get a browsing context</dfn> given |session| and |context id|:
 
 1. If |context id| is null, return [=success=] with data null.
 
-1. If there is no browsing context with [=browsing context id=] |context id| return
-   [=error=] with [=error code=] [=no such frame=]
+1. Let |context id map| be |session|'s [=context id map=].
 
-1. Let |context| be the browsing context with id |context id|.
+1. For each |navigable| → |id| of |context id map|:
 
-1. Return [=success=] with data |context|
+  1. If |id| equals |context id|:
+
+    1. Return [=success=] with data |navigable|'s [=active browsing context=].
+
+1. Return [=error=] with [=error code=] [=no such frame=]
 
 </div>
 
@@ -1956,10 +1995,15 @@ TODO: make this return a list in document order
 
 
 <div algorithm>
-To <dfn>get the browsing context info</dfn> given |context|,
+To <dfn>get the browsing context info</dfn> given |session|, |context|,
 |max depth| and |is root|:
 
-1. Let |context id| be the [=browsing context id=] for |context|.
+1. Let |context id result| be [=get context id=] with |session| and |context|.
+
+1. Assert: |context id| is not [=error=]. This would imply that the browsing
+   context doesn't have an active document.
+
+1. Set |context id| to |context id result|'s data.
 
 1. Let |parent browsing context| be [=get the parent browsing
    context=] given |context|.
@@ -1988,7 +2032,7 @@ To <dfn>get the browsing context info</dfn> given |context|,
   1. For each |context| of |child contexts|:
 
     1. Let |info| be the result of [=get the browsing context info=] given
-       |context|, |child depth|, and false.
+       |session|, |context|, |child depth|, and false.
 
     1. Append |info| to |child infos|
 
@@ -2117,9 +2161,15 @@ browsingContext.NavigationInfo = {
 The <code>browsingContext.NavigationInfo</code> type provides details of an ongoing navigation.
 
 <div algorithm>
-To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
+To <dfn>get the navigation info</dfn>, given |session|, |context| and |navigation status|:
 
-1. Let |context id| be the [=browsing context id=] for |context|.
+1. Let |context id result| be [=get context id=] with |session| and
+   |context|.
+
+1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+   context doesn't have an active document.
+
+1. Set |context id| to |context id result|'s data.
 
 1. Let |navigation id| be |navigation status|'s id.
 
@@ -2174,13 +2224,13 @@ The <dfn export for=commands>browsingContext.activate</dfn> command activates an
 
 <div algorithm="remote end steps for browsingContext.activate">
 
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
-1. Let |context id| be the value of the |command parameters|["<code>context</code>"] field.
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
+   |session| and |command parameters|["<code>context</code>"].
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
-
-1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
+1. If |context| is not a [=top-level browsing context=], return [=error=] with
+   [=error code=] [=invalid argument=].
 
 1. Return [=activate a context=] with |context|.
 
@@ -2367,12 +2417,10 @@ To <dfn>render viewport to a canvas</dfn> given |viewport| and |rect|:
 
 </div>
 
-The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
-
-1. Let |context id| be |command parameters|["<code>context</code>"].
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+   with |session| and |command parameters|["<code>context</code>"]..
 
 1. If the implementation is unable to capture a screenshot of |context| for any
    reason then return [=error=] with [=error code=] [=unsupported operation=].
@@ -2477,13 +2525,10 @@ The <dfn export for=commands>browsingContext.close</dfn> command closes a
 </dl>
 
 <div algorithm="remote end steps for browsingContext.close">
-The [=remote end steps=] with |command parameters| are:
-
-  1. Let |context id| be the value of the <code>context</code> field of
-     |command parameters|.
+The [=remote end steps=] with |session| and |command parameters| are:
 
   1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-     with |context id|.
+     with |session| and |command parameters|["<code>context</code>"].
 
   1. Assert: |context| is not null.
 
@@ -2535,7 +2580,7 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
 </dl>
 
 <div algorithm="remote end steps for browsingContext.create">
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
   1. Let |type| be the value of the <code>type</code> field of
      |command parameters|.
@@ -2544,7 +2589,7 @@ The [=remote end steps=] with |command parameters| are:
      field of |command parameters|, if present, or null otherwise.
 
   1. If |reference context id| is not null, let |reference context| be the
-     result of [=trying=] to [=get a browsing context=] with
+     result of [=trying=] to [=get a browsing context=] with |session| and
      |reference context id|. Otherwise let |reference context| be null.
 
   1. If |reference context| is not null and is not a [=top-level browsing context=],
@@ -2587,8 +2632,8 @@ The [=remote end steps=] with |command parameters| are:
 
     Note: Do not invoke the [=/focusing steps=] for the created browsing context if <code>background</code> is true.
 
-  1. Let |context id| be the [=browsing context id=] of the newly created
-     [=/browsing context=].
+  1. Let |context id| be the result of [=trying=] to [=get context id= with
+     |session| and the newly created [=/browsing context=].
 
   1. Let |body| be a [=/map=] matching the <code>browsingContext.CreateResult</code>
      production, with the <code>context</code> field set to |context id|.
@@ -2629,7 +2674,7 @@ or all top-level contexts when no parent is provided.
 </dl>
 
 <div algorithm="remote end steps for browsingContext.getTree">
-The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |root id| be the value of the <code>root</code> field of
    |command parameters| if present, or null otherwise.
@@ -2640,7 +2685,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |contexts| be an empty [=/list=].
 
 1. If |root id| is not null, append the result of [=trying=] to
-   [=get a browsing context=] given |root id| to |contexts|.
+   [=get a browsing context=] with |session| and |root id| to |contexts|.
    Otherwise append all [=top-level browsing contexts=] to |contexts|.
 
 1. Let |contexts info| be an empty [=/list=].
@@ -2648,7 +2693,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. For each |context| of |contexts|:
 
   1. Let |info| be the result of [=get the browsing context info=] given
-     |context|, |max depth|, and true.
+     |session|, |context|, |max depth|, and true.
 
   1. Append |info| to |contexts info|
 
@@ -2690,13 +2735,10 @@ command allows closing an open prompt
 
 <div algorithm="remote end steps for browsingContext.handleUserPrompt">
 
-The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
-
-1. Let |context id| be the value of the <code>context</code> field of
-   |command parameters|.
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+   with |session| and |command parameters|["<code>context</code>"].
 
 1. Let |accept| be the value of the <code>accept</code> field of |command
    parameters| if present, or true otherwise.
@@ -2758,13 +2800,10 @@ browsing context to the given URL.
 </dl>
 
 <div algorithm="remote end steps for browsingContext.navigate">
-The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
-
-1. Let |context id| be the value of the <code>context</code> field of
-   |command parameters|.
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+   with |session| and |command parameters|["<code>context</code>"].
 
 1. Assert: |context| is not null.
 
@@ -2843,13 +2882,10 @@ PDF document represented as a Base64-encoded string.
    </dd>
 </dl>
 
-The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
-
-1. Let |context id| be the value of the <code>context</code> field of
-   |command parameters|.
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+   with |session| and |command parameters|["<code>context</code>"].
 
 1. If the implementation is unable to provide a paginated representation of
    |context| for any reason then return [=error=] with [=error code=]
@@ -2970,13 +3006,10 @@ browsing context.
 </dl>
 
 <div algorithm="remote end steps for browsingContext.reload">
-The [=remote end steps=] with |command parameters| are:
-
-1. Let |context id| be the value of the <code>context</code> field of
-   |command parameters|.
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+   with |session| and |command parameters|["<code>context</code>"].
 
 1. Assert: |context| is not null.
 
@@ -3032,11 +3065,10 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command  specific
 
 <div algorithm="remote end steps for browsingContext.setViewport">
 
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
-1. Let |context id| be the value of the |command parameters|["<code>context</code>"] field.
-
-1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
+   |session| and |command parameters|["<code>context</code>"].
 
 1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
 
@@ -3088,7 +3120,7 @@ To <dfn>Recursively emit context created events</dfn> given |session| and |conte
 To <dfn>Emit a context created event</dfn> given |session| and |context|:
 
 1. Let |params| be the result of [=get the browsing context info=] given
-   |context|, 0, and true.
+   |session|, |context|, 0, and true.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.ContextCreated</code> production, with the
@@ -3149,13 +3181,6 @@ Define the following [=browsing context tree discarded=] steps:
 
 1. Let |context| be the browsing context being discarded.
 
-1. Let |params| be the result of [=get the browsing context info=], given
-   |context|, 0, and true.
-
-1. Let |body| be a [=/map=] matching the
-    <code>browsingContext.ContextDestroyed</code> production, with the
-    <code>params</code> field set to |params|.
-
 1. Let |related browsing contexts| be a [=/set=] containing the result of
    [=get the parent browsing context=] with |context|, if that is not
    null, or an empty [=/set=] otherwise.
@@ -3163,6 +3188,13 @@ Define the following [=browsing context tree discarded=] steps:
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.contextDestroyed</code>" and |related browsing
    contexts|:
+
+  1. Let |params| be the result of [=get the browsing context info=], given
+     |session|, |context|, 0, and true.
+
+  1. Let |body| be a [=/map=] matching the
+      <code>browsingContext.ContextDestroyed</code> production, with the
+      <code>params</code> field set to |params|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -3191,22 +3223,22 @@ become inaccessible but not yet get discarded because bfcache.
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
 started</dfn> steps given |context| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
-   and |navigation status|.
-
- 1. Let |body| be a [=/map=] matching the
-    <code>browsingContext.NavigationStarted</code> production, with the
-    <code>params</code> field set to |params|.
-
 1. Let |navigation id| be |navigation status|'s id.
-
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. [=Resume=] with "<code>navigation started</code>", |navigation id|, and
    |navigation status|.
 
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.navigationStarted</code>" and |related browsing contexts|:
+
+  1. Let |params| be the result of [=get the navigation info=] given |session|,
+     |context| and |navigation status|.
+
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.NavigationStarted</code> production, with the
+     <code>params</code> field set to |params|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -3230,22 +3262,22 @@ started</dfn> steps given |context| and |navigation status|:
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fragment
 navigated</dfn> steps given |context| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
-   and |navigation status|.
-
-1. Let |body| be a [=/map=] matching the
-    <code>browsingContext.FragmentNavigated</code> production, with the
-    <code>params</code> field set to |params|.
-
 1. Let |navigation id| be |navigation status|'s id.
-
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. [=Resume=] with "<code>fragment navigated</code>", |navigation id|, and
    |navigation status|.
 
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.fragmentNavigated</code>" and |related browsing contexts|:
+
+  1. Let |params| be the result of [=get the navigation info=] given |session|,
+     |context| and |navigation status|.
+
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.FragmentNavigated</code> production, with the
+     <code>params</code> field set to |params|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -3269,22 +3301,22 @@ navigated</dfn> steps given |context| and |navigation status|:
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi DOM content
 loaded</dfn> steps given |context| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
-   and |navigation status|.
-
-1. Let |body| be a [=/map=] matching the
-   <code>browsingContext.DomContentLoaded</code> production, with the
-   <code>params</code> field set to |params|.
-
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
-
 1. Let |navigation id| be |navigation status|'s id.
 
 1. [=Resume=] with "<code>domContentLoaded</code>", |navigation id|, and
    |navigation status|.
 
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.domContentLoaded</code>" and |related browsing contexts|:
+
+  1. Let |params| be the result of [=get the navigation info=] given |session|, |context|
+     and |navigation status|.
+
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.DomContentLoaded</code> production, with the
+     <code>params</code> field set to |params|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -3308,21 +3340,21 @@ loaded</dfn> steps given |context| and |navigation status|:
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load
 complete</dfn> steps given |context| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
-   and |navigation status|.
-
-1. Let |body| be a [=/map=] matching the <code>browsingContext.Load</code>
-   production, with the <code>params</code> field set to |params|.
-
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
-
 1. Let |navigation id| be |navigation status|'s id.
 
 1. [=Resume=] with "<code>load</code>", |navigation id| and
    |navigation status|.
 
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.load</code>" and |related browsing contexts|:
+
+  1. Let |params| be the result of [=get the navigation info=] given |session|,
+     |context| and |navigation status|.
+
+  1. Let |body| be a [=/map=] matching the <code>browsingContext.Load</code>
+     production, with the <code>params</code> field set to |params|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -3346,21 +3378,21 @@ complete</dfn> steps given |context| and |navigation status|:
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download
 started</dfn> steps given |context| and |navigation status|:
 
- 1. Let |params| be the result of [=get the navigation info=] given |context|
-    and |navigation status|.
-
- 1. Let |body| be a [=/map=] matching the
-     <code>browsingContext.DownloadWillBegin</code> production, with the
-     <code>params</code> field set to |params|.
-
  1. Let |navigation id| be |navigation status|'s id.
-
- 1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
  1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
 
+ 1. Let |related browsing contexts| be a [=/set=] containing |context|.
+
  1. For each |session| in the [=set of sessions for which an event is enabled=]
     given "<code>browsingContext.downloadWillBegin</code>" and |related browsing contexts|:
+
+   1. Let |params| be the result of [=get the navigation info=] given |session|, |context|
+      and |navigation status|.
+
+   1. Let |body| be a [=/map=] matching the
+      <code>browsingContext.DownloadWillBegin</code> production, with the
+      <code>params</code> field set to |params|.
 
    1. [=Emit an event=] with |session| and |body|.
 
@@ -3384,13 +3416,6 @@ started</dfn> steps given |context| and |navigation status|:
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
 aborted</dfn> steps given |context| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
-   and |navigation status|.
-
-1. Let |body| be a [=/map=] matching the
-    <code>browsingContext.NavigationAborted</code> production, with the
-    <code>params</code> field set to |params|.
-
 1. Let |navigation id| be |navigation status|'s id.
 
 1. Let |related browsing contexts| be a [=/set=] containing |context|.
@@ -3399,6 +3424,13 @@ aborted</dfn> steps given |context| and |navigation status|:
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.navigationAborted</code>" and |related browsing contexts|:
+
+  1. Let |params| be the result of [=get the navigation info=] given |session|,
+     |context| and |navigation status|.
+
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.NavigationAborted</code> production, with the
+     <code>params</code> field set to |params|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -3423,21 +3455,21 @@ aborted</dfn> steps given |context| and |navigation status|:
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
 failed</dfn> steps given |context| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
-   and |navigation status|.
-
-1. Let |body| be a [=/map=] matching the
-    <code>browsingContext.NavigationFailed</code> production, with the
-    <code>params</code> field set to |params|.
-
 1. Let |navigation id| be |navigation status|'s id.
-
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. [=Resume=] with "<code>navigation failed</code>", |navigation id|, and |navigation status|.
 
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.navigationFailed</code>" and |related browsing contexts|:
+
+  1. Let |params| be the result of [=get the navigation info=] given |context|
+     and |navigation status|.
+
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.NavigationFailed</code> production, with the
+     <code>params</code> field set to |params|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -3470,22 +3502,27 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
 
 1. Let |context| be |window|'s [=/browsing context=].
 
-1. Let |context id| be the [=browsing context id=] for |context|.
-
-1. Let |params| be a [=/map=] matching the
-   <code>browsingContext.UserPromptClosedParameters</code> production with the
-   <code>context</code> field set to |context id|, the <code>accepted</code>
-   field set to |accepted|, and the <code>userText</code> field set to |user
-   text| if |user text| is not null or omitted otherwise.
-
-1. Let |body| be a [=/map=] matching the
-   <code>BrowsingContextUserPromptClosedEvent</code> production, with the
-   <code>params</code> field set to |params|.
-
 1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.userPromptClosed</code>" and |related browsing contexts|:
+
+  1. Let |context id result| be [=get context id=] with |session| and |context|.
+
+  1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+     context doesn't have an active document.
+
+  1. Set |context id| to |context id result|'s data.
+
+  1. Let |params| be a [=/map=] matching the
+     <code>browsingContext.UserPromptClosedParameters</code> production with the
+     <code>context</code> field set to |context id|, the <code>accepted</code>
+     field set to |accepted|, and the <code>userText</code> field set to |user
+     text| if |user text| is not null or omitted otherwise.
+
+  1. Let |body| be a [=/map=] matching the
+     <code>BrowsingContextUserPromptClosedEvent</code> production, with the
+     <code>params</code> field set to |params|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -3519,23 +3556,28 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
 
 1. Let |context| be |window|'s [=/browsing context=].
 
-1. Let |context id| be the [=browsing context id=] for |context|.
-
-1. Let |params| be a [=/map=] matching the
-   <code>browsingContext.UserPromptOpenedParameters</code> production with the
-   <code>context</code> field set to |context id|, the <code>type</code> field
-   set to |type|, the <code>message</code> field set to |message|, and the
-   <code>defaultValue</code> field set to |default value| if |default value| is
-   not null or omitted otherwise.
-
-1. Let |body| be a [=/map=] matching the
-   <code>browsingContext.UserPromptOpened</code> production, with the
-   <code>params</code> field set to |params|.
-
 1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.userPromptOpened</code>" and |related browsing contexts|:
+
+  1. Let |context id result| be [=get context id=] with |session| and |context|.
+
+  1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+     context doesn't have an active document.
+
+  1. Set |context id| to |context id result|'s data.
+
+  1. Let |params| be a [=/map=] matching the
+     <code>browsingContext.UserPromptOpenedParameters</code> production with the
+     <code>context</code> field set to |context id|, the <code>type</code> field
+     set to |type|, the <code>message</code> field set to |message|, and the
+     <code>defaultValue</code> field set to |default value| if |default value| is
+     not null or omitted otherwise.
+
+  1. Let |body| be a [=/map=] matching the
+     <code>browsingContext.UserPromptOpened</code> production, with the
+     <code>params</code> field set to |params|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -3755,8 +3797,13 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
   1. Let |environment settings| be |request|'s [=request/window=]
 
   1. If there is a [=/browsing context=] whose [=active window=] is |environment
-     settings|' [=environment settings object/global object=], let |context id|
-     be the [=browsing context id=] for that context.
+     settings|' [=environment settings object/global object=], let |context id result|
+     be [=get context id=] with |session| and that context.
+
+  1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+     context doesn't have an active document.
+
+  1. Set |context id| to |context id result|'s data.
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -5778,7 +5825,12 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 
        1. Let |top level context| be |browsing context|’s [=top-level browsing context=].
 
-       1. Let |context id| be |top level context|'s id.
+       1. Let |context id result| be [=get context id=] with |session| and |top level context|.
+
+       1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+         context doesn't have an active document.
+
+       1. Set |context id| to |context id result|'s data.
 
        1. If <code>contexts</code> does not [=list/contains|contain=] |context id|, return.
 
@@ -6480,7 +6532,7 @@ To <dfn>get the browsing context</dfn> with given |realm|:
 </div>
 
 <div algorithm>
-To <dfn>get the realm info</dfn> given |environment settings|:
+To <dfn>get the realm info</dfn> given |session| and |environment settings|:
 
 1. Let |realm| be |environment settings|' [=realm execution context=]'s Realm component.
 
@@ -6497,8 +6549,16 @@ To <dfn>get the realm info</dfn> given |environment settings|:
     <dd>
       1. Let |document| be |environment settings|' [=relevant global object=]'s
          <a>associated <code>Document</code></a>.
+
       1. Let |browsing context| be |document|'s [=/browsing context=].
-      1. Let |context id| be the [=browsing context id=] for |browsing context|.
+
+      1. Let |context id result| be the [=get context id=] with |session| and |browsing context|.
+
+      1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+         context doesn't have an active document.
+
+      1. Set |context id| to |context id result|'s data.
+
       1. Let |realm info| be a [=/map=] matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
          field set to |origin|, and the <code>context</code> field set to |context id|.
@@ -6509,11 +6569,21 @@ To <dfn>get the realm info</dfn> given |environment settings|:
 
       1. Let |document| be |global object|'s wrapped {{Window}}'s
          <a>associated <code>Document</code></a>.
+
       1. Let |browsing context| be |document|'s [=/browsing context=].
-      1. Let |context id| be the [=browsing context id=] for |browsing context|.
+
+      1. Let |context id result| be [=get context id=] with |session| and |browsing context|.
+
+      1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+         context doesn't have an active document.
+
+      1. Set |context id| to |context id result|'s data.
+
       1. Let |sandbox name| be the result of [=get a sandbox name=] given
          |realm|.
+
       1. Assert: |sandbox name| is not null.
+
       1. Let |realm info| be a [=/map=] matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
          field set to |origin|, the <code>context</code> field set to |context id|,
@@ -7245,7 +7315,12 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
     1. Let |browsing context| be |window|'s [=Window/browsing context=].
 
-    1. Let |context id| be the [=browsing context id=] for |browsing context|.
+    1. Let |context id result| be [=get context id=] with |session| and |browsing context|.
+
+    1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+       context doesn't have an active document.
+
+    1. Set |context id| to |context id result|'s data.
 
     1. Let |serialized| be a [=/map=] matching the
        <code>script.WindowProxyProperties</code> production in the [=local end
@@ -7556,7 +7631,7 @@ an optional <code>browsingContext.BrowsingContext</code> in which a
 script related event occurred.
 
 <div algorithm>
-To <dfn>get the source</dfn> given |source realm|:
+To <dfn>get the source</dfn> given |session| and |source realm|:
 
 1. Let |realm| be the [=realm id=] for |source realm|.
 
@@ -7569,7 +7644,13 @@ To <dfn>get the source</dfn> given |source realm|:
 
   1. Let |browsing context| be |document|’s [=Document/browsing context=].
 
-  1. Let |context id| be the [=browsing context id=] for |browsing context|.
+  1. Let |context id result| be [=get context id=] with |session| and |browsing
+     context|.
+
+  1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+     context doesn't have an active document.
+
+  1. Set |context id| to |context id result|'s data.
 
   Otherwise let |browsing context| be null.
 
@@ -7608,12 +7689,12 @@ This is useful in cases where a context identifier can stand in for the realm
 associated with the context's active document.
 
 <div algorithm>
-To <dfn>get a realm from a target</dfn> given |target|:
+To <dfn>get a realm from a target</dfn> given |session| and |target|:
 
 1. If |target| matches the <code>script.ContextTarget</code> production:
 
   1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-     with |target|["<code>context</code>"].
+     with |session| and |target|["<code>context</code>"].
 
   1. If |target| does not contain a field named "<code>sandbox</code>", or
      |target|["<code>sandbox</code>"] is an empty string:
@@ -7687,15 +7768,18 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |arguments| be the <code>arguments</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
-1. Let the |contexts| be the value of the <code>contexts</code> field of |command parameters| if it is present or null if it isn’t.
+1. Let the |contexts| be the value of the <code>contexts</code> field of
+   |command parameters| if it is present or null if it isn’t.
 
 1. If |contexts| is not null:
 
    1. For each |context id| of |contexts|:
 
-      1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+      1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+         with |session| and |context id|.
 
-      1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
+      1. If |context| is not a [=top-level browsing context=], return [=error=]
+         with [=error code=] [=invalid argument=].
 
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
@@ -7744,10 +7828,10 @@ other handles or strong ECMAScript references.
 </dl>
 
 <div algorithm="remote end steps for script.disown">
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
-   given the value of the <code>target</code> field of |command parameters|.
+   with |session| and |command parameters|["<code>target</code>"].
 
 1. Let |handles| the value of the <code>handles</code> field of |command parameters|.
 
@@ -7848,7 +7932,7 @@ Note: the |function declaration| is parenthesized and evaluated.
 The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
-   given the value of the <code>target</code> field of |command parameters|.
+   with |session| and |command parameters|["<code>target</code>"].
 
 1. Let |realm id| be |realm|'s [=realm id=].
 
@@ -7991,7 +8075,7 @@ that likely isn't what clients want.
 The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
-   given the value of the <code>target</code> field of |command parameters|.
+   with |session| and |command parameters|["<code>target</code>"].
 
 1. Let |realm id| be |realm|'s [=realm id=].
 
@@ -8086,7 +8170,7 @@ realm associated with the [=document=] currently loaded in a specified
 </dl>
 
 <div algorithm="remote end steps for script.getRealms">
-The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |environment settings| be a [=/list=] of all the [=environment settings objects=]
    that have their [=execution ready flag=] set.
@@ -8094,7 +8178,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. If |command parameters| contains <code>context</code>:
 
   1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-     with |command parameters|["<code>context</code>"].
+     with |session| and |command parameters|["<code>context</code>"].
 
   1. Let |document| be |context|'s [=active document=].
 
@@ -8118,7 +8202,8 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. For each |settings| of |environment settings|:
 
-  1. Let |realm info| be the result of [=get the realm info=] given |settings|
+  1. Let |realm info| be the result of [=get the realm info=] given |session|
+     and |settings|
 
   1. If |command parameters| contains <code>type</code> and |realm
      info|["<code>type</code>"] is not equal to |command
@@ -8234,7 +8319,7 @@ given |session|, |realm|, |channel properties|, and |message|:
      |message|, |serialization options|, |ownership type|, a new [=/map=] as serialization
      internal map and |realm|.
 
-  1. Let |source| be the [=get the source=] with |realm|.
+  1. Let |source| be the [=get the source=] with |session| and |realm|.
 
   1. Let |params| be a [=/map=] matching the
      <code>script.MessageParameters</code> production, with the
@@ -8274,19 +8359,19 @@ object:
 1. Let |environment settings| be the newly created [=environment settings
    object=].
 
-1. Let |realm info| be the result of [=get the realm info=] given
-   |environment settings|.
-
-1. If |realm info| is null, return.
-
 1. Let |related browsing contexts| be the result of [=get related browsing
    contexts=] given |environment settings|.
 
-1. Let |body| be a [=/map=] matching the <code>script.RealmCreated</code>
-   production, with the <code>params</code> field set to |realm info|.
-
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>script.realmCreated</code>" and |related browsing contexts|:
+
+  1. Let |realm info| be the result of [=get the realm info=] given
+     |session| and |environment settings|.
+
+  1. If |realm info| is null, continue.
+
+  1. Let |body| be a [=/map=] matching the <code>script.RealmCreated</code>
+     production, with the <code>params</code> field set to |realm info|.
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -8317,7 +8402,8 @@ The [=remote end subscribe steps=] with [=subscribe priority=] 2, given
 
     Otherwise, if |include global| is false, continue.
 
-  1. Let |realm info| be the result of [=get the realm info=] given |settings|
+  1. Let |realm info| be the result of [=get the realm info=] given |session|
+     and |settings|.
 
   1. Let |body| be a [=/map=] matching the <code>script.RealmCreated</code>
      production, with the <code>params</code> field set to |realm info|.
@@ -8441,7 +8527,14 @@ To <dfn>buffer a log event</dfn> given |session|, |contexts| and |event|:
 
 1. For each |context| of |contexts|:
 
-  1. Append the [=browsing context id=] for |context| to |context ids|.
+  1. Let |context id result| be [=get context id=] with  |session| to and |context|.
+
+  1. Assert: |context id result| is not [=error=]. This would imply that the browsing
+     context doesn't have an active document.
+
+  1. Set |context id| to |context id result|'s data.
+
+  1. [=list/Append=] |context id| to |context ids|.
 
 1. For each |context id| in |context ids|:
 
@@ -8593,7 +8686,8 @@ Define the following [=console steps=] with |method|, |args|, and
 
      1. Add |serialized arg| to |serialized args|.
 
-  1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
+  1. Let |source| be the result of [=get the source=] with |session| and
+     [=current Realm Record=].
 
   1. If |method| is "<code>assert</code>", "<code>error</code>",
      "<code>trace</code>", or "<code>warn</code>", let |stack| be the [=current
@@ -8632,17 +8726,19 @@ ignore>line number</var>, <var ignore>column number</var>, |message| and
 1. Let |stack| be the [=stack trace for an exception=] with the exception
    corresponding to the error being reported.
 
-1. Let |source| be the result of [=get the source=] given [=current Realm Record=].
-
-1. Let |entry| be a [=/map=] matching the <code>log.JavascriptLogEntry</code> production,
-   with <code>level</code> set to "<code>error</code>", <code>text</code> set to
-   |message|, <code>source</code> set to |source|, and the <code>timestamp</code>
-   field set to |timestamp|.
-
 1. Let |related browsing contexts| be the result of [=get related browsing
    contexts=] given |settings|.
 
 1. For each |session| in [=active BiDi sessions=]:
+
+  1. Let |source| be the result of [=get the source=] given |session| and
+     [=current Realm Record=].
+
+  1. Let |entry| be a [=/map=] matching the <code>log.JavascriptLogEntry</code> production,
+     with <code>level</code> set to "<code>error</code>", <code>text</code> set to
+     |message|, <code>source</code> set to |source|, and the <code>timestamp</code>
+     field set to |timestamp|.
+
 
   1. If [=event is enabled=] with |session|, "<code>log.entryAdded</code>" and
      |related browsing contexts|, [=emit an event=] with |session| and |body|.
@@ -8920,11 +9016,8 @@ specified sequence of user input actions.
 
 The [=remote end steps=] with |session| and |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
-   |command parameters|.
-
 1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+   with |session| and |command parameters|["<code>context</code>"].
 
 1. Let |input state| be [=get the input state=] with |session| and |context|'s
    [=top-level browsing context=].
@@ -8973,13 +9066,10 @@ state associated with the current session.
 
 <div algorithm="remote end steps for input.releaseActions">
 
-The [=remote end steps=] given |session|, and |command parameters| are:
-
-1. Let |context id| be the value of the <code>context</code> field of
-   |command parameters|.
+The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+   with |session| and |command parameters|["<code>context</code>"].
 
 1. Let |top-level context| be |context|'s [=top-level browsing context=].
 
