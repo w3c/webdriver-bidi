@@ -2126,7 +2126,10 @@ browsingContext.CssLocator = {
 
 browsingContext.TextLocator {
    type: "text",
-   value: script.RegExpLocalValue
+   value: text,
+   ? ignoreCase: bool
+   ? matchType: "full" / "partial",
+   ? maxDepth: js-uint,
 }
 
 browsingContext.XPathLocator {
@@ -2899,28 +2902,80 @@ To <dfn>locate nodes using XPath</dfn> with given |context target|,
 
 </div>
 
-<div algorithm="locate nodes using regexp">
-To <dfn>locate nodes using regexp</dfn> with given |context target|, |context nodes|,
-|regexp|, |maximum returned nodes|, and <var ignore>session</var>:
+<div algorithm="locate nodes using text">
+To <dfn>locate nodes using text</dfn> with given |context target|, |context nodes|,
+|selector|, |max depth|, |match type|, |match case|, |maximum returned nodes|,
+and |session|:
 
 1. Let |returned nodes| be an empty list.
 
-1. Let |element nodes| be the result of [=locate nodes using CSS=] given |context target|,
-   |context nodes|, "*" and <var ignore>session</var>.
+1. For each |context node| in |context nodes|:
 
-1. For each |element node| in |element nodes|:
+  1. Let |iterative returned nodes| be an empty list.
 
   1. Let |node text| be the result of calling the [=innerText getter steps=] with
-     |element node| as the [=this=] value.
+     |context node| as the [=this=] value.
 
-  1. Let |is text match| be the result of calling [=test=] with |regexp| as
-     this and |node text| as the argument.
+  1. Let |is match| be false.
 
-  1. If |is text match| is true, [=list/append=] |element node| to |returned nodes|.
+  1. In the following list of conditions and associated steps, run the first set 
+     of steps for which the associated condition is true, if any:
 
-  1. If |maximum returned nodes| is greater than 0 and [=list/size=] of
-     |returned nodes| is greater than or equal to |maximum returned nodes|,
-     return |returned nodes|.
+     <dl>
+
+       <dt>|match type| is "partial" and |match case| is true
+       <dd>
+         1. If |node text| contains the substring |selector|, including case,
+            set |is match| to true.
+
+       <dt>|match type| is "partial" and |match case| is false
+       <dd>
+         1. If |node text| contains the substring |selector|, ignoring case,
+            set |is match| to true.
+
+       <dt>|match type| is "full" and |match case| is true
+       <dd>
+         1. If |node text| is equal to |selector|, including case, 
+            set |is match| to true.
+
+       <dt>|match type| is "full" and |match case| is false
+       <dd>
+         1. If |node text| is equal to |selector|, ignoring case,
+            set |is match| to true.
+
+   1. If |is match| is true, perform the following steps:
+
+     1. If |max depth| is not null and |max depth| is equal to 0, perform the
+        following steps:
+        
+       1. [=list/append=] |context node| to |returned nodes|.
+
+       1. If |maximum returned nodes| is not null and [=list/size=] of
+          |returned nodes| is greater than or equal to |maximum returned nodes|,
+          return |returned nodes|.
+         
+         Otherwise, perform the following steps:
+
+       1. Let |child nodes| be an empty list and, for each node |child| in the
+          <a spec=dom>children</a> of |context node|:
+
+         1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
+
+       1. If [=list/size=] of |child nodes| is equal to 0, perform the following steps:
+       
+         1. [=list/append=] |context node| to |returned nodes|.
+
+         1. If |maximum returned nodes| is not null and [=list/size=] of
+            |returned nodes| is greater than or equal to |maximum returned nodes|,
+            return |returned nodes|.
+         
+         Otherwise, perform the following steps:
+
+         1. Set |max depth| to |max depth| - 1 if |max depth| is not null.
+
+         1. [=list/extend=] |returned nodes| with the result of [=locate nodes using text=]
+            with |context target|, |child nodes|, |selector|, |max depth|,
+            |match type|, |match case|, |maximum returned nodes|, and |session|.
 
 1. Return |returned nodes|.
 
@@ -3005,7 +3060,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
          1. Let |regexp| be the value of the <code>data</code> property of |selector|.
 
-         1. Let |result nodes| be a result of [=trying=] to [=locate nodes using regexp=]
+         1. Let |result nodes| be a result of [=trying=] to [=locate nodes using text=]
             given |current context target|, |context nodes|, |regexp|, |maximum returned
             nodes| and |session|.
 
