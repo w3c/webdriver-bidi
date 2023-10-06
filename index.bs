@@ -177,6 +177,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: handled; url: webappapis.html#concept-error-handled
     text: hidden; url: document-sequences.html#system-visibility-state
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
+    text: innerText getter steps; url:dom.html#dom-innertext
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: parent; for:navigable; url: document-sequences.html#nav-parent
@@ -2844,14 +2845,14 @@ To <dfn>locate nodes using XPath</dfn> with given |context target|,
 
    1. Let |evaluateResult| be the result of calling [=evaluate=] on |context target|'s
       [=active document=], with arguments |selector|, |context node|, null,
-      [=ORDERED_NODE_SNAPSHOT_TYPE=], and null.
+      [=ORDERED_NODE_SNAPSHOT_TYPE=], and null. If this throws an [=XPathException=]
+      return [=error=] with [=error code=] [=invalid selector=], otherwise if this
+      throws any other exception return [=error=] with [=error code=] [=unknown error=].
 
    1. Let |index| be 0.
 
    1. Let |length| be the result of getting the <code>snapshotLength</code> property
-      from |evaluateResult|. If this throws an [=XPathException=] return [=error=]
-      with [=error code=] [=invalid selector=], otherwise if this throws any other
-      exception return [=error=] with [=error code=] [=unknown error=].
+      from |evaluateResult|.
 
    1. Repeat, while |index| is less than |length|:
 
@@ -2864,7 +2865,7 @@ To <dfn>locate nodes using XPath</dfn> with given |context target|,
          |returned nodes| is greater than or equal to |maximum returned nodes|,
          return |returned nodes|.
 
-      1. Increment |index| by 1. 
+      1. Set |index| to |index| + 1. 
 
 1. Return |returned nodes|
 
@@ -2881,7 +2882,8 @@ To <dfn>locate nodes using regexp</dfn> with given |context target|, |context no
 
 1. For each |element node| in |element nodes|:
 
-  1. Let |node text| be the <code>innerText</code> property of |element node|.
+  1. Let |node text| be the result of calling the [=innerText getter steps=] with
+     |element node| as the [=this=] value.
 
   1. Let |is text match| be the result of calling [=test=] with |regexp| as
      this and |node text| as the argument.
@@ -2920,8 +2922,6 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |locator| be the value of the <code>locator</code> field
    of |command parameters|.
-
-1. Assert: |locator| is not null.
 
 1. Let |start nodes parameter| be the value of the <code>startNodes</code> field
    of |command parameters|.
@@ -2976,7 +2976,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
             given |current context target|, |context nodes|, |regexp|, |maximum returned
             nodes| and |session|.
 
-1. If |maximum returned nodes| is greater than 0, truncate |result nodes| to the
+1. Assert  |maximum returned nodes| is greater than 0, truncate |result nodes| to the
    first |maximum returned nodes| values.
 
 1. Let |serialization options| be the <code>serializationOptions</code> field of
