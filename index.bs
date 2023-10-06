@@ -50,7 +50,6 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: dispatch actions; url: dfn-dispatch-actions
     text: dispatch tick actions; url: dfn-dispatch-tick-actions
     text: draw a bounding box from the framebuffer; url: dfn-draw-a-bounding-box-from-the-framebuffer
-    text: encode a canvas as Base64; url: dfn-encoding-a-canvas-as-base64
     text: endpoint node; url: dfn-endpoint-node
     text: error code; url: dfn-error-code
     text: error; url: dfn-errors
@@ -161,6 +160,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: 2D context creation algorithm; url: canvas.html#2d-context-creation-algorithm
     text: 2D; url: canvas.html#concept-canvas-2d
     text: a browsing context is discarded; url: window-object.html#a-browsing-context-is-discarded
+    text: a serialization of the bitmap as a file; url: canvas.html#a-serialisation-of-the-bitmap-as-a-file
     text: activation notification; url: interaction.html#activation-notification
     text: active browsing context; url: document-sequences.html#nav-bc
     text: active document; for: browsing context; url: document-sequences.html#active-document
@@ -180,6 +180,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: innerText getter steps; url:dom.html#dom-innertext
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
+    text: origin-clean; url: canvas.html#concept-canvas-origin-clean
     text: parent; for:navigable; url: document-sequences.html#nav-parent
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: prompt; url: timers-and-user-prompts.html#dom-prompt
@@ -213,6 +214,7 @@ spec: CSS-VALUES-3; urlPrefix: https://drafts.csswg.org/css-values-3/
 spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
   type: dfn
     text: visual viewport; url: #visual-viewport
+    text: layout viewport; url: #layout-viewport
 spec: SELECTORS4; urlPrefix: https://drafts.csswg.org/selectors-4/
   type: dfn
     text: match a selector against a tree; url: #match-a-selector-against-a-tree
@@ -2268,7 +2270,13 @@ Base64-encoded string.
 
       browsingContext.CaptureScreenshotParameters = {
         context: browsingContext.BrowsingContext,
-        ? clip: browsingContext.ClipRectangle
+        ? format: browsingContext.ImageFormat,
+        ? clip: browsingContext.ClipRectangle,
+      }
+
+      browsingContext.ImageFormat = {
+         type: text,
+         ? quality: 0.0..1.0,
       }
 
       browsingContext.ClipRectangle = (
@@ -2301,7 +2309,7 @@ Base64-encoded string.
    </dd>
 </dl>
 
-TODO: Full page screenshots, and multiple output formats
+TODO: Full page screenshots
 
 <div algorithm>
 To <dfn>normalize rect</dfn> given |rect|:
@@ -2415,6 +2423,23 @@ To <dfn>render viewport to a canvas</dfn> given |viewport| and |rect|:
 
 </div>
 
+<div algorithm>
+To <dfn>encode a canvas as Base64</dfn> given |canvas| and |format|:
+
+1. If |format| is not null, let |type| be the <code>type</code> field of
+   |format|, and let |quality| be the <code>quality</code> field of |format|.
+
+1. Otherwise, let |type| be "image/png" and let |quality| be [=undefined=].
+
+1. Let |file| be [=a serialization of the bitmap as a file=] for |canvas| with
+   |type| and |quality|. 
+
+1. Let |encoded string| be the [=forgiving-base64 encode=] of |file|.
+
+1. Return success with data |encoded string|.
+
+</div>
+
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
 1. Let |context id| be |command parameters|["<code>context</code>"].
@@ -2487,8 +2512,10 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |canvas| be [=render viewport to a canvas=] with |viewport| and |rect|.
 
+1. Let |format| be the <code>format</code> field of |command parameters|.
+
 1. Let |encoding result| be the result of [=trying=] to [=encode a canvas as
-   Base64=] with |canvas|.
+   Base64=] with |canvas| and |format|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.CaptureScreenshotResult</code> production, with the
@@ -3320,9 +3347,9 @@ The [=remote end steps=] with |command parameters| are:
     1. Let |width| be the |viewport parameter|["<code>width</code>"]
     1. Let |height| be the |viewport parameter|["<code>height</code>"]
     1. If the |width| or |height| is outside of the implementation-specific or runtime constraints, return an [=error=] with the [=error code=] [=unsupported operation=].
-    1. Set the layout [[css2#viewport]] of the |context| to be |width| CSS pixels wide and |height| CSS pixels high.
+    1. Set the [=layout viewport=] of the |context| to be |width| CSS pixels wide and |height| CSS pixels high.
 1. Else:
-    1. Set the layout [[css2#viewport]] of |context| to the implementation-defined default layout viewport for |context|.
+    1. Set the [=layout viewport=] of the |context| to the implementation-defined default value.
 1. Run the [[cssom-view-1#resizing-viewports]] steps.
 1. Return [=success=] with data null.
 
@@ -4828,6 +4855,12 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
 
 1. Let |has hostname| be true.
 
+1. Let |has port| be true.
+
+1. Let |has pathname| be true.
+
+1. Let |has search| be true.
+
 1. If |pattern| matches the <code>network.UrlPatternPattern</code> production:
 
   1. Let |pattern url| be the empty string.
@@ -4916,6 +4949,10 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
 
     1. Append |port| to |pattern url|.
 
+  1. Otherwise:
+
+    1. Set |has port| to false.
+
   1. If |pattern| [=map/contains=] "<code>pathname</code>":
 
     1. Let |pathname| be the result of [=trying=] to [=unescape URL Pattern=] with
@@ -4933,6 +4970,10 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
 
     1. Append |pathname| to |pattern url|.
 
+  1. Otherwise:
+
+    1. Set |has pathname| to false.
+
   1. If |pattern| [=map/contains=] "<code>search</code>":
 
     1. Let |search| be the result of [=trying=] to [=unescape URL pattern=] with
@@ -4948,6 +4989,10 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
         1. Return [=error=] with [=error code=] [=invalid argument=].
 
     1. Append |search| to |pattern url|.
+
+  1. Otherwise:
+
+    1. Set |has search| to false.
 
 1. Otherwise, if |pattern| matches the <code>network.UrlPatternString</code> production:
 
@@ -4966,26 +5011,47 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
      <dd>|url|'s [=url/host=] if |has hostname| is true, or null otherwise.
      <dt>port
      <dd>
-     1. If |url|'s [=url/scheme=] [=is special=] and |url|'s
-   [=url/scheme=]'s [=default port=] is not null, and |url|'s [=url/port=] is
-   null or is equal to [=url/scheme=]'s [=default port=]:
-
-       1. The empty string.
-
-     1. Otherwise, if |url|'s [=url/port=] is not null:
-
-       1. [=Serialize an integer=] with |url|'s [=url/port=].
-
-     1. Otherwise:
+     1. If |has port| is false:
 
        1. null.
 
+     1. Otherwise:
+
+       1. If |url|'s [=url/scheme=] [=is special=] and |url|'s [=url/scheme=]'s
+          [=default port=] is not null, and |url|'s [=url/port=] is null or is
+          equal to [=url/scheme=]'s [=default port=]:
+
+         1. The empty string.
+
+       1. Otherwise, if |url|'s [=url/port=] is not null:
+
+         1. [=Serialize an integer=] with |url|'s [=url/port=].
+
+       1. Otherwise:
+
+         1. null.
+
      <dt>pathname
-     <dd>The result of running the [=URL path serializer=] with |url|, if
+     <dd>
+     1. If |has pathname| is false:
+
+       1. null.
+
+     1. Otherwise:
+
+       1. The result of running the [=URL path serializer=] with |url|, if
          |url|'s [=url/path=] is not the empty string and is not [=list/empty=],
          or null otherwise.
+
      <dt>search
-     <dd>|url|'s [=url/query=].
+     <dd>
+     1. If |has search| is false:
+
+       1. null.
+
+     1. Otherwise:
+
+       1. The empty string if |url|'s [=url/query=] is null, or |url|'s [=url/query=] otherwise.
    </dl>
 
 1. Return [=success=] with data |parsed|.
@@ -5022,8 +5088,13 @@ To <dfn>match URL pattern</dfn> given |url pattern| and |url string|:
 1. If |url pattern|'s pathname is not null and is not equal to the result of
    running the [=URL path serializer=] with |url|, return false.
 
-1. If |url pattern|'s search is not null and is not equal to |url|'s
-   [=url/query=], return false.
+1. If |url pattern|'s search is not null:
+
+   1. Let |url query| be |url|'s [=url/query=].
+
+   1. If |url query| is null, set |url query| to the empty string.
+
+   1. If |url pattern|'s search is not equal to |url query|, return false.
 
 1. Return true.
 
@@ -5210,7 +5281,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. [=Resume=] with "<code>continue request</code>", |request id|, and (null,
    "<code>incomplete</code>").
 
-1. Return [=success=] with [=data=] null.
+1. Return [=success=] with data null.
 
 </div>
 
@@ -5345,7 +5416,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. [=Resume=] with "<code>continue request</code>", |request id|, and
    (|response|, "<code>incomplete</code>").
 
-1. Return [=success=] with [=data=] null.
+1. Return [=success=] with data null.
 
 </div>
 
@@ -5420,7 +5491,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. [=Resume=] with "<code>continue request</code>", |request id|, and
    (|response|, "<code>incomplete</code>").
 
-1. Return [=success=] with [=data=] null.
+1. Return [=success=] with data null.
 
 </div>
 
@@ -5532,7 +5603,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. [=Resume=] with "<code>continue request</code>", |request id|, and
    (|response|,"<code>complete</code>").
 
-1. Return [=success=] with [=data=] null.
+1. Return [=success=] with data null.
 
 </div>
 
@@ -7119,10 +7190,6 @@ Issue: Should WindowProxy get attributes in a similar style to Node?
 
 Issue: Describe `script.IteratorRemoteValue` serialization.
 
-Issue: Describe `script.GeneratorRemoteValue` serialization.
-
-Issue: Describe `script.ProxyRemoteValue` serialization.
-
 Issue: handle String / Number / etc. wrapper objects specially?
 
 Values accessible from the ECMAScript runtime are represented by a mirror
@@ -7335,8 +7402,18 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
+    <dt>|value| has a \[[GeneratorState]] [=internal slot=] or \[[AsyncGeneratorState]] [=internal slot=]
+    <dd>Let |remote value| be a [=/map=] matching the <code>script.GeneratorRemoteValue</code>
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle id| if it's not null, or omitted otherwise.
+
     <dt>|value| has an \[[ErrorData]] [=internal slot=]
     <dd>Let |remote value| be a [=/map=] matching the <code>script.ErrorRemoteValue</code>
+        production in the [=local end definition=], with the <code>handle</code>
+        property set to |handle id| if it's not null, or omitted otherwise.
+
+    <dt>|value| has a \[[ProxyHandler]] [=internal slot=] and a \[[ProxyTarget]] [=internal slot=]
+    <dd>Let |remote value| be a [=/map=] matching the <code>script.ProxyRemoteValue</code>
         production in the [=local end definition=], with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
 
@@ -9116,17 +9193,10 @@ specified sequence of user input actions.
         ? pressure: float .default 0.0,
         ? tangentialPressure: float .default 0.0,
         ? twist: (0..359) .default 0,
-        (input.TiltProperties // input.AngleProperties)
-      )
-
-      input.AngleProperties = (
-        ? altitudeAngle: float .default 0.0,
-        ? azimuthAngle: float .default 0.0,
-      )
-
-      input.TiltProperties = (
-        ? tiltX: (-90..90) .default 0,
-        ? tiltY: (-90..90) .default 0,
+        ; 0 .. Math.PI / 2
+        ? altitudeAngle: (0.0..1.5707963267948966) .default 0.0,
+        ; 0 .. 2 * Math.PI
+        ? azimuthAngle: (0.0..6.283185307179586) .default 0.0,
       )
 
       input.Origin = "viewport" / "pointer" / input.ElementOrigin
