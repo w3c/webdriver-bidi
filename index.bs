@@ -2904,7 +2904,7 @@ To <dfn>locate nodes using XPath</dfn> with given |context target|,
 
 <div algorithm="locate nodes using text">
 To <dfn>locate nodes using text</dfn> with given |context target|, |context nodes|,
-|selector|, |max depth|, |match type|, |match case|, |maximum returned nodes|,
+|selector|, |max depth|, |match type|, |ignore case|, |maximum returned nodes|,
 and |session|:
 
 1. Let |returned nodes| be an empty list.
@@ -2921,22 +2921,22 @@ and |session|:
 
      <dl>
 
-       <dt>|match type| is "partial" and |match case| is true
+       <dt>|match type| is "partial" and |ignore case| is false
        <dd>
          1. If |node text| contains the substring |selector|, including case,
             set |is match| to true.
 
-       <dt>|match type| is "partial" and |match case| is false
+       <dt>|match type| is "partial" and |ignore case| is true
        <dd>
          1. If |node text| contains the substring |selector|, ignoring case,
             set |is match| to true.
 
-       <dt>|match type| is "full" and |match case| is true
+       <dt>|match type| is "full" and |ignore case| is false
        <dd>
          1. If |node text| is equal to |selector|, including case, 
             set |is match| to true.
 
-       <dt>|match type| is "full" and |match case| is false
+       <dt>|match type| is "full" and |ignore case| is true
        <dd>
          1. If |node text| is equal to |selector|, ignoring case,
             set |is match| to true.
@@ -3056,11 +3056,18 @@ The [=remote end steps=] with |session| and |command parameters| are:
       <dd>
          1. Let |selector| be the value of the <code>value</code> property of |locator|.
 
-         1. Let |regexp| be the value of the <code>data</code> property of |selector|.
+         1. If |locator| [=map/contains=] <code>maxDepth</code>, let |max depth| be 
+            |locator|["<code>maxDepth</code>"]. Otherwise, let |max depth| be null.
+
+         1. If |locator| [=map/contains=] <code>ignoreCase</code>, let |ignore case| be 
+            |locator|["<code>ignoreCase</code>"]. Otherwise, let |ignore case| be false.
+
+         1. If |locator| [=map/contains=] <code>matchType</code>, let |match type| be 
+            |locator|["<code>matchType</code>"]. Otherwise, let |match type| be "full".
 
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using text=]
-            given |current context target|, |context nodes|, |regexp|, |maximum returned
-            nodes| and |session|.
+            given |current context target|, |context nodes|, |selector|, |max depth|,
+            |match type|, |ignore case|, |maximum returned nodes| and |session|.
 
 1. Assert [=list/size=] of |result nodes| is less than or equal to |maximum returned nodes|.
 
