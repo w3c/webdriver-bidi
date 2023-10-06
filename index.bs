@@ -224,12 +224,13 @@ spec: DOM; urlPrefix: https://dom.spec.whatwg.org/
   type: dfn
     text: root; url: #concept-tree-root
     text: document element; url: #document-element
-spec: XPATH; urlPrefix: https://www.w3.org/TR/DOM-Level-3-XPath/xpath.html
+    text: evaluate; url: #dom-xpathevaluatorbase-evaluate
+    text: ORDERED_NODE_SNAPSHOT_TYPE; url: #dom-xpathresult-ordered_node_snapshot_type
+    text: snapshotItem; url: #dom-xpathresult-snapshotitem
+spec: WEB-IDL; urlPrefix: https://webidl.spec.whatwg.org/
   type: dfn
-    text: evaluate; url: #XPathEvaluator-evaluate
-    text: ORDERED_NODE_SNAPSHOT_TYPE; url: #XPathResult-ORDERED-NODE-SNAPSHOT-TYPE
-    text: snapshotItem; url: #XPathResult-snapshotItem
-    text: XPathException; url: #XPathException
+    text: DOMException; url: #idl-DOMException
+    text: SyntaxError; url:#syntaxerror
 </pre>
 
 <pre class="biblio">
@@ -2867,6 +2868,12 @@ To <dfn>locate nodes using CSS</dfn> with given |context target|, |context nodes
 </div>
 
 <div algorithm="locate nodes using XPath">
+
+Note: Owing to the unmaintained state of the XPath specification, this algorithm
+is phrased as if making calls to the XPath DOM APIs. However this is to be understood
+as equivalent to spec-internal calls directly accessing the underlying algorithms,
+without going via the ECMAScript runtime.
+
 To <dfn>locate nodes using XPath</dfn> with given |context target|,
 |context nodes|, |selector|, |maximum returned nodes|, and <var ignore>session</var>:
 
@@ -2874,20 +2881,21 @@ To <dfn>locate nodes using XPath</dfn> with given |context target|,
 
 1. For each |context node| of |context nodes|:
 
-   1. Let |evaluateResult| be the result of calling [=evaluate=] on |context target|'s
+   1. Let |evaluate result| be the result of calling [=evaluate=] on |context target|'s
       [=active document=], with arguments |selector|, |context node|, null,
-      [=ORDERED_NODE_SNAPSHOT_TYPE=], and null. If this throws an [=XPathException=]
-      return [=error=] with [=error code=] [=invalid selector=], otherwise if this
-      throws any other exception return [=error=] with [=error code=] [=unknown error=].
+      [=ORDERED_NODE_SNAPSHOT_TYPE=], and null. If this throws a "[=SyntaxError=]"
+      [=DOMException=] return [=error=] with [=error code=] [=invalid selector=],
+      otherwise if this throws any other exception return [=error=] with [=error code=]
+      [=unknown error=].
 
    1. Let |index| be 0.
 
    1. Let |length| be the result of getting the <code>snapshotLength</code> property
-      from |evaluateResult|.
+      from |evaluate result|.
 
    1. Repeat, while |index| is less than |length|:
 
-      1. Let |node| be the result of calling [=snapshotItem=] with |evaluateResult|
+      1. Let |node| be the result of calling [=snapshotItem=] with |evaluate result|
          as this and |index| as the argument.
 
       1. [=list/append=] |node| to |returned nodes|.
