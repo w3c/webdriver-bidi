@@ -7,7 +7,7 @@
   <link href="https://www.w3.org/StyleSheets/TR/2021/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="d8df0625ec3f3d23dd4e64ba79b702b63937a06e" name="document-revision">
+  <meta content="af41c9b1b53cef5366064664e6bb0d679a8b0da0" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -544,7 +544,7 @@ var.selected6 { background-color: #FFBCF2; box-shadow: 0 0 0 2px #FFBCF2; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-10-06">6 October 2023</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-10-09">9 October 2023</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -3222,6 +3222,7 @@ browsingContext.ReloadParameters = {
 browsingContext.SetViewportParameters = {
   context: browsingContext.BrowsingContext,
   viewport: browsingContext.Viewport / null,
+  devicePixelRatio: (float .gt 0.0) / null,
 }
 
 browsingContext.Viewport = {
@@ -3244,24 +3245,37 @@ browsingContext.Viewport = {
      <li data-md>
       <p>If <var>context</var> is not a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①③">top-level browsing context</a>, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②②">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①③">invalid argument</a>.</p>
      <li data-md>
-      <p>Let <var>viewport parameter</var> be the <var>command parameters</var>["<code>viewport</code>"] field.</p>
+      <p>Let <var>viewport</var> be the <var>command parameters</var>["<code>viewport</code>"] field.</p>
      <li data-md>
-      <p>If <var>viewport parameter</var> is not null:</p>
+      <p>Let <var>device pixel ratio</var> be the <var>command parameters</var>["<code>devicePixelRatio</code>"] field.</p>
+     <li data-md>
+      <p>If <var>viewport</var> is not null, and the implementation is unable to set the width and height dimensions
+ of the <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#layout-viewport" id="ref-for-layout-viewport">layout viewport</a> to <var>viewport</var>["width"] and <var>viewport</var>["height"], respectively, or if <var>device pixel ratio</var> is not null and the implementation is unable to set the size of the CSS pixel 
+ of the <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#layout-viewport" id="ref-for-layout-viewport①">layout viewport</a> to <var>device pixel ratio</var> device pixels, or if the implementation is unable
+ to adjust the <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#layout-viewport" id="ref-for-layout-viewport②">layout viewport</a> parameters for any other reason, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②⑦">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②③">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unsupported-operation" id="ref-for-dfn-unsupported-operation④">unsupported operation</a>.</p>
+     <li data-md>
+      <p>If <var>viewport</var> is not null:</p>
       <ol>
        <li data-md>
-        <p>Let <var>width</var> be the <var>viewport parameter</var>["<code>width</code>"]</p>
-       <li data-md>
-        <p>Let <var>height</var> be the <var>viewport parameter</var>["<code>height</code>"]</p>
-       <li data-md>
-        <p>If the <var>width</var> or <var>height</var> is outside of the implementation-specific or runtime constraints, return an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②⑦">error</a> with the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②③">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unsupported-operation" id="ref-for-dfn-unsupported-operation④">unsupported operation</a>.</p>
-       <li data-md>
-        <p>Set the <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#layout-viewport" id="ref-for-layout-viewport">layout viewport</a> of the <var>context</var> to be <var>width</var> CSS pixels wide and <var>height</var> CSS pixels high.</p>
+        <p>Set the <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#layout-viewport" id="ref-for-layout-viewport③">layout viewport</a> of the <var>context</var> to be <var>viewport</var>["width"] CSS pixels wide and <var>viewport</var>["height"] CSS pixels high.</p>
       </ol>
      <li data-md>
-      <p>Else:</p>
+      <p>Otherwise:</p>
       <ol>
        <li data-md>
-        <p>Set the <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#layout-viewport" id="ref-for-layout-viewport①">layout viewport</a> of the <var>context</var> to the implementation-defined default value.</p>
+        <p>Set the <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#layout-viewport" id="ref-for-layout-viewport④">layout viewport</a> of the <var>context</var> to the implementation defined default.</p>
+      </ol>
+     <li data-md>
+      <p>If <var>device pixel ratio</var> is not null:</p>
+      <ol>
+       <li data-md>
+        <p>Change the size of the <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#dom-window-devicepixelratio" id="ref-for-dom-window-devicepixelratio">CSS Pixel</a> in <var>context</var>’s <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#layout-viewport" id="ref-for-layout-viewport⑤">layout viewport</a> such that it corresponds to <var>device pixel ratio</var> device pixels.</p>
+      </ol>
+     <li data-md>
+      <p>Otherwise:</p>
+      <ol>
+       <li data-md>
+        <p>Set the size of the <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#dom-window-devicepixelratio" id="ref-for-dom-window-devicepixelratio①">CSS Pixel</a> in <var>context</var>’s <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#layout-viewport" id="ref-for-layout-viewport⑥">layout viewport</a> to the implementation defined default.</p>
       </ol>
      <li data-md>
       <p>Run the <a href="https://drafts.csswg.org/cssom-view-1/#resizing-viewports"><cite>CSSOM View</cite> § 13.1 Resizing viewports</a> steps.</p>
@@ -8799,6 +8813,7 @@ end:</p>
    <li>
     <a data-link-type="biblio">[CSSOM-VIEW-1]</a> defines the following terms:
     <ul>
+     <li><span class="dfn-paneled" id="3163d559">css pixel</span>
      <li><span class="dfn-paneled" id="5a8644fc">determine the device pixel ratio</span>
      <li><span class="dfn-paneled" id="04e2fe80">get the bounding box</span>
      <li><span class="dfn-paneled" id="740a93dd">layout viewport</span>
@@ -9654,9 +9669,10 @@ window.dfnpanelData['09fc63ab'] = {"dfnID": "09fc63ab", "url": "https://console.
 window.dfnpanelData['6b7fd43d'] = {"dfnID": "6b7fd43d", "url": "https://drafts.css-houdini.org/css-paint-api-1/#paintworkletglobalscope", "dfnText": "PaintWorkletGlobalScope", "refSections": [{"refs": [{"id": "ref-for-paintworkletglobalscope"}], "title": "6.5.3.10. The script.RealmInfo Type"}], "external": true};
 window.dfnpanelData['52a5360f'] = {"dfnID": "52a5360f", "url": "https://drafts.csswg.org/css-values-3/#absolute-lengths", "dfnText": "absolute lengths", "refSections": [{"refs": [{"id": "ref-for-absolute-lengths"}], "title": "6.3.3.8. The browsingContext.print Command"}], "external": true};
 window.dfnpanelData['2a2f1579'] = {"dfnID": "2a2f1579", "url": "https://www.w3.org/TR/CSS21/intro.html#canvas", "dfnText": "canvas", "refSections": [{"refs": [{"id": "ref-for-canvas"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
+window.dfnpanelData['3163d559'] = {"dfnID": "3163d559", "url": "https://drafts.csswg.org/cssom-view/#dom-window-devicepixelratio", "dfnText": "css pixel", "refSections": [{"refs": [{"id": "ref-for-dom-window-devicepixelratio"}, {"id": "ref-for-dom-window-devicepixelratio\u2460"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}], "external": true};
 window.dfnpanelData['5a8644fc'] = {"dfnID": "5a8644fc", "url": "https://drafts.csswg.org/cssom-view-1/#determine-the-device-pixel-ratio", "dfnText": "determine the device pixel ratio", "refSections": [{"refs": [{"id": "ref-for-determine-the-device-pixel-ratio"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['04e2fe80'] = {"dfnID": "04e2fe80", "url": "https://drafts.csswg.org/cssom-view-1/#element-get-the-bounding-box", "dfnText": "get the bounding box", "refSections": [{"refs": [{"id": "ref-for-element-get-the-bounding-box"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
-window.dfnpanelData['740a93dd'] = {"dfnID": "740a93dd", "url": "https://drafts.csswg.org/cssom-view/#layout-viewport", "dfnText": "layout viewport", "refSections": [{"refs": [{"id": "ref-for-layout-viewport"}, {"id": "ref-for-layout-viewport\u2460"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}], "external": true};
+window.dfnpanelData['740a93dd'] = {"dfnID": "740a93dd", "url": "https://drafts.csswg.org/cssom-view/#layout-viewport", "dfnText": "layout viewport", "refSections": [{"refs": [{"id": "ref-for-layout-viewport"}, {"id": "ref-for-layout-viewport\u2460"}, {"id": "ref-for-layout-viewport\u2461"}, {"id": "ref-for-layout-viewport\u2462"}, {"id": "ref-for-layout-viewport\u2463"}, {"id": "ref-for-layout-viewport\u2464"}, {"id": "ref-for-layout-viewport\u2465"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}], "external": true};
 window.dfnpanelData['62a0057d'] = {"dfnID": "62a0057d", "url": "https://drafts.csswg.org/cssom-view/#visual-viewport", "dfnText": "visual viewport", "refSections": [{"refs": [{"id": "ref-for-visual-viewport"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['99573380'] = {"dfnID": "99573380", "url": "https://dom.spec.whatwg.org/#attr", "dfnText": "Attr", "refSections": [{"refs": [{"id": "ref-for-attr"}], "title": "6.5.3.13. The script.RemoteValue Type"}], "external": true};
 window.dfnpanelData['85394472'] = {"dfnID": "85394472", "url": "https://dom.spec.whatwg.org/#document", "dfnText": "Document", "refSections": [{"refs": [{"id": "ref-for-document"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-document\u2460"}], "title": "7.1. HTML"}], "external": true};
