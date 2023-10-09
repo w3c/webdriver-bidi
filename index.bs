@@ -9589,6 +9589,59 @@ The [=remote end steps=] given |session|, and |command parameters| are:
 
 </div>
 
+### Events ### {#module-input-events}
+
+#### The input.fileDialogOpened Event #### {#event-input-fileDialogOpened}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl remote-cddl">
+         input.FileDialogOpened = (
+            method: "input.fileDialogOpened",
+            params: input.FileDialogInfo
+         )
+
+         input.FileDialogInfo = {
+            context: browsingContext.BrowsingContext,
+            element: script.SharedReference
+         }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi file dialog
+opened</dfn> steps given |element|.
+
+1. Let |context| be the |element|'s [=node document=]'s [=/browsing context=].
+
+1. Let |context id| be the [=browsing context id=] for |context|.
+
+1. Let |related browsing contexts| be a [=/set=] containing |context|.
+
+1. Let |sessions| be the [=set of sessions for which an event is enabled=]
+   given <code>"input.fileDialogOpened"</code> and |related browsing
+   contexts|.
+
+1. If |sessions| is empty, return false.
+
+1. Let |params| be a [=/map=] matching the <code>input.FileDialogInfo</code>
+   production, with the <code>context</code> field set to |context id| and
+   <code>element</code> field set to |element|.
+
+1. Let |body| be a [=/map=] matching the <code>input.FileDialogOpened</code>
+   production, with the <code>params</code> field set to |params|.
+
+1. For each |session| in |sessions|:
+
+  1. [=Emit an event=] with |session| and |body|.
+
+1. Return true.
+
+</div>
+
 # Patches to Other Specifications # {#patches}
 
 This specification requires some changes to external specifications to provide the necessary
