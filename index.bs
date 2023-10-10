@@ -2918,56 +2918,45 @@ and |session|:
 
 1. Let |returned nodes| be an empty [=/list=].
 
+1. If |ignore case| is false let |search text| be |selector|. Otherwise,
+   let |search text| be the result of executing toUppercase with |selector|
+   according to the Unicode Default Case Conversion algorithm.
+
 1. For each |context node| in |context nodes|:
 
-  1. Let |node text| be the result of calling the [=innerText getter steps=] with
+  1. Let |node inner text| be the result of calling the [=innerText getter steps=] with
      |context node| as the [=this=] value.
 
-  1. In the following list of conditions and associated steps, run the first set 
-     of steps for which the associated condition is true, if any:
+  1. If |ignore case| is false, let |node text| be |node inner text|. Otherwise,
+     let |node text| be the result of executing toUppercase with |node inner text|
+     according to the Unicode Default Case Conversion algorithm. 
 
-     <dl>
+  1. If |match type| is "full" and |node text| [=is=] |search text| [=list/append=]
+     |context node| to |returned nodes|. Otherwise, perform the following steps:
 
-       <dt>|match type| is "full" and |ignore case| is false
-       <dd>
-         1. If |node text| [=is=] |selector|, [=list/append=]
-            |context node| to |returned nodes|.
+    1. If |search text| is a [=code point substring=] of |node text|, perform the
+       following steps:
 
-       <dt>|match type| is "full" and |ignore case| is true
-       <dd>
-         1. If |node text| [=is=] |selector|, ignoring case,
-            [=list/append=] |context node| to |returned nodes|.
+      1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
+         <a spec=dom>children</a> of |context node|:
 
-       <dt>Otherwise
-       <dd>
-         1. If |ignore case| is false and |selector| is a [=code point substring=]
-            of |node text| set |contains text| to true.
+        1. If |child| implements {{Element}}, [=list/append=] |child| to
+           |child nodes|.
 
-         1. If |ignore case| is true and |selector| is a [=code point substring=]
-            of |node text|, ignoring case, set |contains text| to true.
+      1. If [=list/size=] of |child nodes| is equal to 0 or |max depth|
+         is equal to 0 [=list/append=] |context node| to |returned nodes|.
+         Otherwise perform the following steps:
 
-         1. If |contains text| is true, perform the following steps:
+        1. Set |max depth| to |max depth| - 1. 
 
-           1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
-              <a spec=dom>children</a> of |context node|:
+        1. Let |child node matches| be the result of [=locate nodes using text=]
+           with |context target|, |child nodes|, |selector|, |max depth|,
+           |match type|, |ignore case|, |maximum returned node count|, and |session|.
 
-             1. If |child| implements {{Element}}, [=list/append=] |child| to
-                |child nodes|.
-
-           1. If [=list/size=] of |child nodes| is equal to 0 or |max depth|
-              is equal to 0 [=list/append=] |context node| to |returned nodes|.
-              Otherwise perform the following steps:
-
-             1. Set |max depth| to |max depth| - 1. 
-
-             1. Let |child node matches| be the result of [=locate nodes using text=]
-                with |context target|, |child nodes|, |selector|, |max depth|,
-                |match type|, |ignore case|, |maximum returned node count|, and |session|.
-
-             1. If [=list/size=] of |child node matches| is equal to 0 and
-                |match type| is "partial" [=list/append=] |context node| to
-                |returned nodes|. Otherwise, [=list/extend=] |returned nodes|
-                with |child node matches|.
+        1. If [=list/size=] of |child node matches| is equal to 0 and
+           |match type| is "partial" [=list/append=] |context node| to
+           |returned nodes|. Otherwise, [=list/extend=] |returned nodes|
+           with |child node matches|.
 
 1. If |maximum returned node count| is not null [=list/remove=] all entries
    in |returned nodes| with an index greater than or equal to |maximum returned
