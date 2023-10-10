@@ -1951,6 +1951,96 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
 
 </div>
 
+#### The browser.createPartition Command #### {#command-browser-createPartition}
+
+The <dfn export for=commands>browser.createPartition</dfn> command creates a storage partition for a group of browsing contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browser.Close = (
+        method: "browser.createPartition",
+        params: EmptyParams,
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      browser.createPartitionResult = {
+        partition: browser.Partition
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.createPartition">
+
+</div>
+
+#### The browser.closePartition Command #### {#command-browser-closePartition}
+
+The <dfn export for=commands>browser.closePartition</dfn> command closes the partition and all browsing contexts in it without running before unload handlers.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browser.Close = (
+        method: "browser.closePartition",
+        params: {
+          partition: browser.Partition
+        },
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      browser.closePartitionResult = {
+        partition: browser.Partition
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.closePartition">
+
+</div>
+
+#### The browser.getPartitions Command #### {#command-browser-getPartitions}
+
+The <dfn export for=commands>browser.getPartitions</dfn> command returns a list of existing partitions in the browser instance.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browser.Close = (
+        method: "browser.getPartitions",
+        params: EmptyParams,
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      browser.PartitionInfo = (
+        partition: browser.Partition,
+      )
+      browser.PartitionInfoList = [*browser.PartitionInfo]
+      browser.getPartitionsResult = {
+        partitions: browser.PartitionInfoList
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.getPartitions">
+
+</div>
+
 ## The browsingContext Module ## {#module-browsingContext}
 
 The <dfn export for=modules>browsingContext</dfn> module contains commands and
@@ -2069,6 +2159,7 @@ browsingContext.Info = {
   url: text,
   children: browsingContext.InfoList / null
   ? parent: browsingContext.BrowsingContext / null,
+  ? partition: Browser.Partition / null
 }
 </pre>
 
@@ -2769,7 +2860,8 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
       browsingContext.CreateParameters = {
         type: browsingContext.CreateType,
         ? referenceContext: browsingContext.BrowsingContext,
-        ? background: bool .default false
+        ? background: bool .default false,
+        ? partition: Browser.Partition / null
       }
       </pre>
    </dd>
