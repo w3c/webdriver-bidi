@@ -171,6 +171,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: create a classic script; url: webappapis.html#creating-a-classic-script
     text: create a new browsing context; url: browsers.html#creating-a-new-browsing-context
     text: default classic script fetch options; url: webappapis.html#default-classic-script-fetch-options
+    text: drag and drop operations; url: dnd.html#dnd
     text: environment settings object's Realm; url: webappapis.html#environment-settings-object's-realm
     text: focused area of the document; url: document-sequences.html#focused-area-of-the-document
     text: handled; url: webappapis.html#concept-error-handled
@@ -1031,33 +1032,8 @@ To <dfn>close the WebSocket connections</dfn> given |session|:
 
 ## Establishing a Connection ## {#establishing}
 
-WebDriver clients opt in to a bidirectional connection by requesting a
-capability with the name "<code>webSocketUrl</code>" and value
-true.
-
-This specification defines an
-[=additional webdriver capability=] with the [=capability name=] "<code>webSocketUrl</code>".
-
-<div algorithm="webSocketUrl capability deserialization algorithm">
-The [=additional capability deserialization algorithm=] for the
-"<code>webSocketUrl</code>" capability, with parameter |value| is:
-
-1. If |value| is not a boolean, return [=error=] with [=error code|code=]
-   [=invalid argument=].
-
-1. Return [=success=] with data |value|.
-
-</div>
-
-<div algorithm="webSocketUrl capability serialization algorithm">
-The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
-with parameter |value| is:
-
-1. If |value| is false, return [=success=] with data null.
-
-1. Return [=success=] with data true.
-
-</div>
+WebDriver clients opt in to a bidirectional connection by requesting the
+[=WebSocket URL=] capability with value true.
 
 <div algorithm="webSocketUrl new session algorithm">
 The [=WebDriver new session algorithm=] defined by this specification,
@@ -1391,6 +1367,7 @@ session.CapabilityRequest = {
   ? acceptInsecureCerts: bool,
   ? browserName: text,
   ? browserVersion: text,
+  ? enableDragAndDrop: bool,
   ? platformName: text,
   ? proxy: {
     ? proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
@@ -1402,12 +1379,74 @@ session.CapabilityRequest = {
     ? socksProxy: text,
     ? socksVersion: 0..255,
   },
+  ? webSocketUrl: bool,
   Extensible
 };
 </pre>
 
 The <code>session.CapabilityRequest</code> type represents a specific set of
 requested capabilities.
+
+WebDriver BiDi defines [=additional WebDriver capability|additional WebDriver
+capabilities=]. The following tables enumerates the capabilities each
+implementation must support for WebDriver BiDi.
+
+<pre class=simpledef>
+Capability: <dfn export>WebSocket URL</dfn>
+Key: "<code>webSocketUrl</code>"
+Value type: boolean
+Description: Defines the current session's support for bidirection connection.
+</pre>
+
+<pre class=simpledef>
+Capability: <dfn export>Drag and Drop Support</dfn>
+Key: "<code>enableDragAndDrop</code>"
+Value type: boolean
+Description: Defines the current session's drag and drop support.
+</pre>
+
+<div algorithm="webSocketUrl capability deserialization algorithm">
+The [=additional capability deserialization algorithm=] for the
+"<code>webSocketUrl</code>" capability, with parameter |value| is:
+
+1. If |value| is not a boolean, return [=error=] with [=error code|code=]
+   [=invalid argument=].
+
+1. Return [=success=] with data |value|.
+
+</div>
+
+<div algorithm="webSocketUrl capability serialization algorithm">
+The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
+with parameter |value| is:
+
+1. If |value| is false, return [=success=] with data null.
+
+1. Return [=success=] with data true.
+
+</div>
+
+<div algorithm="enableDragAndDrop capability deserialization algorithm">
+The [=additional capability deserialization algorithm=] for the
+"<code>enableDragAndDrop</code>" capability, with parameter |value| is:
+
+1. If |value| is not a boolean, return [=error=] with [=error code|code=]
+   [=invalid argument=].
+
+1. Return [=success=] with data |value|.
+
+</div>
+
+<div algorithm="enableDragAndDrop capability serialization algorithm">
+The [=matched capability serialization algorithm=] for the "<code>enableDragAndDrop</code>" capability,
+with parameter |value| is:
+
+1. If |value| is false, the [=endpoint node=] must disable [=drag
+   and drop operations=].
+
+1. Return [=success=] with data |value|.
+
+</div>
 
 #### The session.SubscriptionRequest Type #### {#type-session-SubscriptionRequest}
 
@@ -1503,6 +1542,7 @@ This is a [=static command=].
         sessionId: text,
         capabilities: {
           acceptInsecureCerts: bool,
+          enableDragAndDrop: bool,
           browserName: text,
           browserVersion: text,
           platformName: text,
