@@ -7,7 +7,7 @@
   <link href="https://www.w3.org/StyleSheets/TR/2021/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="af41c9b1b53cef5366064664e6bb0d679a8b0da0" name="document-revision">
+  <meta content="a3a09beca752e7002fdec13751042a9bea8ce323" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -544,7 +544,7 @@ var.selected6 { background-color: #FFBCF2; box-shadow: 0 0 0 2px #FFBCF2; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-10-09">9 October 2023</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-10-12">12 October 2023</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -2515,6 +2515,7 @@ Base64-encoded string.</p>
 
 browsingContext.CaptureScreenshotParameters = {
   context: browsingContext.BrowsingContext,
+  ? origin: ("viewport" / "document") .default "viewport",
   ? format: browsingContext.ImageFormat,
   ? clip: browsingContext.ClipRectangle,
 }
@@ -2536,7 +2537,7 @@ browsingContext.ElementClipRectangle = {
 }
 
 browsingContext.BoxClipRectangle = {
-   type: "viewport",
+   type: "box",
    x: float,
    y: float,
    width: float,
@@ -2550,7 +2551,6 @@ browsingContext.BoxClipRectangle = {
 }
 </pre>
    </dl>
-   <p>TODO: Full page screenshots</p>
    <div class="algorithm" data-algorithm="normalize rect">
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="normalize-rect">normalize rect</dfn> given <var>rect</var>: 
     <p class="note" role="note"><span class="marker">Note:</span> This ensures that the resulting rect has positive <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension">width dimension</a> and <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension">height dimension</a>.</p>
@@ -2611,36 +2611,17 @@ browsingContext.BoxClipRectangle = {
       <p>Return a new <code class="idl"><a data-link-type="idl" href="https://drafts.fxtf.org/geometry-1/#domrectreadonly" id="ref-for-domrectreadonly①">DOMRectReadOnly</a></code> with <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate⑥">x coordinate</a> <var>x_0</var>, <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate⑥">y coordinate</a> <var>y_0</var>, <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension⑤">width dimension</a> <var>width</var> and <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension⑤">height dimension</a> <var>height</var>.</p>
     </ol>
    </div>
-   <div class="algorithm" data-algorithm="render viewport to a canvas">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="render-viewport-to-a-canvas">render viewport to a canvas</dfn> given <var>viewport</var> and <var>rect</var>: 
+   <div class="algorithm" data-algorithm="render document to a canvas">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="render-document-to-a-canvas">render document to a canvas</dfn> given <var>document</var> and <var>rect</var>: 
     <ol>
      <li data-md>
-      <p class="assertion">Assert: <var>rect</var> is normalized and represents a non-empty sub-region of <var>viewport</var>,
- i.e. all the following hold:</p>
-      <ul>
-       <li data-md>
-        <p><var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate⑦">x coordinate</a> is greater than or equal to 0.</p>
-       <li data-md>
-        <p><var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension⑥">width dimension</a> is greater than 0.</p>
-       <li data-md>
-        <p><var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate⑦">y coordinate</a> is greater than or equal to 0.</p>
-       <li data-md>
-        <p><var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension⑥">height dimension</a> is greater than 0.</p>
-       <li data-md>
-        <p><var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate⑧">x coordinate</a> plus <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension⑦">width dimension</a> is less than
- or equal to <var>viewport</var>’s width.</p>
-       <li data-md>
-        <p><var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate⑧">y coordinate</a> plus <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension⑦">height dimension</a> is less than
- or equal to <var>viewport</var>’s height.</p>
-      </ul>
+      <p>Let <var>ratio</var> be <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view-1/#determine-the-device-pixel-ratio" id="ref-for-determine-the-device-pixel-ratio">determine the device pixel ratio</a> given <var>document</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/nav-history-apis.html#dom-document-defaultview" id="ref-for-dom-document-defaultview">default view</a>.</p>
      <li data-md>
-      <p>Let <var>scale</var> be <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view-1/#determine-the-device-pixel-ratio" id="ref-for-determine-the-device-pixel-ratio">determine the device pixel ratio</a> for the output device of <var>viewport</var>.</p>
-     <li data-md>
-      <p>Let <var>paint width</var> be <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension⑧">width dimension</a> multiplied by <var>scale</var>,
+      <p>Let <var>paint width</var> be <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension⑥">width dimension</a> multiplied by <var>ratio</var>,
  rounded to the nearest integer, so it matches the width of <var>rect</var> in device
  pixels.</p>
      <li data-md>
-      <p>Let <var>paint height</var> be <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension⑧">height dimension</a> multiplied by <var>scale</var>,
+      <p>Let <var>paint height</var> be <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension⑥">height dimension</a> multiplied by <var>ratio</var>,
  rounded to the nearest integer, so it matches the height of <var>rect</var> in device
  pixels.</p>
      <li data-md>
@@ -2652,8 +2633,8 @@ browsingContext.BoxClipRectangle = {
       <p>Set <var>canvas</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage//canvas.html#offscreencanvas-context-mode" id="ref-for-offscreencanvas-context-mode">context mode</a> to <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-2d" id="ref-for-concept-canvas-2d">2D</a>.</p>
      <li data-md>
       <p>Complete implementation specific steps equivalent to drawing the region of
- the framebuffer representing the region of <var>viewport</var> covered by <var>rect</var> to <var>context</var>, such that each pixel in the framebuffer corresponds to a pixel in <var>context</var> with (<var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate⑨">x coordinate</a>, <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate⑨">y coordinate</a>) in
- viewport coordinates corresponding to (0,0) in <var>context</var> and (<var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate①⓪">x coordinate</a> + <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension⑨">width dimension</a>, <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate①⓪">y coordinate</a> + <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension⑨">height dimension</a>) corresponding to (<var>paint
+ the framebuffer representing the region of <var>document</var> covered by <var>rect</var> to <var>context</var>, such that each pixel in the framebuffer corresponds to a pixel in <var>context</var> with (<var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate⑦">x coordinate</a>, <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate⑦">y coordinate</a>) in
+ viewport coordinates corresponding to (0,0) in <var>context</var> and (<var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate⑧">x coordinate</a> + <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension⑦">width dimension</a>, <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate⑧">y coordinate</a> + <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension⑦">height dimension</a>) corresponding to (<var>paint
  width</var>, <var>paint height</var>).</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://www.w3.org/TR/CSS21/intro.html#canvas" id="ref-for-canvas">canvas</a>.</p>
@@ -2674,30 +2655,52 @@ browsingContext.BoxClipRectangle = {
       <p>Return success with data <var>encoded string</var>.</p>
     </ol>
    </div>
+   <div class="algorithm" data-algorithm="get the origin rectangle">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-the-origin-rectangle">get the origin rectangle</dfn> given <var>document</var> and <var>origin</var>: 
+    <ol>
+     <li data-md>
+      <p>If <var>origin</var> is <code>"viewport"</code>:</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>viewport</var> be <var>document</var>’s <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#visual-viewport" id="ref-for-visual-viewport">visual viewport</a>.</p>
+       <li data-md>
+        <p>Let <var>viewport rect</var> be a <code class="idl"><a data-link-type="idl" href="https://drafts.fxtf.org/geometry-1/#domrectreadonly" id="ref-for-domrectreadonly②">DOMRectReadOnly</a></code> with <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate⑨">x coordinate</a> <var>viewport</var> <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#dom-visualviewport-pageleft" id="ref-for-dom-visualviewport-pageleft">page left</a>, <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate⑨">y coordinate</a> <var>viewport</var> <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#dom-visualviewport-pagetop" id="ref-for-dom-visualviewport-pagetop">page top</a>, <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension⑧">width dimension</a> <var>viewport</var> width, and <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension⑧">height dimension</a> <var>viewport</var> height.</p>
+       <li data-md>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑨">success</a> with data <var>viewport rect</var>.</p>
+      </ol>
+     <li data-md>
+      <p class="assertion">Assert: <var>origin</var> is <code>"document"</code>.</p>
+     <li data-md>
+      <p>Let <var>document element</var> be the <a data-link-type="dfn" href="https://dom.spec.whatwg.org/#ref-for-dom-document-documentelement" id="ref-for-ref-for-dom-document-documentelement">document element</a> for <var>document</var>.</p>
+     <li data-md>
+      <p>Let <var>document rect</var> be a <code class="idl"><a data-link-type="idl" href="https://drafts.fxtf.org/geometry-1/#domrectreadonly" id="ref-for-domrectreadonly③">DOMRectReadOnly</a></code> with <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate①⓪">x coordinate</a> 0, <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate①⓪">y
+ coordinate</a> 0, <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension⑨">width dimension</a> <var>document element</var> <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#dom-element-scrollheight" id="ref-for-dom-element-scrollheight">scroll height</a>,
+ and <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension⑨">height dimension</a> <var>document element</var> <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#dom-element-scrollwidth" id="ref-for-dom-element-scrollwidth">scroll width</a>.</p>
+     <li data-md>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⓪">success</a> with data <var>document rect</var>.</p>
+    </ol>
+   </div>
    <p>The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps⑨">remote end steps</a> with <var>session</var> and <var>command parameters</var> are:</p>
    <ol>
     <li data-md>
-     <p>Let <var>context id</var> be <var>command parameters</var>["<code>context</code>"].</p>
-    <li data-md>
-     <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try⑦">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context②">get a browsing context</a> with <var>context id</var>.</p>
+     <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var> if present, or null otherwise.</p>
     <li data-md>
      <p>If the implementation is unable to capture a screenshot of <var>context</var> for any
  reason then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①⑤">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①③">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unsupported-operation" id="ref-for-dfn-unsupported-operation①">unsupported operation</a>.</p>
     <li data-md>
      <p>Let <var>document</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#active-document" id="ref-for-active-document⑤">active document</a>.</p>
     <li data-md>
-     <p>Let <var>viewport</var> be <var>document</var>’s <a data-link-type="dfn" href="https://drafts.csswg.org/cssom-view/#visual-viewport" id="ref-for-visual-viewport">visual viewport</a>.</p>
-    <li data-md>
      <p>Immediately after the next invocation of the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/imagebitmap-and-animations.html#run-the-animation-frame-callbacks" id="ref-for-run-the-animation-frame-callbacks">run the animation frame
  callbacks</a> algorithm for <var>document</var>:</p>
-     <p class="issue" id="issue-b2b83ca0"><a class="self-link" href="#issue-b2b83ca0"></a> This ought to be integrated into the update rendering algorithm
- in some more explicit way.</p>
+     <p class="issue" id="issue-b2b83ca0"><a class="self-link" href="#issue-b2b83ca0"></a> This ought to be integrated into the update rendering algorithm in
+ some more explicit way.</p>
     <li data-md>
-     <p>Let <var>viewport rect</var> be a <code class="idl"><a data-link-type="idl" href="https://drafts.fxtf.org/geometry-1/#domrectreadonly" id="ref-for-domrectreadonly②">DOMRectReadOnly</a></code> with <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate①①">x coordinate</a> 0, <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate①①">y
- coordinate</a> 0, <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension①⓪">width dimension</a> <var>viewport</var> width, and <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension①⓪">height
- dimension</a> <var>viewport</var> height.</p>
+     <p>Let <var>origin</var> be the value of the <code>context</code> field of <var>command
+ parameters</var> if present, or "viewport" otherwise.</p>
     <li data-md>
-     <p>Let <var>clip rect</var> be <var>viewport rect</var>.</p>
+     <p>Let <var>origin rect</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try⑦">trying</a> to <a data-link-type="dfn" href="#get-the-origin-rectangle" id="ref-for-get-the-origin-rectangle">get the origin rectangle</a> given <var>origin</var> and <var>document</var>.</p>
+    <li data-md>
+     <p>Let <var>clip rect</var> be <var>origin rect</var>.</p>
     <li data-md>
      <p>If <var>command parameters</var> contains "<code>clip</code>":</p>
      <ol>
@@ -2733,19 +2736,23 @@ browsingContext.BoxClipRectangle = {
         <dd>
          <ol>
           <li data-md>
-           <p>Let <var>clip rect</var> be a <code class="idl"><a data-link-type="idl" href="https://drafts.fxtf.org/geometry-1/#domrectreadonly" id="ref-for-domrectreadonly③">DOMRectReadOnly</a></code> with x coordinate <var>clip</var>["<code>x</code>"],
-  y coordinate <var>clip</var>["<code>y</code>"], width <var>clip</var>["<code>width</code>"],
-  and height <var>clip</var>["<code>height</code>"].</p>
+           <p>Let <var>clip x</var> be <var>clip</var>["<code>x</code>"] plus <var>origin rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate①①">x
+  coordinate</a>.</p>
+          <li data-md>
+           <p>Let <var>clip y</var> be <var>clip</var>["<code>y</code>"] plus <var>origin rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-y-coordinate" id="ref-for-rectangle-y-coordinate①①">y
+  coordinate</a>.</p>
+          <li data-md>
+           <p>Let <var>clip rect</var> be a <code class="idl"><a data-link-type="idl" href="https://drafts.fxtf.org/geometry-1/#domrectreadonly" id="ref-for-domrectreadonly④">DOMRectReadOnly</a></code> with <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-x-coordinate" id="ref-for-rectangle-x-coordinate①②">x coordinate</a> <var>clip x</var>, <var>clip y</var>, width <var>clip</var>["<code>width</code>"], and height <var>clip</var>["<code>height</code>"].</p>
          </ol>
        </dl>
      </ol>
     <li data-md>
-     <p>Let <var>rect</var> be the <a data-link-type="dfn" href="#rectangle-intersection" id="ref-for-rectangle-intersection">rectangle intersection</a> of <var>viewport rect</var> and <var>clip rect</var>.</p>
+     <p>Let <var>rect</var> be the <a data-link-type="dfn" href="#rectangle-intersection" id="ref-for-rectangle-intersection">rectangle intersection</a> of <var>origin rect</var> and <var>clip rect</var>.</p>
     <li data-md>
-     <p>If <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension①①">width dimension</a> is 0 or <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension①①">height dimension</a> is 0,
+     <p>If <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-width-dimension" id="ref-for-rectangle-width-dimension①⓪">width dimension</a> is 0 or <var>rect</var>’s <a data-link-type="dfn" href="https://drafts.fxtf.org/geometry/#rectangle-height-dimension" id="ref-for-rectangle-height-dimension①⓪">height dimension</a> is 0,
  return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①⑧">error</a> with error code <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unable-to-capture-screen" id="ref-for-dfn-unable-to-capture-screen">unable to capture screen</a>.</p>
     <li data-md>
-     <p>Let <var>canvas</var> be <a data-link-type="dfn" href="#render-viewport-to-a-canvas" id="ref-for-render-viewport-to-a-canvas">render viewport to a canvas</a> with <var>viewport</var> and <var>rect</var>.</p>
+     <p>Let <var>canvas</var> be <a data-link-type="dfn" href="#render-document-to-a-canvas" id="ref-for-render-document-to-a-canvas">render document to a canvas</a> with <var>document</var> and <var>rect</var>.</p>
     <li data-md>
      <p>Let <var>format</var> be the <code>format</code> field of <var>command parameters</var>.</p>
     <li data-md>
@@ -2754,7 +2761,7 @@ browsingContext.BoxClipRectangle = {
     <li data-md>
      <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⑨">map</a> matching the <code>browsingContext.CaptureScreenshotResult</code> production, with the <code>data</code> field set to <var>encoding result</var>.</p>
     <li data-md>
-     <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success①⑨">success</a> with data <var>body</var>.</p>
+     <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②①">success</a> with data <var>body</var>.</p>
    </ol>
    <h5 class="heading settled" data-level="6.3.3.3" id="command-browsingContext-close"><span class="secno">6.3.3.3. </span><span class="content">The browsingContext.close Command</span><a class="self-link" href="#command-browsingContext-close"></a></h5>
    <p>The <dfn data-dfn-for="commands" data-dfn-type="dfn" data-export id="commands-browsingcontextclose">browsingContext.close<a class="self-link" href="#commands-browsingcontextclose"></a></dfn> command closes a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑥">top-level browsing context</a>.</p>
@@ -2781,7 +2788,7 @@ browsingContext.CloseParameters = {
      <li data-md>
       <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
      <li data-md>
-      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⓪">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context③">get a browsing context</a> with <var>context id</var>.</p>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⓪">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context②">get a browsing context</a> with <var>context id</var>.</p>
      <li data-md>
       <p class="assertion">Assert: <var>context</var> is not null.</p>
      <li data-md>
@@ -2789,7 +2796,7 @@ browsingContext.CloseParameters = {
      <li data-md>
       <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#close-a-browsing-context" id="ref-for-close-a-browsing-context①">Close</a> <var>context</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⓪">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②②">success</a> with data null.</p>
     </ol>
     <p class="issue" id="issue-bd9840d8"><a class="self-link" href="#issue-bd9840d8"></a> There is an open discussion about the behavior
 when closing the last <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑧">top-level browsing context</a>. We could expect to close
@@ -2829,7 +2836,7 @@ browsingContext.CreateParameters = {
       <p>Let <var>reference context id</var> be the value of the <code>referenceContext</code> field of <var>command parameters</var>, if present, or null otherwise.</p>
      <li data-md>
       <p>If <var>reference context id</var> is not null, let <var>reference context</var> be the
- result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①①">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context④">get a browsing context</a> with <var>reference context id</var>. Otherwise let <var>reference context</var> be null.</p>
+ result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①①">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context③">get a browsing context</a> with <var>reference context id</var>. Otherwise let <var>reference context</var> be null.</p>
      <li data-md>
       <p>If <var>reference context</var> is not null and is not a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑨">top-level browsing context</a>,
 return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②⓪">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①⑦">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①①">invalid argument</a>.</p>
@@ -2874,7 +2881,7 @@ return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors
      <li data-md>
       <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map②⓪">map</a> matching the <code>browsingContext.CreateResult</code> production, with the <code>context</code> field set to <var>context id</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②①">success</a> with data <var>body</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②③">success</a> with data <var>body</var>.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.3.3.5" id="command-browsingContext-getTree"><span class="secno">6.3.3.5. </span><span class="content">The browsingContext.getTree Command</span><a class="self-link" href="#command-browsingContext-getTree"></a></h5>
@@ -2912,7 +2919,7 @@ browsingContext.GetTreeParameters = {
      <li data-md>
       <p>Let <var>contexts</var> be an empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list②">list</a>.</p>
      <li data-md>
-      <p>If <var>root id</var> is not null, append the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①②">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑤">get a browsing context</a> given <var>root id</var> to <var>contexts</var>.
+      <p>If <var>root id</var> is not null, append the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①②">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context④">get a browsing context</a> given <var>root id</var> to <var>contexts</var>.
  Otherwise append all <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①②">top-level browsing contexts</a> to <var>contexts</var>.</p>
      <li data-md>
       <p>Let <var>contexts info</var> be an empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list③">list</a>.</p>
@@ -2927,7 +2934,7 @@ browsingContext.GetTreeParameters = {
      <li data-md>
       <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map②①">map</a> matching the <code>browsingContext.GetTreeResult</code> production, with the <code>contexts</code> field set to <var>contexts info</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②②">success</a> with data <var>body</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②④">success</a> with data <var>body</var>.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.3.3.6" id="command-browsingContext-handleUserPrompt"><span class="secno">6.3.3.6. </span><span class="content">The browsingContext.handleUserPrompt Command</span><a class="self-link" href="#command-browsingContext-handleUserPrompt"></a></h5>
@@ -2957,7 +2964,7 @@ browsingContext.HandleUserPromptParameters = {
      <li data-md>
       <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
      <li data-md>
-      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①③">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑥">get a browsing context</a> with <var>context id</var>.</p>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①③">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑤">get a browsing context</a> with <var>context id</var>.</p>
      <li data-md>
       <p>Let <var>accept</var> be the value of the <code>accept</code> field of <var>command
  parameters</var> if present, or true otherwise.</p>
@@ -2976,7 +2983,7 @@ browsingContext.HandleUserPromptParameters = {
  refuse the navigation.</p>
       <p>Otherwise return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-alert" id="ref-for-dfn-no-such-alert">no such alert</a>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②③">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑤">success</a> with data null.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.3.3.7" id="command-browsingContext-navigate"><span class="secno">6.3.3.7. </span><span class="content">The browsingContext.navigate Command</span><a class="self-link" href="#command-browsingContext-navigate"></a></h5>
@@ -3010,7 +3017,7 @@ browsingContext.NavigateParameters = {
      <li data-md>
       <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
      <li data-md>
-      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①④">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑦">get a browsing context</a> with <var>context id</var>.</p>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①④">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑥">get a browsing context</a> with <var>context id</var>.</p>
      <li data-md>
       <p class="assertion">Assert: <var>context</var> is not null.</p>
      <li data-md>
@@ -3084,7 +3091,7 @@ browsingContext.PrintPageParameters = {
     <li data-md>
      <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
     <li data-md>
-     <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑤">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑧">get a browsing context</a> with <var>context id</var>.</p>
+     <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑤">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑦">get a browsing context</a> with <var>context id</var>.</p>
     <li data-md>
      <p>If the implementation is unable to provide a paginated representation of <var>context</var> for any reason then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②⑤">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②①">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-unsupported-operation" id="ref-for-dfn-unsupported-operation③">unsupported operation</a>.</p>
     <li data-md>
@@ -3157,7 +3164,7 @@ browsingContext.PrintPageParameters = {
       <li data-md>
        <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map②④">map</a> matching the <code>browsingContext.PrintResult</code> production, with the <code>data</code> field set to <var>encoded data</var>.</p>
       <li data-md>
-       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②④">success</a> with data <var>body</var>.</p>
+       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑥">success</a> with data <var>body</var>.</p>
      </ol>
    </ol>
    <h5 class="heading settled" data-level="6.3.3.9" id="command-browsingContext-reload"><span class="secno">6.3.3.9. </span><span class="content">The browsingContext.reload Command</span><a class="self-link" href="#command-browsingContext-reload"></a></h5>
@@ -3188,7 +3195,7 @@ browsingContext.ReloadParameters = {
      <li data-md>
       <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
      <li data-md>
-      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑦">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑨">get a browsing context</a> with <var>context id</var>.</p>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑦">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑧">get a browsing context</a> with <var>context id</var>.</p>
      <li data-md>
       <p class="assertion">Assert: <var>context</var> is not null.</p>
      <li data-md>
@@ -3241,7 +3248,7 @@ browsingContext.Viewport = {
      <li data-md>
       <p>Let <var>context id</var> be the value of the <var>command parameters</var>["<code>context</code>"] field.</p>
      <li data-md>
-      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑧">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①⓪">get a browsing context</a> with <var>context id</var>.</p>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⑧">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context⑨">get a browsing context</a> with <var>context id</var>.</p>
      <li data-md>
       <p>If <var>context</var> is not a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①③">top-level browsing context</a>, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②②">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①③">invalid argument</a>.</p>
      <li data-md>
@@ -3280,7 +3287,7 @@ browsingContext.Viewport = {
      <li data-md>
       <p>Run the <a href="https://drafts.csswg.org/cssom-view-1/#resizing-viewports"><cite>CSSOM View</cite> § 13.1 Resizing viewports</a> steps.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑤">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑦">success</a> with data null.</p>
     </ol>
    </div>
    <h4 class="heading settled" data-level="6.3.4" id="module-contexts-events"><span class="secno">6.3.4. </span><span class="content">Events</span><a class="self-link" href="#module-contexts-events"></a></h4>
@@ -4552,7 +4559,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
         <p>Set <var>is escaped character</var> to false.</p>
       </ol>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑥">success</a> with data <var>result</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑧">success</a> with data <var>result</var>.</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="parse URL pattern">
@@ -4822,7 +4829,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
         </ol>
       </dl>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑦">success</a> with data <var>parsed</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑨">success</a> with data <var>parsed</var>.</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="match URL pattern">
@@ -5050,7 +5057,7 @@ network.ContinueRequestParameters = {
       <p><a data-link-type="dfn" href="#resume" id="ref-for-resume⑦">Resume</a> with "<code>continue request</code>", <var>request id</var>, and (null,
  "<code>incomplete</code>").</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑧">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⓪">success</a> with data null.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.4.4.3" id="command-network-continueResponse"><span class="secno">6.4.4.3. </span><span class="content">The network.continueResponse Command</span><a class="self-link" href="#command-network-continueResponse"></a></h5>
@@ -5189,7 +5196,7 @@ network.ContinueResponseParameters = {
       <p><a data-link-type="dfn" href="#resume" id="ref-for-resume⑧">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
  (<var>response</var>, "<code>incomplete</code>").</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②⑨">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③①">success</a> with data null.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.4.4.4" id="command-network-continueWithAuth"><span class="secno">6.4.4.4. </span><span class="content">The network.continueWithAuth Command</span><a class="self-link" href="#command-network-continueWithAuth"></a></h5>
@@ -5254,7 +5261,7 @@ network.ContinueWithAuthNoCredentials = (
       <p><a data-link-type="dfn" href="#resume" id="ref-for-resume⑨">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
  (<var>response</var>, "<code>incomplete</code>").</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⓪">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③②">success</a> with data null.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.4.4.5" id="command-network-failRequest"><span class="secno">6.4.4.5. </span><span class="content">The network.failRequest Command</span><a class="self-link" href="#command-network-failRequest"></a></h5>
@@ -5297,7 +5304,7 @@ network.FailRequestParameters = {
       <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⓪">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
  (<var>response</var>, "<code>complete</code>").</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③①">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③③">success</a> with data null.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.4.4.6" id="command-network-provideResponse"><span class="secno">6.4.4.6. </span><span class="content">The network.provideResponse Command</span><a class="self-link" href="#command-network-provideResponse"></a></h5>
@@ -5348,7 +5355,7 @@ network.ProvideResponseParameters = {
       <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①①">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
  (<var>response</var>,"<code>complete</code>").</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③②">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③④">success</a> with data null.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.4.4.7" id="command-network-removeIntercept"><span class="secno">6.4.4.7. </span><span class="content">The network.removeIntercept Command</span><a class="self-link" href="#command-network-removeIntercept"></a></h5>
@@ -5383,7 +5390,7 @@ network.RemoveInterceptParameters = {
      <li data-md>
       <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-remove" id="ref-for-map-remove">Remove</a> <var>intercept</var> from <var>intercept map</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③③">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-null-value" id="ref-for-sec-null-value">null</a>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑤">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-null-value" id="ref-for-sec-null-value">null</a>.</p>
     </ol>
    </div>
    <h4 class="heading settled" data-level="6.4.5" id="module-network-event"><span class="secno">6.4.5. </span><span class="content">Events</span><a class="self-link" href="#module-network-event"></a></h4>
@@ -5992,7 +5999,7 @@ values as well as <a data-link-type="dfn" href="#scriptremotereference" id="ref-
         <p>Append <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist">CreateArrayFromList</a>(«<var>deserialized key</var>, <var>deserialized value</var>») to <var>deserialized key-value list</var>.</p>
       </ol>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③④">success</a> with data <var>deserialized key-value list</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑥">success</a> with data <var>deserialized key-value list</var>.</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="deserialize value list">
@@ -6009,7 +6016,7 @@ values as well as <a data-link-type="dfn" href="#scriptremotereference" id="ref-
         <p>Append <var>deserialized value</var> to <var>deserialized values</var>;</p>
       </ol>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑤">success</a> with data <var>deserialized values</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑦">success</a> with data <var>deserialized values</var>.</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="deserialize local value">
@@ -6038,7 +6045,7 @@ values as well as <a data-link-type="dfn" href="#scriptremotereference" id="ref-
          <li data-md>
           <p>Let <var>deserialized value list</var> be a result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③①">trying</a> to <a data-link-type="dfn" href="#deserialize-value-list" id="ref-for-deserialize-value-list">deserialize value list</a> given <var>value</var>, <var>realm</var> and <var>session</var>.</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑥">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist①">CreateArrayFromList</a>(<var>deserialized value list</var>).</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑧">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist①">CreateArrayFromList</a>(<var>deserialized value list</var>).</p>
         </ol>
        <dt><var>type</var> is the string "<code>date</code>" 
        <dd>
@@ -6050,7 +6057,7 @@ values as well as <a data-link-type="dfn" href="#scriptremotereference" id="ref-
          <li data-md>
           <p class="assertion">Assert: <var>date result</var> is not an <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-completion-record-specification-type" id="ref-for-sec-completion-record-specification-type③">abrupt completion</a>.</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑦">success</a> with data <var>date result</var>.</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑨">success</a> with data <var>date result</var>.</p>
         </ol>
        <dt><var>type</var> is the string "<code>map</code>" 
        <dd>
@@ -6060,7 +6067,7 @@ values as well as <a data-link-type="dfn" href="#scriptremotereference" id="ref-
          <li data-md>
           <p>Let <var>iterable</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist②">CreateArrayFromList</a>(<var>deserialized key-value list</var>)</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑧">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-iterable" id="ref-for-sec-map-iterable">Map</a>(<var>iterable</var>).</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⓪">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-map-iterable" id="ref-for-sec-map-iterable">Map</a>(<var>iterable</var>).</p>
         </ol>
        <dt><var>type</var> is the string "<code>object</code>" 
        <dd>
@@ -6070,7 +6077,7 @@ values as well as <a data-link-type="dfn" href="#scriptremotereference" id="ref-
          <li data-md>
           <p>Let <var>iterable</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist③">CreateArrayFromList</a>(<var>deserialized key-value list</var>)</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success③⑨">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object.fromentries" id="ref-for-sec-object.fromentries">Object.fromEntries</a>(<var>iterable</var>).</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④①">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-object.fromentries" id="ref-for-sec-object.fromentries">Object.fromEntries</a>(<var>iterable</var>).</p>
         </ol>
        <dt><var>type</var> is the string "<code>regexp</code>" 
        <dd>
@@ -6083,7 +6090,7 @@ values as well as <a data-link-type="dfn" href="#scriptremotereference" id="ref-
          <li data-md>
           <p>Let <var>regex_result</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-regexp-pattern-flags" id="ref-for-sec-regexp-pattern-flags">Regexp</a>(<var>pattern</var>, <var>flags</var>). If this throws exception, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑤②">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④⑧">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③①">invalid argument</a>.</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⓪">success</a> with data <var>regex_result</var>.</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④②">success</a> with data <var>regex_result</var>.</p>
         </ol>
        <dt><var>type</var> is the string "<code>set</code>" 
        <dd>
@@ -6093,7 +6100,7 @@ values as well as <a data-link-type="dfn" href="#scriptremotereference" id="ref-
          <li data-md>
           <p>Let <var>iterable</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-createarrayfromlist" id="ref-for-sec-createarrayfromlist④">CreateArrayFromList</a>(<var>deserialized key-value list</var>)</p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④①">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-set-objects" id="ref-for-sec-set-objects">Set object</a>(<var>iterable</var>).</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④③">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-set-objects" id="ref-for-sec-set-objects">Set object</a>(<var>iterable</var>).</p>
         </ol>
        <dt>otherwise 
        <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑤③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③②">invalid argument</a>. 
@@ -6122,13 +6129,13 @@ relationships between different ids.</p>
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-a-realm">get a realm</dfn> given <var>realm id</var>: 
     <ol>
      <li data-md>
-      <p>If <var>realm id</var> is null, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④②">success</a> with data null.</p>
+      <p>If <var>realm id</var> is null, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④④">success</a> with data null.</p>
      <li data-md>
       <p>If there is no <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms④">realm</a> with <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id①">id</a> <var>realm id</var> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑤④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑤⓪">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-frame" id="ref-for-dfn-no-such-frame①">no such frame</a></p>
      <li data-md>
       <p>Let <var>realm</var> be the <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-code-realms" id="ref-for-sec-code-realms⑤">realm</a> with <a data-link-type="dfn" href="#realm-id" id="ref-for-realm-id②">id</a> <var>realm id</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④③">success</a> with data <var>realm</var></p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑤">success</a> with data <var>realm</var></p>
     </ol>
     <p class="issue" id="issue-89e6b783"><a class="self-link" href="#issue-89e6b783"></a> This has the wrong error code</p>
    </div>
@@ -6239,30 +6246,30 @@ represented by value, never by reference.</p>
  the associated condition is true:</p>
       <dl>
        <dt><var>type</var> is the string "<code>undefined</code>" 
-       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④④">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-undefined-value" id="ref-for-sec-undefined-value①">undefined</a>. 
+       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑥">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-undefined-value" id="ref-for-sec-undefined-value①">undefined</a>. 
        <dt><var>type</var> is the string "<code>null</code>" 
-       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑤">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-null-value" id="ref-for-sec-null-value①">null</a>. 
+       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑦">success</a> with data <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-null-value" id="ref-for-sec-null-value①">null</a>. 
        <dt><var>type</var> is the string "<code>string</code>" 
-       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑥">success</a> with data <var>value</var>. 
+       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑧">success</a> with data <var>value</var>. 
        <dt><var>type</var> is the string "<code>number</code>" 
        <dd>
         <ol>
          <li data-md>
-          <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑥">Type</a>(<var>value</var>) is Number, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑦">success</a> with data <var>value</var>.</p>
+          <p>If <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑥">Type</a>(<var>value</var>) is Number, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑨">success</a> with data <var>value</var>.</p>
          <li data-md>
           <p class="assertion">Assert: <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-ecmascript-data-types-and-values" id="ref-for-sec-ecmascript-data-types-and-values⑦">Type</a>(<var>value</var>) is String.</p>
          <li data-md>
-          <p>If <var>value</var> is the string "<code>NaN</code>", return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑧">success</a> with
+          <p>If <var>value</var> is the string "<code>NaN</code>", return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⓪">success</a> with
  data NaN.</p>
          <li data-md>
           <p>Let <var>number_result</var> be <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-stringtonumber" id="ref-for-sec-stringtonumber">StringToNumber</a>(<var>value</var>).</p>
          <li data-md>
           <p>If <var>number_result</var> is NaN, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑤⑤">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑤①">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③③">invalid argument</a></p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success④⑨">success</a> with data <var>number_result</var>.</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤①">success</a> with data <var>number_result</var>.</p>
         </ol>
        <dt><var>type</var> is the string "<code>boolean</code>" 
-       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⓪">success</a> with data <var>value</var>. 
+       <dd>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤②">success</a> with data <var>value</var>. 
        <dt><var>type</var> is the string "<code>bigint</code>" 
        <dd>
         <ol>
@@ -6271,7 +6278,7 @@ represented by value, never by reference.</p>
          <li data-md>
           <p>If <var>bigint_result</var> is undefined, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑤⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑤②">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③④">invalid argument</a></p>
          <li data-md>
-          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤①">success</a> with data <var>bigint_result</var>.</p>
+          <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤③">success</a> with data <var>bigint_result</var>.</p>
         </ol>
       </dl>
      <li data-md>
@@ -6519,7 +6526,7 @@ only <code>sharedId</code>.</p>
      <li data-md>
       <p>If <var>handle map</var> does not contain <var>handle id</var>, then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑤⑧">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑤④">error code</a> <a data-link-type="dfn" href="#no-such-handle" id="ref-for-no-such-handle">no such handle</a>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤②">success</a> with data <var>handle map</var>[<var>handle id</var>].</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤④">success</a> with data <var>handle map</var>[<var>handle id</var>].</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="deserialize shared reference">
@@ -6550,7 +6557,7 @@ only <code>sharedId</code>.</p>
      <li data-md>
       <p>If the <var>realm global object</var> is <code class="idl"><a data-link-type="idl" href="#sandboxwindowproxy" id="ref-for-sandboxwindowproxy④">SandboxWindowProxy</a></code> object, set <var>node</var> to the <code class="idl"><a data-link-type="idl" href="#sandboxproxy" id="ref-for-sandboxproxy⑤">SandboxProxy</a></code> wrapping <var>node</var> in the <var>realm</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤③">success</a> with data <var>node</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑤">success</a> with data <var>node</var>.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.5.3.13" id="type-script-RemoteValue"><span class="secno">6.5.3.13. </span><span class="content">The script.RemoteValue Type</span><a class="self-link" href="#type-script-RemoteValue"></a></h5>
@@ -7324,7 +7331,7 @@ associated with the context’s active document.</p>
       <p>If <var>target</var> matches the <code>script.ContextTarget</code> production:</p>
       <ol>
        <li data-md>
-        <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⑥">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①①">get a browsing context</a> with <var>target</var>["<code>context</code>"].</p>
+        <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⑥">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①⓪">get a browsing context</a> with <var>target</var>["<code>context</code>"].</p>
        <li data-md>
         <p>If <var>target</var> does not contain a field named "<code>sandbox</code>", or <var>target</var>["<code>sandbox</code>"] is an empty string:</p>
         <ol>
@@ -7350,7 +7357,7 @@ associated with the context’s active document.</p>
         <p>Let <var>realm</var> be <a data-link-type="dfn" href="#get-a-realm" id="ref-for-get-a-realm">get a realm</a> given <var>realm id</var>.</p>
       </ol>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤④">success</a> with data <var>realm</var></p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑥">success</a> with data <var>realm</var></p>
     </ol>
     <p class="issue" id="issue-89e6b783①"><a class="self-link" href="#issue-89e6b783①"></a> This has the wrong error code</p>
    </div>
@@ -7398,7 +7405,7 @@ script.AddPreloadScriptParameters = {
         <p>For each <var>context id</var> of <var>contexts</var>:</p>
         <ol>
          <li data-md>
-          <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⑧">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①②">get a browsing context</a> with <var>context id</var>.</p>
+          <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⑧">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①①">get a browsing context</a> with <var>context id</var>.</p>
          <li data-md>
           <p>If <var>context</var> is not a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①⑤">top-level browsing context</a>, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑥②">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑤⑧">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument③⑥">invalid argument</a>.</p>
         </ol>
@@ -7455,7 +7462,7 @@ script.DisownParameters = {
         <p>If <var>handle map</var> contains <var>handle id</var>, remove <var>handle id</var> from the <var>handle map</var>.</p>
       </ol>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑤">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑦">success</a> with data null.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.5.4.3" id="command-script-callFunction"><span class="secno">6.5.4.3. </span><span class="content">The script.callFunction Command</span><a class="self-link" href="#command-script-callFunction"></a></h5>
@@ -7502,7 +7509,7 @@ script.CallFunctionParameters = {
         <p>Append <var>deserialized argument</var> to the <var>deserialized arguments list</var>.</p>
       </ol>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑥">success</a> with data <var>deserialized arguments list</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑧">success</a> with data <var>deserialized arguments list</var>.</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="evaluate function body">
@@ -7734,7 +7741,7 @@ script.GetRealmsParameters = {
       <p>If <var>command parameters</var> contains <code>context</code>:</p>
       <ol>
        <li data-md>
-        <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try④⑤">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①③">get a browsing context</a> with <var>command parameters</var>["<code>context</code>"].</p>
+        <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try④⑤">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①②">get a browsing context</a> with <var>command parameters</var>["<code>context</code>"].</p>
        <li data-md>
         <p>Let <var>document</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#active-document" id="ref-for-active-document①①">active document</a>.</p>
        <li data-md>
@@ -7773,7 +7780,7 @@ script.GetRealmsParameters = {
       <p>Let <var>body</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①⓪④">map</a> matching the <code>script.GetRealmsResult</code> production,
  with the <code>realms</code> field set to <var>realms</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑦">success</a> with data <var>body</var>.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑨">success</a> with data <var>body</var>.</p>
     </ol>
     <p class="issue" id="issue-ac9113ee"><a class="self-link" href="#issue-ac9113ee"></a> Extend this to also allow realm parents e.g. for nested workers? Or get all ancestor workers.</p>
     <p class="issue" id="issue-b6525c5d"><a class="self-link" href="#issue-b6525c5d"></a> We might want to have a more sophisticated filter system than just a
@@ -8228,7 +8235,7 @@ the js exception and console API types that are represented by different methods
       <p>For each <var>context id</var> → <var>events</var> in <var>session</var>’s <a data-link-type="dfn" href="#log-event-buffer" id="ref-for-log-event-buffer①">log event buffer</a>:</p>
       <ol>
        <li data-md>
-        <p>Let <var>maybe context</var> be the result of <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①④">getting a browsing context</a> given <var>context id</var>.</p>
+        <p>Let <var>maybe context</var> be the result of <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①③">getting a browsing context</a> given <var>context id</var>.</p>
        <li data-md>
         <p>If <var>maybe context</var> is an <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑥⑤">error</a>, remove <var>context id</var> from <a data-link-type="dfn" href="#log-event-buffer" id="ref-for-log-event-buffer②">log event
  buffer</a> and continue.</p>
@@ -8306,7 +8313,7 @@ be used as a coordinate origin.</p>
        <li data-md>
         <p>If <var>element</var> doesn’t implement <code class="idl"><a data-link-type="idl" href="https://dom.spec.whatwg.org/#element" id="ref-for-element④">Element</a></code> return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors⑥⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code⑥①">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-element" id="ref-for-dfn-no-such-element②">no such element</a>.</p>
        <li data-md>
-        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑧">success</a> with data <var>element</var>.</p>
+        <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑥⓪">success</a> with data <var>element</var>.</p>
       </ol>
     </ol>
    </div>
@@ -8456,7 +8463,7 @@ input.Origin = "viewport" / "pointer" / input.ElementOrigin
      <li data-md>
       <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
      <li data-md>
-      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try④⑦">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①⑤">get a browsing context</a> with <var>context id</var>.</p>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try④⑦">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①④">get a browsing context</a> with <var>context id</var>.</p>
      <li data-md>
       <p>Let <var>input state</var> be <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-get-the-input-state" id="ref-for-dfn-get-the-input-state">get the input state</a> with <var>session</var> and <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①⑧">top-level browsing context</a>.</p>
      <li data-md>
@@ -8469,7 +8476,7 @@ input.Origin = "viewport" / "pointer" / input.ElementOrigin
      <li data-md>
       <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try④⑧">Try</a> to <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-dispatch-actions" id="ref-for-dfn-dispatch-actions">dispatch actions</a> with <var>input state</var>, <var>actions by tick</var>, <var>context</var>, and <var>actions options</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑨">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑥①">success</a> with data null.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="6.7.3.2" id="command-input-releaseActions"><span class="secno">6.7.3.2. </span><span class="content">The input.releaseActions Command</span><a class="self-link" href="#command-input-releaseActions"></a></h5>
@@ -8498,7 +8505,7 @@ input.ReleaseActionsParameters = {
      <li data-md>
       <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
      <li data-md>
-      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try④⑨">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①⑥">get a browsing context</a> with <var>context id</var>.</p>
+      <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try④⑨">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context①⑤">get a browsing context</a> with <var>context id</var>.</p>
      <li data-md>
       <p>Let <var>top-level context</var> be <var>context</var>’s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context①⑨">top-level browsing context</a>.</p>
      <li data-md>
@@ -8514,7 +8521,7 @@ input.ReleaseActionsParameters = {
      <li data-md>
       <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-reset-the-input-state" id="ref-for-dfn-reset-the-input-state">Reset the input state</a> with <var>session</var> and <var>top-level context</var>.</p>
      <li data-md>
-      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑥⓪">success</a> with data null.</p>
+      <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑥②">success</a> with data null.</p>
     </ol>
    </div>
    <h2 class="heading settled" data-level="7" id="patches"><span class="secno">7. </span><span class="content">Patches to Other Specifications</span><a class="self-link" href="#patches"></a></h2>
@@ -8652,6 +8659,7 @@ end:</p>
    <li><a href="#get-the-initiator">get the initiator</a><span>, in § 6.4.3.9</span>
    <li><a href="#get-the-navigation-info">get the navigation info</a><span>, in § 6.3.2.4</span>
    <li><a href="#get-the-network-intercepts">get the network intercepts</a><span>, in § 6.4.2</span>
+   <li><a href="#get-the-origin-rectangle">get the origin rectangle</a><span>, in § 6.3.3.2</span>
    <li><a href="#get-the-parent-browsing-context">get the parent browsing context</a><span>, in § 6.3.2.2</span>
    <li><a href="#get-the-protocol">get the protocol</a><span>, in § 6.4.3.14</span>
    <li><a href="#get-the-realm-info">get the realm info</a><span>, in § 6.5.3.10</span>
@@ -8709,7 +8717,7 @@ end:</p>
    <li><a href="#remote-end-definition">remote end definition</a><span>, in § 3</span>
    <li><a href="#remote-end-event-trigger">remote end event trigger</a><span>, in § 3.6</span>
    <li><a href="#remote-end-subscribe-steps">remote end subscribe steps</a><span>, in § 3.6</span>
-   <li><a href="#render-viewport-to-a-canvas">render viewport to a canvas</a><span>, in § 6.3.3.2</span>
+   <li><a href="#render-document-to-a-canvas">render document to a canvas</a><span>, in § 6.3.3.2</span>
    <li><a href="#request-id">request id</a><span>, in § 6.4.3.11</span>
    <li><a href="#command-result-type">result type</a><span>, in § 3.4</span>
    <li><a href="#resume">resume</a><span>, in § 2</span>
@@ -8817,7 +8825,11 @@ end:</p>
      <li><span class="dfn-paneled" id="5a8644fc">determine the device pixel ratio</span>
      <li><span class="dfn-paneled" id="04e2fe80">get the bounding box</span>
      <li><span class="dfn-paneled" id="740a93dd">layout viewport</span>
+     <li><span class="dfn-paneled" id="e61855ae">scroll height</span>
+     <li><span class="dfn-paneled" id="3bdd6de9">scroll width</span>
      <li><span class="dfn-paneled" id="62a0057d">visual viewport</span>
+     <li><span class="dfn-paneled" id="87e64c92">visual viewport page left</span>
+     <li><span class="dfn-paneled" id="7d9483c4">visual viewport page top</span>
     </ul>
    <li>
     <a data-link-type="biblio">[DOM]</a> defines the following terms:
@@ -8832,6 +8844,7 @@ end:</p>
      <li><span class="dfn-paneled" id="77211728">attribute list</span>
      <li><span class="dfn-paneled" id="92b2d7da">children</span>
      <li><span class="dfn-paneled" id="a973e0fe">document</span>
+     <li><span class="dfn-paneled" id="ff7203d2">document element</span>
      <li><span class="dfn-paneled" id="73b0c924">mode</span>
      <li><span class="dfn-paneled" id="d462b34f">node</span>
      <li><span class="dfn-paneled" id="5216e1a0">node document</span>
@@ -8992,6 +9005,7 @@ end:</p>
      <li><span class="dfn-paneled" id="4a23b63a">create a new browsing context</span>
      <li><span class="dfn-paneled" id="12b8dfc0">current settings object</span>
      <li><span class="dfn-paneled" id="180e7028">default classic script fetch options</span>
+     <li><span class="dfn-paneled" id="0318be47">default view</span>
      <li><span class="dfn-paneled" id="3e12e042">environment settings object</span>
      <li><span class="dfn-paneled" id="10ae7dd2">environment settings object's realm</span>
      <li><span class="dfn-paneled" id="f5265332">execution ready flag</span>
@@ -9306,8 +9320,8 @@ the listener if it wants. <a class="issue-return" href="#issue-9f7aff26" title="
  an error here? What error code do we want? Is there going to be a problem
  where local ends parse the implementation-defined strings to figure out
  what actually went wrong? <a class="issue-return" href="#issue-ceba1469" title="Jump to section">↵</a></div>
-   <div class="issue"> This ought to be integrated into the update rendering algorithm
- in some more explicit way. <a class="issue-return" href="#issue-b2b83ca0" title="Jump to section">↵</a></div>
+   <div class="issue"> This ought to be integrated into the update rendering algorithm in
+ some more explicit way. <a class="issue-return" href="#issue-b2b83ca0" title="Jump to section">↵</a></div>
    <div class="issue"> There is an open discussion about the behavior
 when closing the last <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context">top-level browsing context</a>. We could expect to close
 the browser, close the session or leave this up to the implementation. <a href="https://github.com/w3c/webdriver-bidi/issues/170">[Issue #w3c/webdriver-bidi#170]</a> <a class="issue-return" href="#issue-bd9840d8" title="Jump to section">↵</a></div>
@@ -9673,7 +9687,11 @@ window.dfnpanelData['3163d559'] = {"dfnID": "3163d559", "url": "https://drafts.c
 window.dfnpanelData['5a8644fc'] = {"dfnID": "5a8644fc", "url": "https://drafts.csswg.org/cssom-view-1/#determine-the-device-pixel-ratio", "dfnText": "determine the device pixel ratio", "refSections": [{"refs": [{"id": "ref-for-determine-the-device-pixel-ratio"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['04e2fe80'] = {"dfnID": "04e2fe80", "url": "https://drafts.csswg.org/cssom-view-1/#element-get-the-bounding-box", "dfnText": "get the bounding box", "refSections": [{"refs": [{"id": "ref-for-element-get-the-bounding-box"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['740a93dd'] = {"dfnID": "740a93dd", "url": "https://drafts.csswg.org/cssom-view/#layout-viewport", "dfnText": "layout viewport", "refSections": [{"refs": [{"id": "ref-for-layout-viewport"}, {"id": "ref-for-layout-viewport\u2460"}, {"id": "ref-for-layout-viewport\u2461"}, {"id": "ref-for-layout-viewport\u2462"}, {"id": "ref-for-layout-viewport\u2463"}, {"id": "ref-for-layout-viewport\u2464"}, {"id": "ref-for-layout-viewport\u2465"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}], "external": true};
+window.dfnpanelData['e61855ae'] = {"dfnID": "e61855ae", "url": "https://drafts.csswg.org/cssom-view/#dom-element-scrollheight", "dfnText": "scroll height", "refSections": [{"refs": [{"id": "ref-for-dom-element-scrollheight"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
+window.dfnpanelData['3bdd6de9'] = {"dfnID": "3bdd6de9", "url": "https://drafts.csswg.org/cssom-view/#dom-element-scrollwidth", "dfnText": "scroll width", "refSections": [{"refs": [{"id": "ref-for-dom-element-scrollwidth"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['62a0057d'] = {"dfnID": "62a0057d", "url": "https://drafts.csswg.org/cssom-view/#visual-viewport", "dfnText": "visual viewport", "refSections": [{"refs": [{"id": "ref-for-visual-viewport"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
+window.dfnpanelData['87e64c92'] = {"dfnID": "87e64c92", "url": "https://drafts.csswg.org/cssom-view/#dom-visualviewport-pageleft", "dfnText": "visual viewport page left", "refSections": [{"refs": [{"id": "ref-for-dom-visualviewport-pageleft"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
+window.dfnpanelData['7d9483c4'] = {"dfnID": "7d9483c4", "url": "https://drafts.csswg.org/cssom-view/#dom-visualviewport-pagetop", "dfnText": "visual viewport page top", "refSections": [{"refs": [{"id": "ref-for-dom-visualviewport-pagetop"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['99573380'] = {"dfnID": "99573380", "url": "https://dom.spec.whatwg.org/#attr", "dfnText": "Attr", "refSections": [{"refs": [{"id": "ref-for-attr"}], "title": "6.5.3.13. The script.RemoteValue Type"}], "external": true};
 window.dfnpanelData['85394472'] = {"dfnID": "85394472", "url": "https://dom.spec.whatwg.org/#document", "dfnText": "Document", "refSections": [{"refs": [{"id": "ref-for-document"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-document\u2460"}], "title": "7.1. HTML"}], "external": true};
 window.dfnpanelData['296f3551'] = {"dfnID": "296f3551", "url": "https://dom.spec.whatwg.org/#element", "dfnText": "Element", "refSections": [{"refs": [{"id": "ref-for-element"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-element\u2460"}, {"id": "ref-for-element\u2461"}], "title": "6.5.3.13. The script.RemoteValue Type"}, {"refs": [{"id": "ref-for-element\u2462"}, {"id": "ref-for-element\u2463"}], "title": "6.7.2.1. input.ElementOrigin"}], "external": true};
@@ -9684,6 +9702,7 @@ window.dfnpanelData['1cd7ff31'] = {"dfnID": "1cd7ff31", "url": "https://dom.spec
 window.dfnpanelData['77211728'] = {"dfnID": "77211728", "url": "https://dom.spec.whatwg.org/#concept-element-attribute", "dfnText": "attribute list", "refSections": [{"refs": [{"id": "ref-for-concept-element-attribute"}], "title": "6.5.3.13. The script.RemoteValue Type"}], "external": true};
 window.dfnpanelData['92b2d7da'] = {"dfnID": "92b2d7da", "url": "https://dom.spec.whatwg.org/#concept-tree-child", "dfnText": "children", "refSections": [{"refs": [{"id": "ref-for-concept-tree-child"}, {"id": "ref-for-concept-tree-child\u2460"}], "title": "6.5.3.13. The script.RemoteValue Type"}], "external": true};
 window.dfnpanelData['a973e0fe'] = {"dfnID": "a973e0fe", "url": "https://dom.spec.whatwg.org/#concept-document", "dfnText": "document", "refSections": [{"refs": [{"id": "ref-for-concept-document"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-concept-document\u2460"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-concept-document\u2461"}], "title": "6.5.5.2. The script.realmCreated Event"}], "external": true};
+window.dfnpanelData['ff7203d2'] = {"dfnID": "ff7203d2", "url": "https://dom.spec.whatwg.org/#ref-for-dom-document-documentelement", "dfnText": "document element", "refSections": [{"refs": [{"id": "ref-for-ref-for-dom-document-documentelement"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['73b0c924'] = {"dfnID": "73b0c924", "url": "https://dom.spec.whatwg.org/#shadowroot-mode", "dfnText": "mode", "refSections": [{"refs": [{"id": "ref-for-shadowroot-mode"}, {"id": "ref-for-shadowroot-mode\u2460"}], "title": "6.5.3.13. The script.RemoteValue Type"}], "external": true};
 window.dfnpanelData['d462b34f'] = {"dfnID": "d462b34f", "url": "https://dom.spec.whatwg.org/#boundary-point-node", "dfnText": "node", "refSections": [{"refs": [{"id": "ref-for-boundary-point-node"}], "title": "6.5.3.12. The script.RemoteReference Type"}], "external": true};
 window.dfnpanelData['5216e1a0'] = {"dfnID": "5216e1a0", "url": "https://dom.spec.whatwg.org/#concept-node-document", "dfnText": "node document", "refSections": [{"refs": [{"id": "ref-for-concept-node-document"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-concept-node-document\u2460"}], "title": "6.5.3.12. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-concept-node-document\u2461"}], "title": "6.5.3.13. The script.RemoteValue Type"}], "external": true};
@@ -9778,11 +9797,11 @@ window.dfnpanelData['24afcdf2'] = {"dfnID": "24afcdf2", "url": "https://fetch.sp
 window.dfnpanelData['dc1cd39b'] = {"dfnID": "dc1cd39b", "url": "https://fetch.spec.whatwg.org/#concept-request-url", "dfnText": "url (for request)", "refSections": [{"refs": [{"id": "ref-for-concept-request-url"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-concept-request-url\u2460"}], "title": "6.4.3.12. The network.RequestData Type"}, {"refs": [{"id": "ref-for-concept-request-url\u2461"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": true};
 window.dfnpanelData['3268a8eb'] = {"dfnID": "3268a8eb", "url": "https://fetch.spec.whatwg.org/#concept-response-url", "dfnText": "url (for response)", "refSections": [{"refs": [{"id": "ref-for-concept-response-url"}, {"id": "ref-for-concept-response-url\u2460"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": true};
 window.dfnpanelData['1ab127d6'] = {"dfnID": "1ab127d6", "url": "https://fetch.spec.whatwg.org/#concept-request-window", "dfnText": "window", "refSections": [{"refs": [{"id": "ref-for-concept-request-window"}, {"id": "ref-for-concept-request-window\u2460"}], "title": "6.4.3.3. The network.BaseParameters Type"}], "external": true};
-window.dfnpanelData['927f9c6b'] = {"dfnID": "927f9c6b", "url": "https://drafts.fxtf.org/geometry/#rectangle-height-dimension", "dfnText": "height dimension", "refSections": [{"refs": [{"id": "ref-for-rectangle-height-dimension"}, {"id": "ref-for-rectangle-height-dimension\u2460"}, {"id": "ref-for-rectangle-height-dimension\u2461"}, {"id": "ref-for-rectangle-height-dimension\u2462"}, {"id": "ref-for-rectangle-height-dimension\u2463"}, {"id": "ref-for-rectangle-height-dimension\u2464"}, {"id": "ref-for-rectangle-height-dimension\u2465"}, {"id": "ref-for-rectangle-height-dimension\u2466"}, {"id": "ref-for-rectangle-height-dimension\u2467"}, {"id": "ref-for-rectangle-height-dimension\u2468"}, {"id": "ref-for-rectangle-height-dimension\u2460\u24ea"}, {"id": "ref-for-rectangle-height-dimension\u2460\u2460"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
-window.dfnpanelData['759027a7'] = {"dfnID": "759027a7", "url": "https://drafts.fxtf.org/geometry/#rectangle-width-dimension", "dfnText": "width dimension", "refSections": [{"refs": [{"id": "ref-for-rectangle-width-dimension"}, {"id": "ref-for-rectangle-width-dimension\u2460"}, {"id": "ref-for-rectangle-width-dimension\u2461"}, {"id": "ref-for-rectangle-width-dimension\u2462"}, {"id": "ref-for-rectangle-width-dimension\u2463"}, {"id": "ref-for-rectangle-width-dimension\u2464"}, {"id": "ref-for-rectangle-width-dimension\u2465"}, {"id": "ref-for-rectangle-width-dimension\u2466"}, {"id": "ref-for-rectangle-width-dimension\u2467"}, {"id": "ref-for-rectangle-width-dimension\u2468"}, {"id": "ref-for-rectangle-width-dimension\u2460\u24ea"}, {"id": "ref-for-rectangle-width-dimension\u2460\u2460"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
-window.dfnpanelData['f20eafbd'] = {"dfnID": "f20eafbd", "url": "https://drafts.fxtf.org/geometry/#rectangle-x-coordinate", "dfnText": "x coordinate", "refSections": [{"refs": [{"id": "ref-for-rectangle-x-coordinate"}, {"id": "ref-for-rectangle-x-coordinate\u2460"}, {"id": "ref-for-rectangle-x-coordinate\u2461"}, {"id": "ref-for-rectangle-x-coordinate\u2462"}, {"id": "ref-for-rectangle-x-coordinate\u2463"}, {"id": "ref-for-rectangle-x-coordinate\u2464"}, {"id": "ref-for-rectangle-x-coordinate\u2465"}, {"id": "ref-for-rectangle-x-coordinate\u2466"}, {"id": "ref-for-rectangle-x-coordinate\u2467"}, {"id": "ref-for-rectangle-x-coordinate\u2468"}, {"id": "ref-for-rectangle-x-coordinate\u2460\u24ea"}, {"id": "ref-for-rectangle-x-coordinate\u2460\u2460"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
+window.dfnpanelData['927f9c6b'] = {"dfnID": "927f9c6b", "url": "https://drafts.fxtf.org/geometry/#rectangle-height-dimension", "dfnText": "height dimension", "refSections": [{"refs": [{"id": "ref-for-rectangle-height-dimension"}, {"id": "ref-for-rectangle-height-dimension\u2460"}, {"id": "ref-for-rectangle-height-dimension\u2461"}, {"id": "ref-for-rectangle-height-dimension\u2462"}, {"id": "ref-for-rectangle-height-dimension\u2463"}, {"id": "ref-for-rectangle-height-dimension\u2464"}, {"id": "ref-for-rectangle-height-dimension\u2465"}, {"id": "ref-for-rectangle-height-dimension\u2466"}, {"id": "ref-for-rectangle-height-dimension\u2467"}, {"id": "ref-for-rectangle-height-dimension\u2468"}, {"id": "ref-for-rectangle-height-dimension\u2460\u24ea"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
+window.dfnpanelData['759027a7'] = {"dfnID": "759027a7", "url": "https://drafts.fxtf.org/geometry/#rectangle-width-dimension", "dfnText": "width dimension", "refSections": [{"refs": [{"id": "ref-for-rectangle-width-dimension"}, {"id": "ref-for-rectangle-width-dimension\u2460"}, {"id": "ref-for-rectangle-width-dimension\u2461"}, {"id": "ref-for-rectangle-width-dimension\u2462"}, {"id": "ref-for-rectangle-width-dimension\u2463"}, {"id": "ref-for-rectangle-width-dimension\u2464"}, {"id": "ref-for-rectangle-width-dimension\u2465"}, {"id": "ref-for-rectangle-width-dimension\u2466"}, {"id": "ref-for-rectangle-width-dimension\u2467"}, {"id": "ref-for-rectangle-width-dimension\u2468"}, {"id": "ref-for-rectangle-width-dimension\u2460\u24ea"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
+window.dfnpanelData['f20eafbd'] = {"dfnID": "f20eafbd", "url": "https://drafts.fxtf.org/geometry/#rectangle-x-coordinate", "dfnText": "x coordinate", "refSections": [{"refs": [{"id": "ref-for-rectangle-x-coordinate"}, {"id": "ref-for-rectangle-x-coordinate\u2460"}, {"id": "ref-for-rectangle-x-coordinate\u2461"}, {"id": "ref-for-rectangle-x-coordinate\u2462"}, {"id": "ref-for-rectangle-x-coordinate\u2463"}, {"id": "ref-for-rectangle-x-coordinate\u2464"}, {"id": "ref-for-rectangle-x-coordinate\u2465"}, {"id": "ref-for-rectangle-x-coordinate\u2466"}, {"id": "ref-for-rectangle-x-coordinate\u2467"}, {"id": "ref-for-rectangle-x-coordinate\u2468"}, {"id": "ref-for-rectangle-x-coordinate\u2460\u24ea"}, {"id": "ref-for-rectangle-x-coordinate\u2460\u2460"}, {"id": "ref-for-rectangle-x-coordinate\u2460\u2461"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['f45987c0'] = {"dfnID": "f45987c0", "url": "https://drafts.fxtf.org/geometry/#rectangle-y-coordinate", "dfnText": "y coordinate", "refSections": [{"refs": [{"id": "ref-for-rectangle-y-coordinate"}, {"id": "ref-for-rectangle-y-coordinate\u2460"}, {"id": "ref-for-rectangle-y-coordinate\u2461"}, {"id": "ref-for-rectangle-y-coordinate\u2462"}, {"id": "ref-for-rectangle-y-coordinate\u2463"}, {"id": "ref-for-rectangle-y-coordinate\u2464"}, {"id": "ref-for-rectangle-y-coordinate\u2465"}, {"id": "ref-for-rectangle-y-coordinate\u2466"}, {"id": "ref-for-rectangle-y-coordinate\u2467"}, {"id": "ref-for-rectangle-y-coordinate\u2468"}, {"id": "ref-for-rectangle-y-coordinate\u2460\u24ea"}, {"id": "ref-for-rectangle-y-coordinate\u2460\u2460"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
-window.dfnpanelData['fdd2dd4e'] = {"dfnID": "fdd2dd4e", "url": "https://drafts.fxtf.org/geometry-1/#domrectreadonly", "dfnText": "DOMRectReadOnly", "refSections": [{"refs": [{"id": "ref-for-domrectreadonly"}, {"id": "ref-for-domrectreadonly\u2460"}, {"id": "ref-for-domrectreadonly\u2461"}, {"id": "ref-for-domrectreadonly\u2462"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
+window.dfnpanelData['fdd2dd4e'] = {"dfnID": "fdd2dd4e", "url": "https://drafts.fxtf.org/geometry-1/#domrectreadonly", "dfnText": "DOMRectReadOnly", "refSections": [{"refs": [{"id": "ref-for-domrectreadonly"}, {"id": "ref-for-domrectreadonly\u2460"}, {"id": "ref-for-domrectreadonly\u2461"}, {"id": "ref-for-domrectreadonly\u2462"}, {"id": "ref-for-domrectreadonly\u2463"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['b281322d'] = {"dfnID": "b281322d", "url": "https://w3c.github.io/hr-time/#dfn-get-time-origin-timestamp", "dfnText": "get time origin timestamp", "refSections": [{"refs": [{"id": "ref-for-dfn-get-time-origin-timestamp"}], "title": "6.4.3.7. The network.FetchTimingInfo Type"}], "external": true};
 window.dfnpanelData['b4ade816'] = {"dfnID": "b4ade816", "url": "https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-2d", "dfnText": "2d", "refSections": [{"refs": [{"id": "ref-for-concept-canvas-2d"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['73daca45'] = {"dfnID": "73daca45", "url": "https://html.spec.whatwg.org/multipage/canvas.html#2d-context-creation-algorithm", "dfnText": "2d context creation algorithm", "refSections": [{"refs": [{"id": "ref-for-2d-context-creation-algorithm"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
@@ -9816,6 +9835,7 @@ window.dfnpanelData['860a2f31'] = {"dfnID": "860a2f31", "url": "https://html.spe
 window.dfnpanelData['4a23b63a'] = {"dfnID": "4a23b63a", "url": "https://html.spec.whatwg.org/multipage/browsers.html#creating-a-new-browsing-context", "dfnText": "create a new browsing context", "refSections": [{"refs": [{"id": "ref-for-creating-a-new-browsing-context"}], "title": "6.3.4.1. The browsingContext.contextCreated Event"}], "external": true};
 window.dfnpanelData['12b8dfc0'] = {"dfnID": "12b8dfc0", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#current-settings-object", "dfnText": "current settings object", "refSections": [{"refs": [{"id": "ref-for-current-settings-object"}], "title": "6.6.3.1. The log.entryAdded Event"}], "external": true};
 window.dfnpanelData['180e7028'] = {"dfnID": "180e7028", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#default-classic-script-fetch-options", "dfnText": "default classic script fetch options", "refSections": [{"refs": [{"id": "ref-for-default-classic-script-fetch-options"}], "title": "6.5.2. Preload Scripts"}, {"refs": [{"id": "ref-for-default-classic-script-fetch-options\u2460"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-default-classic-script-fetch-options\u2461"}], "title": "6.5.4.4. The script.evaluate Command"}], "external": true};
+window.dfnpanelData['0318be47'] = {"dfnID": "0318be47", "url": "https://html.spec.whatwg.org/multipage/nav-history-apis.html#dom-document-defaultview", "dfnText": "default view", "refSections": [{"refs": [{"id": "ref-for-dom-document-defaultview"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['3e12e042'] = {"dfnID": "3e12e042", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object", "dfnText": "environment settings object", "refSections": [{"refs": [{"id": "ref-for-environment-settings-object"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-environment-settings-object\u2460"}], "title": "6.4.3.3. The network.BaseParameters Type"}, {"refs": [{"id": "ref-for-environment-settings-object\u2461"}], "title": "6.5.3.12. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-environment-settings-object\u2462"}], "title": "6.5.3.19. The script.Source Type"}, {"refs": [{"id": "ref-for-environment-settings-object\u2463"}], "title": "6.5.3.20. The script.Target Type"}, {"refs": [{"id": "ref-for-environment-settings-object\u2464"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-environment-settings-object\u2465"}], "title": "6.5.4.4. The script.evaluate Command"}, {"refs": [{"id": "ref-for-environment-settings-object\u2466"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-environment-settings-object\u2467"}], "title": "6.5.5.1. The script.message Event"}, {"refs": [{"id": "ref-for-environment-settings-object\u2468"}, {"id": "ref-for-environment-settings-object\u2460\u24ea"}], "title": "6.5.5.2. The script.realmCreated Event"}, {"refs": [{"id": "ref-for-environment-settings-object\u2460\u2460"}, {"id": "ref-for-environment-settings-object\u2460\u2461"}], "title": "6.5.5.3. The script.realmDestroyed Event"}, {"refs": [{"id": "ref-for-environment-settings-object\u2460\u2462"}], "title": "6.7.2.1. input.ElementOrigin"}], "external": true};
 window.dfnpanelData['10ae7dd2'] = {"dfnID": "10ae7dd2", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#environment-settings-object's-realm", "dfnText": "environment settings object's realm", "refSections": [{"refs": [{"id": "ref-for-environment-settings-object's-realm"}], "title": "6.5.5.3. The script.realmDestroyed Event"}], "external": true};
 window.dfnpanelData['f5265332'] = {"dfnID": "f5265332", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#concept-environment-execution-ready-flag", "dfnText": "execution ready flag", "refSections": [{"refs": [{"id": "ref-for-concept-environment-execution-ready-flag"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-concept-environment-execution-ready-flag\u2460"}], "title": "6.5.5.2. The script.realmCreated Event"}], "external": true};
@@ -9976,7 +9996,7 @@ window.dfnpanelData['79d221ec'] = {"dfnID": "79d221ec", "url": "https://w3c.gith
 window.dfnpanelData['4fc3ddf9'] = {"dfnID": "4fc3ddf9", "url": "https://w3c.github.io/webdriver/#dfn-session-id", "dfnText": "session id", "refSections": [{"refs": [{"id": "ref-for-dfn-session-id"}, {"id": "ref-for-dfn-session-id\u2460"}, {"id": "ref-for-dfn-session-id\u2461"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-dfn-session-id\u2462"}], "title": "6.1.3.2. The session.new Command"}], "external": true};
 window.dfnpanelData['4c001258'] = {"dfnID": "4c001258", "url": "https://w3c.github.io/webdriver/#dfn-session-not-created", "dfnText": "session not created", "refSections": [{"refs": [{"id": "ref-for-dfn-session-not-created"}, {"id": "ref-for-dfn-session-not-created\u2460"}], "title": "6.1.3.2. The session.new Command"}], "external": true};
 window.dfnpanelData['cb9acc83'] = {"dfnID": "cb9acc83", "url": "https://w3c.github.io/webdriver/#dfn-set-a-property", "dfnText": "set a property", "refSections": [{"refs": [{"id": "ref-for-dfn-set-a-property"}], "title": "4.1. Establishing a Connection"}], "external": true};
-window.dfnpanelData['4be6272b'] = {"dfnID": "4be6272b", "url": "https://w3c.github.io/webdriver/#dfn-success", "dfnText": "success", "refSections": [{"refs": [{"id": "ref-for-dfn-success"}, {"id": "ref-for-dfn-success\u2460"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-dfn-success\u2461"}, {"id": "ref-for-dfn-success\u2462"}, {"id": "ref-for-dfn-success\u2463"}], "title": "4.1. Establishing a Connection"}, {"refs": [{"id": "ref-for-dfn-success\u2464"}], "title": "5.1. Sandbox Realms"}, {"refs": [{"id": "ref-for-dfn-success\u2465"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-dfn-success\u2466"}], "title": "6.1.3.1. The session.status Command"}, {"refs": [{"id": "ref-for-dfn-success\u2467"}], "title": "6.1.3.2. The session.new Command"}, {"refs": [{"id": "ref-for-dfn-success\u2468"}], "title": "6.1.3.3. The session.end Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u24ea"}], "title": "6.1.3.4. The session.subscribe Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2460"}], "title": "6.1.3.5. The session.unsubscribe Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2461"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2462"}, {"id": "ref-for-dfn-success\u2460\u2463"}], "title": "6.3.2.1. The browsingContext.BrowsingContext Type"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2464"}, {"id": "ref-for-dfn-success\u2460\u2465"}, {"id": "ref-for-dfn-success\u2460\u2466"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2467"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2468"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u24ea"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2460"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2461"}], "title": "6.3.3.5. The browsingContext.getTree Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2462"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2463"}], "title": "6.3.3.8. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2464"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2465"}, {"id": "ref-for-dfn-success\u2461\u2466"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2467"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2468"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u24ea"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2460"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2461"}], "title": "6.4.4.6. The network.provideResponse Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2462"}], "title": "6.4.4.7. The network.removeIntercept Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2463"}, {"id": "ref-for-dfn-success\u2462\u2464"}, {"id": "ref-for-dfn-success\u2462\u2465"}, {"id": "ref-for-dfn-success\u2462\u2466"}, {"id": "ref-for-dfn-success\u2462\u2467"}, {"id": "ref-for-dfn-success\u2462\u2468"}, {"id": "ref-for-dfn-success\u2463\u24ea"}, {"id": "ref-for-dfn-success\u2463\u2460"}], "title": "6.5.3.6. The script.LocalValue Type"}, {"refs": [{"id": "ref-for-dfn-success\u2463\u2461"}, {"id": "ref-for-dfn-success\u2463\u2462"}], "title": "6.5.3.8. The script.Realm Type"}, {"refs": [{"id": "ref-for-dfn-success\u2463\u2463"}, {"id": "ref-for-dfn-success\u2463\u2464"}, {"id": "ref-for-dfn-success\u2463\u2465"}, {"id": "ref-for-dfn-success\u2463\u2466"}, {"id": "ref-for-dfn-success\u2463\u2467"}, {"id": "ref-for-dfn-success\u2463\u2468"}, {"id": "ref-for-dfn-success\u2464\u24ea"}, {"id": "ref-for-dfn-success\u2464\u2460"}], "title": "6.5.3.9. The script.PrimitiveProtocolValue Type"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2461"}, {"id": "ref-for-dfn-success\u2464\u2462"}], "title": "6.5.3.12. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2463"}], "title": "6.5.3.20. The script.Target Type"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2464"}], "title": "6.5.4.2. The script.disown Command"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2465"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2466"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2467"}], "title": "6.7.2.1. input.ElementOrigin"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2468"}], "title": "6.7.3.1. The input.performActions Command"}, {"refs": [{"id": "ref-for-dfn-success\u2465\u24ea"}], "title": "6.7.3.2. The input.releaseActions Command"}], "external": true};
+window.dfnpanelData['4be6272b'] = {"dfnID": "4be6272b", "url": "https://w3c.github.io/webdriver/#dfn-success", "dfnText": "success", "refSections": [{"refs": [{"id": "ref-for-dfn-success"}, {"id": "ref-for-dfn-success\u2460"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-dfn-success\u2461"}, {"id": "ref-for-dfn-success\u2462"}, {"id": "ref-for-dfn-success\u2463"}], "title": "4.1. Establishing a Connection"}, {"refs": [{"id": "ref-for-dfn-success\u2464"}], "title": "5.1. Sandbox Realms"}, {"refs": [{"id": "ref-for-dfn-success\u2465"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-dfn-success\u2466"}], "title": "6.1.3.1. The session.status Command"}, {"refs": [{"id": "ref-for-dfn-success\u2467"}], "title": "6.1.3.2. The session.new Command"}, {"refs": [{"id": "ref-for-dfn-success\u2468"}], "title": "6.1.3.3. The session.end Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u24ea"}], "title": "6.1.3.4. The session.subscribe Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2460"}], "title": "6.1.3.5. The session.unsubscribe Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2461"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2462"}, {"id": "ref-for-dfn-success\u2460\u2463"}], "title": "6.3.2.1. The browsingContext.BrowsingContext Type"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2464"}, {"id": "ref-for-dfn-success\u2460\u2465"}, {"id": "ref-for-dfn-success\u2460\u2466"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2467"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-dfn-success\u2460\u2468"}, {"id": "ref-for-dfn-success\u2461\u24ea"}, {"id": "ref-for-dfn-success\u2461\u2460"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2461"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2462"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2463"}], "title": "6.3.3.5. The browsingContext.getTree Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2464"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2465"}], "title": "6.3.3.8. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2466"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-dfn-success\u2461\u2467"}, {"id": "ref-for-dfn-success\u2461\u2468"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u24ea"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2460"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2461"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2462"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2463"}], "title": "6.4.4.6. The network.provideResponse Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2464"}], "title": "6.4.4.7. The network.removeIntercept Command"}, {"refs": [{"id": "ref-for-dfn-success\u2462\u2465"}, {"id": "ref-for-dfn-success\u2462\u2466"}, {"id": "ref-for-dfn-success\u2462\u2467"}, {"id": "ref-for-dfn-success\u2462\u2468"}, {"id": "ref-for-dfn-success\u2463\u24ea"}, {"id": "ref-for-dfn-success\u2463\u2460"}, {"id": "ref-for-dfn-success\u2463\u2461"}, {"id": "ref-for-dfn-success\u2463\u2462"}], "title": "6.5.3.6. The script.LocalValue Type"}, {"refs": [{"id": "ref-for-dfn-success\u2463\u2463"}, {"id": "ref-for-dfn-success\u2463\u2464"}], "title": "6.5.3.8. The script.Realm Type"}, {"refs": [{"id": "ref-for-dfn-success\u2463\u2465"}, {"id": "ref-for-dfn-success\u2463\u2466"}, {"id": "ref-for-dfn-success\u2463\u2467"}, {"id": "ref-for-dfn-success\u2463\u2468"}, {"id": "ref-for-dfn-success\u2464\u24ea"}, {"id": "ref-for-dfn-success\u2464\u2460"}, {"id": "ref-for-dfn-success\u2464\u2461"}, {"id": "ref-for-dfn-success\u2464\u2462"}], "title": "6.5.3.9. The script.PrimitiveProtocolValue Type"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2463"}, {"id": "ref-for-dfn-success\u2464\u2464"}], "title": "6.5.3.12. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2465"}], "title": "6.5.3.20. The script.Target Type"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2466"}], "title": "6.5.4.2. The script.disown Command"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2467"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-dfn-success\u2464\u2468"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-dfn-success\u2465\u24ea"}], "title": "6.7.2.1. input.ElementOrigin"}, {"refs": [{"id": "ref-for-dfn-success\u2465\u2460"}], "title": "6.7.3.1. The input.performActions Command"}, {"refs": [{"id": "ref-for-dfn-success\u2465\u2461"}], "title": "6.7.3.2. The input.releaseActions Command"}], "external": true};
 window.dfnpanelData['e7c89135'] = {"dfnID": "e7c89135", "url": "https://w3c.github.io/webdriver/#dfn-try", "dfnText": "try", "refSections": [{"refs": [{"id": "ref-for-dfn-try"}, {"id": "ref-for-dfn-try\u2460"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-dfn-try\u2461"}, {"id": "ref-for-dfn-try\u2462"}], "title": "6.1.3.2. The session.new Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463"}], "title": "6.1.3.4. The session.subscribe Command"}, {"refs": [{"id": "ref-for-dfn-try\u2464"}], "title": "6.1.3.5. The session.unsubscribe Command"}, {"refs": [{"id": "ref-for-dfn-try\u2465"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-dfn-try\u2466"}, {"id": "ref-for-dfn-try\u2467"}, {"id": "ref-for-dfn-try\u2468"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u24ea"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2460"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2461"}], "title": "6.3.3.5. The browsingContext.getTree Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2462"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2463"}], "title": "6.3.3.7. The browsingContext.navigate Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2464"}, {"id": "ref-for-dfn-try\u2460\u2465"}], "title": "6.3.3.8. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2466"}], "title": "6.3.3.9. The browsingContext.reload Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2467"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2468"}, {"id": "ref-for-dfn-try\u2461\u24ea"}, {"id": "ref-for-dfn-try\u2461\u2460"}, {"id": "ref-for-dfn-try\u2461\u2461"}, {"id": "ref-for-dfn-try\u2461\u2462"}, {"id": "ref-for-dfn-try\u2461\u2463"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-dfn-try\u2461\u2464"}], "title": "6.4.4.1. The network.addIntercept Command"}, {"refs": [{"id": "ref-for-dfn-try\u2461\u2465"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-dfn-try\u2461\u2466"}], "title": "6.4.4.6. The network.provideResponse Command"}, {"refs": [{"id": "ref-for-dfn-try\u2461\u2467"}, {"id": "ref-for-dfn-try\u2461\u2468"}, {"id": "ref-for-dfn-try\u2462\u24ea"}, {"id": "ref-for-dfn-try\u2462\u2460"}, {"id": "ref-for-dfn-try\u2462\u2461"}, {"id": "ref-for-dfn-try\u2462\u2462"}, {"id": "ref-for-dfn-try\u2462\u2463"}], "title": "6.5.3.6. The script.LocalValue Type"}, {"refs": [{"id": "ref-for-dfn-try\u2462\u2464"}], "title": "6.5.3.12. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-dfn-try\u2462\u2465"}, {"id": "ref-for-dfn-try\u2462\u2466"}], "title": "6.5.3.20. The script.Target Type"}, {"refs": [{"id": "ref-for-dfn-try\u2462\u2467"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-try\u2462\u2468"}], "title": "6.5.4.2. The script.disown Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u24ea"}, {"id": "ref-for-dfn-try\u2463\u2460"}, {"id": "ref-for-dfn-try\u2463\u2461"}, {"id": "ref-for-dfn-try\u2463\u2462"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2463"}], "title": "6.5.4.4. The script.evaluate Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2464"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2465"}], "title": "6.7.2.1. input.ElementOrigin"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2466"}, {"id": "ref-for-dfn-try\u2463\u2467"}], "title": "6.7.3.1. The input.performActions Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2468"}, {"id": "ref-for-dfn-try\u2464\u24ea"}], "title": "6.7.3.2. The input.releaseActions Command"}], "external": true};
 window.dfnpanelData['7aa9c8e0'] = {"dfnID": "7aa9c8e0", "url": "https://w3c.github.io/webdriver/#dfn-try", "dfnText": "trying", "refSections": [{"refs": [{"id": "ref-for-dfn-try"}, {"id": "ref-for-dfn-try\u2460"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-dfn-try\u2461"}, {"id": "ref-for-dfn-try\u2462"}], "title": "6.1.3.2. The session.new Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463"}], "title": "6.1.3.4. The session.subscribe Command"}, {"refs": [{"id": "ref-for-dfn-try\u2464"}], "title": "6.1.3.5. The session.unsubscribe Command"}, {"refs": [{"id": "ref-for-dfn-try\u2465"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-dfn-try\u2466"}, {"id": "ref-for-dfn-try\u2467"}, {"id": "ref-for-dfn-try\u2468"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u24ea"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2460"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2461"}], "title": "6.3.3.5. The browsingContext.getTree Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2462"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2463"}], "title": "6.3.3.7. The browsingContext.navigate Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2464"}, {"id": "ref-for-dfn-try\u2460\u2465"}], "title": "6.3.3.8. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2466"}], "title": "6.3.3.9. The browsingContext.reload Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2467"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-dfn-try\u2460\u2468"}, {"id": "ref-for-dfn-try\u2461\u24ea"}, {"id": "ref-for-dfn-try\u2461\u2460"}, {"id": "ref-for-dfn-try\u2461\u2461"}, {"id": "ref-for-dfn-try\u2461\u2462"}, {"id": "ref-for-dfn-try\u2461\u2463"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-dfn-try\u2461\u2464"}], "title": "6.4.4.1. The network.addIntercept Command"}, {"refs": [{"id": "ref-for-dfn-try\u2461\u2465"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-dfn-try\u2461\u2466"}], "title": "6.4.4.6. The network.provideResponse Command"}, {"refs": [{"id": "ref-for-dfn-try\u2461\u2467"}, {"id": "ref-for-dfn-try\u2461\u2468"}, {"id": "ref-for-dfn-try\u2462\u24ea"}, {"id": "ref-for-dfn-try\u2462\u2460"}, {"id": "ref-for-dfn-try\u2462\u2461"}, {"id": "ref-for-dfn-try\u2462\u2462"}, {"id": "ref-for-dfn-try\u2462\u2463"}], "title": "6.5.3.6. The script.LocalValue Type"}, {"refs": [{"id": "ref-for-dfn-try\u2462\u2464"}], "title": "6.5.3.12. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-dfn-try\u2462\u2465"}, {"id": "ref-for-dfn-try\u2462\u2466"}], "title": "6.5.3.20. The script.Target Type"}, {"refs": [{"id": "ref-for-dfn-try\u2462\u2467"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-try\u2462\u2468"}], "title": "6.5.4.2. The script.disown Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u24ea"}, {"id": "ref-for-dfn-try\u2463\u2460"}, {"id": "ref-for-dfn-try\u2463\u2461"}, {"id": "ref-for-dfn-try\u2463\u2462"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2463"}], "title": "6.5.4.4. The script.evaluate Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2464"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2465"}], "title": "6.7.2.1. input.ElementOrigin"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2466"}, {"id": "ref-for-dfn-try\u2463\u2467"}], "title": "6.7.3.1. The input.performActions Command"}, {"refs": [{"id": "ref-for-dfn-try\u2463\u2468"}, {"id": "ref-for-dfn-try\u2464\u24ea"}], "title": "6.7.3.2. The input.releaseActions Command"}], "external": true};
 window.dfnpanelData['914911f0'] = {"dfnID": "914911f0", "url": "https://w3c.github.io/webdriver/#dfn-unable-to-capture-screen", "dfnText": "unable to capture screen", "refSections": [{"refs": [{"id": "ref-for-dfn-unable-to-capture-screen"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
@@ -10054,7 +10074,7 @@ window.dfnpanelData['end-the-session'] = {"dfnID": "end-the-session", "url": "#e
 window.dfnpanelData['cleanup-the-session'] = {"dfnID": "cleanup-the-session", "url": "#cleanup-the-session", "dfnText": "cleanup the session", "refSections": [{"refs": [{"id": "ref-for-cleanup-the-session"}], "title": "6.1.3.3. The session.end Command"}, {"refs": [{"id": "ref-for-cleanup-the-session\u2460"}, {"id": "ref-for-cleanup-the-session\u2461"}, {"id": "ref-for-cleanup-the-session\u2462"}], "title": "6.2.2.1. The browser.close Command"}], "external": false};
 window.dfnpanelData['update-the-event-map'] = {"dfnID": "update-the-event-map", "url": "#update-the-event-map", "dfnText": "update the event map", "refSections": [{"refs": [{"id": "ref-for-update-the-event-map"}], "title": "6.1.3.4. The session.subscribe Command"}, {"refs": [{"id": "ref-for-update-the-event-map\u2460"}], "title": "6.1.3.5. The session.unsubscribe Command"}], "external": false};
 window.dfnpanelData['browsing-context-id'] = {"dfnID": "browsing-context-id", "url": "#browsing-context-id", "dfnText": "browsing context\nid", "refSections": [{"refs": [{"id": "ref-for-browsing-context-id"}, {"id": "ref-for-browsing-context-id\u2460"}], "title": "6.3.2.1. The browsingContext.BrowsingContext Type"}, {"refs": [{"id": "ref-for-browsing-context-id\u2461"}, {"id": "ref-for-browsing-context-id\u2462"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-browsing-context-id\u2463"}], "title": "6.3.2.4. The browsingContext.NavigationInfo Type"}, {"refs": [{"id": "ref-for-browsing-context-id\u2464"}, {"id": "ref-for-browsing-context-id\u2465"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-browsing-context-id\u2466"}], "title": "6.3.4.10. The browsingContext.userPromptClosed Event"}, {"refs": [{"id": "ref-for-browsing-context-id\u2467"}], "title": "6.3.4.11. The browsingContext.userPromptOpened Event"}, {"refs": [{"id": "ref-for-browsing-context-id\u2468"}], "title": "6.4.3.3. The network.BaseParameters Type"}, {"refs": [{"id": "ref-for-browsing-context-id\u2460\u24ea"}], "title": "6.5.3.8. The script.Realm Type"}, {"refs": [{"id": "ref-for-browsing-context-id\u2460\u2460"}, {"id": "ref-for-browsing-context-id\u2460\u2461"}], "title": "6.5.3.10. The script.RealmInfo Type"}, {"refs": [{"id": "ref-for-browsing-context-id\u2460\u2462"}], "title": "6.5.3.13. The script.RemoteValue Type"}, {"refs": [{"id": "ref-for-browsing-context-id\u2460\u2463"}], "title": "6.5.3.19. The script.Source Type"}, {"refs": [{"id": "ref-for-browsing-context-id\u2460\u2464"}, {"id": "ref-for-browsing-context-id\u2460\u2465"}], "title": "6.6. The log Module"}], "external": false};
-window.dfnpanelData['get-a-browsing-context'] = {"dfnID": "get-a-browsing-context", "url": "#get-a-browsing-context", "dfnText": "get a browsing context", "refSections": [{"refs": [{"id": "ref-for-get-a-browsing-context"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2461"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2462"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2463"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2464"}], "title": "6.3.3.5. The browsingContext.getTree Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2465"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2466"}], "title": "6.3.3.7. The browsingContext.navigate Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2467"}], "title": "6.3.3.8. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2468"}], "title": "6.3.3.9. The browsingContext.reload Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u24ea"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2460"}], "title": "6.5.3.20. The script.Target Type"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2461"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2462"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2463"}], "title": "6.6.3.1. The log.entryAdded Event"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2464"}], "title": "6.7.3.1. The input.performActions Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2465"}], "title": "6.7.3.2. The input.releaseActions Command"}], "external": false};
+window.dfnpanelData['get-a-browsing-context'] = {"dfnID": "get-a-browsing-context", "url": "#get-a-browsing-context", "dfnText": "get a browsing context", "refSections": [{"refs": [{"id": "ref-for-get-a-browsing-context"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2461"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2462"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2463"}], "title": "6.3.3.5. The browsingContext.getTree Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2464"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2465"}], "title": "6.3.3.7. The browsingContext.navigate Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2466"}], "title": "6.3.3.8. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2467"}], "title": "6.3.3.9. The browsingContext.reload Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2468"}], "title": "6.3.3.10. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u24ea"}], "title": "6.5.3.20. The script.Target Type"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2460"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2461"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2462"}], "title": "6.6.3.1. The log.entryAdded Event"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2463"}], "title": "6.7.3.1. The input.performActions Command"}, {"refs": [{"id": "ref-for-get-a-browsing-context\u2460\u2464"}], "title": "6.7.3.2. The input.releaseActions Command"}], "external": false};
 window.dfnpanelData['get-the-parent-browsing-context'] = {"dfnID": "get-the-parent-browsing-context", "url": "#get-the-parent-browsing-context", "dfnText": "get the parent browsing context", "refSections": [{"refs": [{"id": "ref-for-get-the-parent-browsing-context"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-get-the-parent-browsing-context\u2460"}], "title": "6.3.4.2. The browsingContext.contextDestroyed Event"}], "external": false};
 window.dfnpanelData['get-the-child-browsing-contexts'] = {"dfnID": "get-the-child-browsing-contexts", "url": "#get-the-child-browsing-contexts", "dfnText": "get the child browsing contexts", "refSections": [{"refs": [{"id": "ref-for-get-the-child-browsing-contexts"}], "title": "6.3.2.2. The browsingContext.Info Type"}], "external": false};
 window.dfnpanelData['get-the-browsing-context-info'] = {"dfnID": "get-the-browsing-context-info", "url": "#get-the-browsing-context-info", "dfnText": "get the browsing context info", "refSections": [{"refs": [{"id": "ref-for-get-the-browsing-context-info"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-get-the-browsing-context-info\u2460"}], "title": "6.3.3.5. The browsingContext.getTree Command"}, {"refs": [{"id": "ref-for-get-the-browsing-context-info\u2461"}], "title": "6.3.4.1. The browsingContext.contextCreated Event"}, {"refs": [{"id": "ref-for-get-the-browsing-context-info\u2462"}], "title": "6.3.4.2. The browsingContext.contextDestroyed Event"}], "external": false};
@@ -10063,8 +10083,9 @@ window.dfnpanelData['get-the-navigation-info'] = {"dfnID": "get-the-navigation-i
 window.dfnpanelData['activate-a-context'] = {"dfnID": "activate-a-context", "url": "#activate-a-context", "dfnText": "activate a context", "refSections": [{"refs": [{"id": "ref-for-activate-a-context"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-activate-a-context\u2460"}], "title": "6.3.3.4. The browsingContext.create Command"}], "external": false};
 window.dfnpanelData['normalize-rect'] = {"dfnID": "normalize-rect", "url": "#normalize-rect", "dfnText": "normalize rect", "refSections": [{"refs": [{"id": "ref-for-normalize-rect"}, {"id": "ref-for-normalize-rect\u2460"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": false};
 window.dfnpanelData['rectangle-intersection'] = {"dfnID": "rectangle-intersection", "url": "#rectangle-intersection", "dfnText": "rectangle intersection", "refSections": [{"refs": [{"id": "ref-for-rectangle-intersection"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": false};
-window.dfnpanelData['render-viewport-to-a-canvas'] = {"dfnID": "render-viewport-to-a-canvas", "url": "#render-viewport-to-a-canvas", "dfnText": "render viewport to a canvas", "refSections": [{"refs": [{"id": "ref-for-render-viewport-to-a-canvas"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": false};
+window.dfnpanelData['render-document-to-a-canvas'] = {"dfnID": "render-document-to-a-canvas", "url": "#render-document-to-a-canvas", "dfnText": "render document to a canvas", "refSections": [{"refs": [{"id": "ref-for-render-document-to-a-canvas"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": false};
 window.dfnpanelData['encode-a-canvas-as-base64'] = {"dfnID": "encode-a-canvas-as-base64", "url": "#encode-a-canvas-as-base64", "dfnText": "encode a canvas as Base64", "refSections": [{"refs": [{"id": "ref-for-encode-a-canvas-as-base64"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": false};
+window.dfnpanelData['get-the-origin-rectangle'] = {"dfnID": "get-the-origin-rectangle", "url": "#get-the-origin-rectangle", "dfnText": "get the origin rectangle", "refSections": [{"refs": [{"id": "ref-for-get-the-origin-rectangle"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": false};
 window.dfnpanelData['recursively-emit-context-created-events'] = {"dfnID": "recursively-emit-context-created-events", "url": "#recursively-emit-context-created-events", "dfnText": "Recursively emit context created events", "refSections": [{"refs": [{"id": "ref-for-recursively-emit-context-created-events"}, {"id": "ref-for-recursively-emit-context-created-events\u2460"}], "title": "6.3.4.1. The browsingContext.contextCreated Event"}], "external": false};
 window.dfnpanelData['emit-a-context-created-event'] = {"dfnID": "emit-a-context-created-event", "url": "#emit-a-context-created-event", "dfnText": "Emit a context created event", "refSections": [{"refs": [{"id": "ref-for-emit-a-context-created-event"}, {"id": "ref-for-emit-a-context-created-event\u2460"}], "title": "6.3.4.1. The browsingContext.contextCreated Event"}], "external": false};
 window.dfnpanelData['before-request-sent-map'] = {"dfnID": "before-request-sent-map", "url": "#before-request-sent-map", "dfnText": "before request sent map", "refSections": [{"refs": [{"id": "ref-for-before-request-sent-map"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-before-request-sent-map\u2460"}, {"id": "ref-for-before-request-sent-map\u2461"}, {"id": "ref-for-before-request-sent-map\u2462"}], "title": "6.4.5.2. The network.beforeRequestSent Event"}, {"refs": [{"id": "ref-for-before-request-sent-map\u2463"}], "title": "6.4.5.3. The network.fetchError Event"}, {"refs": [{"id": "ref-for-before-request-sent-map\u2464"}], "title": "6.4.5.4. The network.responseCompleted Event"}, {"refs": [{"id": "ref-for-before-request-sent-map\u2465"}], "title": "6.4.5.5. The network.responseStarted Event"}], "external": false};
