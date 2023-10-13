@@ -3068,8 +3068,8 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command  specific
 
       browsingContext.SetViewportParameters = {
         context: browsingContext.BrowsingContext,
-        viewport: browsingContext.Viewport / null,
-        devicePixelRatio: (float .gt 0.0) / null,
+        ? viewport: browsingContext.Viewport / null,
+        ? devicePixelRatio: (float .gt 0.0) / null,
       }
 
       browsingContext.Viewport = {
@@ -3090,32 +3090,42 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command  specific
 
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |context id| be the value of the |command parameters|["<code>context</code>"] field.
+1. Let |context id| be the value of the <code>context</code> field of |command
+   parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
+   |context id|.
 
-1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
+1. If |context| is not a [=top-level browsing context=], return [=error=] with
+   [=error code=] [=invalid argument=].
 
-1. Let |viewport| be the |command parameters|["<code>viewport</code>"] field.
+1. If the implementation is unable to adjust the |context|'s [=layout viewport=]
+   parameters with the given |command parameters| for any reason, return
+   [=error=] with [=error code=] [=unsupported operation=].
 
-1. Let |device pixel ratio| be the |command parameters|["<code>devicePixelRatio</code>"] field.
+1. If |command parameters| [=map/contains=] the <code>viewport</code> field:
 
-1. If |viewport| is not null, and the implementation is unable to set the width and height dimensions
-   of the [=layout viewport=] to |viewport|["width"] and |viewport|["height"], respectively, or if 
-   |device pixel ratio| is not null and the implementation is unable to set the size of the CSS pixel 
-   of the [=layout viewport=] to |device pixel ratio| device pixels, or if the implementation is unable
-   to adjust the [=layout viewport=] parameters for any other reason, return [=error=] 
-   with [=error code=] [=unsupported operation=].
+   1. Let |viewport| be the |command parameters|["<code>viewport</code>"].
+   
+   1. If |viewport| is not null, set the width of |context|'s [=layout
+      viewport=] to be the <code>width</code> of |viewport| in CSS pixels and
+      set the height of the |context|'s [=layout viewport=] to be the
+      <code>height</code> of |viewport| in CSS pixels.
 
-1. If |viewport| is not null:
-    1. Set the [=layout viewport=] of the |context| to be |viewport|["width"] CSS pixels wide and |viewport|["height"] CSS pixels high.
-1. Otherwise:
-    1. Set the [=layout viewport=] of the |context| to the implementation defined default.
+   1. Otherwise, set the |context|'s [=layout viewport=] to the
+      implementation-defined default.
 
-1. If |device pixel ratio| is not null:
-  1. Change the size of the [=CSS Pixel=] in |context|'s [=layout viewport=] such that it corresponds to |device pixel ratio| device pixels.
-1. Otherwise:
-  1. Set the size of the [=CSS Pixel=] in |context|'s [=layout viewport=] to the implementation defined default.
+1. If |command parameters| [=map/contains=] the <code>devicePixelRatio</code> field:
+
+   1. Let |device pixel ratio| be the |command
+      parameters|["<code>devicePixelRatio</code>"].
+
+   1. If |device pixel ratio| is not null, change the size of the [=CSS Pixel=]
+      in |context|'s [=layout viewport=] such that it corresponds to |device
+      pixel ratio| in device pixels.
+
+   1. Otherwise, set the size of the [=CSS Pixel=] in |context|'s [=layout
+      viewport=] to the implementation-defined default.
 
 1. Run the [[cssom-view-1#resizing-viewports]] steps.
 
