@@ -239,6 +239,7 @@ spec: WEB-IDL; urlPrefix: https://webidl.spec.whatwg.org/
     text: SyntaxError; url:#syntaxerror
 spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
   type: dfn
+    text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
     text: toUppercase; url: ch03.pdf#G34078
 </pre>
 
@@ -2849,7 +2850,7 @@ list of all nodes matching the specified locator.
       browsingContext.LocateNodesParameters = {
          context: browsingContext.BrowsingContext,
          locator: browsingContext.Locator,
-         ? maxReturnedNodeCount: (js-uint .ge 1),
+         ? maxNodeCount: (js-uint .ge 1),
          ? ownership: script.ResultOwnership,
          ? serializationOptions: script.SerializationOptions
          ? startNodes: [ + script.SharedReference ],
@@ -2887,8 +2888,8 @@ To <dfn>locate nodes using CSS</dfn> with given |context target|, |context nodes
 
     1. [=list/Append=] |element| to |returned nodes|.
 
-    1. If |maximum returned node count| is greater than 0 and [=list/size=] of
-       |returned nodes| is greater than or equal to |maximum returned node count|,
+    1. If |maximum returned node count| is not null and [=list/size=] of
+       |returned nodes| is equal to |maximum returned node count|,
        return |returned nodes|.
 
 1. Return |returned nodes|.
@@ -2928,8 +2929,8 @@ without going via the ECMAScript runtime.
 
       1. [=list/Append=] |node| to |returned nodes|.
       
-      1. If |maximum returned node count| is greater than 0 and [=list/size=] of
-         |returned nodes| is greater than or equal to |maximum returned node count|,
+      1. If |maximum returned node count| not null and [=list/size=] of
+         |returned nodes| is equal to |maximum returned node count|,
          return |returned nodes|.
 
       1. Set |index| to |index| + 1. 
@@ -2946,8 +2947,8 @@ and |session|:
 1. Let |returned nodes| be an empty [=/list=].
 
 1. If |ignore case| is false, let |search text| be |selector|. Otherwise, let
-   |search text| be the result of executing [=toUppercase=] with |selector|
-   according to the Unicode Default Case Conversion algorithm.
+   |search text| be the result of [=toUppercase=] with |selector| according
+   to the [=Unicode Default Case Conversion algorithm=].
 
 1. For each |context node| in |context nodes|:
 
@@ -2955,11 +2956,13 @@ and |session|:
      |context node| as the [=this=] value.
 
   1. If |ignore case| is false, let |node text| be |node inner text|. Otherwise,
-     let |node text| be the result of executing [=toUppercase=] with |node inner text|
-     according to the Unicode Default Case Conversion algorithm.
+     let |node text| be the result of [=toUppercase=] with |node inner text|
+     according to the [=Unicode Default Case Conversion algorithm=].
 
   1. If |match type| is "full" and |node text| [=is=] |search text|, [=list/append=]
-     |context node| to |returned nodes|. Otherwise, perform the following steps:
+     |context node| to |returned nodes|.
+     
+  1. Otherwise, perform the following steps:
 
     1. If |search text| is a [=code point substring=] of |node text|, perform the
        following steps:
@@ -2972,7 +2975,8 @@ and |session|:
 
       1. If [=list/size=] of |child nodes| is equal to 0 or |max depth|
          is equal to 0, [=list/append=] |context node| to |returned nodes|.
-         Otherwise, perform the following steps:
+         
+      1. Otherwise, perform the following steps:
 
         1. Set |max depth| to |max depth| - 1. 
 
@@ -3003,12 +3007,9 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Assert: |context| is not null.
 
-1. If |command parameters| [=map/contains=] "<code>maxReturnedNodeCount</code>", let
-   |maximum returned node count| be |command parameters|["<code>maxReturnedNodeCount</code>"].
+1. If |command parameters| [=map/contains=] "<code>maxNodeCount</code>", let
+   |maximum returned node count| be |command parameters|["<code>maxNodeCount</code>"].
    Otherwise, let |maximum returned node count| be null.
-
-1. If |maximum returned node count| is not null and |maximum returned node count|
-   is less than 1, return [=error=] with [=error code=] [=unsupported operation=]. 
 
 1. Let |current context target| be the a [=/map=] matching of the
    <code>script.ContextTarget</code> production with the 
@@ -3042,7 +3043,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |type| be |locator|["<code>type</code>"].
 
 1. In the following list of conditions and associated steps, run the first set 
-   of steps for which the associated condition is true, if any:
+   of steps for which the associated condition is true:
 
    <dl>
 
@@ -3079,7 +3080,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
             given |current context target|, |context nodes|, |selector|, |max depth|,
             |match type|, |ignore case|, |maximum returned node count| and |session|.
 
-1. Assert [=list/size=] of |result nodes| is less than or equal to |maximum returned node count|.
+1. Assert |maximum returned node count| is null or [=list/size=] of |result nodes| is less
+   than or equal to |maximum returned node count|.
 
 1. If |command parameters| [=map/contains=] "<code>serializationOptions</code>",
    let |serialization options| be |command parameters|["<code>serializationOptions</code>"].
