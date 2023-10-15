@@ -2960,35 +2960,33 @@ and |session|:
      let |node text| be the result of [=toUppercase=] with |node inner text|
      according to the [=Unicode Default Case Conversion algorithm=].
 
-  1. If |match type| is "full" and |node text| [=is=] |search text|, [=list/append=]
-     |context node| to |returned nodes|.
+  1. If |search text| is a [=code point substring=] of |node text|, perform the
+     following steps:
      
-  1. Otherwise, perform the following steps:
+    1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
+       <a spec=dom>children</a> of |context node|:
 
-    1. If |search text| is a [=code point substring=] of |node text|, perform the
-       following steps:
+      1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
 
-      1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
-         <a spec=dom>children</a> of |context node|:
+    1. If [=list/size=] of |child nodes| is equal to 0 or |max depth| is equal to 0,
+       perform the following steps:
 
-        1. If |child| implements {{Element}}, [=list/append=] |child| to
-           |child nodes|.
+      1. If |match type| is <code>"full"</code> and |node text| [=is=] |search text|,
+         [=list/append=] |context node| to |returned nodes|.
 
-      1. If [=list/size=] of |child nodes| is equal to 0 or |max depth|
-         is equal to 0, [=list/append=] |context node| to |returned nodes|.
-         
-      1. Otherwise, perform the following steps:
+      1. Otherwise, [=list/append=] |context node| to |returned nodes|.
 
-        1. Set |max depth| to |max depth| - 1. 
+    1. Otherwise, perform the following steps:
 
-        1. Let |child node matches| be the result of [=locate nodes using inner text=]
-           with |context target|, |child nodes|, |selector|, |max depth|,
-           |match type|, |ignore case|, |maximum returned node count|, and |session|.
+      1. Set |max depth| to |max depth| - 1. 
 
-        1. If [=list/size=] of |child node matches| is equal to 0 and
-           |match type| is "partial", [=list/append=] |context node| to
-           |returned nodes|. Otherwise, [=list/extend=] |returned nodes|
-           with |child node matches|.
+      1. Let |child node matches| be the result of [=locate nodes using inner text=]
+         with |context target|, |child nodes|, |selector|, |max depth|,
+         |match type|, |ignore case|, |maximum returned node count|, and |session|.
+
+      1. If [=list/size=] of |child nodes matches| is equal to 0 and |match type| is
+         <code>"partial"</code>, append |context node| to |returned nodes|. Otherwise,
+         [=list/extend=] |returned nodes| with |child node matches|.
 
 1. If |maximum returned node count| is not null, [=list/remove=] all entries
    in |returned nodes| with an index greater than or equal to |maximum returned
