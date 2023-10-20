@@ -37,6 +37,9 @@ spec: RFC6455; urlPrefix: https://tools.ietf.org/html/rfc6455
 spec: RFC8610; urlPrefix: https://tools.ietf.org/html/rfc8610
   type: dfn
     text: match a CDDL specification; url: appendix-C
+spec: RFC9110; urlPrefix: https://tools.ietf.org/html/rfc9110
+  type: dfn
+    text: method; url: method.overview
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithm
@@ -2382,7 +2385,7 @@ To <dfn>encode a canvas as Base64</dfn> given |canvas| and |format|:
 1. Otherwise, let |type| be "image/png" and let |quality| be [=undefined=].
 
 1. Let |file| be [=a serialization of the bitmap as a file=] for |canvas| with
-   |type| and |quality|. 
+   |type| and |quality|.
 
 1. Let |encoded string| be the [=forgiving-base64 encode=] of |file|.
 
@@ -3106,7 +3109,7 @@ The [=remote end steps=] with |command parameters| are:
 1. If |command parameters| [=map/contains=] the <code>viewport</code> field:
 
    1. Let |viewport| be the |command parameters|["<code>viewport</code>"].
-   
+
    1. If |viewport| is not null, set the width of |context|'s [=layout
       viewport=] to be the <code>width</code> of |viewport| in CSS pixels and
       set the height of the |context|'s [=layout viewport=] to be the
@@ -4215,6 +4218,12 @@ Each network request has an associated <dfn export>request id</dfn>, which is a
 string uniquely identifying that request. The identifier for a request resulting from a
 redirect matches that of the request that initiated it.
 
+<pre class="cddl local-cddl remote-cddl">
+network.Method = "GET" / "HEAD" / "POST" / "PUT" / "DELETE" / "CONNECT" / "OPTIONS" / "TRACE";
+</pre>
+
+A network [=method=] is one of the HTTP methods defined in [[!RFC9110]].
+
 #### The network.RequestData Type #### {#type-network-RequestData}
 
 [=Remote end definition=] and [=local end definition=]
@@ -4223,7 +4232,7 @@ redirect matches that of the request that initiated it.
 network.RequestData = {
     request: network.Request,
     url: text,
-    method: text,
+    method: network.Method,
     headers: [*network.Header],
     cookies: [*network.Cookie],
     headersSize: js-uint,
@@ -4960,7 +4969,7 @@ that's blocked by a [=network intercept=].
         ?body: network.BytesValue,
         ?cookies: [*network.CookieHeader],
         ?headers: [*network.Header],
-        ?method: text,
+        ?method: network.Method,
         ?url: text,
       }
       </pre>
