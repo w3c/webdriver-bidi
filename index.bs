@@ -1291,6 +1291,14 @@ access to that data in a {{Window}} global.
 
 Issue: Define how this works.
 
+# User Contexts # {#user-contexts}
+
+A <dfn interface>UserContext</dfn> is an aggregation of browsing contexts that separates the browsing contexts in one user context from browsing contexts in another user context.
+
+Note: User contexts are a WebDriver BiDi-specific equivalent to private browsing modes (https://www.w3.org/2001/tag/doc/private-browsing-modes/).
+While we don't want to pose any restrictions on the implementations of private browsing modes, we want to allow to perform basic operations with private browsing
+contexts. A user context can be seen as a user agent in terms of the Infra spec but currently WebDriver BiDi spec is not compliant with that definition of the user agent.
+
 # Modules # {#modules}
 
 ## The session Module ## {#module-session}
@@ -1951,16 +1959,16 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
 
 </div>
 
-#### The browser.createPartition Command #### {#command-browser-createPartition}
+#### The browser.createUserContext Command #### {#command-browser-createUserContext}
 
-The <dfn export for=commands>browser.createPartition</dfn> command creates a storage partition for a group of browsing contexts.
+The <dfn export for=commands>browser.createUserContext</dfn> command creates a {{UserContext}} of browsing contexts.
 
 <dl>
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
       browser.Close = (
-        method: "browser.createPartition",
+        method: "browser.createUserContext",
         params: EmptyParams,
       )
       </pre>
@@ -1968,29 +1976,29 @@ The <dfn export for=commands>browser.createPartition</dfn> command creates a sto
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      browser.createPartitionResult = {
-        partition: browser.Partition
+      browser.createUserContextResult = {
+        userContext: browser.UserContext
       }
     </pre>
    </dd>
 </dl>
 
-<div algorithm="remote end steps for browser.createPartition">
+<div algorithm="remote end steps for browser.createUserContext">
 
 </div>
 
-#### The browser.closePartition Command #### {#command-browser-closePartition}
+#### The browser.closeUserContext Command #### {#command-browser-closeUserContext}
 
-The <dfn export for=commands>browser.closePartition</dfn> command closes the partition and all browsing contexts in it without running <code>beforeunload</code> handlers.
+The <dfn export for=commands>browser.closeUserContext</dfn> command closes the userContext and all browsing contexts in it without running <code>beforeunload</code> handlers.
 
 <dl>
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
       browser.Close = (
-        method: "browser.closePartition",
+        method: "browser.closeUserContext",
         params: {
-          partition: browser.Partition
+          userContext: browser.UserContext
         },
       )
       </pre>
@@ -1998,27 +2006,27 @@ The <dfn export for=commands>browser.closePartition</dfn> command closes the par
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      browser.closePartitionResult = {
-        partition: browser.Partition
+      browser.closeUserContextResult = {
+        userContext: browser.UserContext
       }
     </pre>
    </dd>
 </dl>
 
-<div algorithm="remote end steps for browser.closePartition">
+<div algorithm="remote end steps for browser.closeUserContext">
 
 </div>
 
-#### The browser.getPartitions Command #### {#command-browser-getPartitions}
+#### The browser.getUserContexts Command #### {#command-browser-getUserContexts}
 
-The <dfn export for=commands>browser.getPartitions</dfn> command returns a list of existing partitions in the browser instance.
+The <dfn export for=commands>browser.getUserContexts</dfn> command returns a list of existing userContexts in the browser instance.
 
 <dl>
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
       browser.Close = (
-        method: "browser.getPartitions",
+        method: "browser.getUserContexts",
         params: EmptyParams,
       )
       </pre>
@@ -2026,18 +2034,18 @@ The <dfn export for=commands>browser.getPartitions</dfn> command returns a list 
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      browser.PartitionInfo = (
-        partition: browser.Partition,
+      browser.UserContextInfo = (
+        userContext: browser.UserContext,
       )
-      browser.PartitionInfoList = [*browser.PartitionInfo]
-      browser.getPartitionsResult = {
-        partitions: browser.PartitionInfoList
+      browser.UserContextInfoList = [*browser.UserContextInfo]
+      browser.getUserContextsResult = {
+        userContexts: browser.UserContextInfoList
       }
     </pre>
    </dd>
 </dl>
 
-<div algorithm="remote end steps for browser.getPartitions">
+<div algorithm="remote end steps for browser.getUserContexts">
 
 </div>
 
@@ -2159,7 +2167,7 @@ browsingContext.Info = {
   url: text,
   children: browsingContext.InfoList / null
   ? parent: browsingContext.BrowsingContext / null,
-  ? partition: Browser.Partition / null
+  ? userContext: Browser.UserContext / null
 }
 </pre>
 
@@ -2861,7 +2869,7 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
         type: browsingContext.CreateType,
         ? referenceContext: browsingContext.BrowsingContext,
         ? background: bool .default false,
-        ? partition: Browser.Partition / null
+        ? userContext: Browser.UserContext / null
       }
       </pre>
    </dd>
