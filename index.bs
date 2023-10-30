@@ -1977,7 +1977,7 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a [
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browser.Close = (
+      browser.CreateUserContext = (
         method: "browser.createUserContext",
         params: EmptyParams,
       )
@@ -2005,7 +2005,7 @@ The <dfn export for=commands>browser.closeUserContext</dfn> command closes a use
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browser.Close = (
+      browser.CloseUserContext = (
         method: "browser.closeUserContext",
         params: {
           userContext: browser.UserContext
@@ -2025,6 +2025,24 @@ The <dfn export for=commands>browser.closeUserContext</dfn> command closes a use
 
 <div algorithm="remote end steps for browser.closeUserContext">
 
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |user context| be the result of [=trying=] to find a [=user context=]
+   whose [=user context id=] equals |command
+   parameters|["<code>userContext</code>"].
+
+   Issue: Do we need to define "find" to be able to combine it with [=trying=]?
+
+   Issue: Should we allow closing the default context?
+
+1. [=Close=] any [=top-level browsing contexts=] contained that belong to the
+   |user context| without [=prompting to unload=].
+
+    Note: This implicitly only affects browsing contexts that were under
+    automation in the first place.
+
+1. Return [=success=] with data null.
+
 </div>
 
 #### The browser.getUserContexts Command #### {#command-browser-getUserContexts}
@@ -2035,7 +2053,7 @@ The <dfn export for=commands>browser.getUserContexts</dfn> command returns a lis
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      browser.Close = (
+      browser.GetUserContexts = (
         method: "browser.getUserContexts",
         params: EmptyParams,
       )
