@@ -1293,9 +1293,10 @@ Issue: Define how this works.
 
 # User Contexts # {#user-contexts}
 
-A <dfn interface>UserContext</dfn> is an aggregation of browsing contexts that separates the browsing contexts in one user context from browsing contexts in another user context.
+A <dfn>user context</dfn> is an aggregation of browsing contexts that separates the browser state for browsing contexts in one user context from browsing contexts in another user context.
+The user agent contains at least one user context, the <dfn>default user context</dfn>. 
 
-Note: User contexts are a WebDriver BiDi-specific equivalent to private browsing modes (https://www.w3.org/2001/tag/doc/private-browsing-modes/).
+Note: User contexts are a WebDriver-specific abstraction to allow working with private browsing modes (https://www.w3.org/2001/tag/doc/private-browsing-modes/).
 While we don't want to pose any restrictions on the implementations of private browsing modes, we want to allow to perform basic operations with private browsing
 contexts. A user context can be seen as a user agent in terms of the Infra spec but currently WebDriver BiDi spec is not compliant with that definition of the user agent.
 
@@ -1961,7 +1962,7 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
 
 #### The browser.createUserContext Command #### {#command-browser-createUserContext}
 
-The <dfn export for=commands>browser.createUserContext</dfn> command creates a {{UserContext}} of browsing contexts.
+The <dfn export for=commands>browser.createUserContext</dfn> command creates a [=user context=] in the user agent.
 
 <dl>
    <dt>Command Type</dt>
@@ -1989,7 +1990,7 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a {
 
 #### The browser.closeUserContext Command #### {#command-browser-closeUserContext}
 
-The <dfn export for=commands>browser.closeUserContext</dfn> command closes the userContext and all browsing contexts in it without running <code>beforeunload</code> handlers.
+The <dfn export for=commands>browser.closeUserContext</dfn> command closes a user context and all browsing contexts in it without running <code>beforeunload</code> handlers.
 
 <dl>
    <dt>Command Type</dt>
@@ -2019,7 +2020,7 @@ The <dfn export for=commands>browser.closeUserContext</dfn> command closes the u
 
 #### The browser.getUserContexts Command #### {#command-browser-getUserContexts}
 
-The <dfn export for=commands>browser.getUserContexts</dfn> command returns a list of existing userContexts in the browser instance.
+The <dfn export for=commands>browser.getUserContexts</dfn> command returns a list of existing user contexts in the user agent.
 
 <dl>
    <dt>Command Type</dt>
@@ -2046,6 +2047,27 @@ The <dfn export for=commands>browser.getUserContexts</dfn> command returns a lis
 </dl>
 
 <div algorithm="remote end steps for browser.getUserContexts">
+
+The [=remote end steps=] are:
+
+1. Let |user contexts| be the result of implementation-specific steps to get [=user contexts=] from the user agent.
+
+1. Let |user context info list| be an empty [=/list=].
+
+1. For each |user context| in |user contexts|:
+
+  1. If the |user context| is the [=default user context=], continue.
+
+  1. Let |info| be a [=/map=] matching the <code>browser.UserContextInfo</code>
+     production with the <code>userContext</code> field set to |user context|'s ID.
+
+  1. Append |info| to |user context info list|.
+
+1. Let |result| be a [=/map=] matching the
+   <code>browser.getUserContextsResult</code> production with the <code>userContexts</code>
+   field set to |user context info list|.
+
+1. Return [=success=] with data |result|.
 
 </div>
 
