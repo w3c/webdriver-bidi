@@ -1293,12 +1293,21 @@ Issue: Define how this works.
 
 # User Contexts # {#user-contexts}
 
-A <dfn>user context</dfn> is an aggregation of browsing contexts that separates the browser state for browsing contexts in one user context from browsing contexts in another user context.
-The user agent contains at least one user context, the <dfn>default user context</dfn>. 
+A <dfn>user context</dfn> represents a collection of top-level navigables within a remote
+end. Each top-level navigable belongs to exactly one user contexts, and child
+navigables belong to the same user context as their parent.
 
-Note: User contexts are a WebDriver-specific abstraction to allow working with private browsing modes (https://www.w3.org/2001/tag/doc/private-browsing-modes/).
-While we don't want to pose any restrictions on the implementations of private browsing modes, we want to allow to perform basic operations with private browsing
-contexts. A user context can be seen as a user agent in terms of the Infra spec but currently WebDriver BiDi spec is not compliant with that definition of the user agent.
+Each user context represents an additional [=storage key=], so that no storage
+state is shared between different user contexts.
+
+A user context has a <dfn>user context id</dfn>, which is a string set upon
+context creation.
+
+Note: the infra spec uses the term "user agent" to refer to the same concept as
+user contexts. However this is not compatible with usage of the term "user
+agent" to mean the entire web client, which may contain multiple user contexts.
+Although this difference is not visible to web content, it can be observed via
+WebDriver, so we avoid reusing existing terminology.
 
 # Modules # {#modules}
 
@@ -2056,10 +2065,8 @@ The [=remote end steps=] are:
 
 1. For each |user context| in |user contexts|:
 
-  1. If the |user context| is the [=default user context=], continue.
-
   1. Let |info| be a [=/map=] matching the <code>browser.UserContextInfo</code>
-     production with the <code>userContext</code> field set to |user context|'s ID.
+     production with the <code>userContext</code> field set to |user context|'s [=user context id=].
 
   1. Append |info| to |user context info list|.
 
@@ -2189,7 +2196,7 @@ browsingContext.Info = {
   url: text,
   children: browsingContext.InfoList / null
   ? parent: browsingContext.BrowsingContext / null,
-  ? userContext: Browser.UserContext / null
+  ? userContext: browser.UserContext / null
 }
 </pre>
 
@@ -2891,7 +2898,7 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
         type: browsingContext.CreateType,
         ? referenceContext: browsingContext.BrowsingContext,
         ? background: bool .default false,
-        ? userContext: Browser.UserContext / null
+        ? userContext: browser.UserContext / null
       }
       </pre>
    </dd>
