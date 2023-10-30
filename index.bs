@@ -1294,8 +1294,14 @@ Issue: Define how this works.
 # User Contexts # {#user-contexts}
 
 A <dfn>user context</dfn> represents a collection of top-level navigables within a remote
-end. Each top-level navigable belongs to exactly one user contexts, and child
-navigables belong to the same user context as their parent.
+end. Each top-level navigable belongs to exactly one user context, and child
+navigables belong to the same user context as their parent. A [=user context=] without
+navigables belonging to it is an <dfn>empty user context</dfn>. 
+
+The remote end always contains one [=user context=] referred as the <dfn>default user
+context</dfn>.
+
+Issue: Should we have a default user context?
 
 Each user context represents an additional [=storage key=], so that no storage
 state is shared between different user contexts.
@@ -1995,6 +2001,16 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a [
 
 <div algorithm="remote end steps for browser.createUserContext">
 
+The [=remote end steps=] are:
+
+1. Let |user context| be the result of performing implementation defined steps to create an [=empty user context=].
+
+1. Let |result| be a [=/map=] matching the
+   <code>browser.createUserContextResult</code> production with the <code>userContext</code>
+   field set to |user context|'s [=user context id=].
+
+1. Return [=success=] with data |result|.
+
 </div>
 
 #### The browser.closeUserContext Command #### {#command-browser-closeUserContext}
@@ -2015,11 +2031,9 @@ The <dfn export for=commands>browser.closeUserContext</dfn> command closes a use
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <pre class="cddl local-cddl">
-      browser.closeUserContextResult = {
-        userContext: browser.UserContext
-      }
-    </pre>
+      <pre class="cddl">
+      EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2033,7 +2047,7 @@ The [=remote end steps=] with |command parameters| are:
 
    Issue: Do we need to define "find" to be able to combine it with [=trying=]?
 
-   Issue: Should we allow closing the default context?
+   Issue: Should we allow closing the default context? Probably not.
 
 1. [=Close=] any [=top-level browsing contexts=] contained that belong to the
    |user context| without [=prompting to unload=].
@@ -2077,7 +2091,8 @@ The <dfn export for=commands>browser.getUserContexts</dfn> command returns a lis
 
 The [=remote end steps=] are:
 
-1. Let |user contexts| be the result of implementation-specific steps to get [=user contexts=] from the user agent.
+1. Let |user contexts| be the result of performing implementation defined steps
+   to get [=user contexts=] from the user agent.
 
 1. Let |user context info list| be an empty [=/list=].
 
@@ -2278,6 +2293,10 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
    Note: This includes the fragment component of the URL.
 
+1. Let |user context| be null if |context| belongs to the [=default user
+   context=] or the [=user context id=] if the [=user context=] the |context|
+   belongs to otherwise.
+
 1. Let |child infos| be null.
 
 1. If |max depth| is null, or |max depth| is greater than 0:
@@ -2299,7 +2318,7 @@ To <dfn>get the browsing context info</dfn> given |context|,
    <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
    if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
-   field set to |url|, and the <code>children</code> field set to |child infos|.
+   field set to |url|, the <code>userContext</code> field set to |user context| and the <code>children</code> field set to |child infos|.
 
 1. Return |context info|.
 
@@ -2949,13 +2968,20 @@ The [=remote end steps=] with |command parameters| are:
   1. If the implementation is unable to create a new browsing context for any
      reason then return [=error=] with [=error code=] [=unsupported operation=].
 
+  1. Let |user context| be the [=default user context=].
+  
+  1. If |command parameters|[<code>userContext</code>] is present and is not null:
+
+    1. Let |user context| be the result of [=trying=] to find a [=user context=] whose [=user context id=] equals |command parameters|[<code>userContext</code>].
+
   <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
        but without using the "current browsing context" concept. -->
   1. Create a new [=top-level browsing context=] by running the [=window open
-     steps=] with <var ignore>url</var> set to "<code>about:blank</code>",
-     <var ignore>target</var> set to the empty string, and
-     <var ignore>features</var> set to "<code>noopener</code>". Which OS window the new [=/browsing context=]
-     is created in depends on |type| and |reference context|:
+     steps=] in the |user context| with <var ignore>url</var> set to
+     "<code>about:blank</code>", <var ignore>target</var> set to the empty
+     string, and <var ignore>features</var> set to "<code>noopener</code>".
+     Which OS window the new [=/browsing context=] is created in depends on
+     |type| and |reference context|:
 
      * If |type| is "<code>tab</code>" and the implementation supports
        multiple browsing contexts in the same OS window:
