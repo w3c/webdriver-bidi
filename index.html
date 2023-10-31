@@ -7,7 +7,7 @@
   <link href="https://www.w3.org/StyleSheets/TR/2021/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="38ba606b749e9efdd9accda22f7945d4b6b3a66e" name="document-revision">
+  <meta content="409761f463284a1e48cadf0ed0a9b8403f1ee3a6" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -544,7 +544,7 @@ var.selected6 { background-color: #FFBCF2; box-shadow: 0 0 0 2px #FFBCF2; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-10-25">25 October 2023</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-10-31">31 October 2023</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -2774,7 +2774,8 @@ browsingContext.BoxClipRectangle = {
 )
 
 browsingContext.CloseParameters = {
-  context: browsingContext.BrowsingContext
+  context: browsingContext.BrowsingContext,
+  ? promptUnload: bool .default false
 }
 </pre>
     <dt>Result Type
@@ -2788,13 +2789,25 @@ browsingContext.CloseParameters = {
      <li data-md>
       <p>Let <var>context id</var> be the value of the <code>context</code> field of <var>command parameters</var>.</p>
      <li data-md>
+      <p>Let <var>prompt unload</var> be the value of the <code>promptUnload</code> field of <var>command parameters</var>.</p>
+     <li data-md>
       <p>Let <var>context</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try①⓪">trying</a> to <a data-link-type="dfn" href="#get-a-browsing-context" id="ref-for-get-a-browsing-context②">get a browsing context</a> with <var>context id</var>.</p>
      <li data-md>
       <p class="assertion">Assert: <var>context</var> is not null.</p>
      <li data-md>
       <p>If <var>context</var> is not a <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-browsing-context" id="ref-for-top-level-browsing-context⑦">top-level browsing context</a>, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors①⑨">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①⑥">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⓪">invalid argument</a>.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#close-a-browsing-context" id="ref-for-close-a-browsing-context①">Close</a> <var>context</var>.</p>
+      <p>If <var>prompt unload</var> is true:</p>
+      <ol>
+       <li data-md>
+        <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#close-a-browsing-context" id="ref-for-close-a-browsing-context①">Close</a> <var>context</var>.</p>
+      </ol>
+     <li data-md>
+      <p>Otherwise:</p>
+      <ol>
+       <li data-md>
+        <p><a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/window-object.html#close-a-browsing-context" id="ref-for-close-a-browsing-context②">Close</a> <var>context</var> without <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#prompt-to-unload-a-document" id="ref-for-prompt-to-unload-a-document①">prompting to unload</a>.</p>
+      </ol>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success②②">success</a> with data null.</p>
     </ol>
@@ -2978,7 +2991,7 @@ browsingContext.HandleUserPromptParameters = {
  negatively if <var>accept</var> is false.</p>
       <p>Otherwise if <var>context</var> is currently showing a simple dialog from a call to <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-prompt" id="ref-for-dom-prompt">prompt</a>, then respond with the string value <var>userText</var> if <var>accept</var> is
  true, or abort if <var>accept</var> is false.</p>
-      <p>Otherwise, if <var>context</var> is currently showing a prompt as part of the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#prompt-to-unload-a-document" id="ref-for-prompt-to-unload-a-document①">prompt
+      <p>Otherwise, if <var>context</var> is currently showing a prompt as part of the <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/browsing-the-web.html#prompt-to-unload-a-document" id="ref-for-prompt-to-unload-a-document②">prompt
  to unload</a> steps, then confirm the navigation if <var>accept</var> is true, otherwise
  refuse the navigation.</p>
       <p>Otherwise return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors②③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code①⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-no-such-alert" id="ref-for-dfn-no-such-alert">no such alert</a>.</p>
@@ -9824,7 +9837,7 @@ window.dfnpanelData['3b2ff63e'] = {"dfnID": "3b2ff63e", "url": "https://html.spe
 window.dfnpanelData['6d88ab2e'] = {"dfnID": "6d88ab2e", "url": "https://html.spec.whatwg.org/multipage/nav-history-apis.html#window-bc", "dfnText": "browsing context (for Window)", "refSections": [{"refs": [{"id": "ref-for-window-bc"}], "title": "6.5.3.13. The script.RemoteValue Type"}], "external": true};
 window.dfnpanelData['f23dc013'] = {"dfnID": "f23dc013", "url": "https://html.spec.whatwg.org/multipage/document-sequences.html#child-navigable", "dfnText": "child navigable", "refSections": [{"refs": [{"id": "ref-for-child-navigable"}], "title": "6.3.2.2. The browsingContext.Info Type"}], "external": true};
 window.dfnpanelData['b6a1ae3f'] = {"dfnID": "b6a1ae3f", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#clean-up-after-running-script", "dfnText": "clean up after running script", "refSections": [{"refs": [{"id": "ref-for-clean-up-after-running-script"}], "title": "6.5.2. Preload Scripts"}, {"refs": [{"id": "ref-for-clean-up-after-running-script\u2460"}, {"id": "ref-for-clean-up-after-running-script\u2461"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-clean-up-after-running-script\u2462"}], "title": "6.5.4.4. The script.evaluate Command"}], "external": true};
-window.dfnpanelData['b273f87a'] = {"dfnID": "b273f87a", "url": "https://html.spec.whatwg.org/multipage/window-object.html#close-a-browsing-context", "dfnText": "close", "refSections": [{"refs": [{"id": "ref-for-close-a-browsing-context"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-close-a-browsing-context\u2460"}], "title": "6.3.3.3. The browsingContext.close Command"}], "external": true};
+window.dfnpanelData['b273f87a'] = {"dfnID": "b273f87a", "url": "https://html.spec.whatwg.org/multipage/window-object.html#close-a-browsing-context", "dfnText": "close", "refSections": [{"refs": [{"id": "ref-for-close-a-browsing-context"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-close-a-browsing-context\u2460"}, {"id": "ref-for-close-a-browsing-context\u2461"}], "title": "6.3.3.3. The browsingContext.close Command"}], "external": true};
 window.dfnpanelData['3752e9b0'] = {"dfnID": "3752e9b0", "url": "https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-confirm", "dfnText": "confirm", "refSections": [{"refs": [{"id": "ref-for-dom-confirm"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}], "external": true};
 window.dfnpanelData['9d2630e3'] = {"dfnID": "9d2630e3", "url": "https://html.spec.whatwg.org/multipage//canvas.html#offscreencanvas-context-mode", "dfnText": "context mode", "refSections": [{"refs": [{"id": "ref-for-offscreencanvas-context-mode"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}], "external": true};
 window.dfnpanelData['860a2f31'] = {"dfnID": "860a2f31", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#creating-a-classic-script", "dfnText": "create a classic script", "refSections": [{"refs": [{"id": "ref-for-creating-a-classic-script"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-creating-a-classic-script\u2460"}], "title": "6.5.4.4. The script.evaluate Command"}], "external": true};
@@ -9852,7 +9865,7 @@ window.dfnpanelData['dc248371'] = {"dfnID": "dc248371", "url": "https://html.spe
 window.dfnpanelData['1bba3db7'] = {"dfnID": "1bba3db7", "url": "https://html.spec.whatwg.org/multipage/document-sequences.html#nav-parent", "dfnText": "parent", "refSections": [{"refs": [{"id": "ref-for-nav-parent"}], "title": "6.3.2.2. The browsingContext.Info Type"}], "external": true};
 window.dfnpanelData['c2359c09'] = {"dfnID": "c2359c09", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#prepare-to-run-script", "dfnText": "prepare to run script", "refSections": [{"refs": [{"id": "ref-for-prepare-to-run-script"}], "title": "6.5.2. Preload Scripts"}, {"refs": [{"id": "ref-for-prepare-to-run-script\u2460"}, {"id": "ref-for-prepare-to-run-script\u2461"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-prepare-to-run-script\u2462"}], "title": "6.5.4.4. The script.evaluate Command"}], "external": true};
 window.dfnpanelData['17555c59'] = {"dfnID": "17555c59", "url": "https://html.spec.whatwg.org/multipage/timers-and-user-prompts.html#dom-prompt", "dfnText": "prompt", "refSections": [{"refs": [{"id": "ref-for-dom-prompt"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}], "external": true};
-window.dfnpanelData['5bec656b'] = {"dfnID": "5bec656b", "url": "https://html.spec.whatwg.org/multipage/browsing-the-web.html#prompt-to-unload-a-document", "dfnText": "prompt to unload", "refSections": [{"refs": [{"id": "ref-for-prompt-to-unload-a-document"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-prompt-to-unload-a-document\u2460"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}], "external": true};
+window.dfnpanelData['5bec656b'] = {"dfnID": "5bec656b", "url": "https://html.spec.whatwg.org/multipage/browsing-the-web.html#prompt-to-unload-a-document", "dfnText": "prompt to unload", "refSections": [{"refs": [{"id": "ref-for-prompt-to-unload-a-document"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-prompt-to-unload-a-document\u2460"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-prompt-to-unload-a-document\u2461"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}], "external": true};
 window.dfnpanelData['ce15d5dc'] = {"dfnID": "ce15d5dc", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#realm-execution-context", "dfnText": "realm execution context", "refSections": [{"refs": [{"id": "ref-for-realm-execution-context"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-realm-execution-context\u2460"}], "title": "6.5.2. Preload Scripts"}, {"refs": [{"id": "ref-for-realm-execution-context\u2461"}], "title": "6.5.3.10. The script.RealmInfo Type"}, {"refs": [{"id": "ref-for-realm-execution-context\u2462"}], "title": "6.5.3.12. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-realm-execution-context\u2463"}], "title": "6.5.3.19. The script.Source Type"}, {"refs": [{"id": "ref-for-realm-execution-context\u2464"}], "title": "6.5.3.20. The script.Target Type"}, {"refs": [{"id": "ref-for-realm-execution-context\u2465"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-realm-execution-context\u2466"}], "title": "6.5.4.4. The script.evaluate Command"}, {"refs": [{"id": "ref-for-realm-execution-context\u2467"}], "title": "6.5.5.1. The script.message Event"}, {"refs": [{"id": "ref-for-realm-execution-context\u2468"}], "title": "6.5.5.3. The script.realmDestroyed Event"}, {"refs": [{"id": "ref-for-realm-execution-context\u2460\u24ea"}], "title": "6.7.2.1. input.ElementOrigin"}], "external": true};
 window.dfnpanelData['e99bd18e'] = {"dfnID": "e99bd18e", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-global", "dfnText": "relevant global object", "refSections": [{"refs": [{"id": "ref-for-concept-relevant-global"}, {"id": "ref-for-concept-relevant-global\u2460"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-concept-relevant-global\u2461"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-concept-relevant-global\u2462"}], "title": "6.5.2. Preload Scripts"}, {"refs": [{"id": "ref-for-concept-relevant-global\u2463"}], "title": "6.5.3.10. The script.RealmInfo Type"}, {"refs": [{"id": "ref-for-concept-relevant-global\u2464"}], "title": "6.5.3.20. The script.Target Type"}, {"refs": [{"id": "ref-for-concept-relevant-global\u2465"}], "title": "6.5.4.5. The script.getRealms Command"}, {"refs": [{"id": "ref-for-concept-relevant-global\u2466"}, {"id": "ref-for-concept-relevant-global\u2467"}], "title": "6.5.5.2. The script.realmCreated Event"}, {"refs": [{"id": "ref-for-concept-relevant-global\u2468"}], "title": "6.5.5.3. The script.realmDestroyed Event"}, {"refs": [{"id": "ref-for-concept-relevant-global\u2460\u24ea"}], "title": "6.7.2.1. input.ElementOrigin"}], "external": true};
 window.dfnpanelData['5991ccfb'] = {"dfnID": "5991ccfb", "url": "https://html.spec.whatwg.org/multipage/webappapis.html#concept-relevant-realm", "dfnText": "relevant realm", "refSections": [{"refs": [{"id": "ref-for-concept-relevant-realm"}], "title": "6.5.5.3. The script.realmDestroyed Event"}], "external": true};
