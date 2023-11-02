@@ -63,6 +63,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: input cancel list; url: dfn-input-cancel-list
     text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
+    text: invalid selector; url: dfn-invalid-selector
     text: invalid session id; url: dfn-invalid-session-id
     text: is element origin; url: dfn-is-element-origin
     text: local end; url: dfn-local-ends
@@ -145,6 +146,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: realm; url: sec-code-realms
     text: running execution context; url: running-execution-context
     text: throw completion; url: sec-completion-record-specification-type
+    text: test; url: #sec-regexp.prototype.test
     text: time value; url: sec-time-values-and-time-range
     text: undefined; url: sec-undefined-value
 spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
@@ -177,6 +179,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: handled; url: webappapis.html#concept-error-handled
     text: hidden; url: document-sequences.html#system-visibility-state
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
+    text: innerText getter steps; url:dom.html#dom-innertext
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
@@ -221,7 +224,24 @@ spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
     text: visual viewport; url: #visual-viewport
 spec: DOM; urlPrefix: https://dom.spec.whatwg.org/
   type: dfn
+    text: root; url: #concept-tree-root
     text: document element; url: #ref-for-dom-document-documentelement
+    text: evaluate; url: #dom-xpathevaluatorbase-evaluate
+    text: ORDERED_NODE_SNAPSHOT_TYPE; url: #dom-xpathresult-ordered_node_snapshot_type
+    text: snapshotItem; url: #dom-xpathresult-snapshotitem
+spec: SELECTORS4; urlPrefix: https://drafts.csswg.org/selectors-4/
+  type: dfn
+    text: match a selector against a tree; url: #match-a-selector-against-a-tree
+    text: parse a selector; url: #parse-a-selector
+    text: scoping root; url: #scoping-root
+spec: WEB-IDL; urlPrefix: https://webidl.spec.whatwg.org/
+  type: dfn
+    text: DOMException; url: #idl-DOMException
+    text: SyntaxError; url:#syntaxerror
+spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
+  type: dfn
+    text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
+    text: toUppercase; url: ch03.pdf#G34078
 </pre>
 
 <pre class="biblio">
@@ -1848,6 +1868,7 @@ BrowsingContextCommand = (
   browsingContext.Create //
   browsingContext.GetTree //
   browsingContext.HandleUserPrompt //
+  browsingContext.LocateNodes //
   browsingContext.Navigate //
   browsingContext.Print //
   browsingContext.Reload //
@@ -1862,6 +1883,7 @@ BrowsingContextResult = (
   browsingContext.CaptureScreenshotResult /
   browsingContext.CreateResult /
   browsingContext.GetTreeResult /
+  browsingContext.LocateNodesResult /
   browsingContext.NavigateResult /
   browsingContext.PrintResult
 )
@@ -2097,6 +2119,39 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 1. Return [=success=] with data |body|.
 
 </div>
+
+#### The browsingContext.Locator Type #### {#type-browsingContext-Locator}
+
+[=remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+browsingContext.Locator = (
+   browsingContext.CssLocator /
+   browsingContext.InnerTextLocator /
+   browsingContext.XPathLocator
+)
+
+browsingContext.CssLocator = {
+   type: "css",
+   value: text
+}
+
+browsingContext.InnerTextLocator = {
+   type: "innerText",
+   value: text,
+   ? ignoreCase: bool
+   ? matchType: "full" / "partial",
+   ? maxDepth: js-uint,
+}
+
+browsingContext.XPathLocator = {
+   type: "xpath",
+   value: text
+}
+</pre>
+
+The <code>browsingContext.Locator</code> type provides details on the strategy
+for locating a node in a document.
 
 #### The browsingContext.Navigation Type #### {#type-browsingContext-Navigation}
 
@@ -2781,6 +2836,279 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    Otherwise return [=error=] with [=error code=] [=no such alert=].
 
 1. Return [=success=] with data null.
+
+</div>
+#### The browsingContext.locateNodes Command ####  {#command-browsingContext-locateNodes}
+
+The <dfn export for=commands>browsingContext.locateNodes</dfn> command returns a
+list of all nodes matching the specified locator.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browsingContext.LocateNodes = (
+        method: "browsingContext.locateNodes",
+        params: browsingContext.LocateNodesParameters
+      )
+
+      browsingContext.LocateNodesParameters = {
+         context: browsingContext.BrowsingContext,
+         locator: browsingContext.Locator,
+         ? maxNodeCount: (js-uint .ge 1),
+         ? ownership: script.ResultOwnership,
+         ? sandbox: text,
+         ? serializationOptions: script.SerializationOptions,
+         ? startNodes: [ + script.SharedReference ]
+      }
+      </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        browsingContext.LocateNodesResult = {
+            nodes: [ * script.NodeRemoteValue ]
+        }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="locate nodes using CSS">
+To <dfn>locate nodes using CSS</dfn> with given |context target|, |context nodes|,
+|selector|, |maximum returned node count|, and <var ignore>session</var>:
+
+1. Let |returned nodes| be an empty [=/list=].
+
+1. Let |parse result| be the result of [=parse a selector=] given |selector|.
+
+1. If |parse result| is failure, return [=error=] with [=error code=] [=invalid selector=].
+
+1. For each |context node| of |context nodes|:
+
+  1. Let |elements| be the result of [=match a selector against a tree=] with 
+     |parse result| and |context target|’s [=active document=] [=root=] using
+     [=scoping root=] |context node|.
+
+  1. For each |element| in |elements|:
+
+    1. [=list/Append=] |element| to |returned nodes|.
+
+    1. If |maximum returned node count| is not null and [=list/size=] of
+       |returned nodes| is equal to |maximum returned node count|,
+       return |returned nodes|.
+
+1. Return |returned nodes|.
+
+</div>
+
+<div algorithm="locate nodes using XPath">
+
+To <dfn>locate nodes using XPath</dfn> with given |context target|,
+|context nodes|, |selector|, |maximum returned node count|, and <var ignore>session</var>:
+
+Note: Owing to the unmaintained state of the XPath specification, this algorithm
+is phrased as if making calls to the XPath DOM APIs. However this is to be understood
+as equivalent to spec-internal calls directly accessing the underlying algorithms,
+without going via the ECMAScript runtime.
+
+1. Let |returned nodes| be an empty [=/list=].
+
+1. For each |context node| of |context nodes|:
+
+   1. Let |evaluate result| be the result of calling [=evaluate=] on |context target|'s
+      [=active document=], with arguments |selector|, |context node|, null,
+      [=ORDERED_NODE_SNAPSHOT_TYPE=], and null. If this throws a "[=SyntaxError=]"
+      [=DOMException=], return [=error=] with [=error code=] [=invalid selector=];
+      otherwise, if this throws any other exception return [=error=] with [=error code=]
+      [=unknown error=].
+
+   1. Let |index| be 0.
+
+   1. Let |length| be the result of getting the <code>snapshotLength</code> property
+      from |evaluate result|.
+
+   1. Repeat, while |index| is less than |length|:
+
+      1. Let |node| be the result of calling [=snapshotItem=] with |evaluate result|
+         as this and |index| as the argument.
+
+      1. [=list/Append=] |node| to |returned nodes|.
+      
+      1. If |maximum returned node count| not null and [=list/size=] of
+         |returned nodes| is equal to |maximum returned node count|,
+         return |returned nodes|.
+
+      1. Set |index| to |index| + 1. 
+
+1. Return |returned nodes|.
+
+</div>
+
+<div algorithm="locate nodes using inner text">
+To <dfn>locate nodes using inner text</dfn> with given |context target|, |context nodes|,
+|selector|, |max depth|, |match type|, |ignore case|, |maximum returned node count|,
+and |session|:
+
+1. If |selector| is the empty string, return [=error=] with [=error code=]
+   [=invalid selector=].
+
+1. Let |returned nodes| be an empty [=/list=].
+
+1. If |ignore case| is false, let |search text| be |selector|. Otherwise, let
+   |search text| be the result of [=toUppercase=] with |selector| according
+   to the [=Unicode Default Case Conversion algorithm=].
+
+1. For each |context node| in |context nodes|:
+
+  1. Let |node inner text| be the result of calling the [=innerText getter steps=] with
+     |context node| as the [=this=] value.
+
+  1. If |ignore case| is false, let |node text| be |node inner text|. Otherwise,
+     let |node text| be the result of [=toUppercase=] with |node inner text|
+     according to the [=Unicode Default Case Conversion algorithm=].
+
+  1. If |search text| is a [=code point substring=] of |node text|, perform the
+     following steps:
+     
+    1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
+       <a spec=dom>children</a> of |context node|:
+
+      1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
+
+    1. If [=list/size=] of |child nodes| is equal to 0 or |max depth| is equal to 0,
+       perform the following steps:
+
+      1. If |match type| is <code>"full"</code> and |node text| [=is=] |search text|,
+         [=list/append=] |context node| to |returned nodes|.
+
+      1. Otherwise, [=list/append=] |context node| to |returned nodes|.
+
+    1. Otherwise, perform the following steps:
+
+      1. Set |max depth| to |max depth| - 1. 
+
+      1. Let |child node matches| be the result of [=locate nodes using inner text=]
+         with |context target|, |child nodes|, |selector|, |max depth|,
+         |match type|, |ignore case|, |maximum returned node count|, and |session|.
+
+      1. If [=list/size=] of |child node matches| is equal to 0 and |match type| is
+         <code>"partial"</code>, append |context node| to |returned nodes|. Otherwise,
+         [=list/extend=] |returned nodes| with |child node matches|.
+
+1. If |maximum returned node count| is not null, [=list/remove=] all entries
+   in |returned nodes| with an index greater than or equal to |maximum returned
+   node count|.
+
+1. Return |returned nodes|.
+
+</div>
+
+<div algorithm="remote end steps for browsingContext.locateNodes">
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let |context id| be |command parameters|["<code>context</code>"].
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Assert: |context| is not null.
+
+1. If |command parameters| [=map/contains=] "<code>sandbox</code>", let
+   |sandbox| be |command parameters|["<code>sandbox</code>"]. Otherwise,
+   let |sandbox| be null.
+
+1. Let |current context target| be the a [=/map=] matching of the
+   <code>script.ContextTarget</code> production with the 
+   <code>context</code> field set to the [=browsing context id=]
+   of |context| and the <code>sandbox</code> field set to |sandbox|.
+
+1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
+   given |current context target|.
+
+1. Let |locator| be |command parameters|["<code>locator</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>startNodes</code>", let
+   |start nodes parameter| be |command parameters|["<code>startNodes</code>"].
+   Otherwise let |start nodes parameter| be null.
+
+1. If |command parameters| [=map/contains=] "<code>maxNodeCount</code>", let
+   |maximum returned node count| be |command parameters|["<code>maxNodeCount</code>"].
+   Otherwise, let |maximum returned node count| be null.
+
+1. Let |context nodes| be an empty [=/list=].
+
+1. If |start nodes parameter| is null, [=list/append=] the [=document element=]
+   of |context|'s [=active document=] to |context nodes|. Otherwise, for each
+   |serialized start node| in |start nodes parameter|:
+
+   1. Let |start node| be the result of [=trying=] to [=deserialize shared reference=] given
+      |serialized start node|, |realm| and |session|.
+
+   1. [=list/Append=] |start node| to |context nodes|.
+
+1. Assert [=list/size=] of |context nodes| is greater than 0.
+
+1. Let |type| be |locator|["<code>type</code>"].
+
+1. In the following list of conditions and associated steps, run the first set 
+   of steps for which the associated condition is true:
+
+   <dl>
+
+      <dt>|type| is the string "<code>css</code>"
+      <dd>
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. Let |result nodes| be a result of [=trying=] to [=locate nodes using css=]
+            given |current context target|, |context nodes|, |selector|, |maximum returned
+            nodes| and |session|.
+
+      <dt>|type| is the string "<code>xpath</code>"
+      <dd>
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. Let |result nodes| be a result of [=trying=] to [=locate nodes using xpath=]
+            given |current context target|, |context nodes|, |selector|, |maximum returned
+            nodes| and |session|.
+
+      <dt>|type| is the string "<code>innerText</code>"
+      <dd>
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. If |locator| [=map/contains=] <code>maxDepth</code>, let |max depth| be 
+            |locator|["<code>maxDepth</code>"]. Otherwise, let |max depth| be null.
+
+         1. If |locator| [=map/contains=] <code>ignoreCase</code>, let |ignore case| be 
+            |locator|["<code>ignoreCase</code>"]. Otherwise, let |ignore case| be false.
+
+         1. If |locator| [=map/contains=] <code>matchType</code>, let |match type| be 
+            |locator|["<code>matchType</code>"]. Otherwise, let |match type| be "full".
+
+         1. Let |result nodes| be a result of [=trying=] to [=locate nodes using inner text=]
+            given |current context target|, |context nodes|, |selector|, |max depth|,
+            |match type|, |ignore case|, |maximum returned node count| and |session|.
+
+1. Assert: |maximum returned node count| is null or [=list/size=] of |result nodes| is less
+   than or equal to |maximum returned node count|.
+
+1. If |command parameters| [=map/contains=] "<code>serializationOptions</code>",
+   let |serialization options| be |command parameters|["<code>serializationOptions</code>"].
+   Otherwise, let |serialization options| be a [=/map=] matching the 
+   <code>script.SerializationOptions</code> production with the fields
+   set to their default values.
+
+1. If |command parameters| [=map/contains=] "<code>ownership</code>",
+   let |result ownership| be |command parameters|["<code>ownership</code>"].
+   Otherwise, let |result ownership| be "none".
+
+1. Let |serialized nodes| be the result of [=serialize as a remote value=] with
+   |result nodes|, |serialization options|, |result ownership|, a new [=/map=]
+   as serialization internal map, |realm| and |session|.
+
+1. Let |result| be a [=/map=] matching the <code>browsingContext.LocateNodesResult</code>
+   production, with the <code>nodes</code> field set |serialized nodes|.
+
+1. Return [=success=] with data |result|.
 
 </div>
 
