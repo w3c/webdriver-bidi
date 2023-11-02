@@ -2436,7 +2436,7 @@ To <dfn>encode a canvas as Base64</dfn> given |canvas| and |format|:
 1. Otherwise, let |type| be "image/png" and let |quality| be [=undefined=].
 
 1. Let |file| be [=a serialization of the bitmap as a file=] for |canvas| with
-   |type| and |quality|. 
+   |type| and |quality|.
 
 1. Let |encoded string| be the [=forgiving-base64 encode=] of |file|.
 
@@ -2519,7 +2519,16 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
        1. If |element|'s [=node document=] is not |document|, return [=error=] with
           [=error code=] [=no such element=].
 
-       1. Let |clip rect| be [=get the bounding box=] for |element|.
+       1. Let |viewport rect| be [=get the origin rectangle=] given
+          "<code>viewport</code>" and "<code>document</code>".
+
+       1. Let |element rect| be [=get the bounding box=] for |element|.
+
+       1. Let |clip rect| be a {{DOMRectReadOnly}} with [=x coordinate=]
+          |element rect|["<code>x</code>"] + |viewport rect|["<code>x</code>"]|,
+          [=y coordinate=] |element rect|["<code>y</code>"] + |viewport
+          rect|["<code>y</code>"], width |element rect|["<code>width</code>"],
+          and height |element rect|["<code>height</code>"].
 
        <dt>|clip| matches the <code>browsingContext.BoxClipRectangle</code> production:
        <dd>
@@ -2530,9 +2539,11 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
           coordinate=].
 
        1. Let |clip rect| be a {{DOMRectReadOnly}} with [=x coordinate=] |clip x|,
-          |clip y|, width |clip|["<code>width</code>"], and height
+          [=y coordinate=] |clip y|, width |clip|["<code>width</code>"], and height
           |clip|["<code>height</code>"].
      </dl>
+
+1. Note: All coordiantes are now measured from the origin of the document.
 
 1. Let |rect| be the [=rectangle intersection=] of |origin rect| and |clip rect|.
 
