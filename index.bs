@@ -210,6 +210,14 @@ spec: HR-TIME; urlPrefix: https://w3c.github.io/hr-time/
 spec: RFC4648; urlPrefix: https://tools.ietf.org/html/rfc4648
   type: dfn
     text: Base64 Encode; url: section-4
+spec: PERMISSIONS; urlPrefix: https://www.w3.org/TR/permissions/
+  type: dfn
+    text: permission descriptor; url: #dom-permissiondescriptor
+    text: permission name; url: #permission-name
+    text: permission state; url: #dom-permissionstate
+    text: permissions task source; url: #permissions-task-source
+    text: permissions; url: #permissions
+    text: set permission; url: #set-permission-command
 spec: CSS-VALUES-3; urlPrefix: https://drafts.csswg.org/css-values-3/
   type: dfn
     text: absolute lengths; url: #absolute-lengths
@@ -3960,6 +3968,133 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
    given "<code>browsingContext.userPromptOpened</code>" and |related browsing contexts|:
 
   1. [=Emit an event=] with |session| and |body|.
+
+</div>
+
+## The permissions Module ## {#module-permissions}
+
+The <dfn export for=modules>permissions</dfn> module contains commands and
+events relating to browser [=/permissions=]. [[!PERMISSIONS]]
+
+### Definition ### {#module-permissions-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+
+PermissionsCommand = (
+  permissions.SetPermission
+)
+
+TODO: Add more commands: QueryPermission, ResetPermission, ResetAllPermissions, etc.
+
+</pre>
+
+### Types ### {#module-permissions-types}
+
+#### The permissions.PermissionDescriptor Type #### {#type-permissions-PermissionDescriptor}
+
+<pre class="cddl local-cddl">
+permissions.PermissionDescriptor = {
+  type: "permissionDescriptor",
+  name: text,
+}
+</pre>
+
+The <code>permissions.PermissionDescriptor</code> type represents a [=permission descriptor=].
+
+#### The permissions.PermissionState Type #### {#type-permissions-PermissionState}
+
+<pre class="cddl local-cddl">
+permissions.PermissionState = "granted" / "denied" / "prompt"
+</pre>
+
+The <code>permissions.PermissionState</code> type represents a [=permission state=].
+
+### Commands ### {#module-permissions-commands}
+
+#### The permissions.setPermission Command ####  {#command-permissions-setPermission}
+
+The <dfn export for=commands>permissions.setPermission</dfn> command simulates
+user modification of a {{PermissionDescriptor}}'s [=permission state=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      permissions.setPermission = (
+        method: "permissions.setPermission",
+        params: permissions.SetPermissionParameters
+      )
+
+      permissions.SetPermissionParameters = {
+        descriptor: permissions.PermissionDescriptor,
+        state: permissions.PermissionState,
+        ? context: browsingContext.BrowsingContext,
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for permissions.setPermission">
+
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let |descriptor| be the value of the <code>descriptor</code> field of
+   |command parameters|.
+
+1. Let |state| be the value of the <code>state</code> field of |command
+   parameters|.
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. If |context id| is not present, let |context| be the [=top-level browsing context=]
+   of |session|. Otherwise, let |context| be the result of [=trying=] to
+   [=get a browsing context=] with |context id|.
+
+1. Let |permission name| be the value of the <code>name</code> field of
+   |descriptor| representing [=permission name=].
+
+1. <a>Convert to an IDL value</a> (|descriptor|, |state|) of type {{PermissionSetParameters}}.
+   If this conversion throws an exception, return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |typedDescriptor| be the object |descriptor| refers to, <a>converted to an IDL
+   value</a> of |permission name|'s [=powerful
+   feature/permission descriptor type=]. If this throws an exception,
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |state| is an inappropriate [=permission state=] for any
+   implementation-defined reason, return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |settings| be the [=current settings object=].
+
+1. Let |targets| be a [=/list=] containing all [=environment settings object=]
+   whose [=environment settings object/origin=] is the <a data-lt="same origin">same</a> as
+   the [=environment settings object/origin=] of |settings|.
+
+1. Let |tasks| be an empty [=/list=].
+
+1. For each [=environment settings object=] |target| in |targets|:
+
+   1. [=Queue a task=] |task| on the [=permissions task source=] of |target|'s
+      [=relevant settings object=]'s [=environment settings object/global object=]'s
+      [=Window/browsing context=] to perform the following step:
+
+      1. Interpret |state| as if it were the result of an invocation of [=permission state=]
+         for |typedDescriptor| with the argument |target| made at this moment.
+
+   1. [=list/Append=] |task| to |tasks|.
+
+1. Wait for all <a>tasks</a> in |tasks| to have executed.
+
+1. Return [=success=] with data null.
 
 </div>
 
@@ -9112,7 +9247,7 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 10, given
 
 </div>
 
-## The Input Module ## {#module-input}
+## The input Module ## {#module-input}
 
 The <dfn export for=modules>input</dfn> module contains functionality for
 simulated user input.
