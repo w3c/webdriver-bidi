@@ -8577,12 +8577,19 @@ A [=remote end=] has a [=/map=] of <dfn>default values for storage partition key
 To <dfn>expand a storage partition key spec</dfn> given |partition key spec|:
 
 1. If |partition key spec| is null:
+
   1. Let |partition key| be an empty [=/map=].
+
 1. Otherwise:
+
   1. Let |partition key| be |partition key spec|.
+
 1. For each |name| → |default value| in the [=default values for storage partition key attributes=]:
+
   1. If |partition key|[|name|] does not [=map/exist=]:
+
     1. [=map/Set=] |partition key|[|name|] to |default value|.
+
 1. Return |partition key|.
 
 </div>
@@ -8591,7 +8598,9 @@ To <dfn>expand a storage partition key spec</dfn> given |partition key spec|:
 To <dfn>get the cookie store</dfn> given |storage partition key|:
 
 1. If a [=cookie store=] exists for |storage partition key|:
+
   1. Return the matching [=cookie store=].
+
 1. Return [=error=] with [=error code=] [=no such storage partition=].
 
 </div>
@@ -8681,12 +8690,18 @@ To <dfn>get the cookie store</dfn> given |storage partition key|:
 To <dfn>match cookie</dfn> given |stored cookie| and |filter|:
 
 1. For each |name| → |value| in |filter|:
+
   1. If |name| is "<code>value</code>":
+
     1. Set |value| to [=deserialize protocol bytes=] with |value|.
+
   1. Let |field name| be the field name corresponding to the JSON key |name| in
     the [=table for cookie conversion=].
+
   1. If |stored cookie|[|field name|] does not equal |value|:
+
     1. Return false.
+
 1. Return true.
 
 </div>
@@ -8695,9 +8710,13 @@ To <dfn>match cookie</dfn> given |stored cookie| and |filter|:
 To <dfn>get matching cookies</dfn> given |cookie store| and |filter|:
 
 1. Let |cookies| be a new list.
+
 1. For each |stored cookie| in |cookie store|:
+
   1. If [=match cookie=] with |stored cookie| and |filter| is true:
+
     1. Append the result of [=serialize cookie=] given |stored cookie| to |cookies|.
+
 1. Return |cookies|.
 
 </div>
@@ -8741,14 +8760,20 @@ The <dfn export for=commands>storage.getCookies</dfn> command retrieves zero or 
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
 1. Let |filter| be the value of the <code>cookie</code> field of |command parameters|.
+
 1. Let |partition key spec| be the value of the <code>partitionKey</code> field of
   |command parameters| if it is present or null if it isn't.
+
 1. Let |partition key| be the result of [=expand a storage partition key spec|expanding=] |partition key spec|.
+
 1. Let |store| be the result of [=trying=] to [=get the cookie store=] with
   |partition key|.
+
 1. Let |cookies| be the result of [=get matching cookies=] with |store| and |filter|.
+
 1. Let |body| be a [=/map=] matching the <code>storage.GetCookiesResult</code> production,
   with the <code>cookies</code> field set to |cookies|.
+
 1. Return [=success=] with data |body|.
 
 </div>
@@ -8793,15 +8818,22 @@ The <dfn export for=commands>storage.setCookie</dfn> command creates a new [=coo
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
 1. Let |cookie spec| be the value of the <code>cookie</code> field of |command parameters|.
+
 1. If |cookie spec|["<code>size</code>"] exists:
+
   1. Return an [=error=] with [=error code=] [=invalid argument=].
+
 1. Let |partition key spec| be the value of the <code>partitionKey</code> field of
   |command parameters| if it is present or null if it isn't.
+
 1. Let |partition key| be the result of [=expand a storage partition key spec|expanding=] |partition key spec|.
+
 1. Let |store| be the result of [=trying=] to [=get the cookie store=] with
   |partition key|.
+
 1. Let |deserialized value| be [=deserialize protocol bytes=] with
   |cookie spec|["<code>value</code>"].
+
 1. [=Create a cookie=] in |store| using [=cookie name=] |cookie spec|["<code>name</code>"],
   [=cookie value=] |deserialized value|, [=cookie domain=]
   |cookie spec|["<code>domain</code>"], and an attribute-value list of the
@@ -8831,6 +8863,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |body| be a [=/map=] matching the <code>storage.SetCookieResult</code> production,
   with the <code>partitionKey</code> field set to |partition key|.
+
 1. Return [=success=] with data |body|.
 
 </div>
@@ -8866,14 +8899,21 @@ The <dfn export for=commands>storage.deleteCookies</dfn> command removes zero or
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
 1. Let |filter| be the value of the <code>cookie</code> field of |command parameters|.
+
 1. Let |partition key spec| be the value of the <code>partitionKey</code> field of
   |command parameters| if it is present or null if it isn't.
+
 1. Let |partition key| be the result of [=expand a storage partition key spec|expanding=] |partition key spec|.
+
 1. Let |store| be the result of [=trying=] to [=get the cookie store=] with
   |partition key|.
+
 1. Let |cookies| be the result of [=get matching cookies=] with |store| and |filter|.
+
 1. For each |cookie| in |cookies|:
+
   1. Remove |cookie| from |store|.
+
 1. Return [=success=] with data null.
 
 </div>
