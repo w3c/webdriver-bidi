@@ -2064,19 +2064,22 @@ The <dfn export for=commands>browser.closeUserContext</dfn> command closes a use
 
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |user context| be the result of [=trying=] to find a [=user context=]
-   whose [=user context id=] equals |command
-   parameters|["<code>userContext</code>"].
+1. Let |user context| be |command  parameters|["<code>userContext</code>"].
 
-   Issue: Do we need to define "find" to be able to combine it with [=trying=]?
+1. If the [=user context=] with the [=user context id=] equal to |user context|
+   does not exist in the user agent, return [=error=] with [=error code=] [=invalid
+   argument=]
 
-   Issue: Should we allow closing the default context? Probably not.
-
-1. [=Close=] any [=top-level browsing contexts=] contained that belong to the
-   |user context| without [=prompting to unload=].
+1. [=Close=] any [=top-level browsing contexts=] that belong to the |user
+   context| without [=prompting to unload=].
 
     Note: This implicitly only affects browsing contexts that were under
     automation in the first place.
+
+    Issue: Should we allow closing the default context? Probably not.
+
+1. Perform implementation defined steps to remove the |user context| from the
+   user agent.
 
 1. Return [=success=] with data null.
 
@@ -2991,7 +2994,10 @@ The [=remote end steps=] with |command parameters| are:
   
   1. If |command parameters|[<code>userContext</code>] is present and is not null:
 
-    1. Let |user context| be the result of [=trying=] to find a [=user context=] whose [=user context id=] equals |command parameters|[<code>userContext</code>].
+    1. Let |user context| be |command parameters|[<code>userContext</code>].
+
+    1. If the [=user context=] with the [=user context id=] equal to |user context| does 
+      not exist in the user agent, return [=error=] with [=error code=] [=invalid argument=].
 
   <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
        but without using the "current browsing context" concept. -->
