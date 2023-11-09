@@ -72,6 +72,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: input cancel list; url: dfn-input-cancel-list
     text: intermediary node; url: dfn-intermediary-node
     text: invalid argument; url: dfn-invalid-argument
+    text: invalid selector; url: dfn-invalid-selector
     text: invalid session id; url: dfn-invalid-session-id
     text: is element origin; url: dfn-is-element-origin
     text: local end; url: dfn-local-ends
@@ -154,6 +155,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: realm; url: sec-code-realms
     text: running execution context; url: running-execution-context
     text: throw completion; url: sec-completion-record-specification-type
+    text: test; url: #sec-regexp.prototype.test
     text: time value; url: sec-time-values-and-time-range
     text: undefined; url: sec-undefined-value
 spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
@@ -183,9 +185,11 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: default view; url: nav-history-apis.html#dom-document-defaultview
     text: environment settings object's Realm; url: webappapis.html#environment-settings-object's-realm
     text: focused area of the document; url: document-sequences.html#focused-area-of-the-document
+    text: getting all used history steps; url:browsing-the-web.html#getting-all-used-history-steps
     text: handled; url: webappapis.html#concept-error-handled
     text: hidden; url: document-sequences.html#system-visibility-state
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
+    text: innerText getter steps; url:dom.html#dom-innertext
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
@@ -197,6 +201,8 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
     text: session history; url: history.html#session-history
+    text: session history entry; url: browsing-the-web.html#session-history-entry
+    text: session history traversal queue; url: document-sequences.html#tn-session-history-traversal-queue
     text: set up a window environment settings object; url: window-object.html#set-up-a-window-environment-settings-object
     text: set up a worker environment settings object; url: workers.html#set-up-a-worker-environment-settings-object
     text: set up a worklet environment settings object; url: worklets.html#set-up-a-worklet-environment-settings-object
@@ -204,6 +210,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: system visibility state; url: document-sequences.html#system-visibility-state
     text: traversable navigable; url:document-sequences.html#traversable-navigable
     text: visible; url: document-sequences.html#system-visibility-state
+    text: traverse the history by a delta; url: browsing-the-web.html#traverse-the-history-by-a-delta
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
@@ -230,7 +237,24 @@ spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
     text: visual viewport; url: #visual-viewport
 spec: DOM; urlPrefix: https://dom.spec.whatwg.org/
   type: dfn
+    text: root; url: #concept-tree-root
     text: document element; url: #ref-for-dom-document-documentelement
+    text: evaluate; url: #dom-xpathevaluatorbase-evaluate
+    text: ORDERED_NODE_SNAPSHOT_TYPE; url: #dom-xpathresult-ordered_node_snapshot_type
+    text: snapshotItem; url: #dom-xpathresult-snapshotitem
+spec: SELECTORS4; urlPrefix: https://drafts.csswg.org/selectors-4/
+  type: dfn
+    text: match a selector against a tree; url: #match-a-selector-against-a-tree
+    text: parse a selector; url: #parse-a-selector
+    text: scoping root; url: #scoping-root
+spec: WEB-IDL; urlPrefix: https://webidl.spec.whatwg.org/
+  type: dfn
+    text: DOMException; url: #idl-DOMException
+    text: SyntaxError; url:#syntaxerror
+spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
+  type: dfn
+    text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
+    text: toUppercase; url: ch03.pdf#G34078
 </pre>
 
 <pre class="biblio">
@@ -314,7 +338,7 @@ protocol. These terms are distinct from their representation at the
 
 The protocol is defined using a [[!RFC8610|CDDL]] definition. For the
 convenience of implementors two separate CDDL definitions are defined; the
-<dfn>remote end definition</dfn> which defines the format of messages produced
+<dfn export>remote end definition</dfn> which defines the format of messages produced
 on the [=local end=] and consumed on the [=remote end=], and the <dfn>local end
 definition</dfn> which defines the format of messages produced on the [=remote end=]
 and consumed on the [=local end=]
@@ -457,10 +481,10 @@ in the <code>ResultData</code> group for the results of commands in the module.
 Modules which contain events define [=local end definition=] fragments that are
 choices in the <code>Event</code> group for the module's [=events=].
 
-An implementation may define <dfn>extension modules</dfn>. These must have a
+An implementation may define <dfn export>extension modules</dfn>. These must have a
 [=module name=] that contains a single colon "<code>:</code>" character. The
 part before the colon is the prefix; this is typically the same for all
-extension modules specific to a given implementation and should be unique for a
+[=extension modules=] specific to a given implementation and should be unique for a
 given implementation. Such modules extend the [=local end definition=] and [=remote end definition=]
 providing additional groups as choices for the defined [=commands=] and [=events=].
 
@@ -514,6 +538,9 @@ with the following additional codes:
   <dt><dfn>no such handle</dfn>
   <dd>Tried to deserialize an unknown <code>RemoteObjectReference</code>.
 
+  <dt><dfn>no such history entry</dfn>
+  <dd>Tried to havigate to an unknown [=session history entry=].
+
   <dt><dfn>no such intercept</dfn>
   <dd>Tried to remove an unknown [=network intercept=].
 
@@ -544,6 +571,7 @@ ErrorCode = "invalid argument" /
             "no such element" /
             "no such frame" /
             "no such handle" /
+            "no such history entry" /
             "no such intercept" /
             "no such node" /
             "no such request" /
@@ -1867,10 +1895,12 @@ BrowsingContextCommand = (
   browsingContext.Create //
   browsingContext.GetTree //
   browsingContext.HandleUserPrompt //
+  browsingContext.LocateNodes //
   browsingContext.Navigate //
   browsingContext.Print //
   browsingContext.Reload //
-  browsingContext.SetViewport
+  browsingContext.SetViewport //
+  browsingContext.TraverseHistory
 )
 </pre>
 
@@ -1881,8 +1911,10 @@ BrowsingContextResult = (
   browsingContext.CaptureScreenshotResult /
   browsingContext.CreateResult /
   browsingContext.GetTreeResult /
+  browsingContext.LocateNodesResult /
   browsingContext.NavigateResult /
-  browsingContext.PrintResult
+  browsingContext.PrintResult /
+  browsingContext.TraverseHistoryResult
 )
 
 BrowsingContextEvent = (
@@ -1917,7 +1949,7 @@ associated WebDriver [=window handle=] the [=/browsing context id=] must be the
 same as the [=window handle=].
 
 <div algorithm>
-To <dfn>get a browsing context</dfn> given |context id|:
+To <dfn export>get a browsing context</dfn> given |context id|:
 
 1. If |context id| is null, return [=success=] with data null.
 
@@ -2117,6 +2149,39 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 
 </div>
 
+#### The browsingContext.Locator Type #### {#type-browsingContext-Locator}
+
+[=remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+browsingContext.Locator = (
+   browsingContext.CssLocator /
+   browsingContext.InnerTextLocator /
+   browsingContext.XPathLocator
+)
+
+browsingContext.CssLocator = {
+   type: "css",
+   value: text
+}
+
+browsingContext.InnerTextLocator = {
+   type: "innerText",
+   value: text,
+   ? ignoreCase: bool
+   ? matchType: "full" / "partial",
+   ? maxDepth: js-uint,
+}
+
+browsingContext.XPathLocator = {
+   type: "xpath",
+   value: text
+}
+</pre>
+
+The <code>browsingContext.Locator</code> type provides details on the strategy
+for locating a node in a document.
+
 #### The browsingContext.Navigation Type #### {#type-browsingContext-Navigation}
 
 [=remote end definition=] and [=local end definition=]
@@ -2267,8 +2332,7 @@ Base64-encoded string.
 
       browsingContext.ElementClipRectangle = {
         type: "element",
-        element: script.SharedReference,
-        ? scrollIntoView: bool
+        element: script.SharedReference
       }
 
       browsingContext.BoxClipRectangle = {
@@ -2401,7 +2465,7 @@ To <dfn>encode a canvas as Base64</dfn> given |canvas| and |format|:
 1. Otherwise, let |type| be "image/png" and let |quality| be [=undefined=].
 
 1. Let |file| be [=a serialization of the bitmap as a file=] for |canvas| with
-   |type| and |quality|. 
+   |type| and |quality|.
 
 1. Let |encoded string| be the [=forgiving-base64 encode=] of |file|.
 
@@ -2484,12 +2548,16 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
        1. If |element|'s [=node document=] is not |document|, return [=error=] with
           [=error code=] [=no such element=].
 
-       1. If |clip| contains "<code>scrollIntoView</code>" and
-          |clip|["<code>scrollIntoView</code>"]:
+       1. Let |viewport rect| be [=get the origin rectangle=] given
+          "<code>viewport</code>" and |document|.
 
-         1. [=Scroll into view=] with |element|.
+       1. Let |element rect| be [=get the bounding box=] for |element|.
 
-       1. Let |clip rect| be [=get the bounding box=] for |element|.
+       1. Let |clip rect| be a {{DOMRectReadOnly}} with [=x coordinate=]
+          |element rect|["<code>x</code>"] + |viewport rect|["<code>x</code>"]|,
+          [=y coordinate=] |element rect|["<code>y</code>"] + |viewport
+          rect|["<code>y</code>"], width |element rect|["<code>width</code>"],
+          and height |element rect|["<code>height</code>"].
 
        <dt>|clip| matches the <code>browsingContext.BoxClipRectangle</code> production:
        <dd>
@@ -2500,9 +2568,11 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
           coordinate=].
 
        1. Let |clip rect| be a {{DOMRectReadOnly}} with [=x coordinate=] |clip x|,
-          |clip y|, width |clip|["<code>width</code>"], and height
+          [=y coordinate=] |clip y|, width |clip|["<code>width</code>"], and height
           |clip|["<code>height</code>"].
      </dl>
+
+1. Note: All coordiantes are now measured from the origin of the document.
 
 1. Let |rect| be the [=rectangle intersection=] of |origin rect| and |clip rect|.
 
@@ -2569,11 +2639,11 @@ The [=remote end steps=] with |command parameters| are:
      [=error code=] [=invalid argument=].
 
   1. If |prompt unload| is true:
-     
+
      1. [=Close=] |context|.
 
   1. Otherwise:
-   
+
      1. [=Close=] |context| without [=prompting to unload=].
 
   1. Return [=success=] with data null.
@@ -2806,6 +2876,279 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    Otherwise return [=error=] with [=error code=] [=no such alert=].
 
 1. Return [=success=] with data null.
+
+</div>
+#### The browsingContext.locateNodes Command ####  {#command-browsingContext-locateNodes}
+
+The <dfn export for=commands>browsingContext.locateNodes</dfn> command returns a
+list of all nodes matching the specified locator.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browsingContext.LocateNodes = (
+        method: "browsingContext.locateNodes",
+        params: browsingContext.LocateNodesParameters
+      )
+
+      browsingContext.LocateNodesParameters = {
+         context: browsingContext.BrowsingContext,
+         locator: browsingContext.Locator,
+         ? maxNodeCount: (js-uint .ge 1),
+         ? ownership: script.ResultOwnership,
+         ? sandbox: text,
+         ? serializationOptions: script.SerializationOptions,
+         ? startNodes: [ + script.SharedReference ]
+      }
+      </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        browsingContext.LocateNodesResult = {
+            nodes: [ * script.NodeRemoteValue ]
+        }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="locate nodes using CSS">
+To <dfn>locate nodes using CSS</dfn> with given |context target|, |context nodes|,
+|selector|, |maximum returned node count|, and <var ignore>session</var>:
+
+1. Let |returned nodes| be an empty [=/list=].
+
+1. Let |parse result| be the result of [=parse a selector=] given |selector|.
+
+1. If |parse result| is failure, return [=error=] with [=error code=] [=invalid selector=].
+
+1. For each |context node| of |context nodes|:
+
+  1. Let |elements| be the result of [=match a selector against a tree=] with
+     |parse result| and |context target|’s [=active document=] [=root=] using
+     [=scoping root=] |context node|.
+
+  1. For each |element| in |elements|:
+
+    1. [=list/Append=] |element| to |returned nodes|.
+
+    1. If |maximum returned node count| is not null and [=list/size=] of
+       |returned nodes| is equal to |maximum returned node count|,
+       return |returned nodes|.
+
+1. Return |returned nodes|.
+
+</div>
+
+<div algorithm="locate nodes using XPath">
+
+To <dfn>locate nodes using XPath</dfn> with given |context target|,
+|context nodes|, |selector|, |maximum returned node count|, and <var ignore>session</var>:
+
+Note: Owing to the unmaintained state of the XPath specification, this algorithm
+is phrased as if making calls to the XPath DOM APIs. However this is to be understood
+as equivalent to spec-internal calls directly accessing the underlying algorithms,
+without going via the ECMAScript runtime.
+
+1. Let |returned nodes| be an empty [=/list=].
+
+1. For each |context node| of |context nodes|:
+
+   1. Let |evaluate result| be the result of calling [=evaluate=] on |context target|'s
+      [=active document=], with arguments |selector|, |context node|, null,
+      [=ORDERED_NODE_SNAPSHOT_TYPE=], and null. If this throws a "[=SyntaxError=]"
+      [=DOMException=], return [=error=] with [=error code=] [=invalid selector=];
+      otherwise, if this throws any other exception return [=error=] with [=error code=]
+      [=unknown error=].
+
+   1. Let |index| be 0.
+
+   1. Let |length| be the result of getting the <code>snapshotLength</code> property
+      from |evaluate result|.
+
+   1. Repeat, while |index| is less than |length|:
+
+      1. Let |node| be the result of calling [=snapshotItem=] with |evaluate result|
+         as this and |index| as the argument.
+
+      1. [=list/Append=] |node| to |returned nodes|.
+
+      1. If |maximum returned node count| not null and [=list/size=] of
+         |returned nodes| is equal to |maximum returned node count|,
+         return |returned nodes|.
+
+      1. Set |index| to |index| + 1.
+
+1. Return |returned nodes|.
+
+</div>
+
+<div algorithm="locate nodes using inner text">
+To <dfn>locate nodes using inner text</dfn> with given |context target|, |context nodes|,
+|selector|, |max depth|, |match type|, |ignore case|, |maximum returned node count|,
+and |session|:
+
+1. If |selector| is the empty string, return [=error=] with [=error code=]
+   [=invalid selector=].
+
+1. Let |returned nodes| be an empty [=/list=].
+
+1. If |ignore case| is false, let |search text| be |selector|. Otherwise, let
+   |search text| be the result of [=toUppercase=] with |selector| according
+   to the [=Unicode Default Case Conversion algorithm=].
+
+1. For each |context node| in |context nodes|:
+
+  1. Let |node inner text| be the result of calling the [=innerText getter steps=] with
+     |context node| as the [=this=] value.
+
+  1. If |ignore case| is false, let |node text| be |node inner text|. Otherwise,
+     let |node text| be the result of [=toUppercase=] with |node inner text|
+     according to the [=Unicode Default Case Conversion algorithm=].
+
+  1. If |search text| is a [=code point substring=] of |node text|, perform the
+     following steps:
+
+    1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
+       <a spec=dom>children</a> of |context node|:
+
+      1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
+
+    1. If [=list/size=] of |child nodes| is equal to 0 or |max depth| is equal to 0,
+       perform the following steps:
+
+      1. If |match type| is <code>"full"</code> and |node text| [=is=] |search text|,
+         [=list/append=] |context node| to |returned nodes|.
+
+      1. Otherwise, [=list/append=] |context node| to |returned nodes|.
+
+    1. Otherwise, perform the following steps:
+
+      1. Set |max depth| to |max depth| - 1.
+
+      1. Let |child node matches| be the result of [=locate nodes using inner text=]
+         with |context target|, |child nodes|, |selector|, |max depth|,
+         |match type|, |ignore case|, |maximum returned node count|, and |session|.
+
+      1. If [=list/size=] of |child node matches| is equal to 0 and |match type| is
+         <code>"partial"</code>, append |context node| to |returned nodes|. Otherwise,
+         [=list/extend=] |returned nodes| with |child node matches|.
+
+1. If |maximum returned node count| is not null, [=list/remove=] all entries
+   in |returned nodes| with an index greater than or equal to |maximum returned
+   node count|.
+
+1. Return |returned nodes|.
+
+</div>
+
+<div algorithm="remote end steps for browsingContext.locateNodes">
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let |context id| be |command parameters|["<code>context</code>"].
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Assert: |context| is not null.
+
+1. If |command parameters| [=map/contains=] "<code>sandbox</code>", let
+   |sandbox| be |command parameters|["<code>sandbox</code>"]. Otherwise,
+   let |sandbox| be null.
+
+1. Let |current context target| be the a [=/map=] matching of the
+   <code>script.ContextTarget</code> production with the
+   <code>context</code> field set to the [=browsing context id=]
+   of |context| and the <code>sandbox</code> field set to |sandbox|.
+
+1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
+   given |current context target|.
+
+1. Let |locator| be |command parameters|["<code>locator</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>startNodes</code>", let
+   |start nodes parameter| be |command parameters|["<code>startNodes</code>"].
+   Otherwise let |start nodes parameter| be null.
+
+1. If |command parameters| [=map/contains=] "<code>maxNodeCount</code>", let
+   |maximum returned node count| be |command parameters|["<code>maxNodeCount</code>"].
+   Otherwise, let |maximum returned node count| be null.
+
+1. Let |context nodes| be an empty [=/list=].
+
+1. If |start nodes parameter| is null, [=list/append=] the [=document element=]
+   of |context|'s [=active document=] to |context nodes|. Otherwise, for each
+   |serialized start node| in |start nodes parameter|:
+
+   1. Let |start node| be the result of [=trying=] to [=deserialize shared reference=] given
+      |serialized start node|, |realm| and |session|.
+
+   1. [=list/Append=] |start node| to |context nodes|.
+
+1. Assert [=list/size=] of |context nodes| is greater than 0.
+
+1. Let |type| be |locator|["<code>type</code>"].
+
+1. In the following list of conditions and associated steps, run the first set
+   of steps for which the associated condition is true:
+
+   <dl>
+
+      <dt>|type| is the string "<code>css</code>"
+      <dd>
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. Let |result nodes| be a result of [=trying=] to [=locate nodes using css=]
+            given |current context target|, |context nodes|, |selector|, |maximum returned
+            nodes| and |session|.
+
+      <dt>|type| is the string "<code>xpath</code>"
+      <dd>
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. Let |result nodes| be a result of [=trying=] to [=locate nodes using xpath=]
+            given |current context target|, |context nodes|, |selector|, |maximum returned
+            nodes| and |session|.
+
+      <dt>|type| is the string "<code>innerText</code>"
+      <dd>
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. If |locator| [=map/contains=] <code>maxDepth</code>, let |max depth| be
+            |locator|["<code>maxDepth</code>"]. Otherwise, let |max depth| be null.
+
+         1. If |locator| [=map/contains=] <code>ignoreCase</code>, let |ignore case| be
+            |locator|["<code>ignoreCase</code>"]. Otherwise, let |ignore case| be false.
+
+         1. If |locator| [=map/contains=] <code>matchType</code>, let |match type| be
+            |locator|["<code>matchType</code>"]. Otherwise, let |match type| be "full".
+
+         1. Let |result nodes| be a result of [=trying=] to [=locate nodes using inner text=]
+            given |current context target|, |context nodes|, |selector|, |max depth|,
+            |match type|, |ignore case|, |maximum returned node count| and |session|.
+
+1. Assert: |maximum returned node count| is null or [=list/size=] of |result nodes| is less
+   than or equal to |maximum returned node count|.
+
+1. If |command parameters| [=map/contains=] "<code>serializationOptions</code>",
+   let |serialization options| be |command parameters|["<code>serializationOptions</code>"].
+   Otherwise, let |serialization options| be a [=/map=] matching the
+   <code>script.SerializationOptions</code> production with the fields
+   set to their default values.
+
+1. If |command parameters| [=map/contains=] "<code>ownership</code>",
+   let |result ownership| be |command parameters|["<code>ownership</code>"].
+   Otherwise, let |result ownership| be "none".
+
+1. Let |serialized nodes| be the result of [=serialize as a remote value=] with
+   |result nodes|, |serialization options|, |result ownership|, a new [=/map=]
+   as serialization internal map, |realm| and |session|.
+
+1. Let |result| be a [=/map=] matching the <code>browsingContext.LocateNodesResult</code>
+   production, with the <code>nodes</code> field set |serialized nodes|.
+
+1. Return [=success=] with data |result|.
 
 </div>
 
@@ -3135,7 +3478,7 @@ The [=remote end steps=] with |command parameters| are:
 1. If |command parameters| [=map/contains=] the <code>viewport</code> field:
 
    1. Let |viewport| be the |command parameters|["<code>viewport</code>"].
-   
+
    1. If |viewport| is not null, set the width of |context|'s [=layout
       viewport=] to be the <code>width</code> of |viewport| in CSS pixels and
       set the height of the |context|'s [=layout viewport=] to be the
@@ -3159,6 +3502,116 @@ The [=remote end steps=] with |command parameters| are:
 1. Run the [[cssom-view-1#resizing-viewports]] steps.
 
 1. Return [=success=] with data null.
+
+</div>
+
+#### The browsingContext.traverseHistory Command ####  {#command-browsingContext-traverseHistory}
+
+The <dfn export for=commands>browsingContext.traverseHistory</dfn> command
+traverses the history of a given navigable by a delta.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      BrowsingContext.TraverseHistory = {
+        method: "browsingContext.traverseHistory",
+        params: browsingContext.TraverseHistoryParameters
+      }
+
+      browsingContext.TraverseHistoryParameters = {
+        context: browsingContext.BrowsingContext,
+        delta: js-int,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+        browsingContext.TraverseHistoryResult = {
+        }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.traverseHistory">
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |browsing context| be the result of [=trying=] to [=get a browsing context=]
+   with |command parameters|["<code>context</code>"].
+
+1. Assert: |browsing context| is not null.
+
+1. Let |navigable| be the [=/navigable=] whose [=navigable/active
+   document=] is |browsing context|'s [=browsing context/active document=].
+
+1. Let |delta| be |command parameters|["<code>delta</code>"].
+
+1. Let |resume id| be a unique string.
+
+1. [=Queue a task=] on |navigable|'s [=session history traversal queue=] to run
+   the following steps:
+
+    1. Let |all steps| be the result of [=getting all used history steps=] for |navigable|.
+
+    1. Let |current index| be the index of |navigable|'s [=current session history
+       step=] within |all steps|.
+
+    1. Let |target index| be |current index| plus |delta|.
+
+    1. Let |valid entry| be false if |all steps|[|target index|] does not exist,
+       or true otherwise.
+
+    1. [=Resume=] with "<code>check history</code>", |resume id|, and
+       |valid entry|.
+
+1. Let |is valid entry| be [=await=] with «"<code>check history</code>"», and
+   |resume id|.
+
+1. If |is valid entry| is false, return [=error=] with error code [=no such
+   history entry=].
+
+1. [=Traverse the history by a delta=] given |delta| and |navigable|.
+
+   ISSUE: There is a race condition in the algorithm as written because by the
+   time we try to navigate the target session history entry might not
+   exist. Once we support waiting for history to navigate we can handle this
+   more robustly.
+
+1. TODO: Support waiting for the history traversal to complete.
+
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.TraverseHistoryResult</code> production.
+
+1. Return [=success=] with data |body|.
+
+</div>
+
+<div algorithm>
+
+The <dfn export>WebDriver BiDi page show</dfn> steps given <var
+ignore>context</var> and |navigation status| are:
+
+Issue: Do we want to expose a `browsingContext.pageShow event? In that case we'd
+need to call this whenever `pageshow` is going to be emitted, not just on
+bfcache restore, and also add the persisted status to the data.
+
+ 1. Let |navigation id| be |navigation status|'s id.
+
+ 1. [=Resume=] with "<code>page show</code>", |navigation id|, and
+    |navigation status|.
+
+</div>
+
+<div algorithm>
+
+The <dfn export>WebDriver BiDi pop state</dfn> steps given <var
+ignore>context</var> and |navigation status| are:
+
+ 1. Let |navigation id| be |navigation status|'s id.
+
+ 1. [=Resume=] with "<code>pop state</code>", |navigation id|, and
+    |navigation status|.
 
 </div>
 
@@ -3960,7 +4413,7 @@ network.Cookie = {
     httpOnly: bool,
     secure: bool,
     sameSite: network.SameSite,
-    ? expires: js-uint,
+    ? expiry: js-uint,
 };
 </pre>
 
@@ -3980,7 +4433,7 @@ samesite-flag, which is from [[SAME-SITE-COOKIES]].
 
 1. Let |path| be |stored cookie|'s path field.
 
-1. Let |expires| be |stored cookie|'s expires field represented as a unix
+1. Let |expiry| be |stored cookie|'s expiry-time field represented as a unix
    timestamp, if set, or null otherwise.
 
 1. Let |size| be the byte length of the result of serializing |stored cookie|
@@ -3999,8 +4452,8 @@ samesite-flag, which is from [[SAME-SITE-COOKIES]].
 1. Return a map matching the <code>network.Cookie</code> production,
    with the <code>name</code> field set to |name|, the <code>value</code> field
    set to |value|, the <code>domain</code> field set to |domain|, the
-   <code>path</code> field set to |path|, the <code>expires</code> field set to
-   |expires| if it's not null, or omitted otherwise, the <code>size</code> field
+   <code>path</code> field set to |path|, the <code>expiry</code> field set to
+   |expiry| if it's not null, or omitted otherwise, the <code>size</code> field
    set to |size|, the <code>httpOnly</code> field set to |http only|, the
    <code>secure</code> field set to |secure|, and the <code>sameSite</code>
    field set to |same site|.
@@ -4479,7 +4932,7 @@ network.SetCookieHeader = {
     value: network.BytesValue,
     ? domain: text,
     ? httpOnly: bool,
-    ? expires: text,
+    ? expiry: text,
     ? maxAge: js-int,
     ? path: text,
     ? sameSite: network.SameSite,
@@ -4536,11 +4989,11 @@ To <dfn>serialize set-cookie header</dfn> given |protocol cookie|:
 1. Let |header value| be the [=byte sequence=] formed by concatenating |name|,
    `<code>=</code>`, and |value|.
 
-1. If |protocol cookie| [=map/contains=] "<code>expires</code>:
+1. If |protocol cookie| [=map/contains=] "<code>expiry</code>:
 
   1. Let |attribute| be `<code>;Expires=</code>`
 
-  1. Append [=UTF-8 encode=] |protocol cookie|["<code>expires</code>"] to
+  1. Append [=UTF-8 encode=] |protocol cookie|["<code>expiry</code>"] to
      |attribute|.
 
   1. Append |attribute| to |header value|.
@@ -6099,6 +6552,19 @@ the ECMAScript runtime. The handle is only valid in a specific [=Realm=].
 Each ECMAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
 strong [=/map=] from handle ids to their corresponding objects.
 
+#### The script.InternalId Type #### {#type-script-InternalId}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+script.InternalId = text;
+</pre>
+
+The <code>script.InternalId</code> type represents the id of 
+a previously serialized <code>script.RemoteValue</code> during
+[=serialize as a remote value|serialization=].
+
+
 #### The script.LocalValue Type #### {#type-script-LocalValue}
 
 [=Remote end definition=]
@@ -6846,8 +7312,6 @@ script.RemoteValue = (
   script.WindowProxyRemoteValue
 )
 
-script.InternalId = js-uint;
-
 script.ListRemoteValue = [*script.RemoteValue];
 
 script.MappingRemoteValue = [*[(script.RemoteValue / text), script.RemoteValue]];
@@ -7092,10 +7556,10 @@ To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
     1. If |previously serialized remote value| does not have a field
        <code>internalId</code>, run the following steps:
 
-      1. Let |internal id| be a unique across the <code>internalId</code> fields of
-         the values of |serialization internal map| integer.
+      1. Let |internal id| be the string representation of a [[!RFC4122|UUID]] 
+         based on truly random, or pseudo-random numbers.
 
-       1. Set the <code>internalId</code> field of
+      1. Set the <code>internalId</code> field of
           |previously serialized remote value| to |internal id|.
 
     1. Set the <code>internalId</code> field of |remote value| to a field
@@ -8761,7 +9225,7 @@ The <dfn export for=commands>storage.getCookies</dfn> command retrieves zero or 
           ? httpOnly: bool,
           ? secure: bool,
           ? sameSite: network.SameSite,
-          ? expires: js-uint,
+          ? expiry: js-uint,
           Extensible,
         }
 
@@ -8830,7 +9294,7 @@ The <dfn export for=commands>storage.setCookie</dfn> command creates a new [=coo
           ? httpOnly: bool,
           ? secure: bool,
           ? sameSite: network.SameSite,
-          ? expires: js-uint,
+          ? expiry: js-uint,
           Extensible,
         }
 
@@ -8882,7 +9346,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    <dd><p>|cookie spec|["<code>httpOnly</code>"] if it exists, otherwise false.
 
    <dt>[=Cookie expiry time=]
-   <dd><p>|cookie spec|["<code>expires</code>"] if it exists, otherwise leave unset to
+   <dd><p>|cookie spec|["<code>expiry</code>"] if it exists, otherwise leave unset to
     indicate that this is a session cookie.
 
    <dt>[=Cookie same site=]
@@ -9546,8 +10010,8 @@ To discard a browsing context |browsingContext|, run these steps:
 1. If this is not a recursive invocation of this algorithm, call any <dfn export>browsing context
    tree discarded</dfn> steps defined in other applicable specifications with |browsingContext|.
 
-1. Discard all {{Document}} objects for all the entries in |browsingContext|'s [=session
-   history=].
+1. Discard all {{Document}} objects for all the entries in |browsingContext|'s
+   [=session history=].
 
 1. If |browsingContext| is a [=top-level browsing context=], then [=remove a browsing context=]
    |browsingContext|.
