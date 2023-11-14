@@ -200,8 +200,9 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: shared worker; url: workers.html#shared-workers
     text: system visibility state; url: document-sequences.html#system-visibility-state
     text: traversable navigable; url:document-sequences.html#traversable-navigable
-    text: visible; url: document-sequences.html#system-visibility-state
     text: traverse the history by a delta; url: browsing-the-web.html#traverse-the-history-by-a-delta
+    text: user agent; url: system-state.html#dom-navigator-useragent
+    text: visible; url: document-sequences.html#system-visibility-state
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
@@ -1922,6 +1923,7 @@ BrowsingContextCommand = (
   browsingContext.Navigate //
   browsingContext.Print //
   browsingContext.Reload //
+  browsingContext.SetUserAgent //
   browsingContext.SetViewport //
   browsingContext.TraverseHistory
 )
@@ -3445,6 +3447,58 @@ The [=remote end steps=] with |command parameters| are:
 1. Return the result of [=await a navigation=] with |context|, |request|, |wait
    condition|, history handling "<code>reload</code>", and ignore
    cache |ignore cache|.
+
+</div>
+
+#### The browsingContext.setUserAgent Command ####  {#command-browsingContext-setUserAgent}
+
+The <dfn export for=commands>browsingContext.setUserAgent</dfn> command sets the
+{{NavigatorID/userAgent}} string for a browsing context.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      browsingContext.SetUserAgent = (
+        method: "browsingContext.setUserAgent",
+        params: browsingContext.SetUserAgentParameters
+      )
+
+      browsingContext.SetUserAgentParameters = {
+        context: browsingContext.BrowsingContext,
+        userAgent: text / null,
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.setUserAgent">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of |command
+   parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
+   |context id|.
+
+1. Let |user agent| be the value of the <code>userAgent</code> field of |command
+   parameters| if present, or null otherwise.
+
+1. If |user agent| is not null:
+
+   1. Set |context|'s [=user agent=] to |user agent|.
+
+   1. Otherwise, set |context|'s {{NavigatorID/userAgent}} to the
+      implementation-defined [=default `user-agent` value=].
+
+1. Return [=success=] with data null.
 
 </div>
 
