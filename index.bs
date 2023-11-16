@@ -1067,33 +1067,8 @@ To <dfn>close the WebSocket connections</dfn> given |session|:
 
 ## Establishing a Connection ## {#establishing}
 
-WebDriver clients opt in to a bidirectional connection by requesting a
-capability with the name "<code>webSocketUrl</code>" and value
-true.
-
-This specification defines an
-[=additional webdriver capability=] with the [=capability name=] "<code>webSocketUrl</code>".
-
-<div algorithm="webSocketUrl capability deserialization algorithm">
-The [=additional capability deserialization algorithm=] for the
-"<code>webSocketUrl</code>" capability, with parameter |value| is:
-
-1. If |value| is not a boolean, return [=error=] with [=error code|code=]
-   [=invalid argument=].
-
-1. Return [=success=] with data |value|.
-
-</div>
-
-<div algorithm="webSocketUrl capability serialization algorithm">
-The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
-with parameter |value| is:
-
-1. If |value| is false, return [=success=] with data null.
-
-1. Return [=success=] with data true.
-
-</div>
+WebDriver clients opt in to a bidirectional connection by requesting the
+[=WebSocket URL=] capability with value true.
 
 <div algorithm="webSocketUrl new session algorithm">
 The [=WebDriver new session algorithm=] defined by this specification,
@@ -1428,22 +1403,97 @@ session.CapabilityRequest = {
   ? browserName: text,
   ? browserVersion: text,
   ? platformName: text,
-  ? proxy: {
-    ? proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
-    ? proxyAutoconfigUrl: text,
-    ? ftpProxy: text,
-    ? httpProxy: text,
-    ? noProxy: [*text],
-    ? sslProxy: text,
-    ? socksProxy: text,
-    ? socksVersion: 0..255,
-  },
+  ? proxy: session.ProxyConfiguration,
+  ? webSocketUrl: bool,
   Extensible
 };
 </pre>
 
 The <code>session.CapabilityRequest</code> type represents a specific set of
 requested capabilities.
+
+WebDriver BiDi defines [=additional WebDriver capability|additional WebDriver
+capabilities=]. The following tables enumerates the capabilities each
+implementation must support for WebDriver BiDi.
+
+<pre class=simpledef>
+Capability: <dfn export>WebSocket URL</dfn>
+Key: "<code>webSocketUrl</code>"
+Value type: boolean
+Description: Defines the current session's support for bidirection connection.
+</pre>
+
+<div algorithm="webSocketUrl capability deserialization algorithm">
+The [=additional capability deserialization algorithm=] for the
+"<code>webSocketUrl</code>" capability, with parameter |value| is:
+
+1. If |value| is not a boolean, return [=error=] with [=error code|code=]
+   [=invalid argument=].
+
+1. Return [=success=] with data |value|.
+
+</div>
+
+<div algorithm="webSocketUrl capability serialization algorithm">
+The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
+with parameter |value| is:
+
+1. If |value| is false, return [=success=] with data null.
+
+1. Return [=success=] with data true.
+
+</div>
+
+#### The session.ProxyConfiguration Type #### {#type-session-ProxyConfiguration}
+
+[=remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+session.ProxyConfiguration = {
+   session.AutodetectProxyConfiguration //
+   session.DirectProxyConfiguration //
+   session.ManualProxyConfiguration //
+   session.PacProxyConfiguration //
+   session.SystemProxyConfiguration //
+}
+
+session.AutodetectProxyConfiguration = (
+   proxyType: "autodetect"
+   Extensible
+)
+
+session.DirectProxyConfiguration = (
+   proxyType: "direct",
+   Extensible
+)
+
+session.ManualProxyConfiguration = (
+   proxyType: "manual",
+   ? ftpProxy: text,
+   ? httpProxy: text,
+   ? sslProxy: text,
+   ? session.SocksProxyConfiguration
+   ? noProxy: [*text],
+   Extensible
+)
+
+session.SocksProxyConfiguration = (
+   socksProxy: text,
+   socksVersion: 0..255,
+)
+
+session.PacProxyConfiguration = (
+   proxyType: "pac",
+   proxyAutoconfigUrl: text,
+   Extensible
+)
+
+session.SystemProxyConfiguration = (
+   proxyType: "system"
+   Extensible
+)
+
+</pre>
 
 #### The session.SubscriptionRequest Type #### {#type-session-SubscriptionRequest}
 
@@ -1542,17 +1592,9 @@ This is a [=static command=].
           browserName: text,
           browserVersion: text,
           platformName: text,
-          proxy: {
-            ? proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
-            ? proxyAutoconfigUrl: text,
-            ? ftpProxy: text,
-            ? httpProxy: text,
-            ? noProxy: [*text],
-            ? sslProxy: text,
-            ? socksProxy: text,
-            ? socksVersion: 0..255,
-          },
           setWindowRect: bool,
+          ? proxy: session.ProxyConfiguration,
+          ? webSocketUrl: bool,
           Extensible
         }
       }
