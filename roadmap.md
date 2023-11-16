@@ -110,7 +110,7 @@ This scenario sets cookies to be used when loading a web page and its subresourc
 
 ### Managing windows
 
-This scenario changes the browser window dimensions and position, maximizes/minimizes the window, and toggles full-screen mode while testing the side effects of these actions on the web page. 
+This scenario changes the browser window dimensions and position, maximizes/minimizes the window, and toggles full-screen mode while testing the side effects of these actions on the web page.
 
 - [x] Some items from the previous milestones
 - [ ] [Add commands for resizing and positioning browser windows](https://github.com/w3c/webdriver-bidi/issues/398)
