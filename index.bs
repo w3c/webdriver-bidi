@@ -1961,6 +1961,9 @@ implicitly set when the context is created. For browsing contexts with an
 associated WebDriver [=window handle=] the [=/browsing context id=] must be the
 same as the [=window handle=].
 
+Each [=/browsing context=] also has an <dfn>associated storage partition</dfn>,
+which is the [=storage partition=] it uses to persist data.
+
 <div algorithm>
 To <dfn export>get a browsing context</dfn> given |context id|:
 
@@ -9020,6 +9023,11 @@ worker=] algorithm:
 The <dfn export for=modules>storage</dfn> module contains functionality and
 events related to storage.
 
+A <dfn>storage partition</dfn> is a namespace within which the user agent may
+organize persistent data such as [=cookies=] and local storage.
+
+A <dfn>storage partition key</dfn> uniquely identifies a [=storage partition=].
+
 ### Definition ### {#module-storage-definition}
 
 [=Remote end definition=]
@@ -9056,22 +9064,32 @@ storage.PartitionKey {
 }
 </pre>
 
-The <code>storage.PartitionKey</code> type describes namespaces within which the user agent may organize persistent data such as [=cookies=] and local storage.
+The <code>storage.PartitionKey</code> type represents a [=storage partition key=].
 
 A [=remote end=] has a [=/set=] of <dfn>storage partition key attributes</dfn> which contains zero or more implementation-defined string values.
 
 A [=remote end=] has a [=/map=] of <dfn>default values for storage partition key attributes</dfn> which contains zero or more implementation-defined entries. Each key must be a member of the [=storage partition key attributes=] which the [=remote end=] does not require as input to [=storage.getCookies=], [=storage.setCookie=], and [=storage.deleteCookies=]; the corresponding value is a the value which the [=remote end=] uses when one is not provided.
 
 <div algorithm>
-To <dfn>expand a storage partition key spec</dfn> given |partition key spec| and |cookie domain|:
+To <dfn>expand a storage partition spec</dfn> given |partition spec| and |cookie domain|:
 
-1. If |partition key spec| is null:
+1. If |partition spec| is a [=browsing context id=]:
+
+  1. Let |browsing context| be the result of [=trying=] to [=get a browsing context=] given |partition spec|.
+
+  1. Let |partition key| be the [=storage partition key|key=] of |browsing context|'s [=associated storage partition=].
+
+  1. Return [=success=] with data |partition key|.
+
+1. Otherwise, if |partition spec| is null:
 
   1. Let |partition key| be an empty [=/map=].
 
 1. Otherwise:
 
-  1. Let |partition key| be |partition key spec|.
+  1. Assert: |partition spec| is a [=/map=] with zero or more entries.
+
+  1. Let |partition key| be |partition spec|.
 
 1. For each |name| → |default value| in the [=default values for storage partition key attributes=]:
 
@@ -9171,7 +9189,7 @@ The <dfn export for=commands>storage.getCookies</dfn> command retrieves zero or 
 
         storage.GetCookiesParameters = {
           cookie: storage.CookieFilter,
-          ? partitionKey: storage.PartitionKey,
+          ? partition: storage.PartitionKey / browsingContext.BrowsingContext,
         }
     </pre>
    </dd>
@@ -9193,10 +9211,10 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |cookie domain| be the value of the <code>domain</code> field of |filter| if it is present or null if it isn't.
 
-1. Let |partition key spec| be the value of the <code>partitionKey</code> field of
+1. Let |partition spec| be the value of the <code>partition</code> field of
   |command parameters| if it is present or null if it isn't.
 
-1. Let |partition key| be the result of [=trying=] to [=expand a storage partition key spec|expand=] |partition key spec| using |cookie domain|.
+1. Let |partition key| be the result of [=trying=] to [=expand a storage partition spec|expand=] |partition spec| using |cookie domain|.
 
 1. Let |store| be the result of [=trying=] to [=get the cookie store=] with
   |partition key|.
@@ -9242,7 +9260,7 @@ The <dfn export for=commands>storage.setCookie</dfn> command creates a new [=coo
 
         storage.SetCookieParameters = {
           cookie: storage.PartialCookie,
-          ? partitionKey: storage.PartitionKey,
+          ? partition: storage.PartitionKey / browsingContext.BrowsingContext,
         }
     </pre>
    </dd>
@@ -9263,10 +9281,10 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |cookie domain| be the value of the <code>domain</code> field of |cookie spec|.
 
-1. Let |partition key spec| be the value of the <code>partitionKey</code> field of
+1. Let |partition spec| be the value of the <code>partition</code> field of
   |command parameters| if it is present or null if it isn't.
 
-1. Let |partition key| be the result of [=trying=] to [=expand a storage partition key spec|expand=] |partition key spec| using |cookie domain|.
+1. Let |partition key| be the result of [=trying=] to [=expand a storage partition spec|expand=] |partition spec| using |cookie domain|.
 
 1. Let |store| be the result of [=trying=] to [=get the cookie store=] with
   |partition key|.
@@ -9323,7 +9341,7 @@ The <dfn export for=commands>storage.deleteCookies</dfn> command removes zero or
 
         storage.DeleteCookiesParameters = {
           cookie: storage.CookieFilter,
-          ? partitionKey: storage.PartitionKey,
+          ? partition: storage.PartitionKey / browsingContext.BrowsingContext,
         }
     </pre>
    </dd>
@@ -9344,10 +9362,10 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |cookie domain| be the value of the <code>domain</code> field of |filter| if it is present or null if it isn't.
 
-1. Let |partition key spec| be the value of the <code>partitionKey</code> field of
+1. Let |partition spec| be the value of the <code>partition</code> field of
   |command parameters| if it is present or null if it isn't.
 
-1. Let |partition key| be the result of [=trying=] to [=expand a storage partition key spec|expand=] |partition key spec| using |cookie domain|.
+1. Let |partition key| be the result of [=trying=] to [=expand a storage partition spec|expand=] |partition spec| using |cookie domain|.
 
 1. Let |store| be the result of [=trying=] to [=get the cookie store=] with
   |partition key|.
