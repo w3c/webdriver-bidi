@@ -1400,6 +1400,7 @@ for a session.
 <pre class="cddl remote-cddl local-cddl">
 session.CapabilityRequest = {
   ? acceptInsecureCerts: bool,
+  ? interceptFileDialogs: bool,
   ? browserName: text,
   ? browserVersion: text,
   ? platformName: text,
@@ -1436,6 +1437,34 @@ The [=additional capability deserialization algorithm=] for the
 
 <div algorithm="webSocketUrl capability serialization algorithm">
 The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
+with parameter |value| is:
+
+1. If |value| is false, return [=success=] with data null.
+
+1. Return [=success=] with data true.
+
+</div>
+
+<pre class=simpledef>
+Capability: <dfn export>intercept file dialogs</dfn>
+Key: "<code>interceptFileDialogs</code>"
+Value type: boolean
+Description: Defines whether the file dialogs should be intercepted and not shown on screen.
+</pre>
+
+<div algorithm="interceptFileDialogs capability deserialization algorithm">
+The [=additional capability deserialization algorithm=] for the
+"<code>interceptFileDialogs</code>" capability, with parameter |value| is:
+
+1. If |value| is not a boolean, return [=error=] with [=error code|code=]
+   [=invalid argument=].
+
+1. Return [=success=] with data |value|.
+
+</div>
+
+<div algorithm="interceptFileDialogs capability serialization algorithm">
+The [=matched capability serialization algorithm=] for the "<code>interceptFileDialogs</code>" capability,
 with parameter |value| is:
 
 1. If |value| is false, return [=success=] with data null.
@@ -9625,8 +9654,6 @@ opened</dfn> steps given |element|.
    given <code>"input.fileDialogOpened"</code> and |related browsing
    contexts|.
 
-1. If |sessions| is empty, return false.
-
 1. Let |params| be a [=/map=] matching the <code>input.FileDialogInfo</code>
    production, with the <code>context</code> field set to |context id| and
    <code>element</code> field set to |element|.
@@ -9638,7 +9665,23 @@ opened</dfn> steps given |element|.
 
   1. [=Emit an event=] with |session| and |body|.
 
-1. Return true.
+1. Let |intercepting sessions| be the [=set of sessions for which file dialog interception is enabled=].
+
+1. Return false if |intercepting sessions| is empty, and true otherwise.
+
+</div>
+
+<div algorithm>
+
+The <dfn>set of sessions for which file dialog interception is enabled</dfn> is:
+
+1. Let |sessions| be a new [=/set=].
+
+1. For each |session| in [=active BiDI sessions=]:
+
+  1. If |session|'s [=intercept file dialogs=] capability is true, append |session| to |sessions|.
+
+1. Return |sessions|.
 
 </div>
 
