@@ -570,6 +570,9 @@ with the following additional codes:
 
   <dt><dfn>unable to set cookie</dfn>
   <dd>Tried to create a cookie, but the user agent rejected it.
+
+  <dt><dfn>unknown source origin</dfn>
+  <dd>Tried to interact with data in storage, but the source origin could not be inferred.
 </dl>
 
 <pre class="cddl local-cddl">
@@ -592,7 +595,8 @@ ErrorCode = "invalid argument" /
             "unable to set cookie" /
             "unknown command" /
             "unknown error" /
-            "unsupported operation"
+            "unsupported operation" /
+            "unknown source origin"
 </pre>
 
 ## Events ## {#events}
@@ -9059,7 +9063,7 @@ A [=remote end=] has a [=/set=] of <dfn>storage partition key attributes</dfn> w
 A [=remote end=] has a [=/map=] of <dfn>default values for storage partition key attributes</dfn> which contains zero or more implementation-defined entries. Each key must be a member of the [=storage partition key attributes=] which the [=remote end=] does not require as input to [=storage.getCookies=], [=storage.setCookie=], and [=storage.deleteCookies=]; the corresponding value is a the value which the [=remote end=] uses when one is not provided.
 
 <div algorithm>
-To <dfn>expand a storage partition key spec</dfn> given |partition key spec|:
+To <dfn>expand a storage partition key spec</dfn> given |partition key spec| and |cookie domain|:
 
 1. If |partition key spec| is null:
 
@@ -9075,7 +9079,15 @@ To <dfn>expand a storage partition key spec</dfn> given |partition key spec|:
 
     1. [=map/Set=] |partition key|[|name|] to |default value|.
 
-1. Return |partition key|.
+1. If |partition key|["<code>sourceOrigin</code>"] does not [=map/exist=]:
+
+  1. If |cookie domain| is null, then:
+
+    1. Return [=error=] with [=error code=] [=unknown source origin=].
+
+  1. [=map/Set=] |partition key|["<code>sourceOrigin</code>"] to |cookie domain|.
+
+1. Return [=success=] with data |partition key|.
 
 </div>
 
@@ -9179,10 +9191,12 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |filter| be the value of the <code>cookie</code> field of |command parameters|.
 
+1. Let |cookie domain| be the value of the <code>domain</code> field of |filter| if it is present or null if it isn't.
+
 1. Let |partition key spec| be the value of the <code>partitionKey</code> field of
   |command parameters| if it is present or null if it isn't.
 
-1. Let |partition key| be the result of [=expand a storage partition key spec|expanding=] |partition key spec|.
+1. Let |partition key| be the result of [=trying=] to [=expand a storage partition key spec|expand=] |partition key spec| using |cookie domain|.
 
 1. Let |store| be the result of [=trying=] to [=get the cookie store=] with
   |partition key|.
@@ -9247,10 +9261,12 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |cookie spec| be the value of the <code>cookie</code> field of |command parameters|.
 
+1. Let |cookie domain| be the value of the <code>domain</code> field of |cookie spec|.
+
 1. Let |partition key spec| be the value of the <code>partitionKey</code> field of
   |command parameters| if it is present or null if it isn't.
 
-1. Let |partition key| be the result of [=expand a storage partition key spec|expanding=] |partition key spec|.
+1. Let |partition key| be the result of [=trying=] to [=expand a storage partition key spec|expand=] |partition key spec| using |cookie domain|.
 
 1. Let |store| be the result of [=trying=] to [=get the cookie store=] with
   |partition key|.
@@ -9326,10 +9342,12 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |filter| be the value of the <code>cookie</code> field of |command parameters|.
 
+1. Let |cookie domain| be the value of the <code>domain</code> field of |filter| if it is present or null if it isn't.
+
 1. Let |partition key spec| be the value of the <code>partitionKey</code> field of
   |command parameters| if it is present or null if it isn't.
 
-1. Let |partition key| be the result of [=expand a storage partition key spec|expanding=] |partition key spec|.
+1. Let |partition key| be the result of [=trying=] to [=expand a storage partition key spec|expand=] |partition key spec| using |cookie domain|.
 
 1. Let |store| be the result of [=trying=] to [=get the cookie store=] with
   |partition key|.
