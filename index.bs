@@ -9054,12 +9054,12 @@ StorageResult = (
 
 #### The storage.PartitionKey Type #### {#type-storage-PartitionKey}
 
-[=Remote end definition=] and [=Local end definition=]
+[=Local end definition=]
 
 <pre class="cddl local-cddl remote-cddl">
 storage.PartitionKey = {
-    ? userContext: text,
-    ? sourceOrigin: text,
+    userContext: text,
+    sourceOrigin: text,
     Extensible,
 }
 </pre>
@@ -9073,7 +9073,11 @@ A [=remote end=] has a [=/map=] of <dfn>default values for storage partition key
 <div algorithm>
 To <dfn>expand a storage partition spec</dfn> given |partition spec| and |cookie domain|:
 
-1. If |partition spec| is a [=browsing context id=]:
+1. If |partition spec| is null:
+
+  1. Let |partition key| be an empty [=/map=].
+
+1. Otherwise, if |partition spec|["<code>type</code>"] is "<code>context</code>":
 
   1. Let |browsing context| be the result of [=trying=] to [=get a browsing context=] given |partition spec|.
 
@@ -9081,13 +9085,9 @@ To <dfn>expand a storage partition spec</dfn> given |partition spec| and |cookie
 
   1. Return [=success=] with data |partition key|.
 
-1. Otherwise, if |partition spec| is null:
-
-  1. Let |partition key| be an empty [=/map=].
-
 1. Otherwise:
 
-  1. Assert: |partition spec| is a [=/map=] with zero or more entries.
+  1. Assert: |partition spec|["<code>type</code>"] is "<code>storageKey</code>".
 
   1. Let |partition key| be |partition spec|.
 
@@ -9189,9 +9189,26 @@ The <dfn export for=commands>storage.getCookies</dfn> command retrieves zero or 
           Extensible,
         }
 
+        storage.BrowsingContextPartitionDescriptor = {
+          type: "context",
+          context: browsingContext.BrowsingContext
+        }
+
+        storage.StorageKeyPartitionDescriptor = {
+          type: "storageKey",
+          ? userContext: text,
+          ? sourceOrigin: text,
+          Extensible,
+        }
+
+        storage.PartitionDescriptor = (
+          storage.BrowsingContextPartitionDescriptor /
+          storage.StorageKeyPartitionDescriptor
+        )
+
         storage.GetCookiesParameters = {
           ? filter: storage.CookieFilter,
-          ? partition: storage.PartitionKey / browsingContext.BrowsingContext,
+          ? partition: storage.PartitionDescriptor,
         }
     </pre>
    </dd>
@@ -9263,7 +9280,7 @@ The <dfn export for=commands>storage.setCookie</dfn> command creates a new [=coo
 
         storage.SetCookieParameters = {
           cookie: storage.PartialCookie,
-          ? partition: storage.PartitionKey / browsingContext.BrowsingContext,
+          ? partition: storage.PartitionDescriptor,
         }
     </pre>
    </dd>
@@ -9344,7 +9361,7 @@ The <dfn export for=commands>storage.deleteCookies</dfn> command removes zero or
 
         storage.DeleteCookiesParameters = {
           ? filter: storage.CookieFilter,
-          ? partition: storage.PartitionKey / browsingContext.BrowsingContext,
+          ? partition: storage.PartitionDescriptor,
         }
     </pre>
    </dd>
