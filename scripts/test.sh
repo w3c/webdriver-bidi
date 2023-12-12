@@ -6,7 +6,8 @@ ROOT="$(dirname "$SCRIPT_DIR")"
 
 if ! [ -x "$(command -v cddl)" ] || [ "$1" = "--upgrade" ]; then
   echo 'Installing cddl'
-  # Remove strict version requirement once the CLI command works again
+  # Remove strict version requirement here and for the Rust cache
+  # once the CLI command works again.
   # See: https://github.com/anweiss/cddl/issues/213
   cargo install cddl --version 0.9.1
 fi
