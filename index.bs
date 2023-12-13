@@ -346,7 +346,7 @@ protocol. These terms are distinct from their representation at the
 <a href=#transport>transport</a> layer.
 
 The protocol is defined using a [[!RFC8610|CDDL]] definition. For the
-convenience of implementors two separate CDDL definitions are defined; the
+convenience of implementers two separate CDDL definitions are defined; the
 <dfn export>remote end definition</dfn> which defines the format of messages produced
 on the [=local end=] and consumed on the [=remote end=], and the <dfn>local end
 definition</dfn> which defines the format of messages produced on the [=remote end=]
@@ -494,8 +494,15 @@ An implementation may define <dfn export>extension modules</dfn>. These must hav
 [=module name=] that contains a single colon "<code>:</code>" character. The
 part before the colon is the prefix; this is typically the same for all
 [=extension modules=] specific to a given implementation and should be unique for a
-given implementation. Such modules extend the [=local end definition=] and [=remote end definition=]
-providing additional groups as choices for the defined [=commands=] and [=events=].
+given implementation.
+
+Other specifications may define their own WebDriver-BiDi modules that extend the protocol.
+Such modules must not have a name which contains a colon (<code>:</code>) character,
+nor must they define [=command names=], [=event names=], or property names that contain that character.
+
+Authors of external specifications are encouraged to to add new modules rather than extending
+existing ones. Where it is desired to extend an existing module, it is preferred to integrate the
+extension directly into the specification containing the original module definition.
 
 ## Commands ## {#commands}
 
@@ -1099,33 +1106,8 @@ To <dfn>close the WebSocket connections</dfn> given |session|:
 
 ## Establishing a Connection ## {#establishing}
 
-WebDriver clients opt in to a bidirectional connection by requesting a
-capability with the name "<code>webSocketUrl</code>" and value
-true.
-
-This specification defines an
-[=additional webdriver capability=] with the [=capability name=] "<code>webSocketUrl</code>".
-
-<div algorithm="webSocketUrl capability deserialization algorithm">
-The [=additional capability deserialization algorithm=] for the
-"<code>webSocketUrl</code>" capability, with parameter |value| is:
-
-1. If |value| is not a boolean, return [=error=] with [=error code|code=]
-   [=invalid argument=].
-
-1. Return [=success=] with data |value|.
-
-</div>
-
-<div algorithm="webSocketUrl capability serialization algorithm">
-The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
-with parameter |value| is:
-
-1. If |value| is false, return [=success=] with data null.
-
-1. Return [=success=] with data true.
-
-</div>
+WebDriver clients opt in to a bidirectional connection by requesting the
+[=WebSocket URL=] capability with value true.
 
 <div algorithm="webSocketUrl new session algorithm">
 The [=WebDriver new session algorithm=] defined by this specification,
@@ -1186,7 +1168,7 @@ implemented as native objects in the main implementation language of the browser
 engine) and the ECMAScript-visible state. Because existing sandbox
 implementations happen at a low level in the engine, implementations converging
 toward the specification in all details might be a slow process. In the
-meantime, implementors are encouraged to provide detailed documentation on any
+meantime, implementers are encouraged to provide detailed documentation on any
 differences with the specification, and users of this feature are encouraged to
 explicitly test that scripts running in sandboxes work in all implementations.
 
@@ -1460,22 +1442,97 @@ session.CapabilityRequest = {
   ? browserName: text,
   ? browserVersion: text,
   ? platformName: text,
-  ? proxy: {
-    ? proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
-    ? proxyAutoconfigUrl: text,
-    ? ftpProxy: text,
-    ? httpProxy: text,
-    ? noProxy: [*text],
-    ? sslProxy: text,
-    ? socksProxy: text,
-    ? socksVersion: 0..255,
-  },
+  ? proxy: session.ProxyConfiguration,
+  ? webSocketUrl: bool,
   Extensible
 };
 </pre>
 
 The <code>session.CapabilityRequest</code> type represents a specific set of
 requested capabilities.
+
+WebDriver BiDi defines [=additional WebDriver capability|additional WebDriver
+capabilities=]. The following tables enumerates the capabilities each
+implementation must support for WebDriver BiDi.
+
+<pre class=simpledef>
+Capability: <dfn export>WebSocket URL</dfn>
+Key: "<code>webSocketUrl</code>"
+Value type: boolean
+Description: Defines the current session's support for bidirection connection.
+</pre>
+
+<div algorithm="webSocketUrl capability deserialization algorithm">
+The [=additional capability deserialization algorithm=] for the
+"<code>webSocketUrl</code>" capability, with parameter |value| is:
+
+1. If |value| is not a boolean, return [=error=] with [=error code|code=]
+   [=invalid argument=].
+
+1. Return [=success=] with data |value|.
+
+</div>
+
+<div algorithm="webSocketUrl capability serialization algorithm">
+The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
+with parameter |value| is:
+
+1. If |value| is false, return [=success=] with data null.
+
+1. Return [=success=] with data true.
+
+</div>
+
+#### The session.ProxyConfiguration Type #### {#type-session-ProxyConfiguration}
+
+[=remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+session.ProxyConfiguration = {
+   session.AutodetectProxyConfiguration //
+   session.DirectProxyConfiguration //
+   session.ManualProxyConfiguration //
+   session.PacProxyConfiguration //
+   session.SystemProxyConfiguration //
+}
+
+session.AutodetectProxyConfiguration = (
+   proxyType: "autodetect"
+   Extensible
+)
+
+session.DirectProxyConfiguration = (
+   proxyType: "direct",
+   Extensible
+)
+
+session.ManualProxyConfiguration = (
+   proxyType: "manual",
+   ? ftpProxy: text,
+   ? httpProxy: text,
+   ? sslProxy: text,
+   ? session.SocksProxyConfiguration
+   ? noProxy: [*text],
+   Extensible
+)
+
+session.SocksProxyConfiguration = (
+   socksProxy: text,
+   socksVersion: 0..255,
+)
+
+session.PacProxyConfiguration = (
+   proxyType: "pac",
+   proxyAutoconfigUrl: text,
+   Extensible
+)
+
+session.SystemProxyConfiguration = (
+   proxyType: "system"
+   Extensible
+)
+
+</pre>
 
 #### The session.SubscriptionRequest Type #### {#type-session-SubscriptionRequest}
 
@@ -1574,17 +1631,9 @@ This is a [=static command=].
           browserName: text,
           browserVersion: text,
           platformName: text,
-          proxy: {
-            ? proxyType: "pac" / "direct" / "autodetect" / "system" / "manual",
-            ? proxyAutoconfigUrl: text,
-            ? ftpProxy: text,
-            ? httpProxy: text,
-            ? noProxy: [*text],
-            ? sslProxy: text,
-            ? socksProxy: text,
-            ? socksVersion: 0..255,
-          },
           setWindowRect: bool,
+          ? proxy: session.ProxyConfiguration,
+          ? webSocketUrl: text / true,
           Extensible
         }
       }
@@ -2588,7 +2637,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
           |clip|["<code>height</code>"].
      </dl>
 
-1. Note: All coordiantes are now measured from the origin of the document.
+1. Note: All coordinates are now measured from the origin of the document.
 
 1. Let |rect| be the [=rectangle intersection=] of |origin rect| and |clip rect|.
 
@@ -3037,11 +3086,14 @@ and |session|:
       1. If |match type| is <code>"full"</code> and |node text| [=is=] |search text|,
          [=list/append=] |context node| to |returned nodes|.
 
-      1. Otherwise, [=list/append=] |context node| to |returned nodes|.
+      1. Otherwise, if |match type| is <code>"partial"</code>, [=list/append=]
+         |context node| to |returned nodes|.
 
     1. Otherwise, perform the following steps:
 
-      1. Set |max depth| to |max depth| - 1.
+      1. If |max depth| is not null:
+
+        1. Set |max depth| to |max depth| - 1.
 
       1. Let |child node matches| be the result of [=locate nodes using inner text=]
          with |context target|, |child nodes|, |selector|, |max depth|,
@@ -3443,7 +3495,7 @@ The [=remote end steps=] with |command parameters| are:
 
 #### The browsingContext.setViewport Command ####  {#command-browsingContext-setViewport}
 
-The <dfn export for=commands>browsingContext.setViewport</dfn> command  specific viewport characteristics (e.g. viewport width and viewport height) on the given top-level browsing context.
+The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies specific viewport characteristics (e.g. viewport width and viewport height) on the given top-level browsing context.
 
 <dl>
    <dt>Command Type</dt>
@@ -3530,10 +3582,10 @@ traverses the history of a given navigable by a delta.
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      BrowsingContext.TraverseHistory = {
+      browsingContext.TraverseHistory = (
         method: "browsingContext.traverseHistory",
         params: browsingContext.TraverseHistoryParameters
-      }
+      )
 
       browsingContext.TraverseHistoryParameters = {
         context: browsingContext.BrowsingContext,
@@ -4189,7 +4241,7 @@ To <dfn>get the network intercepts</dfn> given |session|, |event|, and |request|
 1. Run the steps under the first matching condition:
   <dl>
     <dt>|event| is "<code>network.beforeRequestSent</code>"
-    <dd>Set |phase| to the "<code>beforeRequestSent</code>".
+    <dd>Set |phase| to "<code>beforeRequestSent</code>".
     <dt>|event| is "<code>network.responseStarted</code>"
     <dd>Set |phase| to "<code>responseStarted</code>".
     <dt>|event| is "<code>network.authRequired</code>"
@@ -4219,7 +4271,7 @@ To <dfn>get the network intercepts</dfn> given |session|, |event|, and |request|
 
         1. [=list/Append=] |intercept id| to |intercepts|.
 
-        1. Continue.
+        1. Break.
 
 1. Return |intercepts|.
 
@@ -4332,8 +4384,8 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
   1. Let |environment settings| be |request|'s [=request/window=]
 
   1. If there is a [=/browsing context=] whose [=active window=] is |environment
-     settings|' [=environment settings object/global object=], let |context id|
-     be the [=browsing context id=] for that context.
+     settings|' [=environment settings object/global object=], set |context id|
+     to the [=browsing context id=] for that context.
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -4680,7 +4732,7 @@ To <dfn>get the initiator</dfn> given |request|:
 
   1. If |stack trace| has size of 1 or greater, let |line number| be value of the
      <code>lineNumber</code> field in |stack trace|[0], and let |column number| be
-     the value of the <code>columnNumber</code> field |stack trace|[0]. Otherwise
+     the value of the <code>columnNumber</code> field in |stack trace|[0]. Otherwise
      let |line number| and |column number| be 0.
 
   Otherwise, let |stack trace|, |column number|, and |line number| all be null.
@@ -4754,8 +4806,8 @@ To <dfn>get the request data</dfn> given |request|:
 
 1. Let |body| be request's [=request/body=].
 
-1. If |body| is a [=byte sequence=], let |body size| be the length of that
-   sequence. Otherwise, if |body| is a [=/body=] then let |body size| be that
+1. If |body| is a [=byte sequence=], set |body size| to the length of that
+   sequence. Otherwise, if |body| is a [=/body=] then set |body size| to that
    body's <a spec=fetch>length</a>.
 
 1. Let |headers size| be the size in bytes of |request|'s [=request/headers list=] when
@@ -4988,7 +5040,7 @@ decimal digits.
 
   1. Prepend |codepoint| to |serialized|.
 
-  1. Let |value| be |most significant digits|.
+  1. Set |value| to |most significant digits|.
 
 1. Return |serialized|.
 
@@ -5005,7 +5057,7 @@ To <dfn>serialize set-cookie header</dfn> given |protocol cookie|:
 1. Let |header value| be the [=byte sequence=] formed by concatenating |name|,
    `<code>=</code>`, and |value|.
 
-1. If |protocol cookie| [=map/contains=] "<code>expiry</code>:
+1. If |protocol cookie| [=map/contains=] "<code>expiry</code>":
 
   1. Let |attribute| be `<code>;Expires=</code>`
 
@@ -5014,7 +5066,7 @@ To <dfn>serialize set-cookie header</dfn> given |protocol cookie|:
 
   1. Append |attribute| to |header value|.
 
-1. If |protocol cookie| [=map/contains=] "<code>maxAge</code>:
+1. If |protocol cookie| [=map/contains=] "<code>maxAge</code>":
 
   1. Let |attribute| be `<code>;Max-Age=</code>`
 
@@ -5097,7 +5149,7 @@ A <code>network.UrlPattern</code> represents a pattern used for matching request
 URLs for [=network intercepts=].
 
 When URLs are matched against a <code>network.UrlPattern</code> the URL is
-parsed, and each component is comapred for equality with the corresponding field
+parsed, and each component is compared for equality with the corresponding field
 in the pattern, if present. Missing fields from the pattern always match.
 
 Note: This syntax is designed with future extensibility in mind. In particular
@@ -5246,7 +5298,7 @@ To <dfn>parse URL pattern</dfn>, given |pattern|:
        |pattern|["<code>pathname</code>"].
 
     1. If |pathname| does not [=string/starts with|start with=] U+002F (/), then
-       append "<code>/</code>" to pattern.
+       append "<code>/</code>" to |pattern url|.
 
     1. For each |codepoint| in |pathname|:
 
@@ -5761,7 +5813,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If |phase| is not "<code>authRequired</code>", then return [=error=]
    with [=error code=] [=invalid argument=].
 
-1. If |command parameters| "<code>action</code> is "<code>cancel</code>", set
+1. If |command parameters| "<code>action</code>" is "<code>cancel</code>", set
    |response|'s authentication credentials <!--TODO: link--> to
    "<code>cancelled</code>".
 
@@ -6576,7 +6628,7 @@ strong [=/map=] from handle ids to their corresponding objects.
 script.InternalId = text;
 </pre>
 
-The <code>script.InternalId</code> type represents the id of 
+The <code>script.InternalId</code> type represents the id of
 a previously serialized <code>script.RemoteValue</code> during
 [=serialize as a remote value|serialization=].
 
@@ -7572,7 +7624,7 @@ To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
     1. If |previously serialized remote value| does not have a field
        <code>internalId</code>, run the following steps:
 
-      1. Let |internal id| be the string representation of a [[!RFC4122|UUID]] 
+      1. Let |internal id| be the string representation of a [[!RFC4122|UUID]]
          based on truly random, or pseudo-random numbers.
 
       1. Set the <code>internalId</code> field of
@@ -9675,7 +9727,7 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 10, given
 
 </div>
 
-## The Input Module ## {#module-input}
+## The input Module ## {#module-input}
 
 The <dfn export for=modules>input</dfn> module contains functionality for
 simulated user input.
@@ -10020,16 +10072,9 @@ end:
 </div>
 ## Console ##  {#patches-console}
 
-Other specifications can define <dfn>console steps</dfn>. When any method of the
-{{console}} interface is called, with method name
-|method| and argument |args|:
+Other specifications can define <dfn>console steps</dfn>.
 
-
-1. If that method does not call the [=Printer=] operation, call any [=console
-   steps=] defined in external specification with arguments |method|,
-   |args|, and undefined.
-
-   Otherwise, at the point when the [=Printer=] operation is called with
+1. At the point when the [=Printer=] operation is called with
    arguments |name|, |printerArgs| and |options| (which is undefined if the
    argument is not provided), call any [=console steps=] defined in
    external specification with arguments |name|, |printerArgs|, and |options|.
