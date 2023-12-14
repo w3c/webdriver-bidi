@@ -8292,15 +8292,19 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |arguments| be the <code>arguments</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
-1. Let the |contexts| be the value of the <code>contexts</code> field of |command parameters| if it is present or null if it isn’t.
+1. If the value of the <code>contexts</code> field of |command parameters| if it is present:
 
-1. If |contexts| is not null:
+   1. Let |contexts| be an empty [=/set=].
 
-   1. For each |context id| of |contexts|:
+   1. For each |context id| of |command parameters|["<code>contexts</code>"]
 
       1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
 
-      1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
+      1. If |context| is a [=top-level browsing context=] append |context| to |contexts|.
+
+      1. Otherwise return [=error=] with [=error code=] [=invalid argument=].
+
+1. Otherwise let |contexts| to null.
 
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
