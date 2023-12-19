@@ -191,17 +191,17 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: report an error; url: webappapis.html#report-the-error
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
-    text: session history; url: history.html#session-history
     text: session history entry; url: browsing-the-web.html#session-history-entry
     text: session history traversal queue; url: document-sequences.html#tn-session-history-traversal-queue
+    text: session history; url: history.html#session-history
     text: set up a window environment settings object; url: window-object.html#set-up-a-window-environment-settings-object
     text: set up a worker environment settings object; url: workers.html#set-up-a-worker-environment-settings-object
     text: set up a worklet environment settings object; url: worklets.html#set-up-a-worklet-environment-settings-object
     text: shared worker; url: workers.html#shared-workers
     text: system visibility state; url: document-sequences.html#system-visibility-state
     text: traversable navigable; url:document-sequences.html#traversable-navigable
-    text: visible; url: document-sequences.html#system-visibility-state
     text: traverse the history by a delta; url: browsing-the-web.html#traverse-the-history-by-a-delta
+    text: visible; url: document-sequences.html#system-visibility-state
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
@@ -7037,17 +7037,20 @@ script.WindowRealmInfo = {
 
 script.DedicatedWorkerRealmInfo = {
   script.BaseRealmInfo,
-  type: "dedicated-worker"
+  type: "dedicated-worker",
+  owners: [script.Realm]
 }
 
 script.SharedWorkerRealmInfo = {
   script.BaseRealmInfo,
-  type: "shared-worker"
+  type: "shared-worker",
+  owners: [+script.Realm]
 }
 
 script.ServiceWorkerRealmInfo = {
   script.BaseRealmInfo,
   type: "service-worker"
+  owners: [*script.Realm]
 }
 
 script.WorkerRealmInfo = {
@@ -7089,6 +7092,25 @@ To <dfn>get the browsing context</dfn> with given |realm|:
    <a>associated <code>Document</code></a>.
 
 1. Return |document|'s [=/browsing context=].
+
+</div>
+<div algorithm>
+To <dfn>get the worker's owners</dfn> with given |global object|:
+
+1. Assert: |global object| is a {{WorkerGlobalScope}} object.
+
+1. Let |owners| be an empty [=/list=].
+
+1. For each |owner| in the |global object|'s associated [=owner set=]:
+
+   1. Let |owner environment settings| be |owner|'s [=relevant settings object=].
+
+   1. Let |owner realm info| be the result of [=get the realm info=] given
+      |owner environment settings|.
+
+   1. Append |owner realm info|["<code>id</code>"] to |owners|.
+
+1. Return |owners|.
 
 </div>
 
@@ -7135,21 +7157,26 @@ To <dfn>get the realm info</dfn> given |environment settings|:
 
     <dt>|global object| is a {{DedicatedWorkerGlobalScope}} object
     <dd>
+      1. Let |owners| be the result of [=get the worker's owners=] given |global object|.
+      1. Assert: |owners| has precisely one item.
       1. Let |realm info| be a [=/map=] matching the <code>script.DedicatedWorkerRealmInfo</code> production,
-         with the <code>realm</code> field set to |realm id|, and the <code>origin</code> field
-         set to |origin|.
+         with the <code>realm</code> field set to |realm id|, the <code>origin</code> field
+         set to |origin|, and the <code>owners</code> field set to |owners|.
 
     <dt>|global object| is a {{SharedWorkerGlobalScope}} object
     <dd>
+      1. Let |owners| be the result of [=get the worker's owners=] given |global object|.
+      1. Assert: |owners| has at least one item.
       1. Let |realm info| be a [=/map=] matching the <code>script.SharedWorkerRealmInfo</code> production,
-         with the <code>realm</code> field set to |realm id|, and the <code>origin</code>
-         field set to |origin|.
+         with the <code>realm</code> field set to |realm id|, the <code>origin</code> field
+         set to |origin|, and the <code>owners</code> field set to |owners|.
 
     <dt>|global object| is a {{ServiceWorkerGlobalScope}} object
     <dd>
+      1. Let |owners| be the result of [=get the worker's owners=] given |global object|.
       1. Let |realm info| be a [=/map=] matching the <code>script.ServiceWorkerRealmInfo</code> production,
-         with the <code>realm</code> field set to |realm id|, and the <code>origin</code> field
-         set to |origin|.
+         with the <code>realm</code> field set to |realm id|, the <code>origin</code> field
+         set to |origin|, and the <code>owners</code> field set to |owners|.
 
    <dt>|global object| is a {{WorkerGlobalScope}} object
    <dd>
