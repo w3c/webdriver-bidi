@@ -1643,8 +1643,8 @@ session.SystemProxyConfiguration = (
 
 <pre class="cddl remote-cddl">
 session.SubscriptionRequest = {
-  events: [*text],
-  ? contexts: [*browsingContext.BrowsingContext],
+  events: [+text],
+  ? contexts: [+browsingContext.BrowsingContext],
 }
 </pre>
 
@@ -1832,8 +1832,8 @@ Issue: This needs to be generalized to work with realms too
    <dd>
       <pre class="cddl remote-cddl">
       session.Subscribe = (
-        method: "session.subscribe",
-        params: session.SubscriptionRequest
+         method: "session.subscribe",
+         params: session.SubscriptionRequest
       )
       </pre>
    </dd>
@@ -1848,14 +1848,20 @@ Issue: This needs to be generalized to work with realms too
 <div algorithm="remote end steps for session.subscribe">
 The [=remote end steps=] with |session| and |command parameters| are:
 
-1. Let the |list of event names| be the value of the <code>events</code> field of
-   |command parameters|
+1. Let the |set of event names| be empty [=set=].
 
-1. Let the |list of contexts| be the value of the <code>contexts</code>
-   field of |command parameters| if it is present or null if it isn't.
+   1. For each |event| of <code>command parameters</code>["events"], append |event| to |set of event names|.
+
+1. Let |set of contexts| be null.
+
+1. If the value of the <code>contexts</code> field of |command parameters| is not null.
+
+   1. Set |set of contexts| to empty [=set=].
+
+   1. For each |event| of <code>command parameters</code>["contexts"], append |event| to |set of contexts|.
 
 1. Let |enabled events| be the result of [=trying=] to [=update the event map=]
-   with |session|, |list of event names| , |list of contexts| and
+   with |session|, |set of event names| , |set of contexts| and
    enabled true.
 
 1. Let |subscribe step events| be a new [=/map=].
@@ -1898,12 +1904,12 @@ Issue: This needs to be generalised to work with realms too
 <dl>
    <dt>Command Type</dt>
    <dd>
-     <pre class="cddl remote-cddl">
-     session.Unsubscribe = (
-       method: "session.unsubscribe",
-       params: session.SubscriptionRequest
-     )
-     </pre>
+      <pre class="cddl remote-cddl">
+      session.Unsubscribe = (
+         method: "session.unsubscribe",
+         params: session.SubscriptionRequest
+      )
+      </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
@@ -1916,14 +1922,20 @@ Issue: This needs to be generalised to work with realms too
 <div algorithm="remote end steps for session.unsubscribe">
 The [=remote end steps=] with |session| and |command parameters| are:
 
-1. Let the |list of event names| be the value of the <code>events</code> field of
-   |command parameters|.
+1. Let the |set of event names| be empty [=set=].
 
-1. Let the |list of contexts| be the value of the <code>contexts</code>
-   field of |command parameters| if it is present or null if it isn't.
+   1. For each |event| of <code>command parameters</code>["events"], append |event| to |set of event names|.
+
+1. Let |set of contexts| be null.
+
+1. If the value of the <code>contexts</code> field of |command parameters| is not null.
+
+   1. Set |set of contexts| to empty [=set=].
+
+   1. For each |event| of <code>command parameters</code>["contexts"], append |event| to |set of contexts|.
 
 1. [=Try=] to [=update the event map=] with |session|,
-   |list of event names|, |list of contexts| and enabled false.
+   |set of event names|, |list of contexts| and enabled false.
 
 1. Return [=success=] with data null.
 
