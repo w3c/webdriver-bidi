@@ -4248,6 +4248,92 @@ To <dfn>get the network intercepts</dfn> given |session|, |event|, and |request|
 
 </div>
 
+<div algorithm>
+To <dfn>update the response</dfn> given |session|, |command| and |command parameters|:
+
+1. Let |blocked requests| be |session|'s [=blocked request map=].
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. If |blocked requests| does not [=map/contain=] |request id| then return
+   [=error=] with [=error code=] [=no such request=].
+
+1. Let (<var ignore>request</var>, |phase|, |response|) be |blocked requests|[|request id|].
+
+1. If |phase| is "<code>beforeRequestSent</code>" and |command| is
+   "<code>continueResponse</code>", return [=error=] with [=error code=]
+   "<code>invalid argument</code>".
+
+    TODO: Consider a different error
+
+1. If |response| is null:
+
+  <!-- We can end up with non-null response for beforeRequestSent if we have
+  multiple sessions that all intercept the same request -->
+  1. Assert: |phase| is "<code>beforeRequestSent</code>".
+
+  1. Set |response| to a new [=/response=].
+
+1. If |command parameters| [=map/contains=] "<code>statusCode</code>":
+
+  1. Set |responses|'s [=response/status=] be |command
+     parameters|["<code>statusCode</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>reasonPhrase</code>":
+
+  1. Set |responses|'s [=response/status message=] be [=UTF-8 encode=] with
+     |command parameters|["<code>reasonPhrase</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>headers</code>":
+
+  1. Let |headers| be an empty [=/header list=].
+
+  1. For |header| in |command parameters|["<code>headers</code>"]:
+
+    1. Append [=deserialize header=] with |header| to |headers|.
+
+  1. Set |response|'s [=response/header list=] to |headers|.
+
+1. If |command parameters| [=map/contains=] "<code>cookies</code>":
+
+  1. If |command parameters| [=map/contains=] "<code>headers</code>", let
+     |headers| be |response|'s [=response/header list=].
+
+     Otherwise:
+
+     1. Let |headers| be an empty [=/header list=].
+
+     1. For each |header| in |response|'s [=response/headers list=]:
+
+       1. Let |name| be |header|'s name.
+
+       1. If [=byte-lowercase=] |name| is not `<code>set-cookie</code>`:
+
+         1. Append |header| to |headers|
+
+  1. For |cookie| in |command parameters|["<code>cookies</code>"]:
+
+    1. Let |header value| be [=serialize set-cookie header=] with |cookie|.
+
+    1. Append (`<code>Set-Cookie</code>`, |header value|) to |headers|.
+
+    1. Set |response|'s [=response/header list=] to |headers|.
+
+1. If |command parameters| [=map/contains=] "<code>credentials</code>":
+
+   Issue: This doesn't have a way to cancel the auth.
+
+   1. Let |credentials| be |command parameters|["<code>credentials</code>"].
+
+   1. Assert: |credentials|["<code>type</code>"] is "<code>password</code>".
+
+   1. Set |response|'s authentication credentials <!--TODO: link--> to
+      (|credentials|["<code>username</code>"], |credentials|["<code>password</code>"])
+
+1. Return |response|
+
+</div>
+
 ### Types ### {#module-network-types}
 
 #### The network.AuthChallenge Type #### {#type-network-AuthChallenge}
@@ -5617,92 +5703,6 @@ response, but still provide the network response body.
     </pre>
    </dd>
 </dl>
-
-<div algorithm>
-To <dfn>update the response</dfn> given |session|, |command| and |command parameters|:
-
-1. Let |blocked requests| be |session|'s [=blocked request map=].
-
-1. Let |request id| be |command parameters|["<code>request</code>"].
-
-1. If |blocked requests| does not [=map/contain=] |request id| then return
-   [=error=] with [=error code=] [=no such request=].
-
-1. Let (<var ignore>request</var>, |phase|, |response|) be |blocked requests|[|request id|].
-
-1. If |phase| is "<code>beforeRequestSent</code>" and |command| is
-   "<code>continueResponse</code>", return [=error=] with [=error code=]
-   "<code>invalid argument</code>".
-
-    TODO: Consider a different error
-
-1. If |response| is null:
-
-  <!-- We can end up with non-null response for beforeRequestSent if we have
-  multiple sessions that all intercept the same request -->
-  1. Assert: |phase| is "<code>beforeRequestSent</code>".
-
-  1. Set |response| to a new [=/response=].
-
-1. If |command parameters| [=map/contains=] "<code>statusCode</code>":
-
-  1. Set |responses|'s [=response/status=] be |command
-     parameters|["<code>statusCode</code>"].
-
-1. If |command parameters| [=map/contains=] "<code>reasonPhrase</code>":
-
-  1. Set |responses|'s [=response/status message=] be [=UTF-8 encode=] with
-     |command parameters|["<code>reasonPhrase</code>"].
-
-1. If |command parameters| [=map/contains=] "<code>headers</code>":
-
-  1. Let |headers| be an empty [=/header list=].
-
-  1. For |header| in |command parameters|["<code>headers</code>"]:
-
-    1. Append [=deserialize header=] with |header| to |headers|.
-
-  1. Set |response|'s [=response/header list=] to |headers|.
-
-1. If |command parameters| [=map/contains=] "<code>cookies</code>":
-
-  1. If |command parameters| [=map/contains=] "<code>headers</code>", let
-     |headers| be |response|'s [=response/header list=].
-
-     Otherwise:
-
-     1. Let |headers| be an empty [=/header list=].
-
-     1. For each |header| in |response|'s [=response/headers list=]:
-
-       1. Let |name| be |header|'s name.
-
-       1. If [=byte-lowercase=] |name| is not `<code>set-cookie</code>`:
-
-         1. Append |header| to |headers|
-
-  1. For |cookie| in |command parameters|["<code>cookies</code>"]:
-
-    1. Let |header value| be [=serialize set-cookie header=] with |cookie|.
-
-    1. Append (`<code>Set-Cookie</code>`, |header value|) to |headers|.
-
-    1. Set |response|'s [=response/header list=] to |headers|.
-
-1. If |command parameters| [=map/contains=] "<code>credentials</code>":
-
-   Issue: This doesn't have a way to cancel the auth.
-
-   1. Let |credentials| be |command parameters|["<code>credentials</code>"].
-
-   1. Assert: |credentials|["<code>type</code>"] is "<code>password</code>".
-
-   1. Set |response|'s authentication credentials <!--TODO: link--> to
-      (|credentials|["<code>username</code>"], |credentials|["<code>password</code>"])
-
-1. Return |response|
-
-</div>
 
 <div algorithm="remote end steps for network.continueResponse">
 The [=remote end steps=] given |session| and |command parameters| are:
