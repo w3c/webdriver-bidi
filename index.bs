@@ -269,6 +269,9 @@ spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
   type: dfn
     text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
     text: toUppercase; url: ch03.pdf#G34078
+spec: WAI-ARIA; urlPrefix:https://w3c.github.io/aria/
+  type: dfn
+    text: WAI-ARIA role; url: #introroles
 </pre>
 
 <pre class="biblio">
@@ -2501,6 +2504,7 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 browsingContext.Locator = (
    browsingContext.CssLocator /
    browsingContext.InnerTextLocator /
+   browsingContext.RoleLocator /
    browsingContext.XPathLocator
 )
 
@@ -2515,6 +2519,11 @@ browsingContext.InnerTextLocator = {
    ? ignoreCase: bool
    ? matchType: "full" / "partial",
    ? maxDepth: js-uint,
+}
+
+browsingContext.RoleLocator = {
+   type: "role",
+   value: text
 }
 
 browsingContext.XPathLocator = {
@@ -3406,6 +3415,41 @@ and |session|:
 
 </div>
 
+<div algorithm="locate nodes using role">
+To <dfn>locate nodes using role</dfn> with given |context nodes|, |selector|,
+|maximum returned node count|, and |session|:
+
+1. If |selector| is the empty string, return [=error=] with [=error code=]
+   [=invalid selector=].
+
+1. Let |returned nodes| be an empty [=/list=].
+
+1. For each |context node| in |context nodes|:
+
+  1. Let |role| be the result of computing the [=WAI-ARIA role=] of |context node|.
+
+  1. If |selector| [=is=] |role|:
+
+    1. [=list/Append=] |context node| to |returned nodes|.
+
+  1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
+     <a spec=dom>children</a> of |context node|:
+
+    1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
+
+  1. Let |child node matches| be the result of [=locate nodes using role=]
+     with |child nodes|, |selector|, |maximum returned node count|, and |session|.
+
+  1. [=list/Extend=] |returned nodes| with |child node matches|.
+
+1. If |maximum returned node count| is not null, [=list/remove=] all entries
+   in |returned nodes| with an index greater than or equal to |maximum returned
+   node count|.
+
+1. Return [=success=] with data |returned nodes|.
+
+</div>
+
 <div algorithm="remote end steps for browsingContext.locateNodes">
 The [=remote end steps=] with |session| and |command parameters| are:
 
@@ -3481,6 +3525,14 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using inner text=]
             given |context nodes|, |selector|, |max depth|, |match type|,
             |ignore case|, |maximum returned node count| and |session|.
+
+      <dt>|type| is the string "<code>role</code>"
+      <dd>
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. Let |result nodes| be a result of [=trying=] to [=locate nodes using role=]
+            given |context nodes|, |selector|, |maximum returned node count| and
+            |session|.
 
 1. Assert: |maximum returned node count| is null or [=list/size=] of |result nodes| is less
    than or equal to |maximum returned node count|.
