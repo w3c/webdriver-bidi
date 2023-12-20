@@ -9110,8 +9110,8 @@ StorageResult = (
 
 <pre class="cddl local-cddl remote-cddl">
 storage.PartitionKey = {
-    userContext: text,
-    sourceOrigin: text,
+    ? userContext: text,
+    ? sourceOrigin: text,
     Extensible,
 }
 </pre>
@@ -9168,7 +9168,7 @@ To <dfn>expand a storage partition spec</dfn> given |partition spec|:
 
 1. If |partition spec| is null:
 
-  1. Let |partition key| be an empty [=/map=].
+  1. Set |partition spec| to an empty [=/map=].
 
 1. Otherwise, if |partition spec|["<code>type</code>"] is "<code>context</code>":
 
@@ -9178,21 +9178,21 @@ To <dfn>expand a storage partition spec</dfn> given |partition spec|:
 
   1. Return [=success=] with data |partition key|.
 
-1. Otherwise:
-
-  1. Assert: |partition spec|["<code>type</code>"] is "<code>storageKey</code>".
-
-  1. Let |partition key| be |partition spec|.
+1. Let |partition key| be an empty [=/map=].
 
 1. For each |name| → |default value| in the [=default values for storage partition key attributes=]:
 
-  1. If |partition key|[|name|] does not [=map/exist=]:
+  1. Let |value| be |partition spec|[|name|] if it [=map/exists=] or |default value| otherwise.
 
-    1. [=map/Set=] |partition key|[|name|] to |default value|.
+  1. [=map/Set=] |partition key|[|name|] to |value|.
 
 1. For each |name| in the remote end's [=required partition key attributes=]:
 
-  1. If |partition key|[|name|] does not [=map/exist=]:
+  1. If |partition spec|[|name|] [=map/exists=]:
+
+    1. [=map/Set=] |partition key|][|name|] to |partition spec|[|name|].
+
+  1. Otherwise:
 
     1. Return [=error=] with [=error code=] [=underspecified storage partition=].
 
