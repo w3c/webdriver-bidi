@@ -7,7 +7,7 @@
   <link href="https://www.w3.org/StyleSheets/TR/2021/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="9f9fec6cf462e0c29c9698146d0289f35c0d0666" name="document-revision">
+  <meta content="d3ec8cb895b8fa70d41dcf0f2d9471dc206ba650" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -544,7 +544,7 @@ var.selected6 { background-color: #FFBCF2; box-shadow: 0 0 0 2px #FFBCF2; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-12-19">19 December 2023</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2023-12-20">20 December 2023</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -4242,6 +4242,105 @@ requests which are actively being blocked. It is an <a data-link-type="dfn" href
       <p>Return <var>intercepts</var>.</p>
     </ol>
    </div>
+   <div class="algorithm" data-algorithm="update the response">
+     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="update-the-response">update the response</dfn> given <var>session</var>, <var>command</var> and <var>command parameters</var>: 
+    <ol>
+     <li data-md>
+      <p>Let <var>blocked requests</var> be <var>session</var>’s <a data-link-type="dfn" href="#blocked-request-map" id="ref-for-blocked-request-map">blocked request map</a>.</p>
+     <li data-md>
+      <p>Let <var>request id</var> be <var>command parameters</var>["<code>request</code>"].</p>
+     <li data-md>
+      <p>If <var>blocked requests</var> does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①③">contain</a> <var>request id</var> then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②⑧">error code</a> <a data-link-type="dfn" href="#no-such-request" id="ref-for-no-such-request">no such request</a>.</p>
+     <li data-md>
+      <p>Let (<var>request</var>, <var>phase</var>, <var>response</var>) be <var>blocked requests</var>[<var>request id</var>].</p>
+     <li data-md>
+      <p>If <var>phase</var> is "<code>beforeRequestSent</code>" and <var>command</var> is
+ "<code>continueResponse</code>", return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②⑨">error code</a> "<code>invalid argument</code>".</p>
+      <p>TODO: Consider a different error</p>
+     <li data-md>
+      <p>If <var>response</var> is null:</p>
+      <ol>
+       <li data-md>
+        <p class="assertion">Assert: <var>phase</var> is "<code>beforeRequestSent</code>".</p>
+       <li data-md>
+        <p>Set <var>response</var> to a new <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response" id="ref-for-concept-response">response</a>.</p>
+      </ol>
+     <li data-md>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①④">contains</a> "<code>statusCode</code>":</p>
+      <ol>
+       <li data-md>
+        <p>Set <var>responses</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status" id="ref-for-concept-response-status">status</a> be <var>command
+ parameters</var>["<code>statusCode</code>"].</p>
+      </ol>
+     <li data-md>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑤">contains</a> "<code>reasonPhrase</code>":</p>
+      <ol>
+       <li data-md>
+        <p>Set <var>responses</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status-message" id="ref-for-concept-response-status-message">status message</a> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode">UTF-8 encode</a> with <var>command parameters</var>["<code>reasonPhrase</code>"].</p>
+      </ol>
+     <li data-md>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑥">contains</a> "<code>headers</code>":</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>headers</var> be an empty <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list">header list</a>.</p>
+       <li data-md>
+        <p>For <var>header</var> in <var>command parameters</var>["<code>headers</code>"]:</p>
+        <ol>
+         <li data-md>
+          <p>Append <a data-link-type="dfn" href="#deserialize-header" id="ref-for-deserialize-header">deserialize header</a> with <var>header</var> to <var>headers</var>.</p>
+        </ol>
+       <li data-md>
+        <p>Set <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list">header list</a> to <var>headers</var>.</p>
+      </ol>
+     <li data-md>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑦">contains</a> "<code>cookies</code>":</p>
+      <ol>
+       <li data-md>
+        <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑧">contains</a> "<code>headers</code>", let <var>headers</var> be <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list①">header list</a>.</p>
+        <p>Otherwise:</p>
+        <ol>
+         <li data-md>
+          <p>Let <var>headers</var> be an empty <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list①">header list</a>.</p>
+         <li data-md>
+          <p>For each <var>header</var> in <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list②">headers list</a>:</p>
+          <ol>
+           <li data-md>
+            <p>Let <var>name</var> be <var>header</var>’s name.</p>
+           <li data-md>
+            <p>If <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-lowercase" id="ref-for-byte-lowercase">byte-lowercase</a> <var>name</var> is not `<code>set-cookie</code>`:</p>
+            <ol>
+             <li data-md>
+              <p>Append <var>header</var> to <var>headers</var></p>
+            </ol>
+          </ol>
+        </ol>
+       <li data-md>
+        <p>For <var>cookie</var> in <var>command parameters</var>["<code>cookies</code>"]:</p>
+        <ol>
+         <li data-md>
+          <p>Let <var>header value</var> be <a data-link-type="dfn" href="#serialize-set-cookie-header" id="ref-for-serialize-set-cookie-header">serialize set-cookie header</a> with <var>cookie</var>.</p>
+         <li data-md>
+          <p>Append (`<code>Set-Cookie</code>`, <var>header value</var>) to <var>headers</var>.</p>
+         <li data-md>
+          <p>Set <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list③">header list</a> to <var>headers</var>.</p>
+        </ol>
+      </ol>
+     <li data-md>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑨">contains</a> "<code>credentials</code>":</p>
+      <p class="issue" id="issue-2a7f19c6"><a class="self-link" href="#issue-2a7f19c6"></a> This doesn’t have a way to cancel the auth.</p>
+      <ol>
+       <li data-md>
+        <p>Let <var>credentials</var> be <var>command parameters</var>["<code>credentials</code>"].</p>
+       <li data-md>
+        <p class="assertion">Assert: <var>credentials</var>["<code>type</code>"] is "<code>password</code>".</p>
+       <li data-md>
+        <p>Set <var>response</var>’s authentication credentials  to
+  (<var>credentials</var>["<code>username</code>"], <var>credentials</var>["<code>password</code>"])</p>
+      </ol>
+     <li data-md>
+      <p>Return <var>response</var></p>
+    </ol>
+   </div>
    <h4 class="heading settled" data-level="6.4.3" id="module-network-types"><span class="secno">6.4.3. </span><span class="content">Types</span><a class="self-link" href="#module-network-types"></a></h4>
    <h5 class="heading settled" data-level="6.4.3.1" id="type-network-AuthChallenge"><span class="secno">6.4.3.1. </span><span class="content">The network.AuthChallenge Type</span><a class="self-link" href="#type-network-AuthChallenge"></a></h5>
 <pre class="cddl local-cddl">network.AuthChallenge = {
@@ -4254,12 +4353,12 @@ requests which are actively being blocked. It is an <a data-link-type="dfn" href
     <p class="issue" id="issue-f2aa8157"><a class="self-link" href="#issue-f2aa8157"></a> Should we include parameters other than realm?</p>
     <ol>
      <li data-md>
-      <p>If <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status" id="ref-for-concept-response-status">status</a> is 401, let <var>header name</var> be
- `<code>WWW-Authenticate</code>`. Otherwise if <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status" id="ref-for-concept-response-status①">status</a> is 407, let <var>header name</var> be `<code>Proxy-Authenticate</code>`. Otherwise return null.</p>
+      <p>If <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status" id="ref-for-concept-response-status①">status</a> is 401, let <var>header name</var> be
+ `<code>WWW-Authenticate</code>`. Otherwise if <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status" id="ref-for-concept-response-status②">status</a> is 407, let <var>header name</var> be `<code>Proxy-Authenticate</code>`. Otherwise return null.</p>
      <li data-md>
       <p>Let <var>challenges</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list①①">list</a>.</p>
      <li data-md>
-      <p>For each (<var>name</var>, <var>value</var>) in <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list">header list</a>:</p>
+      <p>For each (<var>name</var>, <var>value</var>) in <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list④">header list</a>:</p>
       <p class="issue" id="issue-fb11fbae"><a class="self-link" href="#issue-fb11fbae"></a> as in Fetch it’s unclear if this is the right way to handle multiple
  headers, parsing issues, etc.</p>
       <ol>
@@ -4374,7 +4473,7 @@ a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-sequence" id
     <ol>
      <li data-md>
       <p>If <var>protocol bytes</var> matches the <code>network.StringValue</code> production,
- let <var>bytes</var> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode">UTF-8 encode</a> <var>protocol bytes</var>["<code>value</code>"].</p>
+ let <var>bytes</var> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode①">UTF-8 encode</a> <var>protocol bytes</var>["<code>value</code>"].</p>
      <li data-md>
       <p>Otherwise if <var>protocol bytes</var> matches the <code>network.Base64Value</code> production. Let <var>bytes</var> be <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#forgiving-base64-decode" id="ref-for-forgiving-base64-decode">forgiving-base64 decode</a> <var>protocol
  bytes</var>["<code>value</code>"].</p>
@@ -4458,7 +4557,7 @@ that’s in a <code>Cookie</code> request header.</p>
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-cookie-header">serialize cookie header</dfn> given <var>protocol cookie</var>: 
     <ol>
      <li data-md>
-      <p>Let <var>name</var> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode①">UTF-8 encode</a> <var>protocol cookie</var>["<code>name</code>"].</p>
+      <p>Let <var>name</var> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode②">UTF-8 encode</a> <var>protocol cookie</var>["<code>name</code>"].</p>
      <li data-md>
       <p>Let <var>value</var> be <a data-link-type="dfn" href="#deserialize-protocol-bytes" id="ref-for-deserialize-protocol-bytes">deserialize protocol bytes</a> with <var>protocol
  cookie</var>["<code>value</code>"].</p>
@@ -4563,7 +4662,7 @@ of the request, relative to the <a data-link-type="dfn" href="https://html.spec.
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="deserialize-header">deserialize header</dfn> given <var>protocol header</var>: 
     <ol>
      <li data-md>
-      <p>Let <var>name</var> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode②">UTF-8 encode</a> <var>protocol header</var>["<code>name</code>"].</p>
+      <p>Let <var>name</var> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode③">UTF-8 encode</a> <var>protocol header</var>["<code>name</code>"].</p>
      <li data-md>
       <p>Let <var>value</var> be <a data-link-type="dfn" href="#deserialize-protocol-bytes" id="ref-for-deserialize-protocol-bytes①">deserialize protocol bytes</a> with <var>protocol
  header</var>["<code>value</code>"].</p>
@@ -4782,9 +4881,9 @@ request.</p>
      <li data-md>
       <p>Set <var>protocol</var> to <a data-link-type="dfn" href="#get-the-protocol" id="ref-for-get-the-protocol">get the protocol</a> given <var>response</var>.</p>
      <li data-md>
-      <p>Let <var>status</var> be <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status" id="ref-for-concept-response-status②">status</a>.</p>
+      <p>Let <var>status</var> be <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status" id="ref-for-concept-response-status③">status</a>.</p>
      <li data-md>
-      <p>Let <var>status text</var> be <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status-message" id="ref-for-concept-response-status-message">status message</a>.</p>
+      <p>Let <var>status text</var> be <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status-message" id="ref-for-concept-response-status-message①">status message</a>.</p>
      <li data-md>
       <p>If <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-cache-state" id="ref-for-concept-response-cache-state">cache state</a> is "<code>local</code>", let <var>from cache</var> be
  true, otherwise let it be false.</p>
@@ -4795,7 +4894,7 @@ request.</p>
       <p class="note" role="note"><span class="marker">Note:</span> this is whatever MIME type the browser is actually using, even if it
  isn’t following the exact algorithm in the <a data-link-type="biblio" href="#biblio-mimesniff" title="MIME Sniffing Standard">[MIMESNIFF]</a> specification.</p>
      <li data-md>
-      <p>For each (<var>name</var>, <var>value</var>) in <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list①">headers list</a>:</p>
+      <p>For each (<var>name</var>, <var>value</var>) in <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list⑤">headers list</a>:</p>
       <ol>
        <li data-md>
         <p>Append the result of <a data-link-type="dfn" href="#serialize-header" id="ref-for-serialize-header①">serialize header</a> with <var>name</var> and <var>value</var> to <var>headers</var>.</p>
@@ -4872,7 +4971,7 @@ decimal digits.</p>
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="serialize-set-cookie-header">serialize set-cookie header</dfn> given <var>protocol cookie</var>: 
     <ol>
      <li data-md>
-      <p>Let <var>name</var> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode③">UTF-8 encode</a> <var>protocol cookie</var>["<code>name</code>"].</p>
+      <p>Let <var>name</var> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode④">UTF-8 encode</a> <var>protocol cookie</var>["<code>name</code>"].</p>
      <li data-md>
       <p>Let <var>value</var> be <a data-link-type="dfn" href="#deserialize-protocol-bytes" id="ref-for-deserialize-protocol-bytes②">deserialize protocol bytes</a> with <var>protocol
  cookie</var>["<code>value</code>"].</p>
@@ -4880,17 +4979,17 @@ decimal digits.</p>
       <p>Let <var>header value</var> be the <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-sequence" id="ref-for-byte-sequence④">byte sequence</a> formed by concatenating <var>name</var>,
  `<code>=</code>`, and <var>value</var>.</p>
      <li data-md>
-      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①③">contains</a> "<code>expiry</code>":</p>
+      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⓪">contains</a> "<code>expiry</code>":</p>
       <ol>
        <li data-md>
         <p>Let <var>attribute</var> be `<code>;Expires=</code>`</p>
        <li data-md>
-        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode④">UTF-8 encode</a> <var>protocol cookie</var>["<code>expiry</code>"] to <var>attribute</var>.</p>
+        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑤">UTF-8 encode</a> <var>protocol cookie</var>["<code>expiry</code>"] to <var>attribute</var>.</p>
        <li data-md>
         <p>Append <var>attribute</var> to <var>header value</var>.</p>
       </ol>
      <li data-md>
-      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①④">contains</a> "<code>maxAge</code>":</p>
+      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②①">contains</a> "<code>maxAge</code>":</p>
       <ol>
        <li data-md>
         <p>Let <var>attribute</var> be `<code>;Max-Age=</code>`</p>
@@ -4898,51 +4997,51 @@ decimal digits.</p>
         <p>Let <var>max age string</var> be <a data-link-type="dfn" href="#serialize-an-integer" id="ref-for-serialize-an-integer">serialize an integer</a> <var>protocol
 cookie</var>["<code>maxAge</code>"].</p>
        <li data-md>
-        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑤">UTF-8 encode</a> <var>max age string</var> to <var>attribute</var>.</p>
+        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑥">UTF-8 encode</a> <var>max age string</var> to <var>attribute</var>.</p>
        <li data-md>
         <p>Append <var>attribute</var> to <var>header value</var>.</p>
       </ol>
      <li data-md>
-      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑤">contains</a> "<code>domain</code>":</p>
+      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②②">contains</a> "<code>domain</code>":</p>
       <ol>
        <li data-md>
         <p>Let <var>attribute</var> be `<code>;Domain=</code>`</p>
        <li data-md>
-        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑥">UTF-8 encode</a> <var>protocol cookie</var>["<code>domain</code>"] to <var>attribute</var>.</p>
+        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑦">UTF-8 encode</a> <var>protocol cookie</var>["<code>domain</code>"] to <var>attribute</var>.</p>
        <li data-md>
         <p>Append <var>attribute</var> to <var>header value</var>.</p>
       </ol>
      <li data-md>
-      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑥">contains</a> "<code>path</code>":</p>
+      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②③">contains</a> "<code>path</code>":</p>
       <ol>
        <li data-md>
         <p>Let <var>attribute</var> be `<code>;Path=</code>`</p>
        <li data-md>
-        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑦">UTF-8 encode</a> <var>protocol cookie</var>["<code>path</code>"] to <var>attribute</var>.</p>
+        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑧">UTF-8 encode</a> <var>protocol cookie</var>["<code>path</code>"] to <var>attribute</var>.</p>
        <li data-md>
         <p>Append <var>attribute</var> to <var>header value</var>.</p>
       </ol>
      <li data-md>
-      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑦">contains</a> "<code>secure</code>" and <var>protocol
+      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②④">contains</a> "<code>secure</code>" and <var>protocol
  cookie</var>["<code>secure</code>"] is true:</p>
       <ol>
        <li data-md>
         <p>Append `<code>;Secure</code>` to <var>header value</var>.</p>
       </ol>
      <li data-md>
-      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑧">contains</a> "<code>httpOnly</code>" and <var>protocol
+      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑤">contains</a> "<code>httpOnly</code>" and <var>protocol
  cookie</var>["<code>httpOnly</code>"] is true:</p>
       <ol>
        <li data-md>
         <p>Append `<code>;HttpOnly</code>` to <var>header value</var>.</p>
       </ol>
      <li data-md>
-      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⑨">contains</a> "<code>sameSite</code>":</p>
+      <p>If <var>protocol cookie</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑥">contains</a> "<code>sameSite</code>":</p>
       <ol>
        <li data-md>
         <p>Let <var>attribute</var> be `<code>;SameSite=</code>`</p>
        <li data-md>
-        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑧">UTF-8 encode</a> <var>protocol cookie</var>["<code>sameSite</code>"] to <var>attribute</var>.</p>
+        <p>Append <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑨">UTF-8 encode</a> <var>protocol cookie</var>["<code>sameSite</code>"] to <var>attribute</var>.</p>
        <li data-md>
         <p>Append <var>attribute</var> to <var>header value</var>.</p>
       </ol>
@@ -4997,7 +5096,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
         <p>If <var>is escaped character</var> is false:</p>
         <ol>
          <li data-md>
-          <p>If <var>forbidden characters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-contain" id="ref-for-list-contain⑤">contains</a> <var>codepoint</var>, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②⑧">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①④">invalid argument</a>.</p>
+          <p>If <var>forbidden characters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-contain" id="ref-for-list-contain⑤">contains</a> <var>codepoint</var>, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑤">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⓪">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①④">invalid argument</a>.</p>
          <li data-md>
           <p>If <var>codepoint</var> is U+005C (\):</p>
           <ol>
@@ -5035,10 +5134,10 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
        <li data-md>
         <p>Let <var>pattern url</var> be the empty string.</p>
        <li data-md>
-        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⓪">contains</a> "<code>protocol</code>":</p>
+        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑦">contains</a> "<code>protocol</code>":</p>
         <ol>
          <li data-md>
-          <p>If <var>pattern</var>["<code>protocol</code>"] is the empty string, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code②⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑤">invalid argument</a>.</p>
+          <p>If <var>pattern</var>["<code>protocol</code>"] is the empty string, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③①">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑤">invalid argument</a>.</p>
          <li data-md>
           <p>Let <var>protocol</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②⑥">trying</a> to <a data-link-type="dfn" href="#unescape-url-pattern" id="ref-for-unescape-url-pattern">unescape
  URL Pattern</a> with <var>pattern</var>["<code>protocol</code>"].</p>
@@ -5050,7 +5149,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
  (-), U+002E (.)» does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-contain" id="ref-for-list-contain⑥">contain</a> <var>codepoint</var>:</p>
             <ol>
              <li data-md>
-              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑤">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⓪">error code</a> invalid argument.</p>
+              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑦">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③②">error code</a> invalid argument.</p>
             </ol>
           </ol>
          <li data-md>
@@ -5071,12 +5170,12 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
        <li data-md>
         <p>If <var>scheme</var> <a data-link-type="dfn" href="https://url.spec.whatwg.org/#is-special" id="ref-for-is-special">is special</a>, append "<code>//</code>" to <var>pattern url</var>.</p>
        <li data-md>
-        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②①">contains</a> "<code>hostname</code>":</p>
+        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑧">contains</a> "<code>hostname</code>":</p>
         <ol>
          <li data-md>
-          <p>If <var>pattern</var>["<code>hostname</code>"] is the empty string, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③①">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑥">invalid argument</a>.</p>
+          <p>If <var>pattern</var>["<code>hostname</code>"] is the empty string, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑧">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③③">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑥">invalid argument</a>.</p>
          <li data-md>
-          <p>If <var>scheme</var> is "<code>file</code>" return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑦">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③②">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑦">invalid argument</a>.</p>
+          <p>If <var>scheme</var> is "<code>file</code>" return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑨">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑦">invalid argument</a>.</p>
          <li data-md>
           <p>Let <var>hostname</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②⑦">trying</a> to <a data-link-type="dfn" href="#unescape-url-pattern" id="ref-for-unescape-url-pattern①">unescape
  URL Pattern</a> with <var>pattern</var>["<code>hostname</code>"].</p>
@@ -5089,13 +5188,13 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
             <p>If «U+002F (/), U+003F (?), U+0023 (#)» <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-contain" id="ref-for-list-contain⑦">contains</a> <var>codepoint</var>:</p>
             <ol>
              <li data-md>
-              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑧">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③③">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑧">invalid argument</a>.</p>
+              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⓪">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑤">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑧">invalid argument</a>.</p>
             </ol>
            <li data-md>
             <p>If <var>inside brackets</var> is false and <var>codepoint</var> is U+003A (:):</p>
             <ol>
              <li data-md>
-              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors③⑨">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑨">invalid argument</a>.</p>
+              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④①">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑥">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument①⑨">invalid argument</a>.</p>
             </ol>
            <li data-md>
             <p>If <var>codepoint</var> is U+005B ([), set <var>inside brackets</var> to true.</p>
@@ -5114,10 +5213,10 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
           <p>Set <var>has hostname</var> to false.</p>
         </ol>
        <li data-md>
-        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②②">contains</a> "<code>port</code>":</p>
+        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑨">contains</a> "<code>port</code>":</p>
         <ol>
          <li data-md>
-          <p>If <var>pattern</var>["<code>port</code>"] is the empty string, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⓪">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑤">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②⓪">invalid argument</a>.</p>
+          <p>If <var>pattern</var>["<code>port</code>"] is the empty string, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④②">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑦">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②⓪">invalid argument</a>.</p>
          <li data-md>
           <p>Let <var>port</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②⑧">trying</a> to <a data-link-type="dfn" href="#unescape-url-pattern" id="ref-for-unescape-url-pattern②">unescape
  URL Pattern</a> with <var>pattern</var>["<code>port</code>"].</p>
@@ -5130,7 +5229,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
             <p>If <var>codepoint</var> is not an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ascii-digit" id="ref-for-ascii-digit">ASCII digit</a>:</p>
             <ol>
              <li data-md>
-              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④①">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑥">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②①">invalid argument</a>.</p>
+              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑧">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②①">invalid argument</a>.</p>
             </ol>
           </ol>
          <li data-md>
@@ -5143,7 +5242,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
           <p>Set <var>has port</var> to false.</p>
         </ol>
        <li data-md>
-        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②③">contains</a> "<code>pathname</code>":</p>
+        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③⓪">contains</a> "<code>pathname</code>":</p>
         <ol>
          <li data-md>
           <p>Let <var>pathname</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try②⑨">trying</a> to <a data-link-type="dfn" href="#unescape-url-pattern" id="ref-for-unescape-url-pattern③">unescape URL Pattern</a> with <var>pattern</var>["<code>pathname</code>"].</p>
@@ -5157,7 +5256,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
             <p>If «U+003F (?), U+0023 (#)» <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-contain" id="ref-for-list-contain⑧">contains</a> <var>codepoint</var>:</p>
             <ol>
              <li data-md>
-              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④②">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑦">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②②">invalid argument</a>.</p>
+              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②②">invalid argument</a>.</p>
             </ol>
           </ol>
          <li data-md>
@@ -5170,7 +5269,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
           <p>Set <var>has pathname</var> to false.</p>
         </ol>
        <li data-md>
-        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②④">contains</a> "<code>search</code>":</p>
+        <p>If <var>pattern</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③①">contains</a> "<code>search</code>":</p>
         <ol>
          <li data-md>
           <p>Let <var>search</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try③⓪">trying</a> to <a data-link-type="dfn" href="#unescape-url-pattern" id="ref-for-unescape-url-pattern④">unescape URL pattern</a> with <var>pattern</var>["<code>search</code>"].</p>
@@ -5184,7 +5283,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
             <p>If <var>codepoint</var> is U+0023 (#):</p>
             <ol>
              <li data-md>
-              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④③">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑧">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②③">invalid argument</a>.</p>
+              <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑤">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④⓪">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②③">invalid argument</a>.</p>
             </ol>
           </ol>
          <li data-md>
@@ -5207,7 +5306,7 @@ the syntax forbids characters that are treated specially in the <a data-link-typ
      <li data-md>
       <p>Let <var>url</var> be the result of <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-parser" id="ref-for-concept-url-parser①">parsing</a> <var>pattern url</var>.</p>
      <li data-md>
-      <p>If <var>url</var> is failure, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④④">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code③⑨">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②④">invalid argument</a>.</p>
+      <p>If <var>url</var> is failure, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④①">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②④">invalid argument</a>.</p>
      <li data-md>
       <p>Let <var>parsed</var> be a struct with the following fields:</p>
       <dl>
@@ -5415,52 +5514,52 @@ network.ContinueRequestParameters = {
      The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps②①">remote end steps</a> given <var>session</var> and <var>command parameters</var> are: 
     <ol>
      <li data-md>
-      <p>Let <var>blocked requests</var> be <var>session</var>’s <a data-link-type="dfn" href="#blocked-request-map" id="ref-for-blocked-request-map">blocked request map</a>.</p>
+      <p>Let <var>blocked requests</var> be <var>session</var>’s <a data-link-type="dfn" href="#blocked-request-map" id="ref-for-blocked-request-map①">blocked request map</a>.</p>
      <li data-md>
       <p>Let <var>request id</var> be <var>command parameters</var>["<code>request</code>"].</p>
      <li data-md>
-      <p>If <var>blocked requests</var> does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑤">contain</a> <var>request id</var> then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑤">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④⓪">error code</a> <a data-link-type="dfn" href="#no-such-request" id="ref-for-no-such-request">no such request</a>.</p>
+      <p>If <var>blocked requests</var> does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③②">contain</a> <var>request id</var> then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑦">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④②">error code</a> <a data-link-type="dfn" href="#no-such-request" id="ref-for-no-such-request①">no such request</a>.</p>
      <li data-md>
       <p>Let (<var>request</var>, <var>phase</var>, <var>response</var>) be <var>blocked requests</var>[<var>request id</var>].</p>
      <li data-md>
-      <p>If <var>phase</var> is not "<code>beforeRequestSent</code>", then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑥">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④①">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②⑤">invalid argument</a>.</p>
+      <p>If <var>phase</var> is not "<code>beforeRequestSent</code>", then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑧">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④③">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②⑤">invalid argument</a>.</p>
       <p class="issue" id="issue-674c4ab4"><a class="self-link" href="#issue-674c4ab4"></a> consider a "<code>request already sent</code>" error.</p>
      <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑥">contains</a> "<code>url</code>":</p>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③③">contains</a> "<code>url</code>":</p>
       <ol>
        <li data-md>
         <p>Let <var>url record</var> be the result of applying the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-parser" id="ref-for-concept-url-parser③">URL parser</a> to <var>command
  parameters</var>["<code>url</code>"], with <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/webappapis.html#concept-script-base-url" id="ref-for-concept-script-base-url②">base URL</a> null.</p>
        <li data-md>
-        <p>If <var>url record</var> is failure, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑦">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④②">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②⑥">invalid
+        <p>If <var>url record</var> is failure, return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑨">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④④">error code</a> <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-invalid-argument" id="ref-for-dfn-invalid-argument②⑥">invalid
  argument</a>.</p>
         <p>TODO: Should we also resume here?</p>
        <li data-md>
         <p>Let <var>request</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-url" id="ref-for-concept-request-url②">url</a> be <var>url record</var>.</p>
       </ol>
      <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑦">contains</a> "<code>method</code>":</p>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③④">contains</a> "<code>method</code>":</p>
       <ol>
        <li data-md>
         <p>Let <var>request</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-method" id="ref-for-concept-request-method①">method</a> be <var>command
  parameters</var>["<code>method</code>"].</p>
       </ol>
      <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑧">contains</a> "<code>headers</code>":</p>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③⑤">contains</a> "<code>headers</code>":</p>
       <ol>
        <li data-md>
-        <p>Let <var>headers</var> be an empty <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list">header list</a>.</p>
+        <p>Let <var>headers</var> be an empty <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list②">header list</a>.</p>
        <li data-md>
         <p>For <var>header</var> in <var>command parameters</var>["<code>headers</code>"]:</p>
         <ol>
          <li data-md>
-          <p>Append <a data-link-type="dfn" href="#deserialize-header" id="ref-for-deserialize-header">deserialize header</a> with <var>header</var> to <var>headers</var>.</p>
+          <p>Append <a data-link-type="dfn" href="#deserialize-header" id="ref-for-deserialize-header①">deserialize header</a> with <var>header</var> to <var>headers</var>.</p>
         </ol>
        <li data-md>
         <p>Set <var>request</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-header-list" id="ref-for-concept-request-header-list②">headers list</a> to <var>headers</var>.</p>
       </ol>
      <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②⑨">contains</a> "<code>cookies</code>":</p>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③⑥">contains</a> "<code>cookies</code>":</p>
       <ol>
        <li data-md>
         <p>Let <var>cookie header</var> be an empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-sequence" id="ref-for-byte-sequence⑤">byte sequence</a>.</p>
@@ -5481,7 +5580,7 @@ network.ContinueRequestParameters = {
          <li data-md>
           <p>Let <var>name</var> be <var>header</var>’s name.</p>
          <li data-md>
-          <p>If <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-lowercase" id="ref-for-byte-lowercase">byte-lowercase</a> <var>name</var> is `<code>cookie</code>`:</p>
+          <p>If <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-lowercase" id="ref-for-byte-lowercase①">byte-lowercase</a> <var>name</var> is `<code>cookie</code>`:</p>
           <ol>
            <li data-md>
             <p>Set <var>header</var>’s value to <var>cookie header</var>.</p>
@@ -5499,7 +5598,7 @@ network.ContinueRequestParameters = {
         </ol>
       </ol>
      <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③⓪">contains</a> "<code>body</code>":</p>
+      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③⑦">contains</a> "<code>body</code>":</p>
       <ol>
        <li data-md>
         <p>Let <var>body</var> be <a data-link-type="dfn" href="#deserialize-protocol-bytes" id="ref-for-deserialize-protocol-bytes③">deserialize protocol bytes</a> with <var>command
@@ -5540,105 +5639,6 @@ network.ContinueResponseParameters = {
 <pre class="cddl">EmptyResult
 </pre>
    </dl>
-   <div class="algorithm" data-algorithm="update the response">
-     To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="update-the-response">update the response</dfn> given <var>session</var>, <var>command</var> and <var>command parameters</var>: 
-    <ol>
-     <li data-md>
-      <p>Let <var>blocked requests</var> be <var>session</var>’s <a data-link-type="dfn" href="#blocked-request-map" id="ref-for-blocked-request-map①">blocked request map</a>.</p>
-     <li data-md>
-      <p>Let <var>request id</var> be <var>command parameters</var>["<code>request</code>"].</p>
-     <li data-md>
-      <p>If <var>blocked requests</var> does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③①">contain</a> <var>request id</var> then return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑧">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④③">error code</a> <a data-link-type="dfn" href="#no-such-request" id="ref-for-no-such-request①">no such request</a>.</p>
-     <li data-md>
-      <p>Let (<var>request</var>, <var>phase</var>, <var>response</var>) be <var>blocked requests</var>[<var>request id</var>].</p>
-     <li data-md>
-      <p>If <var>phase</var> is "<code>beforeRequestSent</code>" and <var>command</var> is
- "<code>continueResponse</code>", return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-errors" id="ref-for-dfn-errors④⑨">error</a> with <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-error-code" id="ref-for-dfn-error-code④④">error code</a> "<code>invalid argument</code>".</p>
-      <p>TODO: Consider a different error</p>
-     <li data-md>
-      <p>If <var>response</var> is null:</p>
-      <ol>
-       <li data-md>
-        <p class="assertion">Assert: <var>phase</var> is "<code>beforeRequestSent</code>".</p>
-       <li data-md>
-        <p>Set <var>response</var> to a new <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response" id="ref-for-concept-response">response</a>.</p>
-      </ol>
-     <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③②">contains</a> "<code>statusCode</code>":</p>
-      <ol>
-       <li data-md>
-        <p>Set <var>responses</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status" id="ref-for-concept-response-status③">status</a> be <var>command
- parameters</var>["<code>statusCode</code>"].</p>
-      </ol>
-     <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③③">contains</a> "<code>reasonPhrase</code>":</p>
-      <ol>
-       <li data-md>
-        <p>Set <var>responses</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status-message" id="ref-for-concept-response-status-message①">status message</a> be <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-encode" id="ref-for-utf-8-encode⑨">UTF-8 encode</a> with <var>command parameters</var>["<code>reasonPhrase</code>"].</p>
-      </ol>
-     <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③④">contains</a> "<code>headers</code>":</p>
-      <ol>
-       <li data-md>
-        <p>Let <var>headers</var> be an empty <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list①">header list</a>.</p>
-       <li data-md>
-        <p>For <var>header</var> in <var>command parameters</var>["<code>headers</code>"]:</p>
-        <ol>
-         <li data-md>
-          <p>Append <a data-link-type="dfn" href="#deserialize-header" id="ref-for-deserialize-header①">deserialize header</a> with <var>header</var> to <var>headers</var>.</p>
-        </ol>
-       <li data-md>
-        <p>Set <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list②">header list</a> to <var>headers</var>.</p>
-      </ol>
-     <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③⑤">contains</a> "<code>cookies</code>":</p>
-      <ol>
-       <li data-md>
-        <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③⑥">contains</a> "<code>headers</code>", let <var>headers</var> be <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list③">header list</a>.</p>
-        <p>Otherwise:</p>
-        <ol>
-         <li data-md>
-          <p>Let <var>headers</var> be an empty <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-header-list" id="ref-for-concept-header-list②">header list</a>.</p>
-         <li data-md>
-          <p>For each <var>header</var> in <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list④">headers list</a>:</p>
-          <ol>
-           <li data-md>
-            <p>Let <var>name</var> be <var>header</var>’s name.</p>
-           <li data-md>
-            <p>If <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-lowercase" id="ref-for-byte-lowercase①">byte-lowercase</a> <var>name</var> is not `<code>set-cookie</code>`:</p>
-            <ol>
-             <li data-md>
-              <p>Append <var>header</var> to <var>headers</var></p>
-            </ol>
-          </ol>
-        </ol>
-       <li data-md>
-        <p>For <var>cookie</var> in <var>command parameters</var>["<code>cookies</code>"]:</p>
-        <ol>
-         <li data-md>
-          <p>Let <var>header value</var> be <a data-link-type="dfn" href="#serialize-set-cookie-header" id="ref-for-serialize-set-cookie-header">serialize set-cookie header</a> with <var>cookie</var>.</p>
-         <li data-md>
-          <p>Append (`<code>Set-Cookie</code>`, <var>header value</var>) to <var>headers</var>.</p>
-         <li data-md>
-          <p>Set <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-header-list" id="ref-for-concept-response-header-list⑤">header list</a> to <var>headers</var>.</p>
-        </ol>
-      </ol>
-     <li data-md>
-      <p>If <var>command parameters</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③⑦">contains</a> "<code>credentials</code>":</p>
-      <p class="issue" id="issue-2a7f19c6"><a class="self-link" href="#issue-2a7f19c6"></a> This doesn’t have a way to cancel the auth.</p>
-      <ol>
-       <li data-md>
-        <p>Let <var>credentials</var> be <var>command parameters</var>["<code>credentials</code>"].</p>
-       <li data-md>
-        <p class="assertion">Assert: <var>credentials</var>["<code>type</code>"] is "<code>password</code>".</p>
-       <li data-md>
-        <p>Set <var>response</var>’s authentication credentials  to
-  (<var>credentials</var>["<code>username</code>"], <var>credentials</var>["<code>password</code>"])</p>
-      </ol>
-     <li data-md>
-      <p>Return <var>response</var></p>
-    </ol>
-   </div>
    <div class="algorithm" data-algorithm="remote end steps for network.continueResponse">
      The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-end-steps" id="ref-for-dfn-remote-end-steps②②">remote end steps</a> given <var>session</var> and <var>command parameters</var> are: 
     <ol>
@@ -9271,7 +9271,7 @@ end:</p>
    <li><a href="#unescape-url-pattern">unescape URL pattern</a><span>, in § 6.4.3.16</span>
    <li><a href="#unwrapped">unwrapped</a><span>, in § 5.2</span>
    <li><a href="#update-the-event-map">update the event map</a><span>, in § 6.1.1</span>
-   <li><a href="#update-the-response">update the response</a><span>, in § 6.4.4.3</span>
+   <li><a href="#update-the-response">update the response</a><span>, in § 6.4.2</span>
    <li><a href="#navigation-status-url">url</a><span>, in § 6.3</span>
    <li><a href="#wait-queue">wait queue</a><span>, in § 2</span>
    <li><a href="#webdriver-bidi-auth-required">WebDriver BiDi auth required</a><span>, in § 6.4.5.1</span>
@@ -9878,13 +9878,13 @@ bfcache restore, and also add the persisted status to the data. <a class="issue-
    <div class="issue"> It’s unclear if we ought to only fire this event for browsing
 contexts that have active documents; navigation can also cause contexts to
 become inaccessible but not yet get discarded because bfcache. <a class="issue-return" href="#issue-4e122e13" title="Jump to section">↵</a></div>
+   <div class="issue"> This doesn’t have a way to cancel the auth. <a class="issue-return" href="#issue-2a7f19c6" title="Jump to section">↵</a></div>
    <div class="issue"> Should we include parameters other than realm? <a class="issue-return" href="#issue-f2aa8157" title="Jump to section">↵</a></div>
    <div class="issue"> as in Fetch it’s unclear if this is the right way to handle multiple
  headers, parsing issues, etc. <a class="issue-return" href="#issue-fb11fbae" title="Jump to section">↵</a></div>
    <div class="issue"> Consider including the `sharedId` of the document node that initiated the
 request in addition to the context. <a class="issue-return" href="#issue-f8347230" title="Jump to section">↵</a></div>
    <div class="issue"> consider a "<code>request already sent</code>" error. <a class="issue-return" href="#issue-674c4ab4" title="Jump to section">↵</a></div>
-   <div class="issue"> This doesn’t have a way to cancel the auth. <a class="issue-return" href="#issue-2a7f19c6" title="Jump to section">↵</a></div>
    <div class="issue"> Allow setting the precise kind of error <a href="https://github.com/w3c/webdriver-bidi/issues/508">[Issue #508]</a> <a class="issue-return" href="#issue-6015124b" title="Jump to section">↵</a></div>
    <div class="issue"> This has the wrong error code <a class="issue-return" href="#issue-89e6b783" title="Jump to section">↵</a></div>
    <div class="issue"> This doesn’t handle lone surrogates <a class="issue-return" href="#issue-d33a79cf" title="Jump to section">↵</a></div>
@@ -10304,7 +10304,7 @@ window.dfnpanelData['b7212a68'] = {"dfnID": "b7212a68", "url": "https://tc39.es/
 window.dfnpanelData['ced1a660'] = {"dfnID": "ced1a660", "url": "https://tc39.es/ecma262/#sec-undefined-value", "dfnText": "undefined", "refSections": [{"refs": [{"id": "ref-for-sec-undefined-value"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-sec-undefined-value\u2460"}], "title": "6.5.3.10. The script.PrimitiveProtocolValue Type"}], "external": true};
 window.dfnpanelData['b0fcb8d7'] = {"dfnID": "b0fcb8d7", "url": "https://encoding.spec.whatwg.org/#utf-8-decode", "dfnText": "utf-8 decode", "refSections": [{"refs": [{"id": "ref-for-utf-8-decode"}], "title": "6.4.3.1. The network.AuthChallenge Type"}, {"refs": [{"id": "ref-for-utf-8-decode\u2460"}], "title": "6.4.3.5. The network.Cookie Type"}, {"refs": [{"id": "ref-for-utf-8-decode\u2461"}], "title": "6.4.3.8. The network.Header Type"}], "external": true};
 window.dfnpanelData['f256859a'] = {"dfnID": "f256859a", "url": "https://encoding.spec.whatwg.org/#utf-8-decode-without-bom-or-fail", "dfnText": "utf-8 decode without bom or fail", "refSections": [{"refs": [{"id": "ref-for-utf-8-decode-without-bom-or-fail"}], "title": "6.4.3.4. The network.BytesValue Type"}], "external": true};
-window.dfnpanelData['0303e8e5'] = {"dfnID": "0303e8e5", "url": "https://encoding.spec.whatwg.org/#utf-8-encode", "dfnText": "utf-8 encode", "refSections": [{"refs": [{"id": "ref-for-utf-8-encode"}], "title": "6.4.3.4. The network.BytesValue Type"}, {"refs": [{"id": "ref-for-utf-8-encode\u2460"}], "title": "6.4.3.6. The network.CookieHeader Type"}, {"refs": [{"id": "ref-for-utf-8-encode\u2461"}], "title": "6.4.3.8. The network.Header Type"}, {"refs": [{"id": "ref-for-utf-8-encode\u2462"}, {"id": "ref-for-utf-8-encode\u2463"}, {"id": "ref-for-utf-8-encode\u2464"}, {"id": "ref-for-utf-8-encode\u2465"}, {"id": "ref-for-utf-8-encode\u2466"}, {"id": "ref-for-utf-8-encode\u2467"}], "title": "6.4.3.15. The network.SetCookieHeader Type"}, {"refs": [{"id": "ref-for-utf-8-encode\u2468"}], "title": "6.4.4.3. The network.continueResponse Command"}], "external": true};
+window.dfnpanelData['0303e8e5'] = {"dfnID": "0303e8e5", "url": "https://encoding.spec.whatwg.org/#utf-8-encode", "dfnText": "utf-8 encode", "refSections": [{"refs": [{"id": "ref-for-utf-8-encode"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-utf-8-encode\u2460"}], "title": "6.4.3.4. The network.BytesValue Type"}, {"refs": [{"id": "ref-for-utf-8-encode\u2461"}], "title": "6.4.3.6. The network.CookieHeader Type"}, {"refs": [{"id": "ref-for-utf-8-encode\u2462"}], "title": "6.4.3.8. The network.Header Type"}, {"refs": [{"id": "ref-for-utf-8-encode\u2463"}, {"id": "ref-for-utf-8-encode\u2464"}, {"id": "ref-for-utf-8-encode\u2465"}, {"id": "ref-for-utf-8-encode\u2466"}, {"id": "ref-for-utf-8-encode\u2467"}, {"id": "ref-for-utf-8-encode\u2468"}], "title": "6.4.3.15. The network.SetCookieHeader Type"}], "external": true};
 window.dfnpanelData['dc126c10'] = {"dfnID": "dc126c10", "url": "https://fetch.spec.whatwg.org/#connection-timing-info-alpn-negotiated-protocol", "dfnText": "alpn negotiated protocol", "refSections": [{"refs": [{"id": "ref-for-connection-timing-info-alpn-negotiated-protocol"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": true};
 window.dfnpanelData['4a2cfa3a'] = {"dfnID": "4a2cfa3a", "url": "https://fetch.spec.whatwg.org/#byte-sequence-as-a-body", "dfnText": "as a body", "refSections": [{"refs": [{"id": "ref-for-byte-sequence-as-a-body"}], "title": "6.4.4.6. The network.provideResponse Command"}], "external": true};
 window.dfnpanelData['644cb530'] = {"dfnID": "644cb530", "url": "https://fetch.spec.whatwg.org/#concept-body", "dfnText": "body", "refSections": [{"refs": [{"id": "ref-for-concept-body"}], "title": "6.4.3.12. The network.RequestData Type"}], "external": true};
@@ -10326,9 +10326,9 @@ window.dfnpanelData['7d9064d0'] = {"dfnID": "7d9064d0", "url": "https://fetch.sp
 window.dfnpanelData['fd8ed7d1'] = {"dfnID": "fd8ed7d1", "url": "https://fetch.spec.whatwg.org/#fetch-timing-info-final-network-request-start-time", "dfnText": "final network-request start time", "refSections": [{"refs": [{"id": "ref-for-fetch-timing-info-final-network-request-start-time"}], "title": "6.4.3.7. The network.FetchTimingInfo Type"}], "external": true};
 window.dfnpanelData['a4361c75'] = {"dfnID": "a4361c75", "url": "https://fetch.spec.whatwg.org/#fetch-timing-info-final-network-response-start-time", "dfnText": "final network-response start time", "refSections": [{"refs": [{"id": "ref-for-fetch-timing-info-final-network-response-start-time"}], "title": "6.4.3.7. The network.FetchTimingInfo Type"}], "external": true};
 window.dfnpanelData['c9e7c11a'] = {"dfnID": "c9e7c11a", "url": "https://fetch.spec.whatwg.org/#concept-header", "dfnText": "header", "refSections": [{"refs": [{"id": "ref-for-concept-header"}], "title": "6.4.3.8. The network.Header Type"}, {"refs": [{"id": "ref-for-concept-header\u2460"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": true};
-window.dfnpanelData['d85a6c84'] = {"dfnID": "d85a6c84", "url": "https://fetch.spec.whatwg.org/#concept-header-list", "dfnText": "header list", "refSections": [{"refs": [{"id": "ref-for-concept-header-list"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-concept-header-list\u2460"}, {"id": "ref-for-concept-header-list\u2461"}], "title": "6.4.4.3. The network.continueResponse Command"}], "external": true};
+window.dfnpanelData['d85a6c84'] = {"dfnID": "d85a6c84", "url": "https://fetch.spec.whatwg.org/#concept-header-list", "dfnText": "header list", "refSections": [{"refs": [{"id": "ref-for-concept-header-list"}, {"id": "ref-for-concept-header-list\u2460"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-concept-header-list\u2461"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": true};
 window.dfnpanelData['6ee0eab1'] = {"dfnID": "6ee0eab1", "url": "https://fetch.spec.whatwg.org/#concept-request-header-list", "dfnText": "header list (for request)", "refSections": [{"refs": [{"id": "ref-for-concept-request-header-list"}, {"id": "ref-for-concept-request-header-list\u2460"}], "title": "6.4.3.12. The network.RequestData Type"}, {"refs": [{"id": "ref-for-concept-request-header-list\u2461"}, {"id": "ref-for-concept-request-header-list\u2462"}, {"id": "ref-for-concept-request-header-list\u2463"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": true};
-window.dfnpanelData['f7b00a8b'] = {"dfnID": "f7b00a8b", "url": "https://fetch.spec.whatwg.org/#concept-response-header-list", "dfnText": "header list (for response)", "refSections": [{"refs": [{"id": "ref-for-concept-response-header-list"}], "title": "6.4.3.1. The network.AuthChallenge Type"}, {"refs": [{"id": "ref-for-concept-response-header-list\u2460"}], "title": "6.4.3.14. The network.ResponseData Type"}, {"refs": [{"id": "ref-for-concept-response-header-list\u2461"}, {"id": "ref-for-concept-response-header-list\u2462"}, {"id": "ref-for-concept-response-header-list\u2463"}, {"id": "ref-for-concept-response-header-list\u2464"}], "title": "6.4.4.3. The network.continueResponse Command"}], "external": true};
+window.dfnpanelData['f7b00a8b'] = {"dfnID": "f7b00a8b", "url": "https://fetch.spec.whatwg.org/#concept-response-header-list", "dfnText": "header list (for response)", "refSections": [{"refs": [{"id": "ref-for-concept-response-header-list"}, {"id": "ref-for-concept-response-header-list\u2460"}, {"id": "ref-for-concept-response-header-list\u2461"}, {"id": "ref-for-concept-response-header-list\u2462"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-concept-response-header-list\u2463"}], "title": "6.4.3.1. The network.AuthChallenge Type"}, {"refs": [{"id": "ref-for-concept-response-header-list\u2464"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": true};
 window.dfnpanelData['7b0b4fa0'] = {"dfnID": "7b0b4fa0", "url": "https://fetch.spec.whatwg.org/#request-initiator-type", "dfnText": "initiator type", "refSections": [{"refs": [{"id": "ref-for-request-initiator-type"}], "title": "6.4.3.9. The network.Initiator Type"}], "external": true};
 window.dfnpanelData['7acd5143'] = {"dfnID": "7acd5143", "url": "https://fetch.spec.whatwg.org/#concept-body-total-bytes", "dfnText": "length", "refSections": [{"refs": [{"id": "ref-for-concept-body-total-bytes"}], "title": "6.4.3.12. The network.RequestData Type"}], "external": true};
 window.dfnpanelData['50b05fad'] = {"dfnID": "50b05fad", "url": "https://fetch.spec.whatwg.org/#concept-request-method", "dfnText": "method", "refSections": [{"refs": [{"id": "ref-for-concept-request-method"}], "title": "6.4.3.12. The network.RequestData Type"}, {"refs": [{"id": "ref-for-concept-request-method\u2460"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": true};
@@ -10338,12 +10338,12 @@ window.dfnpanelData['8c3deeef'] = {"dfnID": "8c3deeef", "url": "https://fetch.sp
 window.dfnpanelData['a8ffe756'] = {"dfnID": "a8ffe756", "url": "https://fetch.spec.whatwg.org/#fetch-timing-info-redirect-end-time", "dfnText": "redirect end time", "refSections": [{"refs": [{"id": "ref-for-fetch-timing-info-redirect-end-time"}], "title": "6.4.3.7. The network.FetchTimingInfo Type"}], "external": true};
 window.dfnpanelData['a4341052'] = {"dfnID": "a4341052", "url": "https://fetch.spec.whatwg.org/#fetch-timing-info-redirect-start-time", "dfnText": "redirect start time", "refSections": [{"refs": [{"id": "ref-for-fetch-timing-info-redirect-start-time"}], "title": "6.4.3.7. The network.FetchTimingInfo Type"}], "external": true};
 window.dfnpanelData['55213b5b'] = {"dfnID": "55213b5b", "url": "https://fetch.spec.whatwg.org/#concept-request", "dfnText": "request", "refSections": [{"refs": [{"id": "ref-for-concept-request"}], "title": "3.5. Errors"}, {"refs": [{"id": "ref-for-concept-request\u2460"}], "title": "6.3.3.8. The browsingContext.navigate Command"}, {"refs": [{"id": "ref-for-concept-request\u2461"}], "title": "6.3.3.10. The browsingContext.reload Command"}, {"refs": [{"id": "ref-for-concept-request\u2462"}], "title": "6.4.3.7. The network.FetchTimingInfo Type"}], "external": true};
-window.dfnpanelData['ee7bba09'] = {"dfnID": "ee7bba09", "url": "https://fetch.spec.whatwg.org/#concept-response", "dfnText": "response", "refSections": [{"refs": [{"id": "ref-for-concept-response"}], "title": "6.4.4.3. The network.continueResponse Command"}], "external": true};
+window.dfnpanelData['ee7bba09'] = {"dfnID": "ee7bba09", "url": "https://fetch.spec.whatwg.org/#concept-response", "dfnText": "response", "refSections": [{"refs": [{"id": "ref-for-concept-response"}], "title": "6.4.2. Network Intercepts"}], "external": true};
 window.dfnpanelData['366a7ed3'] = {"dfnID": "366a7ed3", "url": "https://fetch.spec.whatwg.org/#response-body-info", "dfnText": "response body info", "refSections": [{"refs": [{"id": "ref-for-response-body-info"}], "title": "6.4.3.13. The network.ResponseContent Type"}, {"refs": [{"id": "ref-for-response-body-info\u2460"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": true};
 window.dfnpanelData['21347267'] = {"dfnID": "21347267", "url": "https://fetch.spec.whatwg.org/#connection-timing-info-secure-connection-start-time", "dfnText": "secure connection start time", "refSections": [{"refs": [{"id": "ref-for-connection-timing-info-secure-connection-start-time"}], "title": "6.4.3.7. The network.FetchTimingInfo Type"}], "external": true};
 window.dfnpanelData['b42e14e0'] = {"dfnID": "b42e14e0", "url": "https://fetch.spec.whatwg.org/#fetch-timing-info-start-time", "dfnText": "start time", "refSections": [{"refs": [{"id": "ref-for-fetch-timing-info-start-time"}], "title": "6.4.3.7. The network.FetchTimingInfo Type"}], "external": true};
-window.dfnpanelData['a1d47575'] = {"dfnID": "a1d47575", "url": "https://fetch.spec.whatwg.org/#concept-response-status", "dfnText": "status", "refSections": [{"refs": [{"id": "ref-for-concept-response-status"}, {"id": "ref-for-concept-response-status\u2460"}], "title": "6.4.3.1. The network.AuthChallenge Type"}, {"refs": [{"id": "ref-for-concept-response-status\u2461"}], "title": "6.4.3.14. The network.ResponseData Type"}, {"refs": [{"id": "ref-for-concept-response-status\u2462"}], "title": "6.4.4.3. The network.continueResponse Command"}], "external": true};
-window.dfnpanelData['24afcdf2'] = {"dfnID": "24afcdf2", "url": "https://fetch.spec.whatwg.org/#concept-response-status-message", "dfnText": "status message", "refSections": [{"refs": [{"id": "ref-for-concept-response-status-message"}], "title": "6.4.3.14. The network.ResponseData Type"}, {"refs": [{"id": "ref-for-concept-response-status-message\u2460"}], "title": "6.4.4.3. The network.continueResponse Command"}], "external": true};
+window.dfnpanelData['a1d47575'] = {"dfnID": "a1d47575", "url": "https://fetch.spec.whatwg.org/#concept-response-status", "dfnText": "status", "refSections": [{"refs": [{"id": "ref-for-concept-response-status"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-concept-response-status\u2460"}, {"id": "ref-for-concept-response-status\u2461"}], "title": "6.4.3.1. The network.AuthChallenge Type"}, {"refs": [{"id": "ref-for-concept-response-status\u2462"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": true};
+window.dfnpanelData['24afcdf2'] = {"dfnID": "24afcdf2", "url": "https://fetch.spec.whatwg.org/#concept-response-status-message", "dfnText": "status message", "refSections": [{"refs": [{"id": "ref-for-concept-response-status-message"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-concept-response-status-message\u2460"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": true};
 window.dfnpanelData['dc1cd39b'] = {"dfnID": "dc1cd39b", "url": "https://fetch.spec.whatwg.org/#concept-request-url", "dfnText": "url (for request)", "refSections": [{"refs": [{"id": "ref-for-concept-request-url"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-concept-request-url\u2460"}], "title": "6.4.3.12. The network.RequestData Type"}, {"refs": [{"id": "ref-for-concept-request-url\u2461"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": true};
 window.dfnpanelData['3268a8eb'] = {"dfnID": "3268a8eb", "url": "https://fetch.spec.whatwg.org/#concept-response-url", "dfnText": "url (for response)", "refSections": [{"refs": [{"id": "ref-for-concept-response-url"}, {"id": "ref-for-concept-response-url\u2460"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": true};
 window.dfnpanelData['1ab127d6'] = {"dfnID": "1ab127d6", "url": "https://fetch.spec.whatwg.org/#concept-request-window", "dfnText": "window", "refSections": [{"refs": [{"id": "ref-for-concept-request-window"}, {"id": "ref-for-concept-request-window\u2460"}], "title": "6.4.3.3. The network.BaseParameters Type"}], "external": true};
@@ -10451,7 +10451,7 @@ window.dfnpanelData['6f2dfa22'] = {"dfnID": "6f2dfa22", "url": "https://infra.sp
 window.dfnpanelData['77b4c09a'] = {"dfnID": "77b4c09a", "url": "https://infra.spec.whatwg.org/#assert", "dfnText": "assert", "refSections": [{"refs": [{"id": "ref-for-assert"}, {"id": "ref-for-assert\u2460"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-assert\u2461"}], "title": "4.1. Establishing a Connection"}, {"refs": [{"id": "ref-for-assert\u2462"}], "title": "6.5.3.14. The script.RemoteValue Type"}], "external": true};
 window.dfnpanelData['3de9e659'] = {"dfnID": "3de9e659", "url": "https://infra.spec.whatwg.org/#byte-sequence", "dfnText": "byte sequence", "refSections": [{"refs": [{"id": "ref-for-byte-sequence"}, {"id": "ref-for-byte-sequence\u2460"}], "title": "6.4.3.4. The network.BytesValue Type"}, {"refs": [{"id": "ref-for-byte-sequence\u2461"}], "title": "6.4.3.6. The network.CookieHeader Type"}, {"refs": [{"id": "ref-for-byte-sequence\u2462"}], "title": "6.4.3.12. The network.RequestData Type"}, {"refs": [{"id": "ref-for-byte-sequence\u2463"}], "title": "6.4.3.15. The network.SetCookieHeader Type"}, {"refs": [{"id": "ref-for-byte-sequence\u2464"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": true};
 window.dfnpanelData['970896d2'] = {"dfnID": "970896d2", "url": "https://infra.spec.whatwg.org/#byte-case-insensitive", "dfnText": "byte-case-insensitive", "refSections": [{"refs": [{"id": "ref-for-byte-case-insensitive"}], "title": "6.4.3.1. The network.AuthChallenge Type"}, {"refs": [{"id": "ref-for-byte-case-insensitive\u2460"}], "title": "6.4.3.12. The network.RequestData Type"}], "external": true};
-window.dfnpanelData['7838e1c1'] = {"dfnID": "7838e1c1", "url": "https://infra.spec.whatwg.org/#byte-lowercase", "dfnText": "byte-lowercase", "refSections": [{"refs": [{"id": "ref-for-byte-lowercase"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-byte-lowercase\u2460"}], "title": "6.4.4.3. The network.continueResponse Command"}], "external": true};
+window.dfnpanelData['7838e1c1'] = {"dfnID": "7838e1c1", "url": "https://infra.spec.whatwg.org/#byte-lowercase", "dfnText": "byte-lowercase", "refSections": [{"refs": [{"id": "ref-for-byte-lowercase"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-byte-lowercase\u2460"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": true};
 window.dfnpanelData['027e3e49'] = {"dfnID": "027e3e49", "url": "https://infra.spec.whatwg.org/#list-clone", "dfnText": "clone (for list)", "refSections": [{"refs": [{"id": "ref-for-list-clone"}, {"id": "ref-for-list-clone\u2460"}], "title": "6.1.1. Definition"}], "external": true};
 window.dfnpanelData['ab3919d2'] = {"dfnID": "ab3919d2", "url": "https://infra.spec.whatwg.org/#map-clone", "dfnText": "clone (for map)", "refSections": [{"refs": [{"id": "ref-for-map-clone"}, {"id": "ref-for-map-clone\u2460"}, {"id": "ref-for-map-clone\u2461"}], "title": "6.5.3.14. The script.RemoteValue Type"}], "external": true};
 window.dfnpanelData['915aff5e'] = {"dfnID": "915aff5e", "url": "https://infra.spec.whatwg.org/#code-point", "dfnText": "code point", "refSections": [{"refs": [{"id": "ref-for-code-point"}], "title": "6.4.3.15. The network.SetCookieHeader Type"}], "external": true};
@@ -10459,7 +10459,7 @@ window.dfnpanelData['bb1f9628'] = {"dfnID": "bb1f9628", "url": "https://infra.sp
 window.dfnpanelData['951b74c1'] = {"dfnID": "951b74c1", "url": "https://infra.spec.whatwg.org/#code-unit-substring", "dfnText": "code unit substring", "refSections": [{"refs": [{"id": "ref-for-code-unit-substring"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": true};
 window.dfnpanelData['4a3bf5fb'] = {"dfnID": "4a3bf5fb", "url": "https://infra.spec.whatwg.org/#string-concatenate", "dfnText": "concatenate", "refSections": [{"refs": [{"id": "ref-for-string-concatenate"}], "title": "6.5.4.3. The script.callFunction Command"}], "external": true};
 window.dfnpanelData['ae8def21'] = {"dfnID": "ae8def21", "url": "https://infra.spec.whatwg.org/#list-contain", "dfnText": "contain (for list)", "refSections": [{"refs": [{"id": "ref-for-list-contain"}, {"id": "ref-for-list-contain\u2460"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-list-contain\u2461"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-list-contain\u2462"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-list-contain\u2463"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-list-contain\u2464"}, {"id": "ref-for-list-contain\u2465"}, {"id": "ref-for-list-contain\u2466"}, {"id": "ref-for-list-contain\u2467"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-list-contain\u2468"}], "title": "6.5.2. Preload Scripts"}], "external": true};
-window.dfnpanelData['a326add7'] = {"dfnID": "a326add7", "url": "https://infra.spec.whatwg.org/#map-exists", "dfnText": "contain (for map)", "refSections": [{"refs": [{"id": "ref-for-map-exists"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-map-exists\u2460"}, {"id": "ref-for-map-exists\u2461"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-map-exists\u2462"}, {"id": "ref-for-map-exists\u2463"}, {"id": "ref-for-map-exists\u2464"}, {"id": "ref-for-map-exists\u2465"}, {"id": "ref-for-map-exists\u2466"}, {"id": "ref-for-map-exists\u2467"}, {"id": "ref-for-map-exists\u2468"}, {"id": "ref-for-map-exists\u2460\u24ea"}], "title": "6.3.3.7. The browsingContext.locateNodes Command"}, {"refs": [{"id": "ref-for-map-exists\u2460\u2460"}, {"id": "ref-for-map-exists\u2460\u2461"}], "title": "6.3.3.11. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-map-exists\u2460\u2462"}, {"id": "ref-for-map-exists\u2460\u2463"}, {"id": "ref-for-map-exists\u2460\u2464"}, {"id": "ref-for-map-exists\u2460\u2465"}, {"id": "ref-for-map-exists\u2460\u2466"}, {"id": "ref-for-map-exists\u2460\u2467"}, {"id": "ref-for-map-exists\u2460\u2468"}], "title": "6.4.3.15. The network.SetCookieHeader Type"}, {"refs": [{"id": "ref-for-map-exists\u2461\u24ea"}, {"id": "ref-for-map-exists\u2461\u2460"}, {"id": "ref-for-map-exists\u2461\u2461"}, {"id": "ref-for-map-exists\u2461\u2462"}, {"id": "ref-for-map-exists\u2461\u2463"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-map-exists\u2461\u2464"}, {"id": "ref-for-map-exists\u2461\u2465"}, {"id": "ref-for-map-exists\u2461\u2466"}, {"id": "ref-for-map-exists\u2461\u2467"}, {"id": "ref-for-map-exists\u2461\u2468"}, {"id": "ref-for-map-exists\u2462\u24ea"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-map-exists\u2462\u2460"}, {"id": "ref-for-map-exists\u2462\u2461"}, {"id": "ref-for-map-exists\u2462\u2462"}, {"id": "ref-for-map-exists\u2462\u2463"}, {"id": "ref-for-map-exists\u2462\u2464"}, {"id": "ref-for-map-exists\u2462\u2465"}, {"id": "ref-for-map-exists\u2462\u2466"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-map-exists\u2462\u2467"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-map-exists\u2462\u2468"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-map-exists\u2463\u24ea"}], "title": "6.4.4.6. The network.provideResponse Command"}, {"refs": [{"id": "ref-for-map-exists\u2463\u2460"}], "title": "6.4.4.7. The network.removeIntercept Command"}, {"refs": [{"id": "ref-for-map-exists\u2463\u2461"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-map-exists\u2463\u2462"}], "title": "6.5.4.6. The script.removePreloadScript Command"}, {"refs": [{"id": "ref-for-map-exists\u2463\u2463"}, {"id": "ref-for-map-exists\u2463\u2464"}], "title": "6.5.5.1. The script.message Event"}], "external": true};
+window.dfnpanelData['a326add7'] = {"dfnID": "a326add7", "url": "https://infra.spec.whatwg.org/#map-exists", "dfnText": "contain (for map)", "refSections": [{"refs": [{"id": "ref-for-map-exists"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-map-exists\u2460"}, {"id": "ref-for-map-exists\u2461"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-map-exists\u2462"}, {"id": "ref-for-map-exists\u2463"}, {"id": "ref-for-map-exists\u2464"}, {"id": "ref-for-map-exists\u2465"}, {"id": "ref-for-map-exists\u2466"}, {"id": "ref-for-map-exists\u2467"}, {"id": "ref-for-map-exists\u2468"}, {"id": "ref-for-map-exists\u2460\u24ea"}], "title": "6.3.3.7. The browsingContext.locateNodes Command"}, {"refs": [{"id": "ref-for-map-exists\u2460\u2460"}, {"id": "ref-for-map-exists\u2460\u2461"}], "title": "6.3.3.11. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-map-exists\u2460\u2462"}, {"id": "ref-for-map-exists\u2460\u2463"}, {"id": "ref-for-map-exists\u2460\u2464"}, {"id": "ref-for-map-exists\u2460\u2465"}, {"id": "ref-for-map-exists\u2460\u2466"}, {"id": "ref-for-map-exists\u2460\u2467"}, {"id": "ref-for-map-exists\u2460\u2468"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-map-exists\u2461\u24ea"}, {"id": "ref-for-map-exists\u2461\u2460"}, {"id": "ref-for-map-exists\u2461\u2461"}, {"id": "ref-for-map-exists\u2461\u2462"}, {"id": "ref-for-map-exists\u2461\u2463"}, {"id": "ref-for-map-exists\u2461\u2464"}, {"id": "ref-for-map-exists\u2461\u2465"}], "title": "6.4.3.15. The network.SetCookieHeader Type"}, {"refs": [{"id": "ref-for-map-exists\u2461\u2466"}, {"id": "ref-for-map-exists\u2461\u2467"}, {"id": "ref-for-map-exists\u2461\u2468"}, {"id": "ref-for-map-exists\u2462\u24ea"}, {"id": "ref-for-map-exists\u2462\u2460"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-map-exists\u2462\u2461"}, {"id": "ref-for-map-exists\u2462\u2462"}, {"id": "ref-for-map-exists\u2462\u2463"}, {"id": "ref-for-map-exists\u2462\u2464"}, {"id": "ref-for-map-exists\u2462\u2465"}, {"id": "ref-for-map-exists\u2462\u2466"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-map-exists\u2462\u2467"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-map-exists\u2462\u2468"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-map-exists\u2463\u24ea"}], "title": "6.4.4.6. The network.provideResponse Command"}, {"refs": [{"id": "ref-for-map-exists\u2463\u2460"}], "title": "6.4.4.7. The network.removeIntercept Command"}, {"refs": [{"id": "ref-for-map-exists\u2463\u2461"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-map-exists\u2463\u2462"}], "title": "6.5.4.6. The script.removePreloadScript Command"}, {"refs": [{"id": "ref-for-map-exists\u2463\u2463"}, {"id": "ref-for-map-exists\u2463\u2464"}], "title": "6.5.5.1. The script.message Event"}], "external": true};
 window.dfnpanelData['f937b7b6'] = {"dfnID": "f937b7b6", "url": "https://infra.spec.whatwg.org/#iteration-continue", "dfnText": "continue", "refSections": [{"refs": [{"id": "ref-for-iteration-continue"}], "title": "6.5.4.5. The script.getRealms Command"}], "external": true};
 window.dfnpanelData['03afaf9c'] = {"dfnID": "03afaf9c", "url": "https://infra.spec.whatwg.org/#list-empty", "dfnText": "empty", "refSections": [{"refs": [{"id": "ref-for-list-empty"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-list-empty\u2460"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-list-empty\u2461"}], "title": "6.3.3.9. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-list-empty\u2462"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-list-empty\u2463"}], "title": "6.4.3.3. The network.BaseParameters Type"}, {"refs": [{"id": "ref-for-list-empty\u2464"}], "title": "6.4.3.16. The network.UrlPattern Type"}], "external": true};
 window.dfnpanelData['d8f8bd6e'] = {"dfnID": "d8f8bd6e", "url": "https://infra.spec.whatwg.org/#list-extend", "dfnText": "extend", "refSections": [{"refs": [{"id": "ref-for-list-extend"}], "title": "6.3.3.7. The browsingContext.locateNodes Command"}], "external": true};
@@ -10533,8 +10533,8 @@ window.dfnpanelData['14549aa9'] = {"dfnID": "14549aa9", "url": "https://w3c.gith
 window.dfnpanelData['136bda97'] = {"dfnID": "136bda97", "url": "https://w3c.github.io/webdriver/#dfn-dispatch-actions", "dfnText": "dispatch actions", "refSections": [{"refs": [{"id": "ref-for-dfn-dispatch-actions"}], "title": "6.7.3.1. The input.performActions Command"}], "external": true};
 window.dfnpanelData['94219729'] = {"dfnID": "94219729", "url": "https://w3c.github.io/webdriver/#dfn-dispatch-tick-actions", "dfnText": "dispatch tick actions", "refSections": [{"refs": [{"id": "ref-for-dfn-dispatch-tick-actions"}], "title": "6.7.3.2. The input.releaseActions Command"}], "external": true};
 window.dfnpanelData['ee843963'] = {"dfnID": "ee843963", "url": "https://w3c.github.io/webdriver/#dfn-endpoint-node", "dfnText": "endpoint node", "refSections": [{"refs": [{"id": "ref-for-dfn-endpoint-node"}, {"id": "ref-for-dfn-endpoint-node\u2460"}], "title": "4. Transport"}], "external": true};
-window.dfnpanelData['a4c28706'] = {"dfnID": "a4c28706", "url": "https://w3c.github.io/webdriver/#dfn-errors", "dfnText": "error", "refSections": [{"refs": [{"id": "ref-for-dfn-errors"}, {"id": "ref-for-dfn-errors\u2460"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-dfn-errors\u2461"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-dfn-errors\u2462"}], "title": "5.1. Sandbox Realms"}, {"refs": [{"id": "ref-for-dfn-errors\u2463"}, {"id": "ref-for-dfn-errors\u2464"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-dfn-errors\u2465"}], "title": "6.1.2.2. The session.CapabilityRequest Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2466"}, {"id": "ref-for-dfn-errors\u2467"}], "title": "6.1.3.2. The session.new Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2468"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u24ea"}], "title": "6.3.2.1. The browsingContext.BrowsingContext Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u2460"}, {"id": "ref-for-dfn-errors\u2460\u2461"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u2462"}, {"id": "ref-for-dfn-errors\u2460\u2463"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u2464"}, {"id": "ref-for-dfn-errors\u2460\u2465"}, {"id": "ref-for-dfn-errors\u2460\u2466"}, {"id": "ref-for-dfn-errors\u2460\u2467"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u2468"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u24ea"}, {"id": "ref-for-dfn-errors\u2461\u2460"}, {"id": "ref-for-dfn-errors\u2461\u2461"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u2462"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u2463"}, {"id": "ref-for-dfn-errors\u2461\u2464"}, {"id": "ref-for-dfn-errors\u2461\u2465"}, {"id": "ref-for-dfn-errors\u2461\u2466"}], "title": "6.3.3.7. The browsingContext.locateNodes Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u2467"}], "title": "6.3.3.8. The browsingContext.navigate Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u2468"}], "title": "6.3.3.9. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2462\u24ea"}, {"id": "ref-for-dfn-errors\u2462\u2460"}], "title": "6.3.3.11. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2462\u2461"}], "title": "6.3.3.12. The browsingContext.traverseHistory Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2462\u2462"}, {"id": "ref-for-dfn-errors\u2462\u2463"}, {"id": "ref-for-dfn-errors\u2462\u2464"}, {"id": "ref-for-dfn-errors\u2462\u2465"}, {"id": "ref-for-dfn-errors\u2462\u2466"}, {"id": "ref-for-dfn-errors\u2462\u2467"}, {"id": "ref-for-dfn-errors\u2462\u2468"}, {"id": "ref-for-dfn-errors\u2463\u24ea"}, {"id": "ref-for-dfn-errors\u2463\u2460"}, {"id": "ref-for-dfn-errors\u2463\u2461"}, {"id": "ref-for-dfn-errors\u2463\u2462"}, {"id": "ref-for-dfn-errors\u2463\u2463"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2463\u2464"}, {"id": "ref-for-dfn-errors\u2463\u2465"}, {"id": "ref-for-dfn-errors\u2463\u2466"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2463\u2467"}, {"id": "ref-for-dfn-errors\u2463\u2468"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u24ea"}, {"id": "ref-for-dfn-errors\u2464\u2460"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u2461"}, {"id": "ref-for-dfn-errors\u2464\u2462"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u2463"}], "title": "6.4.4.7. The network.removeIntercept Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u2464"}, {"id": "ref-for-dfn-errors\u2464\u2465"}, {"id": "ref-for-dfn-errors\u2464\u2466"}, {"id": "ref-for-dfn-errors\u2464\u2467"}], "title": "6.5.3.7. The script.LocalValue Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u2468"}], "title": "6.5.3.9. The script.Realm Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u24ea"}, {"id": "ref-for-dfn-errors\u2465\u2460"}, {"id": "ref-for-dfn-errors\u2465\u2461"}], "title": "6.5.3.10. The script.PrimitiveProtocolValue Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u2462"}, {"id": "ref-for-dfn-errors\u2465\u2463"}, {"id": "ref-for-dfn-errors\u2465\u2464"}, {"id": "ref-for-dfn-errors\u2465\u2465"}], "title": "6.5.3.13. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u2466"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u2467"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u2468"}], "title": "6.5.4.6. The script.removePreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2466\u24ea"}], "title": "6.6.3.1. The log.entryAdded Event"}, {"refs": [{"id": "ref-for-dfn-errors\u2466\u2460"}], "title": "6.7.2.1. input.ElementOrigin"}], "external": true};
-window.dfnpanelData['c8ff8493'] = {"dfnID": "c8ff8493", "url": "https://w3c.github.io/webdriver/#dfn-error-code", "dfnText": "error code", "refSections": [{"refs": [{"id": "ref-for-dfn-error-code"}], "title": "3.5. Errors"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460"}, {"id": "ref-for-dfn-error-code\u2461"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-dfn-error-code\u2462"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463"}], "title": "5.1. Sandbox Realms"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464"}, {"id": "ref-for-dfn-error-code\u2465"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-dfn-error-code\u2466"}], "title": "6.1.2.2. The session.CapabilityRequest Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2467"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2468"}], "title": "6.3.2.1. The browsingContext.BrowsingContext Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u24ea"}, {"id": "ref-for-dfn-error-code\u2460\u2460"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2461"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2462"}, {"id": "ref-for-dfn-error-code\u2460\u2463"}, {"id": "ref-for-dfn-error-code\u2460\u2464"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2465"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2466"}, {"id": "ref-for-dfn-error-code\u2460\u2467"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2468"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u24ea"}, {"id": "ref-for-dfn-error-code\u2461\u2460"}, {"id": "ref-for-dfn-error-code\u2461\u2461"}, {"id": "ref-for-dfn-error-code\u2461\u2462"}], "title": "6.3.3.7. The browsingContext.locateNodes Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u2463"}], "title": "6.3.3.8. The browsingContext.navigate Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u2464"}], "title": "6.3.3.9. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u2465"}, {"id": "ref-for-dfn-error-code\u2461\u2466"}], "title": "6.3.3.11. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u2467"}, {"id": "ref-for-dfn-error-code\u2461\u2468"}, {"id": "ref-for-dfn-error-code\u2462\u24ea"}, {"id": "ref-for-dfn-error-code\u2462\u2460"}, {"id": "ref-for-dfn-error-code\u2462\u2461"}, {"id": "ref-for-dfn-error-code\u2462\u2462"}, {"id": "ref-for-dfn-error-code\u2462\u2463"}, {"id": "ref-for-dfn-error-code\u2462\u2464"}, {"id": "ref-for-dfn-error-code\u2462\u2465"}, {"id": "ref-for-dfn-error-code\u2462\u2466"}, {"id": "ref-for-dfn-error-code\u2462\u2467"}, {"id": "ref-for-dfn-error-code\u2462\u2468"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463\u24ea"}, {"id": "ref-for-dfn-error-code\u2463\u2460"}, {"id": "ref-for-dfn-error-code\u2463\u2461"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463\u2462"}, {"id": "ref-for-dfn-error-code\u2463\u2463"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463\u2464"}, {"id": "ref-for-dfn-error-code\u2463\u2465"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463\u2466"}, {"id": "ref-for-dfn-error-code\u2463\u2467"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463\u2468"}], "title": "6.4.4.7. The network.removeIntercept Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464\u24ea"}, {"id": "ref-for-dfn-error-code\u2464\u2460"}, {"id": "ref-for-dfn-error-code\u2464\u2461"}, {"id": "ref-for-dfn-error-code\u2464\u2462"}], "title": "6.5.3.7. The script.LocalValue Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464\u2463"}], "title": "6.5.3.9. The script.Realm Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464\u2464"}, {"id": "ref-for-dfn-error-code\u2464\u2465"}, {"id": "ref-for-dfn-error-code\u2464\u2466"}], "title": "6.5.3.10. The script.PrimitiveProtocolValue Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464\u2467"}, {"id": "ref-for-dfn-error-code\u2464\u2468"}, {"id": "ref-for-dfn-error-code\u2465\u24ea"}, {"id": "ref-for-dfn-error-code\u2465\u2460"}], "title": "6.5.3.13. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2465\u2461"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2465\u2462"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2465\u2463"}], "title": "6.5.4.6. The script.removePreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2465\u2464"}], "title": "6.7.2.1. input.ElementOrigin"}], "external": true};
+window.dfnpanelData['a4c28706'] = {"dfnID": "a4c28706", "url": "https://w3c.github.io/webdriver/#dfn-errors", "dfnText": "error", "refSections": [{"refs": [{"id": "ref-for-dfn-errors"}, {"id": "ref-for-dfn-errors\u2460"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-dfn-errors\u2461"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-dfn-errors\u2462"}], "title": "5.1. Sandbox Realms"}, {"refs": [{"id": "ref-for-dfn-errors\u2463"}, {"id": "ref-for-dfn-errors\u2464"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-dfn-errors\u2465"}], "title": "6.1.2.2. The session.CapabilityRequest Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2466"}, {"id": "ref-for-dfn-errors\u2467"}], "title": "6.1.3.2. The session.new Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2468"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u24ea"}], "title": "6.3.2.1. The browsingContext.BrowsingContext Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u2460"}, {"id": "ref-for-dfn-errors\u2460\u2461"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u2462"}, {"id": "ref-for-dfn-errors\u2460\u2463"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u2464"}, {"id": "ref-for-dfn-errors\u2460\u2465"}, {"id": "ref-for-dfn-errors\u2460\u2466"}, {"id": "ref-for-dfn-errors\u2460\u2467"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2460\u2468"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u24ea"}, {"id": "ref-for-dfn-errors\u2461\u2460"}, {"id": "ref-for-dfn-errors\u2461\u2461"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u2462"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u2463"}, {"id": "ref-for-dfn-errors\u2461\u2464"}, {"id": "ref-for-dfn-errors\u2461\u2465"}, {"id": "ref-for-dfn-errors\u2461\u2466"}], "title": "6.3.3.7. The browsingContext.locateNodes Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u2467"}], "title": "6.3.3.8. The browsingContext.navigate Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2461\u2468"}], "title": "6.3.3.9. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2462\u24ea"}, {"id": "ref-for-dfn-errors\u2462\u2460"}], "title": "6.3.3.11. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2462\u2461"}], "title": "6.3.3.12. The browsingContext.traverseHistory Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2462\u2462"}, {"id": "ref-for-dfn-errors\u2462\u2463"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-dfn-errors\u2462\u2464"}, {"id": "ref-for-dfn-errors\u2462\u2465"}, {"id": "ref-for-dfn-errors\u2462\u2466"}, {"id": "ref-for-dfn-errors\u2462\u2467"}, {"id": "ref-for-dfn-errors\u2462\u2468"}, {"id": "ref-for-dfn-errors\u2463\u24ea"}, {"id": "ref-for-dfn-errors\u2463\u2460"}, {"id": "ref-for-dfn-errors\u2463\u2461"}, {"id": "ref-for-dfn-errors\u2463\u2462"}, {"id": "ref-for-dfn-errors\u2463\u2463"}, {"id": "ref-for-dfn-errors\u2463\u2464"}, {"id": "ref-for-dfn-errors\u2463\u2465"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2463\u2466"}, {"id": "ref-for-dfn-errors\u2463\u2467"}, {"id": "ref-for-dfn-errors\u2463\u2468"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u24ea"}, {"id": "ref-for-dfn-errors\u2464\u2460"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u2461"}, {"id": "ref-for-dfn-errors\u2464\u2462"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u2463"}], "title": "6.4.4.7. The network.removeIntercept Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u2464"}, {"id": "ref-for-dfn-errors\u2464\u2465"}, {"id": "ref-for-dfn-errors\u2464\u2466"}, {"id": "ref-for-dfn-errors\u2464\u2467"}], "title": "6.5.3.7. The script.LocalValue Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2464\u2468"}], "title": "6.5.3.9. The script.Realm Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u24ea"}, {"id": "ref-for-dfn-errors\u2465\u2460"}, {"id": "ref-for-dfn-errors\u2465\u2461"}], "title": "6.5.3.10. The script.PrimitiveProtocolValue Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u2462"}, {"id": "ref-for-dfn-errors\u2465\u2463"}, {"id": "ref-for-dfn-errors\u2465\u2464"}, {"id": "ref-for-dfn-errors\u2465\u2465"}], "title": "6.5.3.13. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u2466"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u2467"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2465\u2468"}], "title": "6.5.4.6. The script.removePreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-errors\u2466\u24ea"}], "title": "6.6.3.1. The log.entryAdded Event"}, {"refs": [{"id": "ref-for-dfn-errors\u2466\u2460"}], "title": "6.7.2.1. input.ElementOrigin"}], "external": true};
+window.dfnpanelData['c8ff8493'] = {"dfnID": "c8ff8493", "url": "https://w3c.github.io/webdriver/#dfn-error-code", "dfnText": "error code", "refSections": [{"refs": [{"id": "ref-for-dfn-error-code"}], "title": "3.5. Errors"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460"}, {"id": "ref-for-dfn-error-code\u2461"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-dfn-error-code\u2462"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463"}], "title": "5.1. Sandbox Realms"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464"}, {"id": "ref-for-dfn-error-code\u2465"}], "title": "6.1.1. Definition"}, {"refs": [{"id": "ref-for-dfn-error-code\u2466"}], "title": "6.1.2.2. The session.CapabilityRequest Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2467"}], "title": "6.2.2.1. The browser.close Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2468"}], "title": "6.3.2.1. The browsingContext.BrowsingContext Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u24ea"}, {"id": "ref-for-dfn-error-code\u2460\u2460"}], "title": "6.3.2.2. The browsingContext.Info Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2461"}], "title": "6.3.3.1. The browsingContext.activate Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2462"}, {"id": "ref-for-dfn-error-code\u2460\u2463"}, {"id": "ref-for-dfn-error-code\u2460\u2464"}], "title": "6.3.3.2. The browsingContext.captureScreenshot Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2465"}], "title": "6.3.3.3. The browsingContext.close Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2466"}, {"id": "ref-for-dfn-error-code\u2460\u2467"}], "title": "6.3.3.4. The browsingContext.create Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2460\u2468"}], "title": "6.3.3.6. The browsingContext.handleUserPrompt Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u24ea"}, {"id": "ref-for-dfn-error-code\u2461\u2460"}, {"id": "ref-for-dfn-error-code\u2461\u2461"}, {"id": "ref-for-dfn-error-code\u2461\u2462"}], "title": "6.3.3.7. The browsingContext.locateNodes Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u2463"}], "title": "6.3.3.8. The browsingContext.navigate Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u2464"}], "title": "6.3.3.9. The browsingContext.print Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u2465"}, {"id": "ref-for-dfn-error-code\u2461\u2466"}], "title": "6.3.3.11. The browsingContext.setViewport Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2461\u2467"}, {"id": "ref-for-dfn-error-code\u2461\u2468"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-dfn-error-code\u2462\u24ea"}, {"id": "ref-for-dfn-error-code\u2462\u2460"}, {"id": "ref-for-dfn-error-code\u2462\u2461"}, {"id": "ref-for-dfn-error-code\u2462\u2462"}, {"id": "ref-for-dfn-error-code\u2462\u2463"}, {"id": "ref-for-dfn-error-code\u2462\u2464"}, {"id": "ref-for-dfn-error-code\u2462\u2465"}, {"id": "ref-for-dfn-error-code\u2462\u2466"}, {"id": "ref-for-dfn-error-code\u2462\u2467"}, {"id": "ref-for-dfn-error-code\u2462\u2468"}, {"id": "ref-for-dfn-error-code\u2463\u24ea"}, {"id": "ref-for-dfn-error-code\u2463\u2460"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463\u2461"}, {"id": "ref-for-dfn-error-code\u2463\u2462"}, {"id": "ref-for-dfn-error-code\u2463\u2463"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463\u2464"}, {"id": "ref-for-dfn-error-code\u2463\u2465"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463\u2466"}, {"id": "ref-for-dfn-error-code\u2463\u2467"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2463\u2468"}], "title": "6.4.4.7. The network.removeIntercept Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464\u24ea"}, {"id": "ref-for-dfn-error-code\u2464\u2460"}, {"id": "ref-for-dfn-error-code\u2464\u2461"}, {"id": "ref-for-dfn-error-code\u2464\u2462"}], "title": "6.5.3.7. The script.LocalValue Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464\u2463"}], "title": "6.5.3.9. The script.Realm Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464\u2464"}, {"id": "ref-for-dfn-error-code\u2464\u2465"}, {"id": "ref-for-dfn-error-code\u2464\u2466"}], "title": "6.5.3.10. The script.PrimitiveProtocolValue Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2464\u2467"}, {"id": "ref-for-dfn-error-code\u2464\u2468"}, {"id": "ref-for-dfn-error-code\u2465\u24ea"}, {"id": "ref-for-dfn-error-code\u2465\u2460"}], "title": "6.5.3.13. The script.RemoteReference Type"}, {"refs": [{"id": "ref-for-dfn-error-code\u2465\u2461"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2465\u2462"}], "title": "6.5.4.3. The script.callFunction Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2465\u2463"}], "title": "6.5.4.6. The script.removePreloadScript Command"}, {"refs": [{"id": "ref-for-dfn-error-code\u2465\u2464"}], "title": "6.7.2.1. input.ElementOrigin"}], "external": true};
 window.dfnpanelData['a6b7422e'] = {"dfnID": "a6b7422e", "url": "https://w3c.github.io/webdriver/#dfn-extract-an-action-sequence", "dfnText": "extract an action sequence", "refSections": [{"refs": [{"id": "ref-for-dfn-extract-an-action-sequence"}], "title": "6.7.3.1. The input.performActions Command"}], "external": true};
 window.dfnpanelData['01bb51cf'] = {"dfnID": "01bb51cf", "url": "https://w3c.github.io/webdriver/#dfn-get-a-node", "dfnText": "get a node", "refSections": [{"refs": [{"id": "ref-for-dfn-get-a-node"}], "title": "6.5.3.13. The script.RemoteReference Type"}], "external": true};
 window.dfnpanelData['3b685aa8'] = {"dfnID": "3b685aa8", "url": "https://w3c.github.io/webdriver/#dfn-get-element-origin", "dfnText": "get element origin", "refSections": [{"refs": [{"id": "ref-for-dfn-get-element-origin"}], "title": "6.7.3.1. The input.performActions Command"}, {"refs": [{"id": "ref-for-dfn-get-element-origin\u2460"}], "title": "6.7.3.2. The input.releaseActions Command"}], "external": true};
@@ -10596,7 +10596,7 @@ window.dfnpanelData['no-such-handle'] = {"dfnID": "no-such-handle", "url": "#no-
 window.dfnpanelData['no-such-history-entry'] = {"dfnID": "no-such-history-entry", "url": "#no-such-history-entry", "dfnText": "no such history entry", "refSections": [{"refs": [{"id": "ref-for-no-such-history-entry"}], "title": "6.3.3.12. The browsingContext.traverseHistory Command"}], "external": false};
 window.dfnpanelData['no-such-intercept'] = {"dfnID": "no-such-intercept", "url": "#no-such-intercept", "dfnText": "no such intercept", "refSections": [{"refs": [{"id": "ref-for-no-such-intercept"}], "title": "6.4.4.7. The network.removeIntercept Command"}], "external": false};
 window.dfnpanelData['no-such-node'] = {"dfnID": "no-such-node", "url": "#no-such-node", "dfnText": "no such node", "refSections": [{"refs": [{"id": "ref-for-no-such-node"}, {"id": "ref-for-no-such-node\u2460"}, {"id": "ref-for-no-such-node\u2461"}], "title": "6.5.3.13. The script.RemoteReference Type"}], "external": false};
-window.dfnpanelData['no-such-request'] = {"dfnID": "no-such-request", "url": "#no-such-request", "dfnText": "no such request", "refSections": [{"refs": [{"id": "ref-for-no-such-request"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-no-such-request\u2460"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-no-such-request\u2461"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-no-such-request\u2462"}], "title": "6.4.4.5. The network.failRequest Command"}], "external": false};
+window.dfnpanelData['no-such-request'] = {"dfnID": "no-such-request", "url": "#no-such-request", "dfnText": "no such request", "refSections": [{"refs": [{"id": "ref-for-no-such-request"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-no-such-request\u2460"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-no-such-request\u2461"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-no-such-request\u2462"}], "title": "6.4.4.5. The network.failRequest Command"}], "external": false};
 window.dfnpanelData['no-such-script'] = {"dfnID": "no-such-script", "url": "#no-such-script", "dfnText": "no such script", "refSections": [{"refs": [{"id": "ref-for-no-such-script"}], "title": "6.5.4.6. The script.removePreloadScript Command"}], "external": false};
 window.dfnpanelData['unable-to-close-browser'] = {"dfnID": "unable-to-close-browser", "url": "#unable-to-close-browser", "dfnText": "unable to close browser", "refSections": [{"refs": [{"id": "ref-for-unable-to-close-browser"}], "title": "6.2.2.1. The browser.close Command"}], "external": false};
 window.dfnpanelData['event'] = {"dfnID": "event", "url": "#event", "dfnText": "event", "refSections": [{"refs": [{"id": "ref-for-event"}, {"id": "ref-for-event\u2460"}], "title": "3.3. Modules"}, {"refs": [{"id": "ref-for-event\u2461"}], "title": "3.6. Events"}, {"refs": [{"id": "ref-for-event\u2462"}], "title": "4. Transport"}, {"refs": [{"id": "ref-for-event\u2463"}, {"id": "ref-for-event\u2464"}, {"id": "ref-for-event\u2465"}, {"id": "ref-for-event\u2466"}], "title": "6.1.3.4. The session.subscribe Command"}], "external": false};
@@ -10664,8 +10664,9 @@ window.dfnpanelData['emit-a-context-created-event'] = {"dfnID": "emit-a-context-
 window.dfnpanelData['before-request-sent-map'] = {"dfnID": "before-request-sent-map", "url": "#before-request-sent-map", "dfnText": "before request sent map", "refSections": [{"refs": [{"id": "ref-for-before-request-sent-map"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-before-request-sent-map\u2460"}, {"id": "ref-for-before-request-sent-map\u2461"}, {"id": "ref-for-before-request-sent-map\u2462"}], "title": "6.4.5.2. The network.beforeRequestSent Event"}, {"refs": [{"id": "ref-for-before-request-sent-map\u2463"}], "title": "6.4.5.3. The network.fetchError Event"}, {"refs": [{"id": "ref-for-before-request-sent-map\u2464"}], "title": "6.4.5.4. The network.responseCompleted Event"}, {"refs": [{"id": "ref-for-before-request-sent-map\u2465"}], "title": "6.4.5.5. The network.responseStarted Event"}], "external": false};
 window.dfnpanelData['network-intercept'] = {"dfnID": "network-intercept", "url": "#network-intercept", "dfnText": "network intercept", "refSections": [{"refs": [{"id": "ref-for-network-intercept"}], "title": "3.5. Errors"}, {"refs": [{"id": "ref-for-network-intercept\u2460"}], "title": "6.4.3.10. The network.Intercept Type"}, {"refs": [{"id": "ref-for-network-intercept\u2461"}], "title": "6.4.3.16. The network.UrlPattern Type"}, {"refs": [{"id": "ref-for-network-intercept\u2462"}], "title": "6.4.4.1. The network.addIntercept Command"}, {"refs": [{"id": "ref-for-network-intercept\u2463"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-network-intercept\u2464"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-network-intercept\u2465"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-network-intercept\u2466"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-network-intercept\u2467"}], "title": "6.4.4.6. The network.provideResponse Command"}, {"refs": [{"id": "ref-for-network-intercept\u2468"}], "title": "6.4.4.7. The network.removeIntercept Command"}], "external": false};
 window.dfnpanelData['intercept-map'] = {"dfnID": "intercept-map", "url": "#intercept-map", "dfnText": "intercept map", "refSections": [{"refs": [{"id": "ref-for-intercept-map"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-intercept-map\u2460"}], "title": "6.4.4.1. The network.addIntercept Command"}, {"refs": [{"id": "ref-for-intercept-map\u2461"}], "title": "6.4.4.7. The network.removeIntercept Command"}], "external": false};
-window.dfnpanelData['blocked-request-map'] = {"dfnID": "blocked-request-map", "url": "#blocked-request-map", "dfnText": "blocked request map", "refSections": [{"refs": [{"id": "ref-for-blocked-request-map"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-blocked-request-map\u2460"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-blocked-request-map\u2461"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-blocked-request-map\u2462"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-blocked-request-map\u2463"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-blocked-request-map\u2464"}], "title": "6.4.5.2. The network.beforeRequestSent Event"}, {"refs": [{"id": "ref-for-blocked-request-map\u2465"}], "title": "6.4.5.5. The network.responseStarted Event"}], "external": false};
+window.dfnpanelData['blocked-request-map'] = {"dfnID": "blocked-request-map", "url": "#blocked-request-map", "dfnText": "blocked request map", "refSections": [{"refs": [{"id": "ref-for-blocked-request-map"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-blocked-request-map\u2460"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-blocked-request-map\u2461"}], "title": "6.4.4.4. The network.continueWithAuth Command"}, {"refs": [{"id": "ref-for-blocked-request-map\u2462"}], "title": "6.4.4.5. The network.failRequest Command"}, {"refs": [{"id": "ref-for-blocked-request-map\u2463"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-blocked-request-map\u2464"}], "title": "6.4.5.2. The network.beforeRequestSent Event"}, {"refs": [{"id": "ref-for-blocked-request-map\u2465"}], "title": "6.4.5.5. The network.responseStarted Event"}], "external": false};
 window.dfnpanelData['get-the-network-intercepts'] = {"dfnID": "get-the-network-intercepts", "url": "#get-the-network-intercepts", "dfnText": "get the network intercepts", "refSections": [{"refs": [{"id": "ref-for-get-the-network-intercepts"}], "title": "6.4.3.3. The network.BaseParameters Type"}], "external": false};
+window.dfnpanelData['update-the-response'] = {"dfnID": "update-the-response", "url": "#update-the-response", "dfnText": "update the response", "refSections": [{"refs": [{"id": "ref-for-update-the-response"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-update-the-response\u2460"}], "title": "6.4.4.6. The network.provideResponse Command"}], "external": false};
 window.dfnpanelData['extract-challenges'] = {"dfnID": "extract-challenges", "url": "#extract-challenges", "dfnText": "extract challenges", "refSections": [{"refs": [{"id": "ref-for-extract-challenges"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": false};
 window.dfnpanelData['process-a-network-event'] = {"dfnID": "process-a-network-event", "url": "#process-a-network-event", "dfnText": "process a network event", "refSections": [{"refs": [{"id": "ref-for-process-a-network-event"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-process-a-network-event\u2460"}], "title": "6.4.5.2. The network.beforeRequestSent Event"}, {"refs": [{"id": "ref-for-process-a-network-event\u2461"}], "title": "6.4.5.3. The network.fetchError Event"}, {"refs": [{"id": "ref-for-process-a-network-event\u2462"}], "title": "6.4.5.4. The network.responseCompleted Event"}, {"refs": [{"id": "ref-for-process-a-network-event\u2463"}], "title": "6.4.5.5. The network.responseStarted Event"}], "external": false};
 window.dfnpanelData['deserialize-protocol-bytes'] = {"dfnID": "deserialize-protocol-bytes", "url": "#deserialize-protocol-bytes", "dfnText": "deserialize protocol bytes", "refSections": [{"refs": [{"id": "ref-for-deserialize-protocol-bytes"}], "title": "6.4.3.6. The network.CookieHeader Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2460"}], "title": "6.4.3.8. The network.Header Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2461"}], "title": "6.4.3.15. The network.SetCookieHeader Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2462"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2463"}], "title": "6.4.4.6. The network.provideResponse Command"}], "external": false};
@@ -10674,7 +10675,7 @@ window.dfnpanelData['serialize-cookie'] = {"dfnID": "serialize-cookie", "url": "
 window.dfnpanelData['serialize-cookie-header'] = {"dfnID": "serialize-cookie-header", "url": "#serialize-cookie-header", "dfnText": "serialize cookie header", "refSections": [{"refs": [{"id": "ref-for-serialize-cookie-header"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": false};
 window.dfnpanelData['get-the-fetch-timings'] = {"dfnID": "get-the-fetch-timings", "url": "#get-the-fetch-timings", "dfnText": "get the fetch timings", "refSections": [{"refs": [{"id": "ref-for-get-the-fetch-timings"}], "title": "6.4.3.12. The network.RequestData Type"}], "external": false};
 window.dfnpanelData['serialize-header'] = {"dfnID": "serialize-header", "url": "#serialize-header", "dfnText": "serialize header", "refSections": [{"refs": [{"id": "ref-for-serialize-header"}], "title": "6.4.3.12. The network.RequestData Type"}, {"refs": [{"id": "ref-for-serialize-header\u2460"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": false};
-window.dfnpanelData['deserialize-header'] = {"dfnID": "deserialize-header", "url": "#deserialize-header", "dfnText": "deserialize header", "refSections": [{"refs": [{"id": "ref-for-deserialize-header"}], "title": "6.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-deserialize-header\u2460"}], "title": "6.4.4.3. The network.continueResponse Command"}], "external": false};
+window.dfnpanelData['deserialize-header'] = {"dfnID": "deserialize-header", "url": "#deserialize-header", "dfnText": "deserialize header", "refSections": [{"refs": [{"id": "ref-for-deserialize-header"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-deserialize-header\u2460"}], "title": "6.4.4.2. The network.continueRequest Command"}], "external": false};
 window.dfnpanelData['get-the-initiator'] = {"dfnID": "get-the-initiator", "url": "#get-the-initiator", "dfnText": "get the initiator", "refSections": [{"refs": [{"id": "ref-for-get-the-initiator"}], "title": "6.4.5.2. The network.beforeRequestSent Event"}], "external": false};
 window.dfnpanelData['request-id'] = {"dfnID": "request-id", "url": "#request-id", "dfnText": "request id", "refSections": [{"refs": [{"id": "ref-for-request-id"}], "title": "6.4.2. Network Intercepts"}, {"refs": [{"id": "ref-for-request-id\u2460"}], "title": "6.4.3.9. The network.Initiator Type"}, {"refs": [{"id": "ref-for-request-id\u2461"}], "title": "6.4.3.12. The network.RequestData Type"}, {"refs": [{"id": "ref-for-request-id\u2462"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-request-id\u2463"}, {"id": "ref-for-request-id\u2464"}], "title": "6.4.5.2. The network.beforeRequestSent Event"}, {"refs": [{"id": "ref-for-request-id\u2465"}], "title": "6.4.5.5. The network.responseStarted Event"}], "external": false};
 window.dfnpanelData['get-the-request-data'] = {"dfnID": "get-the-request-data", "url": "#get-the-request-data", "dfnText": "get the request data", "refSections": [{"refs": [{"id": "ref-for-get-the-request-data"}], "title": "6.4.3.3. The network.BaseParameters Type"}], "external": false};
@@ -10682,11 +10683,10 @@ window.dfnpanelData['get-the-response-content-info'] = {"dfnID": "get-the-respon
 window.dfnpanelData['get-the-protocol'] = {"dfnID": "get-the-protocol", "url": "#get-the-protocol", "dfnText": "get the protocol", "refSections": [{"refs": [{"id": "ref-for-get-the-protocol"}], "title": "6.4.3.14. The network.ResponseData Type"}], "external": false};
 window.dfnpanelData['get-the-response-data'] = {"dfnID": "get-the-response-data", "url": "#get-the-response-data", "dfnText": "get the response data", "refSections": [{"refs": [{"id": "ref-for-get-the-response-data"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-get-the-response-data\u2460"}], "title": "6.4.5.4. The network.responseCompleted Event"}, {"refs": [{"id": "ref-for-get-the-response-data\u2461"}], "title": "6.4.5.5. The network.responseStarted Event"}], "external": false};
 window.dfnpanelData['serialize-an-integer'] = {"dfnID": "serialize-an-integer", "url": "#serialize-an-integer", "dfnText": "serialize an integer", "refSections": [{"refs": [{"id": "ref-for-serialize-an-integer"}], "title": "6.4.3.15. The network.SetCookieHeader Type"}, {"refs": [{"id": "ref-for-serialize-an-integer\u2460"}, {"id": "ref-for-serialize-an-integer\u2461"}], "title": "6.4.3.16. The network.UrlPattern Type"}], "external": false};
-window.dfnpanelData['serialize-set-cookie-header'] = {"dfnID": "serialize-set-cookie-header", "url": "#serialize-set-cookie-header", "dfnText": "serialize set-cookie header", "refSections": [{"refs": [{"id": "ref-for-serialize-set-cookie-header"}], "title": "6.4.4.3. The network.continueResponse Command"}], "external": false};
+window.dfnpanelData['serialize-set-cookie-header'] = {"dfnID": "serialize-set-cookie-header", "url": "#serialize-set-cookie-header", "dfnText": "serialize set-cookie header", "refSections": [{"refs": [{"id": "ref-for-serialize-set-cookie-header"}], "title": "6.4.2. Network Intercepts"}], "external": false};
 window.dfnpanelData['unescape-url-pattern'] = {"dfnID": "unescape-url-pattern", "url": "#unescape-url-pattern", "dfnText": "unescape URL pattern", "refSections": [{"refs": [{"id": "ref-for-unescape-url-pattern"}, {"id": "ref-for-unescape-url-pattern\u2460"}, {"id": "ref-for-unescape-url-pattern\u2461"}, {"id": "ref-for-unescape-url-pattern\u2462"}, {"id": "ref-for-unescape-url-pattern\u2463"}, {"id": "ref-for-unescape-url-pattern\u2464"}], "title": "6.4.3.16. The network.UrlPattern Type"}], "external": false};
 window.dfnpanelData['parse-url-pattern'] = {"dfnID": "parse-url-pattern", "url": "#parse-url-pattern", "dfnText": "parse URL pattern", "refSections": [{"refs": [{"id": "ref-for-parse-url-pattern"}], "title": "6.4.4.1. The network.addIntercept Command"}], "external": false};
 window.dfnpanelData['match-url-pattern'] = {"dfnID": "match-url-pattern", "url": "#match-url-pattern", "dfnText": "match URL pattern", "refSections": [{"refs": [{"id": "ref-for-match-url-pattern"}], "title": "6.4.2. Network Intercepts"}], "external": false};
-window.dfnpanelData['update-the-response'] = {"dfnID": "update-the-response", "url": "#update-the-response", "dfnText": "update the response", "refSections": [{"refs": [{"id": "ref-for-update-the-response"}], "title": "6.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-update-the-response\u2460"}], "title": "6.4.4.6. The network.provideResponse Command"}], "external": false};
 window.dfnpanelData['webdriver-bidi-before-request-sent'] = {"dfnID": "webdriver-bidi-before-request-sent", "url": "#webdriver-bidi-before-request-sent", "dfnText": "WebDriver BiDi before\nrequest sent", "refSections": [{"refs": [{"id": "ref-for-webdriver-bidi-before-request-sent"}], "title": "6.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-webdriver-bidi-before-request-sent\u2460"}, {"id": "ref-for-webdriver-bidi-before-request-sent\u2461"}], "title": "6.4.5.3. The network.fetchError Event"}, {"refs": [{"id": "ref-for-webdriver-bidi-before-request-sent\u2462"}], "title": "6.4.5.4. The network.responseCompleted Event"}, {"refs": [{"id": "ref-for-webdriver-bidi-before-request-sent\u2463"}], "title": "6.4.5.5. The network.responseStarted Event"}], "external": false};
 window.dfnpanelData['preload-script'] = {"dfnID": "preload-script", "url": "#preload-script", "dfnText": "Preload script", "refSections": [{"refs": [{"id": "ref-for-preload-script"}], "title": "3.5. Errors"}, {"refs": [{"id": "ref-for-preload-script\u2460"}], "title": "6.5.2. Preload Scripts"}, {"refs": [{"id": "ref-for-preload-script\u2461"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-preload-script\u2462"}], "title": "6.5.4.6. The script.removePreloadScript Command"}], "external": false};
 window.dfnpanelData['preload-script-map'] = {"dfnID": "preload-script-map", "url": "#preload-script-map", "dfnText": "preload script map", "refSections": [{"refs": [{"id": "ref-for-preload-script-map"}], "title": "6.5.2. Preload Scripts"}, {"refs": [{"id": "ref-for-preload-script-map\u2460"}], "title": "6.5.4.1. The script.addPreloadScript Command"}, {"refs": [{"id": "ref-for-preload-script-map\u2461"}], "title": "6.5.4.6. The script.removePreloadScript Command"}], "external": false};
