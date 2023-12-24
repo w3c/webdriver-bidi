@@ -175,6 +175,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: default classic script fetch options; url: webappapis.html#default-classic-script-fetch-options
     text: default view; url: nav-history-apis.html#dom-document-defaultview
     text: environment settings object's Realm; url: webappapis.html#environment-settings-object's-realm
+    text: event loop processing model; url: event-loop-processing-model
     text: focused area of the document; url: document-sequences.html#focused-area-of-the-document
     text: getting all used history steps; url:browsing-the-web.html#getting-all-used-history-steps
     text: handled; url: webappapis.html#concept-error-handled
@@ -189,7 +190,6 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: prompt; url: timers-and-user-prompts.html#dom-prompt
     text: remove a browsing context; url: browsers.html#bcg-remove
     text: report an error; url: webappapis.html#report-the-error
-    text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
     text: session history entry; url: browsing-the-web.html#session-history-entry
     text: session history traversal queue; url: document-sequences.html#tn-session-history-traversal-queue
@@ -1978,6 +1978,11 @@ implicitly set when the context is created. For browsing contexts with an
 associated WebDriver [=window handle=] the [=/browsing context id=] must be the
 same as the [=window handle=].
 
+Each [=/browsing context=] has an associated <dfn>list of suspended rendering
+ids</dfn>, which is initially an empty list. It is used to track pending
+invocations of [=browsingContext.captureScreenshot=] and
+[=browsingContext.print=].
+
 <div algorithm>
 To <dfn export>get a browsing context</dfn> given |context id|:
 
@@ -1989,6 +1994,19 @@ To <dfn export>get a browsing context</dfn> given |context id|:
 1. Let |context| be the browsing context with id |context id|.
 
 1. Return [=success=] with data |context|
+
+</div>
+
+<div algorithm>
+To <dfn export>resume suspended renderings</dfn> for a given |browsing context|.
+
+1. Let |rendering ids| be |browsing context|'s [=list of suspended rendering ids=].
+
+1. For each |rendering id| in |rendering ids|:
+
+  1. [=Resume=] with "<code>animation frame</code>", |rendering id|, and ().
+
+1. [=list/Empty=] |rendering ids|.
 
 </div>
 
@@ -2487,6 +2505,17 @@ To <dfn>render document to a canvas</dfn> given |document| and |rect|:
 </div>
 
 <div algorithm>
+To <dfn>await the next animation frame</dfn> given |browsing context|:
+
+1. Let |rendering id| be a new unique opaque string.
+
+1. [=list/Append=] |rendering id| to |browsing context|'s [=list of suspended rendering ids=].
+
+1. [=Await=] with «"<code>animation frame</code>"», and |rendering id|.
+
+</div>
+
+<div algorithm>
 To <dfn>encode a canvas as Base64</dfn> given |canvas| and |format|:
 
 1. If |format| is not null, let |type| be the <code>type</code> field of
@@ -2539,11 +2568,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |document| be |context|'s [=active document=].
 
-1. Immediately after the next invocation of the [=run the animation frame
-   callbacks=] algorithm for |document|:
-
-   Issue: This ought to be integrated into the update rendering algorithm in
-   some more explicit way.
+1. [=Await the next animation frame=] with |context|.
 
 1. Let |origin| be the value of the <code>context</code> field of |command
    parameters| if present, or "viewport" otherwise.
@@ -3339,11 +3364,7 @@ Note: The minimum page size is 1 point, which is (2.54 / 72) cm as per
 
 1. Let |document| be |context|'s [=active document=].
 
-1. Immediately after the next invocation of the [=run the animation frame
-   callbacks=] algorithm for |document|:
-
-   Issue: This ought to be integrated into the update rendering algorithm
-   in some more explicit way.
+1. [=Await the next animation frame=] with |context|.
 
   1. Let |pdf data| be the result taking UA-specific steps to generate a
      paginated representation of |document|, with the CSS [=media type=] set to
@@ -9673,6 +9694,17 @@ end:
    with <var ignore>script</var>, <var ignore>line</var>, <var
    ignore>col</var>, <var ignore>message</var>, and true if the error is
    [=handled=], or false otherwise.
+
+</div>
+
+The [=event loop processing model=] is modified to insert a step at the end of
+the sub-steps labeled [=update the rendering=]:
+
+<div algorithm="extension to update the rendering in HTML">
+
+1. For each [=fully active=] <code>Document</code> |doc| in <var
+   ignore>docs</var> run [=resume suspended renderings=] given |doc|'s
+   [=/browsing context=]. WEBDRIVERBIDI
 
 </div>
 ## Console ##  {#patches-console}
