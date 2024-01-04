@@ -1294,20 +1294,20 @@ Issue: Define how this works.
 # User Contexts # {#user-contexts}
 
 A <dfn>user context</dfn> represents a collection of top-level navigables within
-a [=remote end=]. Each top-level navigable belongs to exactly one [=user
-context=], and child navigables belong to the same [=user context=] as their
-parent. A [=user context=] without navigables belonging to it is an <dfn>empty
-user context</dfn>.
+a [=remote end=]. User contexts have a <dfn>user context id</dfn>, which is a
+string set upon the user context creation. The [=default user context=]'s [=user
+context id|id=] is <code>"default"</code>. A [=remote end=] always contains at
+least one [=user context=] referred as the <dfn>default user context</dfn>.
 
-A [=remote end=] always contains at least one [=user context=] referred as the
-<dfn>default user context</dfn>.
+Each top-level navigable belongs to exactly one [=user context=], and child
+navigables belong to the same [=user context=] as their parent. Each navigable's
+[=user context=] is the [=user context=] the navigables belongs to.
+
+A [=user context=] without navigables belonging to it is an <dfn>empty
+user context</dfn>.
 
 Each [=user context=] represents an additional [=storage key=], so that no
 storage state is shared between different [=user context|user contexts=].
-
-A [=user context=] other than the [=default user context=] has a <dfn>user
-context id</dfn>, which is a string set upon context creation. The [=default
-user context=] does not have a [=user context id=].
 
 Note: The infra spec uses the term "user agent" to refer to the same concept as
 [=user context|user contexts=]. However, this is not compatible with usage of
@@ -2025,8 +2025,7 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 
 The [=remote end steps=] are:
 
-1. Let |user context| be the result of performing implementation-defined steps
-   to create an [=empty user context=].
+1. Let |user context| be a new [=empty user context=].
 
 1. Let |result| be a [=/map=] matching the
    <code>browser.createUserContextResult</code> production with the
@@ -2069,14 +2068,14 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |user context| be |command  parameters|["<code>userContext</code>"].
 
 1. If the [=user context=] with the [=user context id=] equal to |user context|
-   does not exist in the user agent, return [=error=] with [=error code=]
+   does not exist in the [=remote end=], return [=error=] with [=error code=]
    [=invalid argument=]
 
-1. [=Close=] any [=top-level browsing contexts=] that belong to the |user
-   context| without [=prompting to unload=].
+1. [=Close=] any [=top-level browsing contexts=] whose [=user context=]'s [=user
+   context id=] is |user context| without [=prompting to unload=].
 
-1. Perform implementation-defined steps to remove |user context| from the user
-   agent.
+1. Perform implementation-defined steps to remove |user context| from the
+   [=remote end=].
 
 1. Return [=success=] with data null.
 
@@ -2110,15 +2109,15 @@ The <dfn export for=commands>browser.getUserContexts</dfn> command returns a lis
 
 The [=remote end steps=] are:
 
-1. Let |user contexts| be the result of performing implementation defined steps
-   to get [=user contexts=] from the user agent.
+1. Let |user contexts| be the [=user contexts=] within the [=remote end=].
 
 1. Let |user context info list| be an empty [=/list=].
 
 1. For each |user context| in |user contexts|:
 
   1. Let |info| be a [=/map=] matching the <code>browser.UserContextInfo</code>
-     production with the <code>userContext</code> field set to |user context|'s [=user context id=].
+     production with the <code>userContext</code> field set to |user context|'s
+     [=user context id|id=].
 
   1. Append |info| to |user context info list|.
 
@@ -2312,10 +2311,6 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
    Note: This includes the fragment component of the URL.
 
-1. Let |user context| be null if |context| belongs to the [=default user
-   context=] or the [=user context id=] of the [=user context=] which the |context|
-   belongs to otherwise.
-
 1. Let |child infos| be null.
 
 1. If |max depth| is null, or |max depth| is greater than 0:
@@ -2337,8 +2332,9 @@ To <dfn>get the browsing context info</dfn> given |context|,
    <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
    if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
-   field set to |url|, the <code>userContext</code> field set to |user context| if it’s not null, or omitted otherwise,
-   and the <code>children</code> field set to |child infos|.
+   field set to |url|, the <code>userContext</code> field set to |context|'s
+   [=user context id=], and the <code>children</code> field set to |child
+   infos|.
 
 1. Return |context info|.
 
