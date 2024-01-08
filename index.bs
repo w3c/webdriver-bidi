@@ -606,7 +606,7 @@ with the following additional codes:
 
   <dt><dfn>underspecified storage partition</dfn>
   <dd>Tried to interact with data in a storage partition which was not adequately specified.
-  
+
   <dt><dfn>unable to set file input</dfn>
   <dd>Tried to set a file input, but failed to do so.
 </dl>
@@ -10134,8 +10134,8 @@ The [=remote end steps=] given |session|, and |command parameters| are:
 
 #### The input.setFiles Command ####  {#command-input-setFiles}
 
-The <dfn export for=commands>input.setFiles</dfn> command sets a given file
-input with a given set of file paths.
+The <dfn export for=commands>input.setFiles</dfn> command sets the <code>files</code> property of a given <code>input<code> element with type <code>file</code>
+to a set of file paths.
 
 <dl>
    <dt>Command Type</dt>
@@ -10183,23 +10183,28 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
    with |command parameters|["<code>element</code>"], |realm|, and |session|.
 
+1. If |element| doesn't implement {{Element}}, return [=error=] with [=error code=]
+   [=no such element=].
+
+1. If |element| doesn't implement {{HTMLInputElement}},
+   |element|["<code>type</code>"] is not "file", or
+   |element|["<code>disabled</code>"] is true, return [=error=] with [=error
+   code=]
+   [=unable to set file input=].
+
 1. Let |files| be the value of the |command parameters|["<code>files</code>"]
    field.
 
 1. Let |selected files| be |element|'s [=selected files=].
-   
-1. If the [=set/size=] of the [=set/intersection=] of |files| and |selected files| is
-   equal to the [=set/size=] of |selected files|:
-   
-   1. [=Queue an element task=] on the [=user interaction task source=] given
-      |element| to fire an event named <code>cancel</code> at |element|, with
-      the <code>bubbles</code> attribute initialized to true.
 
-      Note: Although there may not be any dialog, cancellation in a browser is
-      typically determined by changes in file selection. In other words, if
-      there is no change, a "cancel" event should be sent.
-   
-   1. Return [=success=] with data null.
+1. If the [=set/size=] of the [=set/intersection=] of |files| and |selected
+   files| is equal to the [=set/size=] of |selected files|, [=queue an element
+   task=] on the [=user interaction task source=] given |element| to fire an
+   event named <code>cancel</code> at |element|, with the <code>bubbles</code>
+   attribute initialized to true.
+
+   Note: Cancellation in a browser is typically determined by changes in file
+   selection. In other words, if there is no change, a "cancel" event is sent.
 
 1. Otherwise, [=update the file selection=] for |element| with |files| as the
    user's selection.
