@@ -199,6 +199,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: hidden; url: document-sequences.html#system-visibility-state
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
     text: innerText getter steps; url:dom.html#dom-innertext
+    text: input type; url: input.html#dom-input-type
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
@@ -209,6 +210,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: report an error; url: webappapis.html#report-the-error
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
+    text: selected files; url: input.html#concept-input-type-file-selected
     text: session history entry; url: browsing-the-web.html#session-history-entry
     text: session history traversal queue; url: document-sequences.html#tn-session-history-traversal-queue
     text: session history; url: history.html#session-history
@@ -219,6 +221,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: system visibility state; url: document-sequences.html#system-visibility-state
     text: traversable navigable; url:document-sequences.html#traversable-navigable
     text: traverse the history by a delta; url: browsing-the-web.html#traverse-the-history-by-a-delta
+    text: update the file selection; url: input.html#update-the-file-selection
     text: visible; url: document-sequences.html#system-visibility-state
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
@@ -603,6 +606,9 @@ with the following additional codes:
 
   <dt><dfn>underspecified storage partition</dfn>
   <dd>Tried to interact with data in a storage partition which was not adequately specified.
+
+  <dt><dfn>unable to set file input</dfn>
+  <dd>Tried to set a file input, but failed to do so.
 </dl>
 
 <pre class="cddl local-cddl">
@@ -9835,7 +9841,8 @@ simulated user input.
 
 InputCommand = (
   input.PerformActions //
-  input.ReleaseActions
+  input.ReleaseActions //
+  input.SetFiles
 )
 </pre>
 
@@ -10121,6 +10128,87 @@ The [=remote end steps=] given |session|, and |command parameters| are:
    |actions options|.
 
 1. [=Reset the input state=] with |session| and |top-level context|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The input.setFiles Command ####  {#command-input-setFiles}
+
+The <dfn export for=commands>input.setFiles</dfn> command sets the <code>files</code> property of a given <code>input</code> element with type <code>file</code>
+to a set of file paths.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      input.SetFiles = (
+        method: "input.setFiles",
+        params: input.SetFilesParameters
+      )
+
+      input.SetFilesParameters = {
+        context: browsingContext.BrowsingContext,
+        element: script.SharedReference,
+        files: [*text]
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for input.setFiles">
+
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |context id| be the value of the |command
+   parameters|["<code>context</code>"] field.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
+   |context id|.
+
+1. Let |document| be |context|'s [=active document=].
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=relevant global object=]'s <a>associated <code>Document</code></a> is
+   |document|.
+
+1. Let |realm| be |environment settings|'s [=realm execution context=]'s
+   Realm component.
+
+1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
+   with |command parameters|["<code>element</code>"], |realm|, and |session|.
+
+1. If |element| doesn't implement {{Element}}, return [=error=] with [=error code=]
+   [=no such element=].
+
+1. If |element| doesn't implement {{HTMLInputElement}},
+   |element|["<code>type</code>"] is not "file", or
+   |element|["<code>disabled</code>"] is true, return [=error=] with [=error
+   code=]
+   [=unable to set file input=].
+
+1. Let |files| be the value of the |command parameters|["<code>files</code>"]
+   field.
+
+1. Let |selected files| be |element|'s [=selected files=].
+
+1. If the [=set/size=] of the [=set/intersection=] of |files| and |selected
+   files| is equal to the [=set/size=] of |selected files|, [=queue an element
+   task=] on the [=user interaction task source=] given |element| to fire an
+   event named <code>cancel</code> at |element|, with the <code>bubbles</code>
+   attribute initialized to true.
+
+   Note: Cancellation in a browser is typically determined by changes in file
+   selection. In other words, if there is no change, a "cancel" event is sent.
+
+1. Otherwise, [=update the file selection=] for |element| with |files| as the
+   user's selection.
 
 1. Return [=success=] with data null.
 
