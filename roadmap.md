@@ -42,7 +42,7 @@ This scenario loads a web page, enters text into a form field via the keyboard, 
 - [x] Everything from the previous scenario
 - [x] [Emulating keyboard input](https://w3c.github.io/webdriver-bidi/#command-input-performActions)
 - [x] [Emulating mouse input](https://w3c.github.io/webdriver-bidi/#command-input-performActions)
-- [ ] [Ability to test and fill out file inputs](https://github.com/w3c/webdriver-bidi/issues/494)
+- [x] [Ability to set files on file inputs](https://w3c.github.io/webdriver-bidi/#command-input-setFiles)
 
 ### Capturing screenshots
 
