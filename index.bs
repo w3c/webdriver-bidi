@@ -90,6 +90,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
     text: parse a page range; url: dfn-parse-a-page-range
+    text: handler; for: prompt handler configuration; url: dfn-handler
     text: process capabilities; url: dfn-processing-capabilities
     text: readiness state; url: dfn-readiness-state
     text: remote end steps; url: dfn-remote-end-steps
@@ -231,6 +232,9 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
+spec: INFRA; urlPrefix: https://infra.spec.whatwg.org/
+  type: dfn
+    text: convert a JSON-derived JavaScript value to an Infra value; url: convert-a-json-derived-javascript-value-to-an-infra-value
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
     text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
@@ -1567,7 +1571,7 @@ session.CapabilityRequest = {
   ? browserVersion: text,
   ? platformName: text,
   ? proxy: session.ProxyConfiguration,
-  ? webSocketUrl: bool,
+  ? unhandledPromptBehavior: session.UserPromptHandler,
   Extensible
 };
 </pre>
@@ -1657,6 +1661,28 @@ session.SystemProxyConfiguration = (
 )
 
 </pre>
+
+#### The session.UserPromptHandler Type #### {#type-session-UserPromptHandler}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+session.UserPromptHandler = session.UserPromptHandlerType /
+                            session.UserPromptHandlerConfiguration;
+
+session.UserPromptHandlerType = "accept" / "dismiss" / "ignore";
+
+session.UserPromptHandlerConfiguration = {
+  ? alert: session.UserPromptHandlerType,
+  ? beforeUnload: session.UserPromptHandlerType,
+  ? confirm: session.UserPromptHandlerType,
+  ? default: session.UserPromptHandlerType,
+  ? prompt: session.UserPromptHandlerType,
+};
+</pre>
+
+The <code>session.UserPromptHandler</code> type represents the configuration of
+the user prompt handler.
 
 #### The session.SubscriptionRequest Type #### {#type-session-SubscriptionRequest}
 
@@ -1758,6 +1784,7 @@ This is a [=static command=].
           setWindowRect: bool,
           userAgent: text,
           ? proxy: session.ProxyConfiguration,
+          ? unahandledPromptBehavior: session.UserPromptHandler,
           ? webSocketUrl: text,
           Extensible
         }
@@ -1777,8 +1804,11 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |flags| be a [=/set=] containing "<code>bidi</code>".
 
-1. Let |capabilities| be the result of [=trying=] to [=process capabilities=]
+1. Let |capabilities json| be the result of [=trying=] to [=process capabilities=]
    with |command parameters| and |flags|.
+
+1. Let |capabilities| be [=convert a JSON-derived JavaScript value to an Infra
+   value=] with |capabilities json|.
 
 1. Let |session| be the result of [=trying=] to [=create a session=] with
    |capabilities| and |flags|.
@@ -4583,8 +4613,9 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
 
         browsingContext.UserPromptOpenedParameters = {
           context: browsingContext.BrowsingContext,
-          type: "alert" / "confirm" / "prompt" / "beforeunload",
+          handler: "accept" / "dismiss" / "ignore",
           message: text,
+          type: "alert" / "confirm" / "prompt" / "beforeunload",
           ? defaultValue: text
         }
       </pre>
@@ -4600,12 +4631,18 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
+1. Let |handler configuration| be [=get the prompt handler=] with |type|.
+
+1. Let |handler| be |handler configuration|'s [=prompt handler
+   configuration/handler=].
+
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpenedParameters</code> production with the
    <code>context</code> field set to |context id|, the <code>type</code> field
-   set to |type|, the <code>message</code> field set to |message|, and the
+   set to |type|, the <code>message</code> field set to |message|, the
    <code>defaultValue</code> field set to |default value| if |default value| is
-   not null or omitted otherwise.
+   not null or omitted otherwise, and the <code>handler</code> field set to
+   |handler|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpened</code> production, with the
@@ -4617,6 +4654,10 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
    given "<code>browsingContext.userPromptOpened</code>" and |related browsing contexts|:
 
   1. [=Emit an event=] with |session| and |body|.
+
+1. If |handler| is "<code>ignore</code>", set handler to "<code>none</code>".
+
+1. Return |handler|.
 
 </div>
 
@@ -10719,6 +10760,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Return [=success=] with data null.
 
 </div>
+
 
 # Patches to Other Specifications # {#patches}
 
