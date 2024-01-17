@@ -1301,27 +1301,61 @@ Issue: Define how this works.
 
 # User Contexts # {#user-contexts}
 
-A <dfn>user context</dfn> represents a collection of top-level navigables within
-a [=remote end=]. User contexts have a <dfn>user context id</dfn>, which is a
-string set upon the user context creation. The [=default user context=]'s [=user
-context id|id=] is <code>"default"</code>. A [=remote end=] always contains one
-[=user context=] referred as the <dfn>default user context</dfn>.
+A <dfn>user context</dfn> represents a collection of zero or more
+[=/top-level traversables=] within a [=remote end=]. Each [=user context=] has
+an associated [=storage partition=], so that [=remote end=] data is not shared
+between different [=user contexts=].
 
-Each top-level navigable belongs to exactly one [=user context=], and child
-navigables belong to the same [=user context=] as their parent. Each navigable's
-[=user context=] is the [=user context=] the navigables belongs to.
-
-A [=user context=] without navigables belonging to it is an <dfn>empty
-user context</dfn>.
-
-Each [=user context=] represents an additional [=storage key=], so that no
-storage state is shared between different [=user context|user contexts=].
+Issue: Unclear that this is the best way to formally define the concept of a
+user context or the interaction with storage.
 
 Note: The infra spec uses the term "user agent" to refer to the same concept as
 [=user context|user contexts=]. However, this is not compatible with usage of
 the term "user agent" to mean the entire web client with multiple [=user
 context|user contexts=]. Although this difference is not visible to web content,
-it is observed via WebDriver, so we avoid reusing existing terminology.
+it is observed via WebDriver, so we avoid using this terminology.
+
+A [=user context=] has a <dfn>user context id</dfn>, which is a unique string
+set upon the user context creation.
+
+A [=navigable=] has an <dfn>associated user context</dfn>, which is a
+[=user context=].
+
+When a new [=/top-level traversable=] is created its [=associated user context=]
+is set to a user context in the [=set of user contexts=].
+
+Note: In some cases the user context is set by specification when the
+[=/top-level traversable=] is created, however in cases where no such
+requirements are present, the [=associated user context=] for a [=/top-level
+traversable=] is implemenation-defined.
+
+Issue: Should we specify that [=/top-level traversables=] with a non-null
+opener have the same [=associated user context=] as their opener?
+Need to check if this is something existing implementations enforce.
+
+A [=child navigable=]'s [=associated user context=] is it's
+[=navigable/parent=]'s [=associated user context=].
+
+A [=user context=] which isn't the [=associated user context=] for any
+[=/top-level traversable=] is an <dfn>empty user context</dfn>.
+
+The <dfn>default user context</dfn> is a [=user context=] with [=user context
+id=] <code>"default"</code>.
+
+An implementation has a <dfn>set of user contexts</dfn>, which is a [=/set=] of
+[=user contexts=]. Initially this contains the [=default user context=].
+
+Implementations may [=set/append=] new [=user contexts=] to the [=set of user
+contexts=] at any time, for example in response to user actions.
+
+Note: "At any time" here includes during implementation startup, so a given
+implementation might always have multiple entries in the [=set of user contexts=].
+
+Implementations may [=set/remove=] any [=empty user context=], with exception of
+the [=default user context=], from the [=set of user contexts=] at any
+time. However they are not required to remove such [=user contexts=]. [=User
+contexts=] that are not [=empty user contexts=] must not be removed from the
+[=set of user contexts=].
 
 # Modules # {#modules}
 
@@ -2032,7 +2066,9 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 
 The [=remote end steps=] are:
 
-1. Let |user context| be a new [=empty user context=].
+1. Let |user context| be a new [=user context=].
+
+1. [=set/Append=] |user context| to the [=set of user contexts=].
 
 1. Let |result| be a [=/map=] matching the
    <code>browser.createUserContextResult</code> production with the
@@ -2072,22 +2108,26 @@ user context and all browsing contexts in it without running
 
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |user context| be |command  parameters|["<code>userContext</code>"].
+1. Let |user context id| be |command  parameters|["<code>userContext</code>"].
 
-1. If |user context| is <code>"default"</code>, return [=error=] with [=error
+1. If |user context id| is <code>"default"</code>, return [=error=] with [=error
    code=] [=invalid argument=].
 
-1. If the [=user context=] with the [=user context id=] equal to |user context|
-   does not exist in the [=remote end=], return [=error=] with [=error code=] [=no
-   such user context=].
+1. For each |user context| in the [=set of user contexts=]:
 
-1. [=Close=] any [=top-level browsing contexts=] whose [=user context=]'s [=user
-   context id=] is |user context| without [=prompting to unload=].
+  1. If |user context|'s [=user context id=] is |user context id|:
 
-1. Perform implementation-defined steps to remove |user context| from the
-   [=remote end=].
+    1. For each [=/top-level traversable=] |navigable|:
 
-1. Return [=success=] with data null.
+      1. If |navigable|'s [=associated user context=] is |user context|:
+
+        1. [=Close=] |navigable| without [=prompting to unload=].
+
+    1. [=set/Remove=] |user context| for the [=set of user contexts=].
+
+    1. Return [=success=] with data null.
+
+1. Return [=error=] with [=error code=] [=no such user context=].
 
 </div>
 
@@ -2205,11 +2245,11 @@ To <dfn export>get a browsing context</dfn> given |context id|:
 browsingContext.InfoList = [*browsingContext.Info]
 
 browsingContext.Info = {
+  children: browsingContext.InfoList / null,
   context: browsingContext.BrowsingContext,
   url: text,
-  children: browsingContext.InfoList / null
+  userContext: browser.UserContext
   ? parent: browsingContext.BrowsingContext / null,
-  ? userContext: browser.UserContext
 }
 </pre>
 
@@ -2283,20 +2323,22 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
   1. Set |child infos| to an empty [=/list=].
 
-  1. For each |context| of |child contexts|:
+  1. For each |child context| of |child contexts|:
 
     1. Let |info| be the result of [=get the browsing context info=] given
-       |context|, |child depth|, and false.
+       |child context|, |child depth|, and false.
 
     1. Append |info| to |child infos|
+
+1. Let |user context| be |context|'s [=associated user context=].
 
 1. Let |context info| be a [=/map=] matching the
    <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
    if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
-   field set to |url|, the <code>userContext</code> field set to |context|'s
-   [=user context id=], and the <code>children</code> field set to |child
-   infos|.
+   field set to |url|, the <code>userContext</code> field set to
+   |user context|'s [=user context id=], and the <code>children</code> field
+   set to |child infos|.
 
 1. Return |context info|.
 
