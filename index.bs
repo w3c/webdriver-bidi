@@ -577,9 +577,6 @@ WebDriver BiDi extends the set of [=error codes=] from [[WEBDRIVER|WebDriver]]
 with the following additional codes:
 
 <dl>
-  <dt><dfn>invalid user context id</dfn>
-  <dd>Tried to use a [=user context=] that contradicts the provided reference context.
-
   <dt><dfn>no such handle</dfn>
   <dd>Tried to deserialize an unknown <code>RemoteObjectReference</code>.
 
@@ -620,7 +617,6 @@ with the following additional codes:
 <pre class="cddl local-cddl">
 ErrorCode = "invalid argument" /
             "invalid session id" /
-            "invalid user context id" /
             "move target out of bounds" /
             "no such alert" /
             "no such element" /
@@ -3038,29 +3034,31 @@ The [=remote end steps=] with |command parameters| are:
   1. If the implementation is unable to create a new browsing context for any
      reason then return [=error=] with [=error code=] [=unsupported operation=].
 
-  1. Let |user context| be the [=default user context=] if |reference context| is null, and |reference context|' [=user context=] otherwise.
+  1. Let |user context| be the [=default user context=] if |reference context|
+     is null, and |reference context|' [=associated user context=] otherwise.
 
   1. If |command parameters|[<code>userContext</code>] is present and is not null:
 
     1. Let |user context id| be |command parameters|[<code>userContext</code>].
 
-    1. If the [=user context=] with the [=user context id=] equal to |user context id| does
+    1. If the [=user context=] with the [=user context id=] |user context id| does
       not exist in the [=remote end=], return [=error=] with [=error code=] [=no such user context=].
 
-    1. Set |user context| to the [=user context=] with the [=user context id=] equal
-      to |user context id|.
+    1. Set |user context| to the [=user context=] with the [=user context id=] |user context id|.
 
-    1. If |reference context| is not null and |reference context|'s [=user context=] is not |user context|,
-      return [=error=] with [=error code=] [=invalid user context id=].
+  1. If the implementation is unable to create a new [=/top-level traversable=]
+     with [=associated user context=] |user context| for any reason, return
+     [=error=] with [=error code=] [=unsupported operation=].
 
   <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
        but without using the "current browsing context" concept. -->
   1. Create a new [=top-level browsing context=] by running the [=window open
-     steps=] in the |user context| with <var ignore>url</var> set to
-     "<code>about:blank</code>", <var ignore>target</var> set to the empty
-     string, and <var ignore>features</var> set to "<code>noopener</code>".
-     Which OS window the new [=/browsing context=] is created in depends on
-     |type| and |reference context|:
+     steps=] with <var ignore>url</var> set to "<code>about:blank</code>", <var
+     ignore>target</var> set to the empty string, and <var ignore>features</var>
+     set to "<code>noopener</code>", and setting the [=associated user context=]
+     for the newly created [=/top-level traversable=] to |user context|. Which OS
+     window the new [=/browsing context=] is created in depends on |type| and
+     |reference context|:
 
      * If |type| is "<code>tab</code>" and the implementation supports
        multiple browsing contexts in the same OS window:
