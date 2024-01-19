@@ -1353,6 +1353,19 @@ time. However they are not required to remove such [=user contexts=]. [=User
 contexts=] that are not [=empty user contexts=] must not be removed from the
 [=set of user contexts=].
 
+<div algorithm>
+To <dfn>get user context</dfn> given |user context id|:
+
+1. For each |user context| in the [=set of user contexts=]:
+
+ 1. If |user context|'s [=user context id=] equals |user context id|:
+
+   1. Return |user context|.
+
+1. Return null.
+
+</div>
+
 # Modules # {#modules}
 
 ## The session Module ## {#module-session}
@@ -2157,21 +2170,19 @@ The [=remote end steps=] with |command parameters| are:
 1. If |user context id| is <code>"default"</code>, return [=error=] with [=error
    code=] [=invalid argument=].
 
-1. For each |user context| in the [=set of user contexts=]:
+1. Set |user context| to [=get user context=] with |user context id|.
 
-  1. If |user context|'s [=user context id=] is |user context id|:
+1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
 
-    1. For each [=/top-level traversable=] |navigable|:
+1. For each [=/top-level traversable=] |navigable|:
 
-      1. If |navigable|'s [=associated user context=] is |user context|:
+  1. If |navigable|'s [=associated user context=] is |user context|:
 
-        1. [=Close=] |navigable| without [=prompting to unload=].
+    1. [=Close=] |navigable| without [=prompting to unload=].
 
-    1. [=set/Remove=] |user context| for the [=set of user contexts=].
+1. [=set/Remove=] |user context| for the [=set of user contexts=].
 
-    1. Return [=success=] with data null.
-
-1. Return [=error=] with [=error code=] [=no such user context=].
+1. Return [=success=] with data null.
 
 </div>
 
@@ -3037,12 +3048,9 @@ The [=remote end steps=] with |command parameters| are:
 
   1. If |command parameters|[<code>userContext</code>] is present and is not null:
 
-    1. Let |user context id| be |command parameters|[<code>userContext</code>].
+    1. Set |user context| to [=get user context=] with |command parameters|["<code>userContextId</code>"].
 
-    1. If the [=user context=] with the [=user context id=] |user context id| does
-      not exist in the [=remote end=], return [=error=] with [=error code=] [=no such user context=].
-
-    1. Set |user context| to the [=user context=] with the [=user context id=] |user context id|.
+    1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
 
   1. If the implementation is unable to create a new [=/top-level traversable=]
      with [=associated user context=] |user context| for any reason, return
