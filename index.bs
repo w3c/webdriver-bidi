@@ -598,6 +598,9 @@ with the following additional codes:
   <dt><dfn>no such storage partition</dfn>
   <dd>Tried to access data in a non-existent storage partition.
 
+  <dt><dfn>no such user context</dfn>
+  <dd>Tried to reference an unknown [=user context=].
+
   <dt><dfn>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
 
@@ -625,6 +628,7 @@ ErrorCode = "invalid argument" /
             "no such request" /
             "no such script" /
             "no such storage partition" /
+            "no such user context" /
             "session not created" /
             "unable to capture screen" /
             "unable to close browser" /
@@ -1291,6 +1295,77 @@ access to that data in a {{Window}} global.
 
 Issue: Define how this works.
 
+# User Contexts # {#user-contexts}
+
+A <dfn>user context</dfn> represents a collection of zero or more
+[=/top-level traversables=] within a [=remote end=]. Each [=user context=] has
+an associated [=storage partition=], so that [=remote end=] data is not shared
+between different [=user contexts=].
+
+Issue: Unclear that this is the best way to formally define the concept of a
+user context or the interaction with storage.
+
+Note: The infra spec uses the term "user agent" to refer to the same concept as
+[=user context|user contexts=]. However, this is not compatible with usage of
+the term "user agent" to mean the entire web client with multiple [=user
+context|user contexts=]. Although this difference is not visible to web content,
+it is observed via WebDriver, so we avoid using this terminology.
+
+A [=user context=] has a <dfn>user context id</dfn>, which is a unique string
+set upon the user context creation.
+
+A [=navigable=] has an <dfn>associated user context</dfn>, which is a
+[=user context=].
+
+When a new [=/top-level traversable=] is created its [=associated user context=]
+is set to a user context in the [=set of user contexts=].
+
+Note: In some cases the user context is set by specification when the
+[=/top-level traversable=] is created, however in cases where no such
+requirements are present, the [=associated user context=] for a [=/top-level
+traversable=] is implemenation-defined.
+
+Issue: Should we specify that [=/top-level traversables=] with a non-null
+opener have the same [=associated user context=] as their opener?
+Need to check if this is something existing implementations enforce.
+
+A [=child navigable=]'s [=associated user context=] is it's
+[=navigable/parent=]'s [=associated user context=].
+
+A [=user context=] which isn't the [=associated user context=] for any
+[=/top-level traversable=] is an <dfn>empty user context</dfn>.
+
+The <dfn>default user context</dfn> is a [=user context=] with [=user context
+id=] <code>"default"</code>.
+
+An implementation has a <dfn>set of user contexts</dfn>, which is a [=/set=] of
+[=user contexts=]. Initially this contains the [=default user context=].
+
+Implementations may [=set/append=] new [=user contexts=] to the [=set of user
+contexts=] at any time, for example in response to user actions.
+
+Note: "At any time" here includes during implementation startup, so a given
+implementation might always have multiple entries in the [=set of user contexts=].
+
+Implementations may [=set/remove=] any [=empty user context=], with exception of
+the [=default user context=], from the [=set of user contexts=] at any
+time. However they are not required to remove such [=user contexts=]. [=User
+contexts=] that are not [=empty user contexts=] must not be removed from the
+[=set of user contexts=].
+
+<div algorithm>
+To <dfn>get user context</dfn> given |user context id|:
+
+1. For each |user context| in the [=set of user contexts=]:
+
+ 1. If |user context|'s [=user context id=] equals |user context id|:
+
+   1. Return |user context|.
+
+1. Return null.
+
+</div>
+
 # Modules # {#modules}
 
 ## The session Module ## {#module-session}
@@ -1865,7 +1940,10 @@ managing the remote end browser process.
 
 <pre class="cddl remote-cddl">
 BrowserCommand = (
-  browser.Close
+  browser.Close //
+  browser.CreateUserContext //
+  browser.GetUserContexts //
+  browser.RemoveUserContext
 )
 </pre>
 
@@ -1873,8 +1951,33 @@ BrowserCommand = (
 
 <!-- Nothing yet -->
 <pre class="cddl local-cddl">
+BrowserResult = (
+   browser.CreateUserContextResult /
+   browser.GetUserContextsResult
+)
 </pre>
 
+
+### Types ### {#module-browser-types}
+
+#### The browser.UserContext Type #### {#type-browser-UserContext}
+
+<pre class="cddl remote-cddl local-cddl">
+browser.UserContext = text;
+</pre>
+
+The <code>browser.UserContext</code> unique identifies a [=user context=].
+
+#### The browser.UserContextInfo Type #### {#type-browser-UserContextInfo}
+
+<pre class="cddl remote-cddl local-cddl">
+browser.UserContextInfo = {
+  userContext: browser.UserContext
+}
+</pre>
+
+The <code>browser.UserContextInfo</code> type represents properties of a [=user
+context=].
 
 ### Commands ### {#module-browser-commands}
 
@@ -1936,9 +2039,6 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
 
   1. [=Close=] any [=top-level browsing contexts=] without [=prompting to unload=].
 
-     Note: This implicitly only affects browsing contexts that were under
-     automation in the first place.
-
   1. Perform implementation defined steps to clean up resources associated with
      the [=remote end=] under automation.
 
@@ -1948,6 +2048,145 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
      automation, or shutting down the [=WebSocket Listener=]. Because of
      differences between browsers and operating systems it is not possible to
      specify in detail precise invariants [=local ends=] can depend on here.
+
+</div>
+
+#### The browser.createUserContext Command #### {#command-browser-createUserContext}
+
+The <dfn export for=commands>browser.createUserContext</dfn> command creates a
+[=user context=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browser.CreateUserContext = (
+        method: "browser.createUserContext",
+        params: EmptyParams,
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      browser.CreateUserContextResult = browser.UserContextInfo
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.createUserContext">
+
+The [=remote end steps=] are:
+
+1. Let |user context| be a new [=user context=].
+
+1. [=set/Append=] |user context| to the [=set of user contexts=].
+
+1. Let |user context info| be a [=/map=] matching the
+    <code>browser.UserContextInfo</code> production with the
+    <code>userContext</code> field set to |user context|'s [=user context id=].
+
+1. Return [=success=] with data |user context info|.
+
+</div>
+
+
+#### The browser.getUserContexts Command #### {#command-browser-getUserContexts}
+
+The <dfn export for=commands>browser.getUserContexts</dfn> command returns a
+list of [=user context=]s.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browser.GetUserContexts = (
+        method: "browser.getUserContexts",
+        params: EmptyParams,
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      browser.GetUserContextsResult = {
+        userContexts: [ + browser.UserContextInfo]
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.getUserContexts">
+
+The [=remote end steps=] are:
+
+1. Let |user contexts| be an empty [=/list=].
+
+1. For each |user context| in the [=set of user contexts=]:
+
+  1. Let |user context info| be a [=/map=] matching the
+     <code>browser.UserContextInfo</code> production with the
+     <code>userContext</code> field set to |user context|'s [=user context id=].
+
+  1. [=list/Append=] |user context info| to |user contexts|.
+
+1. Let |result| be a [=/map=] matching the
+   <code>browser.GetUserContextsResult</code> production with the
+   <code>userContexts</code> field set to |user contexts|.
+
+1. Return [=success=] with data |result|.
+
+</div>
+
+
+#### The browser.removeUserContext Command #### {#command-browser-removeUserContext}
+
+The <dfn export for=commands>browser.removeUserContext</dfn> command closes a
+user context and all browsing contexts in it without running
+<code>beforeunload</code> handlers.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browser.RemoveUserContext = (
+        method: "browser.removeUserContext",
+        params: {
+          userContext: browser.UserContext
+        },
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl">
+      EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.removeUserContext">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |user context id| be |command  parameters|["<code>userContext</code>"].
+
+1. If |user context id| is <code>"default"</code>, return [=error=] with [=error
+   code=] [=invalid argument=].
+
+1. Set |user context| to [=get user context=] with |user context id|.
+
+1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
+
+1. For each [=/top-level traversable=] |navigable|:
+
+  1. If |navigable|'s [=associated user context=] is |user context|:
+
+    1. [=Close=] |navigable| without [=prompting to unload=].
+
+1. [=set/Remove=] |user context| for the [=set of user contexts=].
+
+1. Return [=success=] with data null.
 
 </div>
 
@@ -2065,9 +2304,10 @@ To <dfn export>get a browsing context</dfn> given |context id|:
 browsingContext.InfoList = [*browsingContext.Info]
 
 browsingContext.Info = {
+  children: browsingContext.InfoList / null,
   context: browsingContext.BrowsingContext,
   url: text,
-  children: browsingContext.InfoList / null
+  userContext: browser.UserContext
   ? parent: browsingContext.BrowsingContext / null,
 }
 </pre>
@@ -2142,18 +2382,22 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
   1. Set |child infos| to an empty [=/list=].
 
-  1. For each |context| of |child contexts|:
+  1. For each |child context| of |child contexts|:
 
     1. Let |info| be the result of [=get the browsing context info=] given
-       |context|, |child depth|, and false.
+       |child context|, |child depth|, and false.
 
     1. Append |info| to |child infos|
+
+1. Let |user context| be |context|'s [=associated user context=].
 
 1. Let |context info| be a [=/map=] matching the
    <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
    if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
-   field set to |url|, and the <code>children</code> field set to |child infos|.
+   field set to |url|, the <code>userContext</code> field set to
+   |user context|'s [=user context id=], and the <code>children</code> field
+   set to |child infos|.
 
 1. Return |context info|.
 
@@ -2769,7 +3013,8 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
       browsingContext.CreateParameters = {
         type: browsingContext.CreateType,
         ? referenceContext: browsingContext.BrowsingContext,
-        ? background: bool .default false
+        ? background: bool .default false,
+        ? userContext: browser.UserContext / null
       }
       </pre>
    </dd>
@@ -2802,13 +3047,28 @@ The [=remote end steps=] with |command parameters| are:
   1. If the implementation is unable to create a new browsing context for any
      reason then return [=error=] with [=error code=] [=unsupported operation=].
 
+  1. Let |user context| be the [=default user context=] if |reference context|
+     is null, and |reference context|' [=associated user context=] otherwise.
+
+  1. If |command parameters|[<code>userContext</code>] is present and is not null:
+
+    1. Set |user context| to [=get user context=] with |command parameters|["<code>userContext</code>"].
+
+    1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
+
+  1. If the implementation is unable to create a new [=/top-level traversable=]
+     with [=associated user context=] |user context| for any reason, return
+     [=error=] with [=error code=] [=unsupported operation=].
+
   <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
        but without using the "current browsing context" concept. -->
   1. Create a new [=top-level browsing context=] by running the [=window open
-     steps=] with <var ignore>url</var> set to "<code>about:blank</code>",
-     <var ignore>target</var> set to the empty string, and
-     <var ignore>features</var> set to "<code>noopener</code>". Which OS window the new [=/browsing context=]
-     is created in depends on |type| and |reference context|:
+     steps=] with <var ignore>url</var> set to "<code>about:blank</code>", <var
+     ignore>target</var> set to the empty string, and <var ignore>features</var>
+     set to "<code>noopener</code>", and setting the [=associated user context=]
+     for the newly created [=/top-level traversable=] to |user context|. Which OS
+     window the new [=/browsing context=] is created in depends on |type| and
+     |reference context|:
 
      * If |type| is "<code>tab</code>" and the implementation supports
        multiple browsing contexts in the same OS window:
