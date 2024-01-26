@@ -9551,7 +9551,10 @@ To <dfn>match cookie</dfn> given |stored cookie| and |filter|:
   1. Let |field name| be the field name corresponding to the JSON key |name| in
     the [=table for cookie conversion=].
 
-  1. If |stored cookie|[|field name|] does not equal |value|:
+  1. If |field name| is "<code>value</code>", set |store cookie value| to [=deserialize protocol bytes=] with |stored cookie|["value"],
+     Otherwise let |store cookie value| be |stored cookie|[|field name|].
+
+  1. If |store cookie value| does not equal |value|:
 
     1. Return false.
 
@@ -9566,9 +9569,11 @@ To <dfn>get matching cookies</dfn> given |cookie store| and |filter|:
 
 1. For each |stored cookie| in |cookie store|:
 
-  1. If [=match cookie=] with |stored cookie| and |filter| is true:
+  1. Let |serialized cookie| be the result of [=serialize cookie=] given |stored cookie|.
 
-    1. Append the result of [=serialize cookie=] given |stored cookie| to |cookies|.
+  1. If [=match cookie=] with |serialized cookie| and |filter| is true:
+
+    1. Append |serialized cookie| to |cookies|.
 
 1. Return |cookies|.
 
