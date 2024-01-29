@@ -7,7 +7,7 @@
   <link href="https://www.w3.org/StyleSheets/TR/2021/W3C-ED" rel="stylesheet">
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
-  <meta content="a0d50b0ca251d20005557e0cb2b615cf9c9096df" name="document-revision">
+  <meta content="19a79212558ff69026a5e7295ad141e241dfa20c" name="document-revision">
 <style>
 var {
   color: #cd5c5c
@@ -567,7 +567,7 @@ var.selected6 { background-color: #FFBCF2; box-shadow: 0 0 0 2px #FFBCF2; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2024-01-23">23 January 2024</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2024-01-29">29 January 2024</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -8931,7 +8931,10 @@ attributes</a>.</p>
         <p>Let <var>field name</var> be the field name corresponding to the JSON key <var>name</var> in
 the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-table-for-cookie-conversion" id="ref-for-dfn-table-for-cookie-conversion">table for cookie conversion</a>.</p>
        <li data-md>
-        <p>If <var>stored cookie</var>[<var>field name</var>] does not equal <var>value</var>:</p>
+        <p>If <var>field name</var> is "<code>value</code>", set <var>store cookie value</var> to <a data-link-type="dfn" href="#deserialize-protocol-bytes" id="ref-for-deserialize-protocol-bytes⑥">deserialize protocol bytes</a> with <var>stored cookie</var>["value"],
+ Otherwise let <var>store cookie value</var> be <var>stored cookie</var>[<var>field name</var>].</p>
+       <li data-md>
+        <p>If <var>store cookie value</var> does not equal <var>value</var>:</p>
         <ol>
          <li data-md>
           <p>Return false.</p>
@@ -8950,10 +8953,12 @@ the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-table-for
       <p>For each <var>stored cookie</var> in <var>cookie store</var>:</p>
       <ol>
        <li data-md>
-        <p>If <a data-link-type="dfn" href="#match-cookie" id="ref-for-match-cookie">match cookie</a> with <var>stored cookie</var> and <var>filter</var> is true:</p>
+        <p>Let <var>serialized cookie</var> be the result of <a data-link-type="dfn" href="#serialize-cookie" id="ref-for-serialize-cookie①">serialize cookie</a> given <var>stored cookie</var>.</p>
+       <li data-md>
+        <p>If <a data-link-type="dfn" href="#match-cookie" id="ref-for-match-cookie">match cookie</a> with <var>serialized cookie</var> and <var>filter</var> is true:</p>
         <ol>
          <li data-md>
-          <p>Append the result of <a data-link-type="dfn" href="#serialize-cookie" id="ref-for-serialize-cookie①">serialize cookie</a> given <var>stored cookie</var> to <var>cookies</var>.</p>
+          <p>Append <var>serialized cookie</var> to <var>cookies</var>.</p>
         </ol>
       </ol>
      <li data-md>
@@ -9080,7 +9085,7 @@ storage.SetCookieParameters = {
      <li data-md>
       <p>Let <var>store</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try⑤⑦">trying</a> to <a data-link-type="dfn" href="#get-the-cookie-store" id="ref-for-get-the-cookie-store①">get the cookie store</a> with <var>partition key</var>.</p>
      <li data-md>
-      <p>Let <var>deserialized value</var> be <a data-link-type="dfn" href="#deserialize-protocol-bytes" id="ref-for-deserialize-protocol-bytes⑥">deserialize protocol bytes</a> with <var>cookie spec</var>["<code>value</code>"].</p>
+      <p>Let <var>deserialized value</var> be <a data-link-type="dfn" href="#deserialize-protocol-bytes" id="ref-for-deserialize-protocol-bytes⑦">deserialize protocol bytes</a> with <var>cookie spec</var>["<code>value</code>"].</p>
      <li data-md>
       <p><a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-creating-a-cookie" id="ref-for-dfn-creating-a-cookie">Create a cookie</a> in <var>store</var> using <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-cookie-name" id="ref-for-dfn-cookie-name">cookie name</a> <var>cookie spec</var>["<code>name</code>"], <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-cookie-value" id="ref-for-dfn-cookie-value">cookie value</a> <var>deserialized value</var>, <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-cookie-domain" id="ref-for-dfn-cookie-domain">cookie domain</a> <var>cookie spec</var>["<code>domain</code>"], and an attribute-value list of the
 following cookie concepts listed in the <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-table-for-cookie-conversion" id="ref-for-dfn-table-for-cookie-conversion①">table for cookie conversion</a>:</p>
@@ -11466,7 +11471,7 @@ window.dfnpanelData['get-the-network-intercepts'] = {"dfnID": "get-the-network-i
 window.dfnpanelData['update-the-response'] = {"dfnID": "update-the-response", "url": "#update-the-response", "dfnText": "update the response", "refSections": [{"refs": [{"id": "ref-for-update-the-response"}], "title": "7.4.4.3. The network.continueResponse Command"}, {"refs": [{"id": "ref-for-update-the-response\u2460"}], "title": "7.4.4.6. The network.provideResponse Command"}], "external": false};
 window.dfnpanelData['extract-challenges'] = {"dfnID": "extract-challenges", "url": "#extract-challenges", "dfnText": "extract challenges", "refSections": [{"refs": [{"id": "ref-for-extract-challenges"}], "title": "7.4.3.14. The network.ResponseData Type"}], "external": false};
 window.dfnpanelData['process-a-network-event'] = {"dfnID": "process-a-network-event", "url": "#process-a-network-event", "dfnText": "process a network event", "refSections": [{"refs": [{"id": "ref-for-process-a-network-event"}], "title": "7.4.5.1. The network.authRequired Event"}, {"refs": [{"id": "ref-for-process-a-network-event\u2460"}], "title": "7.4.5.2. The network.beforeRequestSent Event"}, {"refs": [{"id": "ref-for-process-a-network-event\u2461"}], "title": "7.4.5.3. The network.fetchError Event"}, {"refs": [{"id": "ref-for-process-a-network-event\u2462"}], "title": "7.4.5.4. The network.responseCompleted Event"}, {"refs": [{"id": "ref-for-process-a-network-event\u2463"}], "title": "7.4.5.5. The network.responseStarted Event"}], "external": false};
-window.dfnpanelData['deserialize-protocol-bytes'] = {"dfnID": "deserialize-protocol-bytes", "url": "#deserialize-protocol-bytes", "dfnText": "deserialize protocol bytes", "refSections": [{"refs": [{"id": "ref-for-deserialize-protocol-bytes"}], "title": "7.4.3.6. The network.CookieHeader Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2460"}], "title": "7.4.3.8. The network.Header Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2461"}], "title": "7.4.3.15. The network.SetCookieHeader Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2462"}], "title": "7.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2463"}], "title": "7.4.4.6. The network.provideResponse Command"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2464"}], "title": "7.6.2.1. The storage.PartitionKey Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2465"}], "title": "7.6.3.2. The storage.setCookie Command"}], "external": false};
+window.dfnpanelData['deserialize-protocol-bytes'] = {"dfnID": "deserialize-protocol-bytes", "url": "#deserialize-protocol-bytes", "dfnText": "deserialize protocol bytes", "refSections": [{"refs": [{"id": "ref-for-deserialize-protocol-bytes"}], "title": "7.4.3.6. The network.CookieHeader Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2460"}], "title": "7.4.3.8. The network.Header Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2461"}], "title": "7.4.3.15. The network.SetCookieHeader Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2462"}], "title": "7.4.4.2. The network.continueRequest Command"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2463"}], "title": "7.4.4.6. The network.provideResponse Command"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2464"}, {"id": "ref-for-deserialize-protocol-bytes\u2465"}], "title": "7.6.2.1. The storage.PartitionKey Type"}, {"refs": [{"id": "ref-for-deserialize-protocol-bytes\u2466"}], "title": "7.6.3.2. The storage.setCookie Command"}], "external": false};
 window.dfnpanelData['serialize-protocol-bytes'] = {"dfnID": "serialize-protocol-bytes", "url": "#serialize-protocol-bytes", "dfnText": "serialize protocol bytes", "refSections": [{"refs": [{"id": "ref-for-serialize-protocol-bytes"}], "title": "7.4.3.5. The network.Cookie Type"}, {"refs": [{"id": "ref-for-serialize-protocol-bytes\u2460"}], "title": "7.4.3.8. The network.Header Type"}], "external": false};
 window.dfnpanelData['serialize-cookie'] = {"dfnID": "serialize-cookie", "url": "#serialize-cookie", "dfnText": "serialize cookie", "refSections": [{"refs": [{"id": "ref-for-serialize-cookie"}], "title": "7.4.3.12. The network.RequestData Type"}, {"refs": [{"id": "ref-for-serialize-cookie\u2460"}], "title": "7.6.2.1. The storage.PartitionKey Type"}], "external": false};
 window.dfnpanelData['serialize-cookie-header'] = {"dfnID": "serialize-cookie-header", "url": "#serialize-cookie-header", "dfnText": "serialize cookie header", "refSections": [{"refs": [{"id": "ref-for-serialize-cookie-header"}], "title": "7.4.4.2. The network.continueRequest Command"}], "external": false};
