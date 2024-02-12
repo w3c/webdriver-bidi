@@ -9491,6 +9491,25 @@ entries with the keys of [=default values for storage partition key
 attributes=].
 
 <div algorithm>
+To <dfn>deserialize filter</dfn> given |filter|:
+
+1. Let |deserialized filter| to be an empty [=/map=].
+
+1. For each |name| → |value| in |filter|:
+
+  1. Let |deserialized name| be the field name corresponding to the JSON key |name| in
+    the [=table for cookie conversion=].
+
+  1. If |name| is "<code>value</code>", set |deserialized value| to [=deserialize protocol bytes=] with |value|,
+     otherwise let |deserialized value| be |value|.
+
+  1. [=map/Set=] |deserialized filter|[|deserialized name|] to |deserialized value|.
+
+1. Return |deserialized filter|.
+
+</div>
+
+<div algorithm>
 To <dfn>expand a storage partition spec</dfn> given |partition spec|:
 
 1. If |partition spec| is null:
@@ -9545,17 +9564,7 @@ To <dfn>match cookie</dfn> given |stored cookie| and |filter|:
 
 1. For each |name| → |value| in |filter|:
 
-  1. If |name| is "<code>value</code>":
-
-    1. Set |value| to [=deserialize protocol bytes=] with |value|.
-
-  1. Let |field name| be the field name corresponding to the JSON key |name| in
-    the [=table for cookie conversion=].
-
-  1. If |field name| is "<code>value</code>", set |store cookie value| to [=deserialize protocol bytes=] with |stored cookie|["value"],
-     Otherwise let |store cookie value| be |stored cookie|[|field name|].
-
-  1. If |store cookie value| does not equal |value|:
+  1. If |stored cookie|[|name|] does not equal |value|:
 
     1. Return false.
 
@@ -9568,13 +9577,13 @@ To <dfn>get matching cookies</dfn> given |cookie store| and |filter|:
 
 1. Let |cookies| be a new list.
 
+1. Set |deserialized filter| to [=deserialize filter=] with |filter|.
+
 1. For each |stored cookie| in |cookie store|:
 
-  1. Let |serialized cookie| be the result of [=serialize cookie=] given |stored cookie|.
+  1. If [=match cookie=] with |stored cookie| and |deserialized filter| is true:
 
-  1. If [=match cookie=] with |serialized cookie| and |filter| is true:
-
-    1. Append |serialized cookie| to |cookies|.
+    1. Append |stored cookie| to |cookies|.
 
 1. Return |cookies|.
 
@@ -9662,8 +9671,16 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |cookies| be the result of [=get matching cookies=] with |store| and |filter|.
 
+1. Let |serialized cookies| be a new list.
+
+1. For each |cookie| in |cookies|:
+
+  1. Let |serialized cookie| be the result of [=serialize cookie=] given |cookie|.
+
+  1. Append |serialized cookie| to |serialized cookies|.
+
 1. Let |body| be a [=/map=] matching the <code>storage.GetCookiesResult</code> production,
-  with the <code>cookies</code> field set to |cookies| and the <code>partitionKey</code>
+  with the <code>cookies</code> field set to |serialized cookies| and the <code>partitionKey</code>
   field set to |partition key|.
 
 1. Return [=success=] with data |body|.
