@@ -231,6 +231,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
+    text: the rules for choosing a navigable; url:document-sequences.html#the-rules-for-choosing-a-navigable
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
     text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
@@ -2307,6 +2308,10 @@ same as the [=window handle=].
 Each [=/browsing context=] also has an <dfn>associated storage partition</dfn>,
 which is the [=storage partition=] it uses to persist data.
 
+Each [=/browsing context=] also has an <dfn>original opener</dfn>, which
+is a [=/browsing context=] that opened the browsing context, initially
+set to null.
+
 <div algorithm>
 To <dfn export>get a browsing context</dfn> given |context id|:
 
@@ -2331,8 +2336,9 @@ browsingContext.InfoList = [*browsingContext.Info]
 browsingContext.Info = {
   children: browsingContext.InfoList / null,
   context: browsingContext.BrowsingContext,
+  opener: browsingContext.BrowsingContext / null,
   url: text,
-  userContext: browser.UserContext
+  userContext: browser.UserContext,
   ? parent: browsingContext.BrowsingContext / null,
 }
 </pre>
@@ -2416,12 +2422,17 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
 1. Let |user context| be |context|'s [=associated user context=].
 
+1. Let |opener id| be the [=browsing context id=] for |context|'s
+   [=original opener=], if |context|'s [=original opener=] is not null,
+   and null otherwise.
+
 1. Let |context info| be a [=/map=] matching the
    <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
    if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
    field set to |url|, the <code>userContext</code> field set to
-   |user context|'s [=user context id=], and the <code>children</code> field
+   |user context|'s [=user context id=], <code>opener</code>
+   field set to |opener id|, and the <code>children</code> field
    set to |child infos|.
 
 1. Return |context info|.
@@ -4163,6 +4174,11 @@ the <dfn export>WebDriver BiDi navigable created</dfn> steps given
 |navigable|:
 
 1. Let |context| be |navigable|'s [=active browsing context=].
+
+1. Set |context|'s [=original opener=] to |context|'s [=opener browsing
+   context=], as if the |context|'s [=opener browsing context=] was
+   created according to [=the rules for choosing a navigable=] but with
+   <code>noopener</code> always set to false.
 
 1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
