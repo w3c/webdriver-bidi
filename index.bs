@@ -4519,9 +4519,9 @@ A <dfn>network intercept</dfn> is a mechanism to allow remote ends to intercept
 and modify network requests and responses.
 
 A [=BiDi session=] has an <dfn>intercept map</dfn> which is a [=/map=] between
-intercept id and a [=struct=] with fields <code>url patterns</code> and
-<code>phases</code> that define the properties of active network intercepts. It
-is initially empty.
+intercept id and a [=struct=] with fields <code>url patterns</code>,
+<code>phases</code>, and <code>browsingContexts</code> that define the properties
+of active network intercepts. It is initially empty.
 
 A [=BiDi session=] has a <dfn>blocked request map</dfn>, used to track the
 requests which are actively being blocked. It is an [=/map=] between [=request id=]
@@ -4530,7 +4530,7 @@ and a [=struct=] with fields <code>request</code>, <code>phase</code>, and
 
 <div algorithm>
 
-To <dfn>get the network intercepts</dfn> given |session|, |event|, and |request|:
+To <dfn>get the network intercepts</dfn> given |session|, |event|, |request|, and |context id|:
 
 1. Let |session intercepts| be |session|'s [=intercept map=].
 
@@ -4552,6 +4552,12 @@ To <dfn>get the network intercepts</dfn> given |session|, |event|, and |request|
    [=request/URL=].
 
 1. For each |intercept id| → |intercept| of |session intercepts|:
+
+  1. If |intercept|'s <code>contexts</code> is not null:
+
+    1. If |intercept|'s <code>contexts</code> does not [=set/contains|contain=] |context id|:
+
+      1. Continue.
 
   1. If |intercept|'s <code>phases</code> [=set/contains=] |phase|:
 
@@ -4753,8 +4759,6 @@ request in addition to the context.
 <div algorithm>
 To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
 
-1. Let |intercepts| be the result of [=get the network intercepts=] with
-   |session|, |event|, and |request|.
 
 1. Let |request data| be the result of [=get the request data=] with |request|.
 
@@ -4763,13 +4767,20 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
 
 1. Let |context id| be null.
 
+1. Let |top-level context id| be null.
+
 1. If |request|'s [=request/window=] is an [=environment settings object=]:
 
   1. Let |environment settings| be |request|'s [=request/window=]
 
   1. If there is a [=/browsing context=] whose [=active window=] is |environment
      settings|' [=environment settings object/global object=], set |context id|
-     to the [=browsing context id=] for that context.
+     to the [=browsing context id=] for that context, and set |top-level context id|
+     to be [=top-level browsing context=]'s [=browsing context id=] for that
+     context.
+
+1. Let |intercepts| be the result of [=get the network intercepts=] with
+   |session|, |event|, |request|, and |top-level context id|.
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -5842,6 +5853,7 @@ The <dfn export for=commands>network.addIntercept</dfn> command adds a
 
       network.AddInterceptParameters = {
         phases: [+network.InterceptPhase],
+        ? contexts: [+browsingContext.BrowsingContext],
         ? urlPatterns: [*network.UrlPattern],
       }
 
@@ -5867,6 +5879,25 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |url patterns| be the <code>urlPatterns</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
+1. Let |contexts| be null.
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Set |contexts| to an empty [=/set=].
+
+   1. For each |context id| of |command parameters|["<code>contexts</code>"]
+
+      1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+         with |context id|.
+
+      1. If |context| is not a [=top-level browsing context=], return [=error=]
+         with [=error code=] [=invalid argument=].
+
+      1. Append |context| to |contexts|.
+
+   1. If |contexts| is an empty [=/set=], return [=error=] with [=error code=]
+      [=invalid argument=].
+
 1. Let |intercept map| be |session|'s [=intercept map=].
 
 1. Let |parsed patterns| be an empty [=/list=].
@@ -5879,7 +5910,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
   1. [=list/Append=] |parsed| to |parsed patterns|.
 
 1. Set |intercept map|[|intercept|] to a struct with <code>url patterns</code>
-   |parsed patterns| and <code>phases</code> |command parameters|["<code>phases</code>"].
+   |parsed patterns|, <code>phases</code> |command
+   parameters|["<code>phases</code>"] and <code>browsingContexts</code>
+   |contexts|.
 
 1. Return a new [=/map=] matching the
    <code>network.AddInterceptResult</code> production with the
