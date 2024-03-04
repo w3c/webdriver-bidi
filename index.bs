@@ -10270,24 +10270,64 @@ specified sequence of user input actions.
         input.KeyUpAction
       )
 
-      input.PointerSourceActions = {
-        type: "pointer",
-        id: text,
-        ? parameters: input.PointerParameters,
-        actions: [*input.PointerSourceAction]
+      input.PointerSourceActions = (
+         input.MouseSourceActions /
+         input.TouchSourceActions /
+         input.PenSourceActions
+      )
+
+      input.MouseSourceActions = {
+         type: "pointer",
+         id: text,
+         ? parameters: input.MouseSourceParameters,
+         actions: [*input.MouseSourceAction]
       }
 
-      input.PointerType = "mouse" / "pen" / "touch"
-
-      input.PointerParameters = {
-        ? pointerType: input.PointerType .default "mouse"
+      input.MouseSourceParameters = {
+         ? pointerType: "mouse"
       }
 
-      input.PointerSourceAction = (
+      input.MouseSourceAction = (
         input.PauseAction /
-        input.PointerDownAction /
-        input.PointerUpAction /
-        input.PointerMoveAction
+        input.MouseDownAction /
+        input.MouseUpAction /
+        input.MouseMoveAction
+      )
+
+      input.TouchSourceActions = {
+         type: "pointer",
+         id: text,
+         parameters: input.TouchSourceParameters,
+         actions: [*input.TouchSourceAction]
+      }
+
+      input.TouchSourceParameters = {
+         pointerType: "touch"
+      }
+
+      input.TouchSourceAction = (
+        input.PauseAction /
+        input.TouchDownAction /
+        input.TouchUpAction /
+        input.TouchMoveAction
+      )
+
+      input.PenSourceActions = {
+         type: "pointer",
+         id: text,
+         parameters: input.PenSourceParameters,
+         actions: [*input.PenSourceAction]
+      }
+
+      input.PenSourceParameters = {
+         pointerType: "pen"
+      }
+
+      input.PenSourceAction = (
+        input.PauseAction /
+        input.PenDownAction /
+        input.PenUpAction /
+        input.PenMoveAction
       )
 
       input.WheelSourceActions = {
@@ -10316,47 +10356,87 @@ specified sequence of user input actions.
         value: text
       }
 
-      input.PointerUpAction = {
-        type: "pointerUp",
-        button: js-uint,
-      }
-
-      input.PointerDownAction = {
+      input.MouseDownAction = {
         type: "pointerDown",
-        button: js-uint,
-        input.PointerCommonProperties
+        button: js-uint
       }
 
-      input.PointerMoveAction = {
+      input.MouseUpAction = {
+        type: "pointerUp",
+        button: js-uint
+      }
+
+      input.MouseMoveAction = {
         type: "pointerMove",
-        x: js-int,
-        y: js-int,
-        ? duration: js-uint,
-        ? origin: input.Origin,
-        input.PointerCommonProperties
+        input.PointerMoveProperties
       }
 
-      input.WheelScrollAction = {
-        type: "scroll",
-        x: js-int,
-        y: js-int,
-        deltaX: js-int,
-        deltaY: js-int,
-        ? duration: js-uint,
-        ? origin: input.Origin .default "viewport",
+      input.TouchDownAction = {
+        type: "pointerDown",
+        input.TouchProperties
       }
 
-      input.PointerCommonProperties = (
+      input.TouchUpAction = {
+        type: "pointerUp",
+        input.TouchProperties
+      }
+
+      input.TouchMoveAction = {
+        type: "pointerMove",
+        input.PointerMoveProperties,
+        input.TouchProperties
+      }
+
+      input.TouchProperties = (
         ? width: js-uint .default 1,
         ? height: js-uint .default 1,
-        ? pressure: float .default 0.0,
+        ? pressure: float .default 0.5
+      )
+
+      input.PenDownAction = {
+        type: "pointerDown",
+        button: js-uint,
+        input.PenProperties
+      }
+
+      input.PenUpAction = {
+        type: "pointerUp",
+        button: js-uint,
+        input.PenProperties
+      }
+
+      input.PenMoveAction = {
+        type: "pointerMove",
+        input.PointerMoveProperties,
+        input.PenProperties
+      }
+
+      input.PenProperties = (
         ? tangentialPressure: float .default 0.0,
         ? twist: (0..359) .default 0,
         ; 0 .. Math.PI / 2
-        ? altitudeAngle: (0.0..1.5707963267948966) .default 0.0,
+        ? altitudeAngle: (0.0..1.5707963267948966) .default 1.5707963267948966,
         ; 0 .. 2 * Math.PI
         ? azimuthAngle: (0.0..6.283185307179586) .default 0.0,
+        input.TouchProperties,
       )
+
+      input.PointerMoveProperties = (
+        x: js-int,
+        y: js-int,
+        ? duration: js-uint,
+        ? origin: input.Origin .default "viewport",
+      )
+
+      input.WheelScrollAction = {
+        type: "scroll",
+        deltaX: js-int,
+        deltaY: js-int,
+        x: js-int,
+        y: js-int,
+        ? duration: js-uint,
+        ? origin: input.Origin .default "viewport",
+      }
 
       input.Origin = "viewport" / "pointer" / input.ElementOrigin
     </pre>
