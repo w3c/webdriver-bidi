@@ -334,7 +334,7 @@ Issue: Surely there's a better mechanism for doing this "wait for an event" thin
 
 <div algorithm>
 
-When an algorithm |algorithm| running [=in parallel=] <dfn>awaits</dfn> a set of
+When an algorithm |algorithm| running [=in parallel=] <dfn export>awaits</dfn> a set of
 events |events|, and |resume id|:
 
 1. Pause the execution of |algorithm|.
@@ -346,7 +346,7 @@ events |events|, and |resume id|:
 </div>
 
 <div algorithm>
-To <dfn>resume</dfn> given |name|, |id| and |parameters|:
+To <dfn export>resume</dfn> given |name|, |id| and |parameters|:
 
 1. If [=wait queue=] does not contain |id|, return.
 
@@ -376,7 +376,7 @@ protocol. These terms are distinct from their representation at the
 The protocol is defined using a [[!RFC8610|CDDL]] definition. For the
 convenience of implementers two separate CDDL definitions are defined; the
 <dfn export>remote end definition</dfn> which defines the format of messages produced
-on the [=local end=] and consumed on the [=remote end=], and the <dfn>local end
+on the [=local end=] and consumed on the [=remote end=], and the <dfn export>local end
 definition</dfn> which defines the format of messages produced on the [=remote end=]
 and consumed on the [=local end=]
 
@@ -480,11 +480,11 @@ WebDriver BiDi extends the [=/session=] concept from [[WEBDRIVER|WebDriver]].
 A [=/session=] has a <dfn>BiDi flag</dfn>, which is false unless otherwise
 stated.
 
-A <dfn>BiDi session</dfn> is a [=/session=] which has the [=BiDi flag=]
+A <dfn export>BiDi session</dfn> is a [=/session=] which has the [=BiDi flag=]
 set to true.
 
 <div algorithm>
-The list of <dfn>active BiDi sessions</dfn> is given by:
+The list of <dfn export>active BiDi sessions</dfn> is given by:
 
 1. Let |BiDi sessions| be a new [=/list=].
 
@@ -505,7 +505,7 @@ Each <dfn export>module</dfn> represents a collection of related
 agent. For example, a module might contain functionality for inspecting and
 manipulating the DOM, or for script execution.
 
-Each module has a <dfn>module name</dfn> which is a string. The
+Each module has a <dfn for=module export>module name</dfn> which is a string. The
 [=command name=] and [=event name=] for commands and events defined in the
 module start with the [=module name=] followed by a period "<code>.</code>".
 
@@ -556,7 +556,7 @@ Each [=command=] is defined by:
   given a [=BiDi session=] and [=command parameters=] and return an
   instance of the command [=result type=].
 
-A command that can run without an active session is a <dfn>static
+A command that can run without an active session is a <dfn export>static
 command</dfn>. Commands are not static commands unless stated in their
 definition.
 
@@ -569,7 +569,7 @@ Note: This is because the command id is entirely controlled by the [=local end=]
 and isn't necessarily unique over the course of a session. For example a [=local
 end=] which ignores all responses could use the same command id for each command.
 
-The <dfn export for=command>set of all command names</dfn> is a [=/set=] containing
+The <dfn export>set of all command names</dfn> is a [=/set=] containing
 all the defined [=command names=], including any belonging to [=extension
 modules=].
 
@@ -579,40 +579,40 @@ WebDriver BiDi extends the set of [=error codes=] from [[WEBDRIVER|WebDriver]]
 with the following additional codes:
 
 <dl>
-  <dt><dfn>no such handle</dfn>
+  <dt><dfn for=errors export>no such handle</dfn>
   <dd>Tried to deserialize an unknown <code>RemoteObjectReference</code>.
 
-  <dt><dfn>no such history entry</dfn>
+  <dt><dfn for=errors export>no such history entry</dfn>
   <dd>Tried to havigate to an unknown [=session history entry=].
 
-  <dt><dfn>no such intercept</dfn>
+  <dt><dfn for=errors export>no such intercept</dfn>
   <dd>Tried to remove an unknown [=network intercept=].
 
-  <dt><dfn>no such node</dfn>
+  <dt><dfn for=errors export>no such node</dfn>
   <dd>Tried to deserialize an unknown <code>SharedReference</code>.
 
-  <dt><dfn>no such request</dfn>
+  <dt><dfn for=errors export>no such request</dfn>
   <dd>Tried to continue an unknown [=/request=].
 
-  <dt><dfn>no such script</dfn>
+  <dt><dfn for=errors export>no such script</dfn>
   <dd>Tried to remove an unknown [=preload script=].
 
-  <dt><dfn>no such storage partition</dfn>
+  <dt><dfn for=errors export>no such storage partition</dfn>
   <dd>Tried to access data in a non-existent storage partition.
 
-  <dt><dfn>no such user context</dfn>
+  <dt><dfn for=errors export>no such user context</dfn>
   <dd>Tried to reference an unknown [=user context=].
 
-  <dt><dfn>unable to close browser</dfn>
+  <dt><dfn for=errors export>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
 
-  <dt><dfn>unable to set cookie</dfn>
+  <dt><dfn for=errors export>unable to set cookie</dfn>
   <dd>Tried to create a cookie, but the user agent rejected it.
 
-  <dt><dfn>underspecified storage partition</dfn>
+  <dt><dfn for=errors export>underspecified storage partition</dfn>
   <dd>Tried to interact with data in a storage partition which was not adequately specified.
 
-  <dt><dfn>unable to set file input</dfn>
+  <dt><dfn for=errors export>unable to set file input</dfn>
   <dd>Tried to set a file input, but failed to do so.
 </dl>
 
@@ -655,15 +655,16 @@ occurred on the [=remote end=].
       name</dfn>.
 
     - <code>params</code> which defines a mapping containing event data. The
-      populated value of this map is the <dfn export for=command>event
+      populated value of this map is the <dfn export for=event>event
       parameters</code>.
- - A <dfn export>remote end event trigger</dfn> which defines when the event is
-   triggered and steps to construct the [=event type=] data.
- - Optionally, a set of <dfn>remote end subscribe steps</dfn>, which define
-   steps to take when a local end subscribes to an event. Where defined these
-   steps have an associated <dfn>subscribe priority</dfn> which is an integer
-   controlling the order in which the steps are run when multiple events are
-   enabled at once, with lower integers indicating steps that run earlier.
+ - A <dfn for=event export>remote end event trigger</dfn> which defines when the
+   event is triggered and steps to construct the [=event type=] data.
+ - Optionally, a set of <dfn for=event export>remote end subscribe steps</dfn>,
+   which define steps to take when a local end subscribes to an event. Where
+   defined these steps have an associated <dfn for=event export>subscribe
+   priority</dfn> which is an integer controlling the order in which the steps
+   are run when multiple events are enabled at once, with lower integers
+   indicating steps that run earlier.
 
 A [=BiDi session=] has a <dfn export for=event>global event set</dfn>
 which is a [=/set=] containing the event names for events that are enabled for all
@@ -692,8 +693,8 @@ To obtain a list of <dfn>event enabled browsing contexts</dfn> given
 
 <div algorithm>
 
-The <dfn>set of sessions for which an event is enabled</dfn> given |event name| and
-|browsing contexts| is:
+The <dfn export>set of sessions for which an event is enabled</dfn> given |event
+name| and |browsing contexts| is:
 
 1. Let |sessions| be a new [=/set=].
 
@@ -708,7 +709,7 @@ The <dfn>set of sessions for which an event is enabled</dfn> given |event name| 
 
 <div algorithm>
 
-To determine if an <dfn>event is enabled</dfn> given |session|,
+To determine if an <dfn export>event is enabled</dfn> given |session|,
 |event name| and |browsing contexts|:
 
 Note: |browsing contexts| is a set because a [=shared worker=] can be associated
@@ -868,8 +869,7 @@ WebSocket connection to be closed without a closing handshake.
 
 <div algorithm>
 
-To <dfn lt="construct a WebSocket resource name|constructing a
-WebSocket resource name">construct a WebSocket resource name</dfn>
+To <dfn>construct a WebSocket resource name</dfn>
 given a [=/session=] |session|:
 
 1. If |session| is null, return "<code>/session</code>"
@@ -881,12 +881,11 @@ given a [=/session=] |session|:
 
 <div algorithm>
 
-To <dfn lt="construct a WebSocket URL|constructing a WebSocket
-URL">construct a WebSocket URL</dfn> given a [=WebSocket listener=]
+To <dfn>construct a WebSocket URL</dfn> given a [=WebSocket listener=]
 |listener| and [=/session=] |session|:
 
-1. Let |resource name| be the result of [=constructing a WebSocket
-   resource name=] given |session|.
+1. Let |resource name| be the result of [=construct a WebSocket
+   resource name=] with |session|.
 
 1. Return a [=WebSocket URI=] constructed with host set to
    |listener|'s [=listener/host=], port set to |listener|'s
@@ -924,8 +923,8 @@ To <dfn>start listening for a WebSocket connection</dfn> given a
    [=implementation-defined=] [=listener/host=], [=listener/port=],
    [=listener/secure flag=], and an empty [=list of WebSocket resources=].
 
-1. Let |resource name| be the result of [=constructing a WebSocket
-   resource name=] given |session|.
+1. Let |resource name| be the result of [=construct a WebSocket
+   resource name=] with |session|.
 
 1. Append |resource name| to the [=list of WebSocket resources=] for
    |listener|.
@@ -1161,8 +1160,8 @@ with parameters |session|, |capabilities|, and |flags| is:
 1. Let |listener| be the result of [=start listening for a WebSocket
    connection=] given |session|.
 
-1. Set |webSocketUrl| to the result of [=constructing a WebSocket
-   URL=] given |listener| and |session|.
+1. Set |webSocketUrl| to the result of [=construct a WebSocket
+   URL=] with |listener| and |session|.
 
 1. [=Set a property=] on |capabilities| named
    "<code>webSocketUrl</code>" to |webSocketUrl|.
@@ -1313,11 +1312,11 @@ the term "user agent" to mean the entire web client with multiple [=user
 context|user contexts=]. Although this difference is not visible to web content,
 it is observed via WebDriver, so we avoid using this terminology.
 
-A [=user context=] has a <dfn>user context id</dfn>, which is a unique string
-set upon the user context creation.
+A [=user context=] has a <dfn export for="user context">user context id</dfn>,
+which is a unique string set upon the user context creation.
 
-A [=navigable=] has an <dfn>associated user context</dfn>, which is a
-[=user context=].
+A [=navigable=] has an <dfn export>associated user context</dfn>, which is a [=user
+context=].
 
 When a new [=/top-level traversable=] is created its [=associated user context=]
 is set to a user context in the [=set of user contexts=].
@@ -1356,7 +1355,7 @@ contexts=] that are not [=empty user contexts=] must not be removed from the
 [=set of user contexts=].
 
 <div algorithm>
-To <dfn>get user context</dfn> given |user context id|:
+To <dfn export>get user context</dfn> given |user context id|:
 
 1. For each |user context| in the [=set of user contexts=]:
 
@@ -1563,10 +1562,10 @@ capabilities=]. The following tables enumerates the capabilities each
 implementation must support for WebDriver BiDi.
 
 <pre class=simpledef>
-Capability: <dfn export>WebSocket URL</dfn>
+Capability: <dfn>WebSocket URL</dfn>
 Key: "<code>webSocketUrl</code>"
 Value type: boolean
-Description: Defines the current session's support for bidirection connection.
+Description: Defines the current session's support for bidirectional connection.
 </pre>
 
 <div algorithm="webSocketUrl capability deserialization algorithm">
