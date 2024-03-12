@@ -3258,8 +3258,6 @@ list of all nodes matching the specified locator.
          context: browsingContext.BrowsingContext,
          locator: browsingContext.Locator,
          ? maxNodeCount: (js-uint .ge 1),
-         ? ownership: script.ResultOwnership,
-         ? sandbox: text,
          ? serializationOptions: script.SerializationOptions,
          ? startNodes: [ + script.SharedReference ]
       }
@@ -3276,7 +3274,7 @@ list of all nodes matching the specified locator.
 </dl>
 
 <div algorithm="locate nodes using CSS">
-To <dfn>locate nodes using CSS</dfn> with given |context target|, |context nodes|,
+To <dfn>locate nodes using CSS</dfn> with given |context|, |context nodes|,
 |selector|, |maximum returned node count|, and <var ignore>session</var>:
 
 1. Let |returned nodes| be an empty [=/list=].
@@ -3288,7 +3286,7 @@ To <dfn>locate nodes using CSS</dfn> with given |context target|, |context nodes
 1. For each |context node| of |context nodes|:
 
   1. Let |elements| be the result of [=match a selector against a tree=] with
-     |parse result| and |context target|’s [=active document=] [=root=] using
+     |parse result| and |context|’s [=active document=] [=root=] using
      [=scoping root=] |context node|.
 
   1. For each |element| in |elements|:
@@ -3305,8 +3303,8 @@ To <dfn>locate nodes using CSS</dfn> with given |context target|, |context nodes
 
 <div algorithm="locate nodes using XPath">
 
-To <dfn>locate nodes using XPath</dfn> with given |context target|,
-|context nodes|, |selector|, |maximum returned node count|, and <var ignore>session</var>:
+To <dfn>locate nodes using XPath</dfn> with given |context|, |context nodes|,
+|selector|, |maximum returned node count|, and <var ignore>session</var>:
 
 Note: Owing to the unmaintained state of the XPath specification, this algorithm
 is phrased as if making calls to the XPath DOM APIs. However this is to be understood
@@ -3317,7 +3315,7 @@ without going via the ECMAScript runtime.
 
 1. For each |context node| of |context nodes|:
 
-   1. Let |evaluate result| be the result of calling [=evaluate=] on |context target|'s
+   1. Let |evaluate result| be the result of calling [=evaluate=] on |context|'s
       [=active document=], with arguments |selector|, |context node|, null,
       [=ORDERED_NODE_SNAPSHOT_TYPE=], and null. If this throws a "[=SyntaxError=]"
       [=DOMException=], return [=error=] with [=error code=] [=invalid selector=];
@@ -3418,17 +3416,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Assert: |context| is not null.
 
-1. If |command parameters| [=map/contains=] "<code>sandbox</code>", let
-   |sandbox| be |command parameters|["<code>sandbox</code>"]. Otherwise,
-   let |sandbox| be null.
-
-1. Let |current context target| be the a [=/map=] matching of the
-   <code>script.ContextTarget</code> production with the
-   <code>context</code> field set to the [=browsing context id=]
-   of |context| and the <code>sandbox</code> field set to |sandbox|.
-
-1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
-   given |current context target|.
+1. Let |realm| be the result of [=trying=] to [=get a realm from a browsing context=]
+   with [=browsing context id=] of |context| and null.
 
 1. Let |locator| be |command parameters|["<code>locator</code>"].
 
@@ -3465,7 +3454,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |selector| be |locator|["<code>value</code>"].
 
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using css=]
-            given |current context target|, |context nodes|, |selector|, |maximum returned
+            given |context|, |context nodes|, |selector|, |maximum returned
             nodes| and |session|.
 
       <dt>|type| is the string "<code>xpath</code>"
@@ -3473,7 +3462,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |selector| be |locator|["<code>value</code>"].
 
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using xpath=]
-            given |current context target|, |context nodes|, |selector|, |maximum returned
+            given |context|, |context nodes|, |selector|, |maximum returned
             nodes| and |session|.
 
       <dt>|type| is the string "<code>innerText</code>"
@@ -3502,9 +3491,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
    <code>script.SerializationOptions</code> production with the fields
    set to their default values.
 
-1. If |command parameters| [=map/contains=] "<code>ownership</code>",
-   let |result ownership| be |command parameters|["<code>ownership</code>"].
-   Otherwise, let |result ownership| be "none".
+1. Let |result ownership| be "none".
 
 1. Let |serialized nodes| be an empty [=/list=].
 
@@ -8626,28 +8613,43 @@ This is useful in cases where a context identifier can stand in for the realm
 associated with the context's active document.
 
 <div algorithm>
+To <dfn>get a realm from a browsing context</dfn> given |context id| and |sandbox|:
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. If |sandbox| is null or is an empty string:
+
+  1. Let |document| be |context|'s [=active document=].
+
+  1. Let |environment settings| be the [=environment settings object=] whose
+     [=relevant global object=]'s <a>associated <code>Document</code></a> is
+     |document|.
+
+  1. Let |realm| be |environment settings|' [=realm execution context=]'s
+     Realm component.
+
+1. Otherwise: let |realm| be result of [=trying=] to
+   [=get or create a sandbox realm=] given |sandbox| and
+   |context|.
+
+1. Return [=success=] with data |realm|
+
+Issue: This has the wrong error code
+</div>
+
+<div algorithm>
 To <dfn>get a realm from a target</dfn> given |target|:
 
 1. If |target| matches the <code>script.ContextTarget</code> production:
 
-  1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-     with |target|["<code>context</code>"].
+  1. Let |sandbox| be null.
 
-  1. If |target| does not contain a field named "<code>sandbox</code>", or
-     |target|["<code>sandbox</code>"] is an empty string:
+  1. If |target| [=map/contains=] "<code>sandbox</code>", set |sandbox| to
+     |target|["<code>sandbox</code>"].
 
-    1. Let |document| be |context|'s [=active document=].
-
-    1. Let |environment settings| be the [=environment settings object=] whose
-       [=relevant global object=]'s <a>associated <code>Document</code></a> is
-       |document|.
-
-    1. Let |realm| be |environment settings|' [=realm execution context=]'s
-       Realm component.
-
-  1. Otherwise: let |realm| be result of [=trying=] to
-     [=get or create a sandbox realm=] given |target|["<code>sandbox</code>"] and
-     |context|.
+  1. Let |realm| be [=get a realm from a browsing context=] with
+     |target|["<code>context</code>"] and |sandbox|.
 
 1. Otherwise:
 
