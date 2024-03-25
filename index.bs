@@ -212,6 +212,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: report an error; url: webappapis.html#report-the-error
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
+    text: select an image source from a source set; url: images.html#select-an-image-source-from-a-source-set
     text: selected files; url: input.html#concept-input-type-file-selected
     text: session history entry; url: browsing-the-web.html#session-history-entry
     text: session history traversal queue; url: document-sequences.html#tn-session-history-traversal-queue
@@ -243,6 +244,7 @@ spec: CSS-VALUES-3; urlPrefix: https://drafts.csswg.org/css-values-3/
 spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
   type: dfn
     text: CSS pixel; url: #dom-window-devicepixelratio
+    text: evaluate media queries and report changes; url: #evaluate-media-queries-and-report-changes
     text: layout viewport; url: #layout-viewport
     text: scroll height; url: #dom-element-scrollheight
     text: scroll width; url: #dom-element-scrollwidth
@@ -275,6 +277,9 @@ spec: ACCNAME; urlPrefix:https://www.w3.org/TR/accname-1.2
 spec: CORE-AAM; urlPrefix:https://www.w3.org/TR/core-aam-1.2
   type: dfn
     text: computed role; url: /#roleMappingComputedRole
+spec: MEDIAQUARIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
+  type: dfn
+    text: resolution media feature; url: #resolution
 </pre>
 
 <pre class="biblio">
@@ -3927,19 +3932,40 @@ The [=remote end steps=] with |command parameters| are:
    1. Otherwise, set the |context|'s [=layout viewport=] to the
       implementation-defined default.
 
+1. Run the [[cssom-view-1#resizing-viewports]] steps.
+
 1. If |command parameters| [=map/contains=] the <code>devicePixelRatio</code> field:
 
    1. Let |device pixel ratio| be the |command
       parameters|["<code>devicePixelRatio</code>"].
 
-   1. If |device pixel ratio| is not null, change the size of the [=CSS Pixel=]
-      in |context|'s [=layout viewport=] such that it corresponds to |device
-      pixel ratio| in device pixels.
+   1. For the |context| and all descendant traversables:
 
-   1. Otherwise, set the size of the [=CSS Pixel=] in |context|'s [=layout
-      viewport=] to the implementation-defined default.
+      1. If |device pixel ratio| is not null:
 
-1. Run the [[cssom-view-1#resizing-viewports]] steps.
+         1. When the [=select an image source from a source set=] are run, act as if
+            the implementation's pixel density was set to |device pixel ratio| when selecting an image.
+
+         1. For the purposes of the [=resolution media feature=], act as if
+            the implementation's resolution is |device pixel ratio| dppx scaled by the page zoom.
+
+         1. When the [=determine the device pixel ratio=] are run, return |device pixel ratio|.
+
+         1. Run [=evaluate media queries and report changes=] for [=document=] currently loaded
+            in a specified |context|.
+
+      1. Otherwise:
+
+         1. When the [=select an image source from a source set=] steps are run, use the implementation's default behavior,
+            without any changes made by previous invocations of these steps.
+
+         1. For the purposes of the [=resolution media feature=], use the implementation's default behavior,
+            without any changes made by previous invocations of these steps.
+
+         1. When the [=determine the device pixel ratio=] are run, return the implemenation's default value.
+
+         1. Run [=evaluate media queries and report changes=] for [=document=] currently loaded
+            in a specified |context|.
 
 1. Return [=success=] with data null.
 
