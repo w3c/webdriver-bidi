@@ -115,3 +115,9 @@ This scenario changes the browser window dimensions and position, maximizes/mini
 
 - [x] Some items from the previous milestones
 - [ ] [Add commands for resizing and positioning browser windows](https://github.com/w3c/webdriver-bidi/issues/398)
+
+### Extensions
+
+[As a spec author I want to extend WebDriver BiDi functionality, therefore I define a WebDriver BiDi extension in the spec following WebDriver BiDi extension guidelines.](https://github.com/w3c/webdriver-bidi/issues/506)
+
+- [ ] [Manage Bluetooth device permissions](https://github.com/WebBluetoothCG/web-bluetooth/issues/613)
