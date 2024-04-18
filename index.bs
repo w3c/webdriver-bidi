@@ -269,6 +269,12 @@ spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
   type: dfn
     text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
     text: toUppercase; url: ch03.pdf#G34078
+spec: ACCNAME; urlPrefix:https://www.w3.org/TR/accname-1.2
+  type: dfn
+    text: accessible name; url: /#dfn-accessible-name
+spec: CORE-AAM; urlPrefix:https://www.w3.org/TR/core-aam-1.2
+  type: dfn
+    text: computed role; url: /#roleMappingComputedRole
 </pre>
 
 <pre class="biblio">
@@ -2499,10 +2505,19 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 
 <pre class="cddl remote-cddl local-cddl">
 browsingContext.Locator = (
+   browsingContext.AccessibilityLocator /
    browsingContext.CssLocator /
    browsingContext.InnerTextLocator /
    browsingContext.XPathLocator
 )
+
+browsingContext.AccessibilityLocator = {
+   type: "accessibility",
+   value: {
+    ? name: text,
+    ? role: text,
+   }
+}
 
 browsingContext.CssLocator = {
    type: "css",
@@ -3405,6 +3420,67 @@ To <dfn>locate nodes using inner text</dfn> with given |context nodes|,
 
 </div>
 
+<div algorithm="collect nodes using accessibility attributes">
+To <dfn>collect nodes using accessibility attributes</dfn> with given |context nodes|, |selector|,
+|maximum returned node count|, and |returned nodes|:
+
+1. If |returned nodes| is null:
+
+  1. Set |returned nodes| to an empty [=/list=].
+
+1. For each |context node| in |context nodes|:
+
+  1. Let |match| be true.
+
+  1. If |selector| [=map/contains=] "<code>role</code>":
+
+    1. Let |role| be the [=computed role=] of |context node|.
+
+    1. If |selector|["<code>role</code>"] [=is|is not=] |role|:
+
+      1. Set |match| to false.
+
+  1. If |selector| [=map/contains=] "<code>name</code>":
+
+    1. Let |name| be the [=accessible name=] of |context node|.
+
+    1. If |selector|["<code>name</code>"] [=is|is not=] |name|:
+
+      1. Set |match| to false.
+
+  1. If |match| is true:
+
+    1. If |maximum returned node count| is not null and [=list/size=] of |returned
+      nodes| is equal to |maximum returned node count|, [=break=].
+
+    1. [=list/Append=] |context node| to |returned nodes|.
+
+  1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
+     <a spec=dom>children</a> of |context node|:
+
+    1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
+
+  1. [=Try=] to [=collect nodes using accessibility attributes=] with |child nodes|,
+     |selector|, |maximum returned node count|, and |returned nodes|.
+
+1. Return |returned nodes|.
+
+</div>
+
+<div algorithm="locate nodes using accessibility attributes">
+To <dfn>locate nodes using accessibility attributes</dfn> with given |context nodes|, |selector|, and
+|maximum returned node count|:
+
+1. If |selector| does not [=map/contain=] "<code>role</code>" and
+   |selector| does not [=map/contain=] "<code>name</code>", return
+   [=error=] with [=error code=]
+   [=invalid selector=].
+
+1. Return the result of [=collect nodes using accessibility attributes=] with |context nodes|,
+    |selector|, |maximum returned node count|, and null.
+
+</div>
+
 <div algorithm="remote end steps for browsingContext.locateNodes">
 The [=remote end steps=] with |session| and |command parameters| are:
 
@@ -3480,6 +3556,13 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using inner text=]
             given |context nodes|, |selector|, |max depth|, |match type|,
             |ignore case| and |maximum returned node count|.
+
+      <dt>|type| is the string "<code>accessibility</code>"
+      <dd>
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. Let |result nodes| be [=locate nodes using accessibility attributes=]
+            given |context nodes|, |selector|, and |maximum returned node count|.
 
 1. Assert: |maximum returned node count| is null or [=list/size=] of |result nodes| is less
    than or equal to |maximum returned node count|.
