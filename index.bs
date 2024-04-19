@@ -203,6 +203,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
     text: innerText getter steps; url:dom.html#dom-innertext
     text: input type; url: input.html#dom-input-type
+    text: navigable; for:window; url: document-sequences.html#window-navigable
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
@@ -1328,7 +1329,7 @@ it is observed via WebDriver, so we avoid using this terminology.
 A [=user context=] has a <dfn export for="user context">user context id</dfn>,
 which is a unique string set upon the user context creation.
 
-A [=navigable=] has an <dfn export>associated user context</dfn>, which is a [=user
+A [=/navigable=] has an <dfn export>associated user context</dfn>, which is a [=user
 context=].
 
 When a new [=/top-level traversable=] is created its [=associated user context=]
@@ -2279,6 +2280,9 @@ BrowsingContextEvent = (
   browsingContext.UserPromptOpened
 )
 </pre>
+
+A [=remote end=] has a <dfn>device pixel ratio overrides</dfn> which is a weak map
+between [=navigables=] and device pixel ratio overrides. It is initially empty.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -3942,6 +3946,9 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For the |context| and all [=descendant navigables=]:
 
+      1. Let |navigable| be the [=/navigable=] whose [=navigable/active document=] is
+         |context|'s [=browsing context/active document=].
+
       1. If |device pixel ratio| is not null:
 
          1. When the [=select an image source from a source set=] are run, act as if
@@ -3950,7 +3957,7 @@ The [=remote end steps=] with |command parameters| are:
          1. For the purposes of the [=resolution media feature=], act as if
             the implementation's resolution is |device pixel ratio| dppx scaled by the page zoom.
 
-         1. When the [=determine the device pixel ratio=] steps are run, return |device pixel ratio|.
+         1. [=map/Set=] [=device pixel ratio overrides=][|navigable|] to |device pixel ratio|.
 
          1. Run [=evaluate media queries and report changes=] for [=document=] currently loaded
             in a specified |context|.
@@ -3963,7 +3970,7 @@ The [=remote end steps=] with |command parameters| are:
          1. For the purposes of the [=resolution media feature=], use the implementation's default behavior,
             without any changes made by previous invocations of these steps.
 
-         1. When the [=determine the device pixel ratio=] steps are run, return the implemenation's default value.
+         1. [=map/Remove=] |navigable| from [=device pixel ratio overrides=].
 
          1. Run [=evaluate media queries and report changes=] for [=document=] currently loaded
             in a specified |context|.
@@ -10692,3 +10699,10 @@ Other specifications can define <dfn>console steps</dfn>.
    arguments |name|, |printerArgs| and |options| (which is undefined if the
    argument is not provided), call any [=console steps=] defined in
    external specification with arguments |name|, |printerArgs|, and |options|.
+
+
+## CSS ## {#patchs-css}
+
+Insert the following steps at the start of the [=determine the device pixel ratio=] algorithm:
+
+1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
