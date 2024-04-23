@@ -194,6 +194,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: create a new browsing context; url: browsers.html#creating-a-new-browsing-context
     text: default classic script fetch options; url: webappapis.html#default-classic-script-fetch-options
     text: default view; url: nav-history-apis.html#dom-document-defaultview
+    text: descendant navigables; utl: document-sequences.html#descendant-navigables
     text: environment settings object's Realm; url: webappapis.html#environment-settings-object's-realm
     text: focused area of the document; url: document-sequences.html#focused-area-of-the-document
     text: getting all used history steps; url:browsing-the-web.html#getting-all-used-history-steps
@@ -202,6 +203,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
     text: innerText getter steps; url:dom.html#dom-innertext
     text: input type; url: input.html#dom-input-type
+    text: navigable; for:window; url: document-sequences.html#window-navigable
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
@@ -212,6 +214,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: report an error; url: webappapis.html#report-the-error
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
+    text: select an image source from a source set; url: images.html#select-an-image-source-from-a-source-set
     text: selected files; url: input.html#concept-input-type-file-selected
     text: session history entry; url: browsing-the-web.html#session-history-entry
     text: session history traversal queue; url: document-sequences.html#tn-session-history-traversal-queue
@@ -243,6 +246,7 @@ spec: CSS-VALUES-3; urlPrefix: https://drafts.csswg.org/css-values-3/
 spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
   type: dfn
     text: CSS pixel; url: #dom-window-devicepixelratio
+    text: evaluate media queries and report changes; url: #evaluate-media-queries-and-report-changes
     text: layout viewport; url: #layout-viewport
     text: scroll height; url: #dom-element-scrollheight
     text: scroll width; url: #dom-element-scrollwidth
@@ -275,6 +279,9 @@ spec: ACCNAME; urlPrefix:https://www.w3.org/TR/accname-1.2
 spec: CORE-AAM; urlPrefix:https://www.w3.org/TR/core-aam-1.2
   type: dfn
     text: computed role; url: /#roleMappingComputedRole
+spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
+  type: dfn
+    text: resolution media feature; url: #resolution
 </pre>
 
 <pre class="biblio">
@@ -1322,7 +1329,7 @@ it is observed via WebDriver, so we avoid using this terminology.
 A [=user context=] has a <dfn export for="user context">user context id</dfn>,
 which is a unique string set upon the user context creation.
 
-A [=navigable=] has an <dfn export>associated user context</dfn>, which is a [=user
+A [=/navigable=] has an <dfn export>associated user context</dfn>, which is a [=user
 context=].
 
 When a new [=/top-level traversable=] is created its [=associated user context=]
@@ -2273,6 +2280,9 @@ BrowsingContextEvent = (
   browsingContext.UserPromptOpened
 )
 </pre>
+
+A [=remote end=] has a <dfn>device pixel ratio overrides</dfn> which is a weak map
+between [=navigables=] and device pixel ratio overrides. It is initially empty.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -3927,19 +3937,42 @@ The [=remote end steps=] with |command parameters| are:
    1. Otherwise, set the |context|'s [=layout viewport=] to the
       implementation-defined default.
 
+1. Run the [[cssom-view-1#resizing-viewports]] steps.
+
 1. If |command parameters| [=map/contains=] the <code>devicePixelRatio</code> field:
 
    1. Let |device pixel ratio| be the |command
       parameters|["<code>devicePixelRatio</code>"].
 
-   1. If |device pixel ratio| is not null, change the size of the [=CSS Pixel=]
-      in |context|'s [=layout viewport=] such that it corresponds to |device
-      pixel ratio| in device pixels.
+   1. For the |context| and all [=descendant navigables=]:
 
-   1. Otherwise, set the size of the [=CSS Pixel=] in |context|'s [=layout
-      viewport=] to the implementation-defined default.
+      1. Let |navigable| be the [=/navigable=] whose [=navigable/active document=] is
+         |context|'s [=browsing context/active document=].
 
-1. Run the [[cssom-view-1#resizing-viewports]] steps.
+      1. If |device pixel ratio| is not null:
+
+         1. When the [=select an image source from a source set=] are run, act as if
+            the implementation's pixel density was set to |device pixel ratio| when selecting an image.
+
+         1. For the purposes of the [=resolution media feature=], act as if
+            the implementation's resolution is |device pixel ratio| dppx scaled by the page zoom.
+
+         1. [=map/Set=] [=device pixel ratio overrides=][|navigable|] to |device pixel ratio|.
+
+            Note: This will take an effect because of the patch of [[#patchs-determine-the-device-pixel-ratio]].
+
+      1. Otherwise:
+
+         1. When the [=select an image source from a source set=] steps are run, use the implementation's default behavior,
+            without any changes made by previous invocations of these steps.
+
+         1. For the purposes of the [=resolution media feature=], use the implementation's default behavior,
+            without any changes made by previous invocations of these steps.
+
+         1. [=map/Remove=] |navigable| from [=device pixel ratio overrides=].
+
+      1. Run [=evaluate media queries and report changes=] for [=document=] currently loaded
+         in a specified |context|.
 
 1. Return [=success=] with data null.
 
@@ -10665,3 +10698,12 @@ Other specifications can define <dfn>console steps</dfn>.
    arguments |name|, |printerArgs| and |options| (which is undefined if the
    argument is not provided), call any [=console steps=] defined in
    external specification with arguments |name|, |printerArgs|, and |options|.
+
+
+## CSS ## {#patchs-css}
+
+### Determine the device pixel ratio ### {#patchs-determine-the-device-pixel-ratio}
+
+Insert the following steps at the start of the [=determine the device pixel ratio=] algorithm:
+
+1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
