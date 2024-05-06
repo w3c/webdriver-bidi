@@ -13616,6 +13616,161 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
+## The autofill Module ## {#module-autofill}
+
+The <dfn export for=modules>autofill</dfn> module contains functionality for
+saving and triggering autofill.
+
+A <a>browsing context</a> has a <dfn>autofill store for testing</dfn>, an
+<a>ordered map</a>.
+
+### Definition ### {#module-autofill-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+
+InputCommand = (
+  autofill.save //
+  autofill.trigger
+)
+</pre>
+
+### Commands ### {#module-autofill-commands}
+
+#### The autofill.save Command ####  {#command-autofill-save}
+
+The <dfn export for=commands>autofill.save</dfn> command saves a set of field
+name values to the <a>browsing context</a>'s [=autofill store for testing=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      autofill.save = (
+        method: "autofill.save",
+        params: autofill.saveParameters
+      )
+
+      autofill.saveParameters = {
+        context: browsingContext.BrowsingContext,
+        fields: [*autofill.field]
+      }
+
+      autofill.field = (
+        autofill.fieldName /
+        autofill.fieldValue
+      )
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for autofill.save">
+
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Let |store| be |context|'s [=autofill store for testing=].
+
+1. Let |fields| be the value of the <code>fields</code> field of |command
+   parameters|.
+
+1. For each |field| in |fields|:
+
+   1. Let |name| be |field|'s |fieldName|.
+
+   1. Let |value| be |field|'s |fieldValue|.
+
+   1. Set |store|[|fieldName|] to |fieldValue|.
+
+1. Return [=success=] with data null.
+</div>
+
+#### The autofill.trigger Command ####  {#command-autofill-trigger}
+
+The <dfn export for=commands>autofill.trigger</dfn> command triggers autofill
+on a particular form field using the <a>browsing context</a>'s [=autofill
+store for testing=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      autofill.trigger = (
+        method: "autofill.trigger",
+        params: autofill.triggerParameters
+      )
+
+      autofill.triggerParameters = {
+        context: browsingContext.BrowsingContext,
+        element: script.SharedReference
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+     EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for autofill.trigger">
+
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let |context id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+   with |context id|.
+
+1. Let |document| be |context|'s [=active document=].
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=relevant global object=]'s <a>associated <code>Document</code></a> is
+   |document|.
+
+1. Let |realm| be |environment settings|' [=realm execution context=]'s
+  Realm component.
+
+1. Let |element id| be the value of the <code>element</code> field of
+   |command parameters|.
+
+1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
+   with the |element id|, |realm|, and |session|.
+
+1. Let |store| be |context|'s [=autofill store for testing=].
+
+1. If |element| is not [=form associated=] or |element|'s [=form owner=] is
+   null, return an [=error=] with [=error code=] [=invalid element state=].
+
+1. The [=user agent=] should [=autofill=] |element| and |element|'s [=form
+   owner=], while taking into account the contents of |context|'s [=autofill
+   store for testing=].
+
+1. Return [=success=] with data null.
+</div>
+# Patches to Other Specifications # {#patches}
+
+This specification requires some changes to external specifications to provide the necessary
+integration points. It is assumed that these patches will be committed to the other specifications
+as part of the standards process.
+
+## HTML ##  {#patches-html}
+
+The [=a browsing context is discarded=] algorithm is modified to read as follows:
 ### Events ### {#module-input-events}
 
 #### The input.fileDialogOpened Event #### {#event-input-fileDialogOpened}
