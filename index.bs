@@ -282,6 +282,10 @@ spec: CORE-AAM; urlPrefix:https://www.w3.org/TR/core-aam-1.2
 spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
   type: dfn
     text: resolution media feature; url: #resolution
+spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
+  type: dfn
+    text: field-name token; url: #fields.names
+    text: method token; url: #method.overview
 </pre>
 
 <pre class="biblio">
@@ -6096,8 +6100,12 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. If |command parameters| [=map/contains=] "<code>method</code>":
 
-  1. Let |request|'s [=request/method=] be |command
-     parameters|["<code>method</code>"].
+  1. Let |method| be |command parameters|["<code>method</code>"].
+
+  1. If |method| does not match the [=method token=] production, return [=error=]
+     with [=error code=] "<code>invalid argument</code>".
+
+  1. Let |request|'s [=request/method=] be |method|.
 
 1. If |command parameters| [=map/contains=] "<code>headers</code>":
 
@@ -6105,7 +6113,17 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
   1. For |header| in |command parameters|["<code>headers</code>"]:
 
-    1. Append [=deserialize header=] with |header| to |headers|.
+    1. Let |deserialized header| be [=deserialize header=] with |header|.
+
+    1. If |deserialized header|'s name does not match the [=field-name token=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. If |deserialized header|'s value does not match the [=header value=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. Append |deserialized header| to |headers|.
 
   1. Set |request|'s [=request/headers list=] to |headers|.
 
