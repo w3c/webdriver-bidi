@@ -212,6 +212,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: prompt; url: timers-and-user-prompts.html#dom-prompt
     text: remove a browsing context; url: browsers.html#bcg-remove
     text: report an error; url: webappapis.html#report-the-error
+    text: resource; url: infrastructure.html#resources
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
     text: select an image source from a source set; url: images.html#select-an-image-source-from-a-source-set
@@ -5257,11 +5258,11 @@ To <dfn>deserialize header</dfn> given |protocol header|:
 
 <pre class="cddl local-cddl">
 network.Initiator = {
-    type: "parser" / "script" / "preflight" / "other",
+    type: text,
     ? columnNumber: js-uint,
     ? lineNumber: js-uint,
+    ? url: text,
     ? stackTrace: script.StackTrace,
-    ? request: network.Request
 };
 </pre>
 
@@ -5271,40 +5272,41 @@ request.
 <div algorithm>
 To <dfn>get the initiator</dfn> given |request|:
 
-1. Let |request id| be |request|'s [=request id=].
-
-1. Let |type| be "<code>other</code>".
-
-1. If |request| is a [=CORS-Preflight Request=], set |type| to
-   "<code>preflight</code>".
-
-1. TODO: Get the |type|. It's not quite clear how this ought to work; the CDP
-   data depends on whether the navigation was kicked off by the parser or by
-   script (so e.g. inserting an image from script causes the initiator to be
-   "<code>script</code>"), but that doesn't correspond to anything in Fetch.
+1. Let |type| be |request|'s [=request/initiator type=].
 
 1. If |request|'s [=request/initiator type=] is "<code>fetch</code>" or
    "<code>xmlhttprequest</code>":
 
   1. Let |stack trace| be the [=current stack trace=].
 
-  1. If |stack trace| has size of 1 or greater, let |line number| be value of the
-     <code>lineNumber</code> field in |stack trace|[0], and let |column number| be
-     the value of the <code>columnNumber</code> field in |stack trace|[0]. Otherwise
-     let |line number| and |column number| be 0.
+  1. If |stack trace| has size of 1 or greater:
 
-  Otherwise, let |stack trace|, |column number|, and |line number| all be null.
+    1. Let |url| be value of the <code>url</code> in |stack trace|[0].
 
-  TODO: Chrome includes the current parser position as column number / line
-  number for parser-inserted resources.
+    1. Let |line number| be value of the <code>lineNumber</code> field in
+      |stack trace|[0].
 
-1. Return a [=/map=] matching the <code>network.Initiator</code> production, with
-   the <code>type</code> field set to |type|, the <code>columnNumber</code>
-   field set to |column number| if it's not null, or omitted otherwise, the
-   <code>lineNumber</code> field set to |line number| if it's not null, or
-   omitted otherwise, the <code>stackTrace</code> field set to |stack trace| if
-   it's not null, or omitted otherwise, and the <code>request</code> field set
-   to |request id|.
+    1. Let |column number| be the value of the <code>columnNumber</code>
+      field in |stack trace|[0].
+
+1. Otherwise:
+
+  1. Let |stack trace| be null.
+
+  1. Let |url| be the URL of the [=resource=] that initiated |request|.
+
+  1. Let |column number| be the column number within the [=resource=] that initiated |request|.
+
+  1. Let |line number| be the line number within the [=resource=] that initiated |request|.
+
+1. Return a [=/map=] matching the <code>network.Initiator</code>
+   production, with the <code>type</code> field set to |type|, the
+   <code>columnNumber</code> field set to |column number| if it's not
+   null, or omitted otherwise, the <code>lineNumber</code> field set to
+   |line number| if it's not null, or omitted otherwise, the
+   <code>stackTrace</code> field set to |stack trace| if it's not null,
+   or omitted otherwise, and the <code>url</code> field set to |url| if
+   it's not null, or omitted otherwise.
 
 </div>
 
