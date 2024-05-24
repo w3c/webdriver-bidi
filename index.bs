@@ -5258,7 +5258,7 @@ To <dfn>deserialize header</dfn> given |protocol header|:
 
 <pre class="cddl local-cddl">
 network.Initiator = {
-    type: text,
+    type: "parser" / "script" / "preflight" / "other",
     ? columnNumber: js-uint,
     ? lineNumber: js-uint,
     ? url: text,
@@ -5272,32 +5272,34 @@ request.
 <div algorithm>
 To <dfn>get the initiator</dfn> given |request|:
 
-1. Let |type| be |request|'s [=request/initiator type=].
+1. Let |type| be "<code>other</code>".
 
-1. If |request|'s [=request/initiator type=] is "<code>fetch</code>" or
-   "<code>xmlhttprequest</code>":
+1. If |request| is a [=CORS-Preflight Request=], set |type| to
+   "<code>preflight</code>".
+
+1. Otherwise, if |requests|'s [=parser metadata=] is "<code>not-parser-inserted</code>",
+  set |type| to "<code>script</code>".
+
+1. Otherwise, if |requests|'s [=parser metadata=] is "<code>parser-inserted</code>",
+  set |type| to "<code>parser</code>".
+
+1. If |type| is "<code>script</code>":
 
   1. Let |stack trace| be the [=current stack trace=].
 
-  1. If |stack trace| has size of 1 or greater:
+  1. Let |url| be value of the <code>url</code> in |stack trace|[0].
 
-    1. Let |url| be value of the <code>url</code> in |stack trace|[0].
-
-    1. Let |line number| be value of the <code>lineNumber</code> field in
+  1. Let |line number| be value of the <code>lineNumber</code> field in
       |stack trace|[0].
 
-    1. Let |column number| be the value of the <code>columnNumber</code>
-      field in |stack trace|[0].
+  1. Let |column number| be the value of the <code>columnNumber</code>
+    field in |stack trace|[0].
 
-1. Otherwise:
+1. Otherwise, if |type| is "<code>parser</code>":
 
-  1. Let |stack trace| be null.
+  1. TODO: set url/line/column based on the parser positions.
 
-  1. Let |url| be the URL of the [=resource=] that initiated |request|.
-
-  1. Let |column number| be the column number within the [=resource=] that initiated |request|.
-
-  1. Let |line number| be the line number within the [=resource=] that initiated |request|.
+1. Otherwise, let |stack trace|, |column number|, and |line number| all be null.
 
 1. Return a [=/map=] matching the <code>network.Initiator</code>
    production, with the <code>type</code> field set to |type|, the
