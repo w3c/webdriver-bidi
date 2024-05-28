@@ -13635,8 +13635,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 ## The autofill Module ## {#module-autofill}
 
-The <dfn export for=modules>autofill</dfn> module contains functionality for
-saving and triggering autofill.
+The <dfn export for=modules>autofill</dfn> module contains functionality for triggering autofill.
 
 A [=/browsing context=] has a <dfn>autofill store for testing</dfn>, an
 <a>ordered map</a>.
@@ -13648,73 +13647,11 @@ A [=/browsing context=] has a <dfn>autofill store for testing</dfn>, an
 <pre class="cddl remote-cddl">
 
 InputCommand = (
-  autofill.save //
   autofill.trigger
 )
 </pre>
 
 ### Commands ### {#module-autofill-commands}
-
-#### The autofill.save Command ####  {#command-autofill-save}
-
-The <dfn export for=commands>autofill.save</dfn> command saves a set of field
-name values to the [=/browsing context=]'s [=autofill store for testing=].
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-    <pre class="cddl remote-cddl">
-      autofill.save = (
-        method: "autofill.save",
-        params: autofill.saveParameters
-      )
-
-      autofill.saveParameters = {
-        context: browsingContext.BrowsingContext,
-        fields: [*autofill.field]
-      }
-
-      autofill.field = (
-        name: tstr,
-        value: tstr
-      )
-    </pre>
-   </dd>
-   <dt>Return Type</dt>
-   <dd>
-    <pre class="cddl">
-     EmptyResult
-    </pre>
-   </dd>
-</dl>
-
-<div algorithm="remote end steps for autofill.save">
-
-The [=remote end steps=] with <var ignore="">session</var> and
-|command parameters| are:
-
-1. Let |context id| be the value of the <code>context</code> field of
-   |command parameters|.
-
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
-
-1. Let |store| be |context|'s [=autofill store for testing=].
-
-1. Let |fields| be the value of the <code>fields</code> field of |command
-   parameters|.
-
-1. For each |field| in |fields|:
-
-   1. Let |name| be |field|'s <code>name</code>.
-
-   1. Let |value| be |field|'s <code>value</code>.
-
-   1. Set |store|[|name|] to |value|.
-
-1. Return [=success=] with data null.
-
-</div>
 
 #### The autofill.trigger Command ####  {#command-autofill-trigger}
 
@@ -13733,8 +13670,14 @@ store for testing=].
 
       autofill.triggerParameters = {
         context: browsingContext.BrowsingContext,
-        element: script.SharedReference
+        element: script.SharedReference,
+	fields: [*autofill.field]
       }
+
+      autofill.field = (
+        name: tstr,
+        value: tstr
+      )
     </pre>
    </dd>
    <dt>Return Type</dt>
@@ -13771,6 +13714,18 @@ The [=remote end steps=] with |session| and |command parameters| are:
    with the |element id|, |realm|, and |session|.
 
 1. Let |store| be |context|'s [=autofill store for testing=].
+
+1. Let |fields| be the value of the <code>fields</code> field of |command
+   parameters|.
+
+1. For each |field| in |fields|:
+
+   1. Let |name| be |field|'s <code>name</code>.
+
+   1. Let |value| be |field|'s <code>value</code>.
+
+   1. Set |store|[|name|] to |value|.
+
 
 1. If |element| is not a [=form-associated element=] or |element|'s [=form owner=] is
    null, return an [=error=] with [=error code=] [=invalid element state=].
