@@ -4689,7 +4689,8 @@ NetworkCommand = (
   network.ContinueWithAuth //
   network.FailRequest //
   network.ProvideResponse //
-  network.RemoveIntercept
+  network.RemoveIntercept //
+  network.SetCacheMode //
 )
 
 </pre>
@@ -4715,6 +4716,13 @@ NetworkEvent = (
 A [=remote end=] has a <dfn>before request sent map</dfn> which is initially an
 empty map.  It's used to track the network events for which a
 <code>network.beforeRequestSent</code> event has already been sent.
+
+A [=remote end=] has a <dfn>default cache mode override</dfn> which is null or a
+string. It is initially null.
+
+A [=remote end=] has a <dfn>cache mode override map</dfn> which is initially an
+empty weak map. It's used to track the cache mode to use for requests from
+specific browsing contexts.
 
 ### Network Intercepts ### {#network-intercepts}
 
@@ -4971,7 +4979,6 @@ request in addition to the context.
 
 <div algorithm>
 To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
-
 
 1. Let |request data| be the result of [=get the request data=] with |request|.
 
@@ -6554,6 +6561,90 @@ requests will be affected.
 
 </div>
 
+#### The network.setCacheMode Command ####  {#command-network-setCacheMode}
+
+The <dfn export for=commands>network.removeSetCacheMode</dfn> command overrides
+the network cache behaviour for certain requests.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      network.SetCacheMode = (
+        method: "network.setCacheMode",
+        params: network.SetCacheModeParameters
+      )
+
+      network.SetCacheModeParameters = {
+        mode: "no-store" / null,
+        ? contexts: [browsingContext.BrowsingContext]
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The <dfn export>WebDriver BiDi update request cache mode</dfn> steps given
+|request| are:
+
+1. Let |context| be null.
+
+1. If |request|'s [=request/window=] is an [=environment settings object=]:
+
+  1. Let |environment settings| be |request|'s [=request/window=]
+
+  1. If there is a [=/browsing context=] whose [=active window=] is |environment
+     settings|' [=environment settings object/global object=], set |context| to
+     the [=top-level browsing context=] for that context.
+
+1. If |context| is not null:
+
+  1. If [=cache mode override map=] [=map/contains=] |context|, set
+     |request|&apos;s [=request/cache mode=] to [=cache mode override
+     map=][|context|] and return.
+
+1. If [=default cache mode override=] is not null, set
+     |request|&apos;s [=request/cache mode=] to [=default cache mode override=].
+
+</div>
+
+<div algorithm="remote end steps for network.setCacheMode">
+The [=remote end steps=] given <var ignore>session</var> and |command parameters| are:
+
+1. Let |mode| be |command parameters|["<code>mode</code>"].
+
+1. If |command parameters| does not [=map/contain=] "<code>contexts</code>", set
+   the [=default cache mode override=] to |mode| and return [=success=] with
+   data null.
+
+1. Let |contexts| be an empty [=/list=].
+
+1. For each |context id| of |command parameters|["<code>contexts</code>"]:
+
+  1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+     with |context id|.
+
+  1. If |context| is not a [=top-level browsing context=], return [=error=]
+     with [=error code=] [=invalid argument=].
+
+  1. [=list/Append=] |context| to |contexts|.
+
+1. For each |context| in |contexts|:
+
+  1. If |mode| is null and [=cache mode override map=] [=map/contains=]
+     |context| [=map/remove=] |context| from [=cache mode override map=].
+
+  1. Otherwise, set [=cache mode override map=][|context|] to |mode|.
+
+1. Return [=success=] with data null.
+
+</div>
 
 ### Events ### {#module-network-event}
 
