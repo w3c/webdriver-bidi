@@ -216,6 +216,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: activation notification; url: interaction.html#activation-notification
     text: active window; url: document-sequences.html#nav-window
     text: alert; url: timers-and-user-prompts.html#dom-alert
+    text: autofill; url: form-control-infrastructure.html#autofill
     text: close; url: document-sequences.html#close-a-top-level-traversable
     text: disabled; url: form-control-infrastructure.html#concept-fe-disabled
     text: File Upload state; url: input.html#file-upload-state-(type=file)
@@ -13635,10 +13636,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 ## The autofill Module ## {#module-autofill}
 
-The <dfn export for=modules>autofill</dfn> module contains functionality for triggering autofill.
-
-A [=/browsing context=] has a <dfn>autofill store for testing</dfn>, an
-<a>ordered map</a>.
+The <dfn export for=modules>autofill module</dfn> contains functionality for triggering autofill.
 
 ### Definition ### {#module-autofill-definition}
 
@@ -13656,8 +13654,7 @@ InputCommand = (
 #### The autofill.trigger Command ####  {#command-autofill-trigger}
 
 The <dfn export for=commands>autofill.trigger</dfn> command triggers autofill
-on a particular form field using the [=/browsing context=]'s [=autofill
-store for testing=].
+on a particular form field using the provided fields.
 
 <dl>
    <dt>Command Type</dt>
@@ -13671,7 +13668,7 @@ store for testing=].
       autofill.triggerParameters = {
         context: browsingContext.BrowsingContext,
         element: script.SharedReference,
-	fields: [*autofill.field]
+        fields: [*autofill.field]
       }
 
       autofill.field = (
@@ -13713,25 +13710,14 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
    with the |element id|, |realm|, and |session|.
 
-1. Let |store| be |context|'s [=autofill store for testing=].
-
 1. Let |fields| be the value of the <code>fields</code> field of |command
    parameters|.
-
-1. For each |field| in |fields|:
-
-   1. Let |name| be |field|'s <code>name</code>.
-
-   1. Let |value| be |field|'s <code>value</code>.
-
-   1. Set |store|[|name|] to |value|.
-
 
 1. If |element| is not a [=form-associated element=] or |element|'s [=form owner=] is
    null, return an [=error=] with [=error code=] [=invalid element state=].
 
 1. The [=user agent=] should [=autofill=] |element| and |element|'s [=form
-   owner=], while taking into account the contents of |store|.
+   owner=], while taking into account the contents of |fields|.
 
 1. Return [=success=] with data null.
 
