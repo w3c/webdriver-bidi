@@ -66,15 +66,15 @@ In this scenario a `MutationObserver` is installed by a bootstrap script as earl
 This scenario loads a web page and uses network request interception to replace any image in that page with a custom image. In spec terms, this involves:
 
 - [x] Some items from the previous scenarios
-- [ ] [Intercepting network requests](https://github.com/w3c/webdriver-bidi/issues/66)
+- [x] [Intercepting network requests](https://github.com/w3c/webdriver-bidi/issues/66)
 
 ### HTTP authentication
 
 This scenario loads a web page that is protected behind user credentials. In spec terms, this involves:
 
 - [x] Some items from the previous scenarios
-- [ ] [The event for a HTTP auth challenge](https://github.com/w3c/webdriver-bidi/issues/66)
-- [ ] [The command to provide the authentication response](https://github.com/w3c/webdriver-bidi/issues/66)
+- [x] [The event for a HTTP auth challenge](https://github.com/w3c/webdriver-bidi/issues/66)
+- [x] [The command to provide the authentication response](https://github.com/w3c/webdriver-bidi/issues/66)
 
 ### Handling onbeforeunload prompts
 
@@ -105,9 +105,9 @@ This scenario opens multiple web pages at the same time, and performs tests that
 This scenario sets cookies to be used when loading a web page and its subresources, loads that page, and verifies that the correct cookies were sent with the requests. It also inspects the cookies set by the responses, and clears all cookies to reset the state. In spec terms, this involves:
 
 - [x] Some items from the previous milestones
-- [ ] Getting cookies
-- [ ] Setting cookies
-- [ ] Deleting cookies
+- [x] Getting cookies
+- [x] Setting cookies
+- [x] Deleting cookies
 
 ### Managing windows
 

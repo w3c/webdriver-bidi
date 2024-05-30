@@ -288,6 +288,10 @@ spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
 spec:infra; urlPrefix: https://infra.spec.whatwg.org/
   type:dfn;
     text:user agent
+spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
+  type: dfn
+    text: field-name token; url: #fields.names
+    text: method token; url: #method.overview
 </pre>
 
 <pre class="biblio">
@@ -928,7 +932,7 @@ given |resource name|:
    "<code>/session/</code>" prefix.
 
 1. If |session id| is not the string representation of a
-   [[!RFC4122|UUID]], return null.
+   [[!RFC9562|UUID]], return null.
 
 1. Return |session id|.
 
@@ -2436,7 +2440,7 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 |history handling| (default: "<code>default</code>") and |ignore cache| (default: false):
 
 1. Let |navigation id| be the string representation of a
-   [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
+   [[!RFC9562|UUID]] based on truly random, or pseudo-random numbers.
 
 1. Let |navigable| be the [=/navigable=] whose [=navigable/active
    document=] is |context|'s [=browsing context/active document=].
@@ -3391,6 +3395,21 @@ To <dfn>locate nodes using inner text</dfn> with given |context nodes|,
 
 1. For each |context node| in |context nodes|:
 
+  1. If |context node| implements {{Document}} or {{DocumentFragment}}:
+
+    1. Let |child nodes| be an empty [=/list=].
+
+    1. For each node |child| in the <a spec=dom>children</a> of |context node|.
+
+      1. [=list/Append=] |child| to |child nodes|.
+
+    1. Let |child max depth| be null if |max depth| is null, or |max depth| - 1 otherwise.
+
+    1. [=Extend=] |returned nodes| with the result of [=trying=] to [=locate nodes using inner text=]
+      with |child nodes|, |selector|, |child max depth|, |match type|, |ignore case|, and |maximum returned node count|.
+
+  1. If |context node| does not implement {{HTMLElement}} then [=continue=].
+
   1. Let |node inner text| be the result of calling the [=innerText getter steps=] with
      |context node| as the [=this=] value.
 
@@ -3404,7 +3423,7 @@ To <dfn>locate nodes using inner text</dfn> with given |context nodes|,
     1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
        <a spec=dom>children</a> of |context node|:
 
-      1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
+      1. [=list/Append=] |child| to |child nodes|.
 
     1. If [=list/size=] of |child nodes| is equal to 0 or |max depth| is equal to 0,
        perform the following steps:
@@ -3417,12 +3436,10 @@ To <dfn>locate nodes using inner text</dfn> with given |context nodes|,
 
     1. Otherwise, perform the following steps:
 
-      1. If |max depth| is not null:
-
-        1. Set |max depth| to |max depth| - 1.
+      1. Let |child max depth| be null if |max depth| is null, or |max depth| - 1 otherwise.
 
       1. Let |child node matches| be the result of [=locate nodes using inner text=]
-         with |child nodes|, |selector|, |max depth|, |match type|,
+         with |child nodes|, |selector|, |child max depth| , |match type|,
          |ignore case|, and |maximum returned node count|.
 
       1. If [=list/size=] of |child node matches| is equal to 0 and |match type| is
@@ -3449,21 +3466,25 @@ To <dfn>collect nodes using accessibility attributes</dfn> with given |context n
 
   1. Let |match| be true.
 
-  1. If |selector| [=map/contains=] "<code>role</code>":
+  1. If |context node| implements {{Element}}:
 
-    1. Let |role| be the [=computed role=] of |context node|.
+    1. If |selector| [=map/contains=] "<code>role</code>":
 
-    1. If |selector|["<code>role</code>"] [=is|is not=] |role|:
+      1. Let |role| be the [=computed role=] of |context node|.
 
-      1. Set |match| to false.
+      1. If |selector|["<code>role</code>"] [=is|is not=] |role|:
 
-  1. If |selector| [=map/contains=] "<code>name</code>":
+        1. Set |match| to false.
 
-    1. Let |name| be the [=accessible name=] of |context node|.
+    1. If |selector| [=map/contains=] "<code>name</code>":
 
-    1. If |selector|["<code>name</code>"] [=is|is not=] |name|:
+      1. Let |name| be the [=accessible name=] of |context node|.
 
-      1. Set |match| to false.
+      1. If |selector|["<code>name</code>"] [=is|is not=] |name|:
+
+        1. Set |match| to false.
+
+  1. Otherwise, set |match| to false.
 
   1. If |match| is true:
 
@@ -4737,7 +4758,17 @@ To <dfn>update the response</dfn> given |session|, |command| and |command parame
 
   1. For |header| in |command parameters|["<code>headers</code>"]:
 
-    1. Append [=deserialize header=] with |header| to |headers|.
+    1. Let |deserialized header| be [=deserialize header=] with |header|.
+
+    1. If |deserialized header|'s name does not match the [=field-name token=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. If |deserialized header|'s value does not match the [=header value=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. Append |deserialized header| to |headers|.
 
   1. Set |response|'s [=response/header list=] to |headers|.
 
@@ -5988,7 +6019,7 @@ The <dfn export for=commands>network.addIntercept</dfn> command adds a
 <div algorithm="remote end steps for network.addRequestIntercept">
 The [=remote end steps=] given |session| and |command parameters| are:
 
-1. Let |intercept| be the string representation of a [[!RFC4122|UUID]].
+1. Let |intercept| be the string representation of a [[!RFC9562|UUID]].
 
 1. Let |url patterns| be the <code>urlPatterns</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
@@ -6099,8 +6130,12 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. If |command parameters| [=map/contains=] "<code>method</code>":
 
-  1. Let |request|'s [=request/method=] be |command
-     parameters|["<code>method</code>"].
+  1. Let |method| be |command parameters|["<code>method</code>"].
+
+  1. If |method| does not match the [=method token=] production, return [=error=]
+     with [=error code=] "<code>invalid argument</code>".
+
+  1. Let |request|'s [=request/method=] be |method|.
 
 1. If |command parameters| [=map/contains=] "<code>headers</code>":
 
@@ -6108,7 +6143,17 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
   1. For |header| in |command parameters|["<code>headers</code>"]:
 
-    1. Append [=deserialize header=] with |header| to |headers|.
+    1. Let |deserialized header| be [=deserialize header=] with |header|.
+
+    1. If |deserialized header|'s name does not match the [=field-name token=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. If |deserialized header|'s value does not match the [=header value=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. Append |deserialized header| to |headers|.
 
   1. Set |request|'s [=request/headers list=] to |headers|.
 
@@ -6846,7 +6891,7 @@ before any author-defined script have run.
 TODO: Extend this to scripts in other kinds of realms.
 
 A [=BiDi session=] has a <dfn>preload script map</dfn> which is a [=/map=] in
-which the keys are [[!RFC4122|UUID]]s, and the values are [=structs=] with an <a
+which the keys are [[!RFC9562|UUID]]s, and the values are [=structs=] with an <a
 for=struct>item</a> named <code>function declaration</code>, which is a string,
 <code>arguments</code>, <code>contexts</code>, which is a list or null, and an item named <code>sandbox</code> which is a string
 or null.
@@ -8091,7 +8136,7 @@ To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
     1. If |previously serialized remote value| does not have a field
        <code>internalId</code>, run the following steps:
 
-      1. Let |internal id| be the string representation of a [[!RFC4122|UUID]]
+      1. Let |internal id| be the string representation of a [[!RFC9562|UUID]]
          based on truly random, or pseudo-random numbers.
 
       1. Set the <code>internalId</code> field of
@@ -8837,7 +8882,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
 
-1. Let |script| be the string representation of a [[!RFC4122|UUID]].
+1. Let |script| be the string representation of a [[!RFC9562|UUID]].
 
 1. Let |preload script map| be |session|'s [=preload script map=].
 
@@ -10803,3 +10848,18 @@ Other specifications can define <dfn>console steps</dfn>.
 Insert the following steps at the start of the [=determine the device pixel ratio=] algorithm:
 
 1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
+
+
+# Appendices # {#appendices}
+
+<em>This section is non-normative.</em>
+
+## External specifications ## {#external-specifications}
+
+Note: the list is not exhaustive and might not be up to date.
+
+The following external specifications define additional WebDriver BiDi modules:
+
+1. <a href="https://www.w3.org/TR/permissions/">Permissions</a>
+
+1. <a href="https://webbluetoothcg.github.io/web-bluetooth/">Web Bluetooth</a>
