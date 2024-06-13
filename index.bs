@@ -5269,37 +5269,47 @@ network.Initiator = {
 The <code>network.Initiatior</code> type represents the source of a network
 request.
 
+Note: the purpose of initiator to allow finding out which resource
+initiated a particular request.
+
 <div algorithm>
 To <dfn>get the initiator</dfn> given |request|:
 
 1. Let |type| be "<code>other</code>".
 
+1. Let |stack trace|, |url|, |column number|, and |line number| all be null.
+
 1. If |request| is a [=CORS-Preflight Request=], set |type| to
    "<code>preflight</code>".
 
-1. Otherwise, if |requests|'s [=parser metadata=] is "<code>not-parser-inserted</code>",
-  set |type| to "<code>script</code>".
+1. Otherwise, if |request|'s [=request/initiator type=] is "<code>script</code>"
+  and |request| is [=isTopLevel=], set |type| to "<code>parser</code>".
 
-1. Otherwise, if |requests|'s [=parser metadata=] is "<code>parser-inserted</code>",
+1. Otherwise, if |request|'s [=request/initiator type=] is "<code>script</code>"
+  and |request| is not [=isTopLevel=], set |type| to "<code>script</code>".
+
+1. Otherwise, if |request|'s [=request/initiator type=] is "<code>css</code>",
   set |type| to "<code>parser</code>".
 
-1. If |type| is "<code>script</code>":
+  TODO: probably some other initiator types should be treated as "parser".
 
-  1. Let |stack trace| be the [=current stack trace=].
+1. If |request|'s [=request/referrer=] is a URL,
+  set |url| to |request|'s [=request/referrer=] otherwise set |url| to |request|'s document URL;
 
-  1. Let |url| be value of the <code>url</code> in |stack trace|[0].
+1. If |request|'s [=request/initiator type=] is "<code>fetch</code>" or
+   "<code>xmlhttprequest</code>":
 
-  1. Let |line number| be value of the <code>lineNumber</code> field in
-      |stack trace|[0].
+  1. Set |stack trace| be the [=current stack trace=].
 
-  1. Let |column number| be the value of the <code>columnNumber</code>
-    field in |stack trace|[0].
+1. Otherwise, if |type| is "<code>script</code>" and [=current stack trace=] is available to the implementation:
 
-1. Otherwise, if |type| is "<code>parser</code>":
+  1. Set |stack trace| be the [=current stack trace=].
 
-  1. TODO: set url/line/column based on the parser positions.
+1. Otherwise, if |type| is "<code>parser</code>" and implementation-defined parser state is available:
 
-1. Otherwise, let |stack trace|, |column number|, and |line number| all be null.
+  1. Set |line number| to be zero-based parser line position in the resource that initiated the |request|.
+
+  1. Set |column number| to be zero-based parser column position in the resource that initiated the |request|.
 
 1. Return a [=/map=] matching the <code>network.Initiator</code>
    production, with the <code>type</code> field set to |type|, the
