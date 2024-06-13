@@ -2316,6 +2316,10 @@ same as the [=window handle=].
 Each [=/browsing context=] also has an <dfn>associated storage partition</dfn>,
 which is the [=storage partition=] it uses to persist data.
 
+Each [=/browsing context=] also has an associated <dfn>original opener</dfn>,
+which is a [=/browsing context=] that caused browsing context to open
+or null, initially set to null.
+
 <div algorithm>
 To <dfn export>get a browsing context</dfn> given |context id|:
 
@@ -2340,8 +2344,9 @@ browsingContext.InfoList = [*browsingContext.Info]
 browsingContext.Info = {
   children: browsingContext.InfoList / null,
   context: browsingContext.BrowsingContext,
+  originalOpener: browsingContext.BrowsingContext / null,
   url: text,
-  userContext: browser.UserContext
+  userContext: browser.UserContext,
   ? parent: browsingContext.BrowsingContext / null,
 }
 </pre>
@@ -2425,12 +2430,17 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
 1. Let |user context| be |context|'s [=associated user context=].
 
+1. Let |opener id| be the [=browsing context id=] for |context|'s
+   [=original opener=], if |context|'s [=original opener=] is not null,
+   and null otherwise.
+
 1. Let |context info| be a [=/map=] matching the
    <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
    if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
    field set to |url|, the <code>userContext</code> field set to
-   |user context|'s [=user context id=], and the <code>children</code> field
+   |user context|'s [=user context id=], <code>originalOpener</code>
+   field set to |opener id|, and the <code>children</code> field
    set to |child infos|.
 
 1. Return |context info|.
@@ -4169,9 +4179,12 @@ To <dfn>Emit a context created event</dfn> given |session| and |context|:
 
 The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable created</dfn> steps given
-|navigable|:
+|navigable| and |opener navigable|:
 
 1. Let |context| be |navigable|'s [=active browsing context=].
+
+1. Set |context|'s [=original opener=] to |opener navigable|'s [=active browsing context=],
+   if |opener navigable| is provided.
 
 1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
