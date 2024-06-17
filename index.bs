@@ -1061,16 +1061,20 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 To <dfn>get related navigables</dfn> given an [=script/settings object=]
 |settings|:
 
-1. Let |related navigables| be an empty [=/set=]
+1. Let |related navigables| be an empty [=/set=].
 
-1. If |settings|' [=relevant global object=] is a {{Window}}, append |settings|'
-   [=relevant global object=]'s <a>associated <code>Document</code></a>'s
-   [=/navigable=] to |related navigables|.
+1. Let |navigable| be null.
+
+1. If |settings|' [=relevant global object=] is a {{Window}}, set |navigable|
+   to [=relevant global object=]'s <a>associated <code>Document</code></a>'s
+   |=/node navigable=|.
 
    Otherwise if the [=realm/global object=] specified by |settings| is a
    {{WorkerGlobalScope}}, for each |owner| in the [=realm/global object=]'s
-   [=owner set=], if |owner| is a [=Document=], append |owner|'s
-   [=/navigable=] to |related navigables|.
+   [=owner set=], if |owner| is a [=Document=], set |navigable| to |owner|'s
+   |=/node navigable=|.
+
+1. If |navigable| is not null, append |navigable| to |related navigables|.
 
 1. Return |related navigables|.
 
@@ -7665,7 +7669,7 @@ To <dfn>get the navigable</dfn> with given |realm|:
 1. Let |document| be |global object|'s wrapped {{Window}}'s
    <a>associated <code>Document</code></a>.
 
-1. Return |document|'s [=/navigable=].
+1. Return |document|'s [=/node navigable=].
 
 </div>
 <div algorithm>
@@ -7706,7 +7710,8 @@ To <dfn>get the realm info</dfn> given |environment settings|:
     <dd>
       1. Let |document| be |environment settings|' [=relevant global object=]'s
          <a>associated <code>Document</code></a>.
-      1. Let |navigable| be |document|'s [=/navigable=].
+      1. Let |navigable| be |document|'s [=/node navigable=].
+      1. If |navigable| is null, return null.
       1. Let |navigable id| be the [=navigable id=] for |navigable|.
       1. Let |realm info| be a [=/map=] matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
@@ -7718,7 +7723,8 @@ To <dfn>get the realm info</dfn> given |environment settings|:
 
       1. Let |document| be |global object|'s wrapped {{Window}}'s
          <a>associated <code>Document</code></a>.
-      1. Let |navigable| be |document|'s [=/navigable=].
+      1. Let |navigable| be |document|'s [=/node navigable=].
+      1. If |navigable| is null, return null.
       1. Let |navigable id| be the [=navigable id=] for |navigable|.
       1. Let |sandbox name| be the result of [=get a sandbox name=] given
          |realm|.
@@ -8149,7 +8155,7 @@ To <dfn>get shared id for a node</dfn> given |node|, and |session|:
 
 1. If |node| does not implement {{Node}}, return null.
 
-1. Let |navigable| be |node|'s [=node document=]'s [=/navigable=].
+1. Let |navigable| be |node|'s [=/node navigable=].
 
 1. If |navigable| is null, return null.
 
@@ -8767,9 +8773,9 @@ To <dfn>get the source</dfn> given |source realm|:
 
   1. Let |document| be environment settings’ <a>associated <code>Document</code></a>.
 
-  1. Let |navigable| be |document|’s [=/navigable=].
+  1. Let |navigable| be |document|’s [=/node navigable=].
 
-  1. Let |navigable id| be the [=navigable id=] for |navigable|.
+  1. Let |navigable id| be the [=navigable id=] for |navigable| if |navigable| is not null.
 
   Otherwise let |navigable| be null.
 
