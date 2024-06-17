@@ -2467,7 +2467,7 @@ To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|,
    [[!RFC9562|UUID]] based on truly random, or pseudo-random numbers.
 
 1. [=Navigate=] |navigable| with resource |request|, and using
-   |navigable|'s [=navigable/active document=] as the source
+   |navigable|'s [=active document=] as the source
    {{Document}}, with [=navigation id=] |navigation id|, and [=history
    handling behavior=] |history handling|. If |ignore cache| is true,
    the navigation must not load resources from the HTTP cache.
@@ -3342,7 +3342,7 @@ list of all nodes matching the specified locator.
 </dl>
 
 <div algorithm="locate nodes using CSS">
-To <dfn>locate nodes using CSS</dfn> with given |context|, |context nodes|,
+To <dfn>locate nodes using CSS</dfn> with given |navigable|, |context nodes|,
 |selector|, |maximum returned node count|, and <var ignore>session</var>:
 
 1. Let |returned nodes| be an empty [=/list=].
@@ -3354,7 +3354,7 @@ To <dfn>locate nodes using CSS</dfn> with given |context|, |context nodes|,
 1. For each |context node| of |context nodes|:
 
   1. Let |elements| be the result of [=match a selector against a tree=] with
-     |parse result| and |context|’s [=active document=] [=root=] using
+     |parse result| and |navigable|’s [=active document=] [=root=] using
      [=scoping root=] |context node|.
 
   1. For each |element| in |elements|:
@@ -3371,7 +3371,7 @@ To <dfn>locate nodes using CSS</dfn> with given |context|, |context nodes|,
 
 <div algorithm="locate nodes using XPath">
 
-To <dfn>locate nodes using XPath</dfn> with given |context|, |context nodes|,
+To <dfn>locate nodes using XPath</dfn> with given |navigable|, |context nodes|,
 |selector|, and |maximum returned node count|:
 
 Note: Owing to the unmaintained state of the XPath specification, this algorithm
@@ -3383,7 +3383,7 @@ without going via the ECMAScript runtime.
 
 1. For each |context node| of |context nodes|:
 
-   1. Let |evaluate result| be the result of calling [=evaluate=] on |context|'s
+   1. Let |evaluate result| be the result of calling [=evaluate=] on |navigable|'s
       [=active document=], with arguments |selector|, |context node|, null,
       [=ORDERED_NODE_SNAPSHOT_TYPE=], and null. If this throws a "[=SyntaxError=]"
       [=DOMException=], return [=error=] with [=error code=] [=invalid selector=];
@@ -3558,13 +3558,13 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |navigable id| be |command parameters|["<code>context</code>"].
 
-1. Let |context| be the result of [=trying=] to [=get a navigable=]
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
    with |navigable id|.
 
-1. Assert: |context| is not null.
+1. Assert: |navigable| is not null.
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a navigable=]
-   with [=navigable id=] of |context| and null.
+   with [=navigable id=] of |navigable| and null.
 
 1. Let |locator| be |command parameters|["<code>locator</code>"].
 
@@ -3579,7 +3579,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |context nodes| be an empty [=/list=].
 
 1. If |start nodes parameter| is null, [=list/append=] the [=document element=]
-   of |context|'s [=active document=] to |context nodes|. Otherwise, for each
+   of |navigable|'s [=active document=] to |context nodes|. Otherwise, for each
    |serialized start node| in |start nodes parameter|:
 
    1. Let |start node| be the result of [=trying=] to [=deserialize shared reference=] given
@@ -3601,7 +3601,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |selector| be |locator|["<code>value</code>"].
 
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using css=]
-            given |context|, |context nodes|, |selector| and |maximum returned
+            given |navigable|, |context nodes|, |selector| and |maximum returned
             nodes|.
 
       <dt>|type| is the string "<code>xpath</code>"
@@ -3609,7 +3609,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |selector| be |locator|["<code>value</code>"].
 
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using xpath=]
-            given |context|, |context nodes|, |selector| and |maximum returned
+            given |navigable|, |context nodes|, |selector| and |maximum returned
             nodes|.
 
       <dt>|type| is the string "<code>innerText</code>"
@@ -3787,11 +3787,11 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a navigable=]
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
    with |navigable id|.
 
 1. If the implementation is unable to provide a paginated representation of
-   |context| for any reason then return [=error=] with [=error code=]
+   |navigable| for any reason then return [=error=] with [=error code=]
    [=unsupported operation=].
 
 1. Let |margin| be the value of the <code>margin</code> field of |command
@@ -3810,7 +3810,7 @@ Note: The minimum page size is 1 point, which is (2.54 / 72) cm as per
 1. Let |page ranges| be the value of the <code>pageRanges</code> field of
    |command parameters| if present or an empty [=/list=] otherwise.
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |document| be |navigable|'s [=active document=].
 
 1. Immediately after the next invocation of the [=run the animation frame
    callbacks=] algorithm for |document|:
@@ -9317,12 +9317,12 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. If |command parameters| contains <code>context</code>:
 
-  1. Let |context| be the result of [=trying=] to [=get a navigable=]
+  1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
      with |command parameters|["<code>context</code>"].
 
-  1. Let |document| be |context|'s [=active document=].
+  1. Let |document| be |navigable|'s [=active document=].
 
-  1. Let |context environment settings| be a [=/list=].
+  1. Let |navigable environment settings| be a [=/list=].
 
   1. For each |settings| of |environment settings|:
 
@@ -9334,9 +9334,9 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
       * The [=realm/global object=] specified by |settings| is a
         {{WorkerGlobalScope}} with |document| in its [=owner set=]
 
-      Append |settings| to |context environment settings|.
+      Append |settings| to |navigable environment settings|.
 
-  1. Set |environment settings| to |context environment settings|.
+  1. Set |environment settings| to |navigable environment settings|.
 
 1. Let |realms| be a list.
 
@@ -10396,13 +10396,13 @@ The <dfn>is <code>input.ElementOrigin</code></dfn> steps given |object| are:
 <div algorithm>To <dfn>get Element from <code>input.ElementOrigin</code>
 steps</dfn> given |session|:
 
-1. Return the following steps, given |origin| and |context|:
+1. Return the following steps, given |origin| and |navigable|:
 
   1. Assert: |origin| matches <code>input.ElementOrigin</code>.
 
   <!-- converting to realm here is kind of silly since we immediately convert back
        in [=deserialize remote reference=] -->
-  1. Let |document| be |context|'s [=active document=].
+  1. Let |document| be |navigable|'s [=active document=].
 
   1. Let |reference| be |origin|["<code>element</code>"]
 
@@ -10691,10 +10691,10 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |navigable id| be the value of the |command
    parameters|["<code>context</code>"] field.
 
-1. Let |context| be the result of [=trying=] to [=get a navigable=] with
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with
    |navigable id|.
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |document| be |navigable|'s [=active document=].
 
 1. Let |environment settings| be the [=environment settings object=] whose
    [=relevant global object=]'s <a>associated <code>Document</code></a> is
