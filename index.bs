@@ -4690,7 +4690,7 @@ NetworkCommand = (
   network.FailRequest //
   network.ProvideResponse //
   network.RemoveIntercept //
-  network.SetCacheMode //
+  network.SetCacheBypass //
 )
 
 </pre>
@@ -4717,12 +4717,12 @@ A [=remote end=] has a <dfn>before request sent map</dfn> which is initially an
 empty map.  It's used to track the network events for which a
 <code>network.beforeRequestSent</code> event has already been sent.
 
-A [=remote end=] has a <dfn>default cache mode override</dfn> which is null or a
-string. It is initially null.
+A [=remote end=] has a <dfn>default cache bypass</dfn> which is a boolean. It is
+initially false.
 
-A [=remote end=] has a <dfn>cache mode override map</dfn> which is initially an
-empty weak map. It's used to track the cache mode to use for requests from
-specific browsing contexts.
+A [=remote end=] has a <dfn>navigable cache bypass set</dfn> which is initially an
+empty weak set. It's used to track the [=/top-level traversables=] in which
+network caches are bypassed.
 
 ### Network Intercepts ### {#network-intercepts}
 
@@ -6561,22 +6561,22 @@ requests will be affected.
 
 </div>
 
-#### The network.setCacheMode Command ####  {#command-network-setCacheMode}
+#### The network.setCacheBypass Command ####  {#command-network-setCacheBypass}
 
-The <dfn export for=commands>network.setCacheMode</dfn> command overrides
-the network cache behaviour for certain requests.
+The <dfn export for=commands>network.setCacheBypass</dfn> command bypasses the
+network cache for certain requests.
 
 <dl>
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      network.SetCacheMode = (
-        method: "network.setCacheMode",
-        params: network.SetCacheModeParameters
+      network.SetCacheBypass = (
+        method: "network.setCacheBypass",
+        params: network.SetCacheBypassParameters
       )
 
-      network.SetCacheModeParameters = {
-        mode: "no-store" / null,
+      network.SetCacheBypassParameters = {
+        bypass: bool,
         ? contexts: [+browsingContext.BrowsingContext]
       }
     </pre>
@@ -6590,8 +6590,7 @@ the network cache behaviour for certain requests.
 </dl>
 
 <div algorithm>
-The <dfn export>WebDriver BiDi update request cache mode</dfn> steps given
-|request| are:
+The <dfn export>WebDriver BiDi bypass cache</dfn> steps given |request| are:
 
 1. Let |context| be null.
 
@@ -6601,46 +6600,55 @@ The <dfn export>WebDriver BiDi update request cache mode</dfn> steps given
 
   1. If there is a [=/browsing context=] whose [=active window=] is |environment
      settings|' [=environment settings object/global object=], set |context| to
-     the [=top-level browsing context=] for that context.
+     the [=top-level browsing context=] for that browsing context.
 
-1. If |context| is not null:
+1. If |context| is not null and [=navigable cache bypass set=] [=set/contains=]
+   |context|, return true.
 
-  1. If [=cache mode override map=] [=map/contains=] |context|, set
-     |request|'s [=request/cache mode=] to [=cache mode override
-     map=][|context|] and return.
-
-1. If [=default cache mode override=] is not null, set
-     |request|'s [=request/cache mode=] to [=default cache mode override=].
+1.  Return [=default cache bypass=].
 
 </div>
 
-<div algorithm="remote end steps for network.setCacheMode">
+<div algorithm="remote end steps for network.setCacheBypass">
 The [=remote end steps=] given <var ignore>session</var> and |command parameters| are:
 
-1. Let |mode| be |command parameters|["<code>mode</code>"].
+1. Let |bypass| be |command parameters|["<code>bypass</code>"].
 
-1. If |command parameters| does not [=map/contain=] "<code>contexts</code>", set
-   the [=default cache mode override=] to |mode| and return [=success=] with
-   data null.
+1. If |command parameters| does not [=map/contain=] "<code>contexts</code>":
 
-1. Let |contexts| be an empty [=/list=].
+ 1. Set the [=default cache bypass=] to |bypass|.
+
+ 1. If |bypass| is true, perform implementation-defined steps to disable any
+    implementation-specific resource caches for network requests. Otherwise
+    re-enable any implementation-specific resource caches for all contexts.
+
+ 1. Return [=success=] with data null.
+
+1. Let |contexts| be an empty [=/set=].
 
 1. For each |context id| of |command parameters|["<code>contexts</code>"]:
 
-  1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-     with |context id|.
+ 1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+    with |context id|.
 
-  1. If |context| is not a [=top-level browsing context=], return [=error=]
-     with [=error code=] [=invalid argument=].
+ 1. If |context| is not a [=top-level browsing context=], return [=error=]
+    with [=error code=] [=invalid argument=].
 
-  1. [=list/Append=] |context| to |contexts|.
+ 1. [=list/Append=] |context| to |contexts|.
 
 1. For each |context| in |contexts|:
 
-  1. If |mode| is null and [=cache mode override map=] [=map/contains=]
-     |context| [=map/remove=] |context| from [=cache mode override map=].
+  1. If |bypass| is true:
 
-  1. Otherwise, set [=cache mode override map=][|context|] to |mode|.
+    1. [=set/append=] |context| to [=navigable cache bypass set=].
+
+    1. Perform implementation-defined steps to disable any implementation-specific
+       resource caches for network requests originating from |context|.
+
+  1. Otherwise, if [=navigable cache bypass set=] [=set/contains=]
+     |context|, [=set/remove=] |context| from [=navigable cache bypass set=] and
+     re-enable any implementation-specific resource caches for network requests
+     originating from |context|.
 
 1. Return [=success=] with data null.
 
