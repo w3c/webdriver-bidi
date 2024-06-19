@@ -1471,16 +1471,16 @@ events are disabled, the return value is always empty.
 
          1. If |global event set| doesn't contain |event name|:
 
-           1. Let |already enabled contexts| be the [=event enabled navigables=]
+           1. Let |already enabled navigables| be the [=event enabled navigables=]
             given |session| and |event name|.
 
            1. Add |event name| to |global event set|.
 
-           1. For each |context| of |already enabled contexts|, remove |event
-              name| from |event map|[|context|].
+           1. For each |navigable| of |already enabled navigables|, remove |event
+              name| from |event map|[|navigable|].
 
            1. Let |newly enabled contexts| be a list of all [=navigable/top-level traversable=]
-            that are not contained in |already enabled contexts|,
+            that are not contained in |already enabled navigables|,
 
            1. Set |enabled events|[|event name|] to |newly enabled contexts|.
 
@@ -1498,10 +1498,10 @@ events are disabled, the return value is always empty.
 
   1. For each |navigable id| in |navigables|:
 
-    1. Let |context| be the result of [=trying=] to [=get a navigable=]
+    1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
        with |navigable id|.
 
-    1. Let |top-level context| be the [=navigable/top-level traversable=] for |context|.
+    1. Let |top-level context| be the [=navigable/top-level traversable=] for |navigable|.
 
     1. If |event map| does not contain |top-level context|, set |event
        map|[|top-level context|] to a new [=/set=].
@@ -1512,7 +1512,7 @@ events are disabled, the return value is always empty.
 
     1. If |enabled| is true and |global event set| contains |event name|, continue.
 
-    1. For each |context| → |target| in |targets|:
+    1. For each |navigable| → |target| in |targets|:
 
       1. If |enabled| is true and |target| does not contain |event name|:
 
@@ -1521,7 +1521,7 @@ events are disabled, the return value is always empty.
         1. If |enabled events| does not contain |event name|, set |enabled
            events|[|event name|] to a new [=/set=].
 
-        1. Append |context| to |enabled events|[|event name|].
+        1. Append |navigable| to |enabled events|[|event name|].
 
       1. If |enabled| is false:
 
@@ -2348,9 +2348,9 @@ To <dfn export>get a navigable</dfn> given |navigable id|:
 1. If there is no navigable with [=navigable id=] |navigable id| return
    [=error=] with [=error code=] [=no such frame=]
 
-1. Let |context| be the navigable with id |navigable id|.
+1. Let |navigable| be the [=/navigable=] with id |navigable id|.
 
-1. Return [=success=] with data |context|.
+1. Return [=success=] with data |navigable|.
 
 </div>
 
@@ -2421,7 +2421,7 @@ To <dfn>get the navigable info</dfn> given |navigable|,
 
 1. If |max depth| is null, or |max depth| is greater than 0:
 
-  1. Let |child navigables| be [=get the child navigables=] given |context|.
+  1. Let |child navigables| be [=get the child navigables=] given |navigable|.
 
   1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null otherwise.
 
@@ -2434,10 +2434,10 @@ To <dfn>get the navigable info</dfn> given |navigable|,
 
     1. Append |info| to |child infos|
 
-1. Let |user context| be |context|'s [=associated user context=].
+1. Let |user context| be |navigable|'s [=associated user context=].
 
-1. Let |opener id| be the [=navigable id=] for |context|'s
-   [=original opener=], if |context|'s [=original opener=] is not null,
+1. Let |opener id| be the [=navigable id=] for |navigable|'s
+   [=original opener=], if |navigable|'s [=original opener=] is not null,
    and null otherwise.
 
 1. Let |context info| be a [=/map=] matching the
@@ -2844,16 +2844,16 @@ To <dfn>render document to a canvas</dfn> given |document| and |rect|:
 1. Let |canvas| be a new {{HTMLCanvasElement}} with {{HTMLCanvasElement/width}} |paint
    width| and {{HTMLCanvasElement/height}} |paint height|.
 
-1. Let |context| be the result of running the [=2D context creation algorithm=]
+1. Let |canvas context| be the result of running the [=2D context creation algorithm=]
    with |canvas| and null.
 
 1. Set |canvas|'s [=context mode=] to [=2D=].
 
 1. Complete implementation specific steps equivalent to drawing the region of
    the framebuffer representing the region of |document| covered by |rect| to
-   |context|, such that each pixel in the framebuffer corresponds to a pixel in
-   |context| with (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
-   viewport coordinates corresponding to (0,0) in |context| and (|rect|'s
+   |canvas context|, such that each pixel in the framebuffer corresponds to a pixel in
+   |canvas context| with (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
+   viewport coordinates corresponding to (0,0) in |canvas context| and (|rect|'s
    [=x coordinate=] + |rect|'s [=width dimension=], |rect|'s
    [=y coordinate=] + |rect|'s [=height dimension=]) corresponding to (|paint
    width|, |paint height|).
@@ -2910,10 +2910,10 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters| if present, or null otherwise.
 
-1. If the implementation is unable to capture a screenshot of |context| for any
+1. If the implementation is unable to capture a screenshot of |navigable id| for any
    reason then return [=error=] with [=error code=] [=unsupported operation=].
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |document| be |navigable id|'s [=active document=].
 
 1. Immediately after the next invocation of the [=run the animation frame
    callbacks=] algorithm for |document|:
@@ -3036,21 +3036,21 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |prompt unload| be the value of the <code>promptUnload</code> field of
      |command parameters|.
 
-  1. Let |context| be the result of [=trying=] to [=get a navigable=]
+  1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
      with |navigable id|.
 
-  1. Assert: |context| is not null.
+  1. Assert: |navigable| is not null.
 
-  1. If |context| is not a [=navigable/top-level traversable=], return [=error=] with
+  1. If |navigable| is not a [=navigable/top-level traversable=], return [=error=] with
      [=error code=] [=invalid argument=].
 
   1. If |prompt unload| is true:
 
-     1. [=Close=] |context|.
+     1. [=Close=] |navigable|.
 
   1. Otherwise:
 
-     1. [=Close=] |context| without [=prompting to unload=].
+     1. [=Close=] |navigable| without [=prompting to unload=].
 
   1. Return [=success=] with data null.
 
@@ -3215,23 +3215,23 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
    parameters| if present, or null otherwise.
 
-1. Let |contexts| be an empty [=/list=].
+1. Let |navigables| be an empty [=/list=].
 
 1. If |root id| is not null, append the result of [=trying=] to
-   [=get a navigable=] given |root id| to |contexts|.
-   Otherwise append all [=navigable/top-level traversables=] to |contexts|.
+   [=get a navigable=] given |root id| to |navigables|.
+   Otherwise append all [=navigable/top-level traversables=] to |navigables|.
 
-1. Let |contexts info| be an empty [=/list=].
+1. Let |navigables infos| be an empty [=/list=].
 
-1. For each |context| of |contexts|:
+1. For each |navigable| of |navigables|:
 
   1. Let |info| be the result of [=get the navigable info=] given
-     |context|, |max depth|, and true.
+     |navigable|, |max depth|, and true.
 
-  1. Append |info| to |contexts info|
+  1. Append |info| to |navigables infos|
 
 1. Let |body| be a [=/map=] matching the <code>browsingContext.GetTreeResult</code>
-   production, with the <code>contexts</code> field set to |contexts info|.
+   production, with the <code>contexts</code> field set to |navigables infos|.
 
 1. Return [=success=] with data |body|.
 
@@ -3273,7 +3273,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a navigable=]
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
    with |navigable id|.
 
 1. Let |accept| be the value of the <code>accept</code> field of |command
@@ -3282,18 +3282,18 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |userText| be the value of the <code>userText</code> field of |command
    parameters| if present, or the empty string otherwise.
 
-1. If |context| is currently showing a simple dialog from a call to [=alert=] then
+1. If |navigable| is currently showing a simple dialog from a call to [=alert=] then
    acknowledge the prompt.
 
-   Otherwise if |context| is currently showing a simple dialog from a call to
+   Otherwise if |navigable| is currently showing a simple dialog from a call to
    [=confirm=], then respond positively if |accept| is true, or respond
    negatively if |accept| is false.
 
-   Otherwise if |context| is currently showing a simple dialog from a call to
+   Otherwise if |navigable| is currently showing a simple dialog from a call to
    [=prompt=], then respond with the string value |userText| if |accept| is
    true, or abort if |accept| is false.
 
-   Otherwise, if |context| is currently showing a prompt as part of the [=prompt
+   Otherwise, if |navigable| is currently showing a prompt as part of the [=prompt
    to unload=] steps, then confirm the navigation if |accept| is true, otherwise
    refuse the navigation.
 
@@ -6059,23 +6059,23 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |url patterns| be the <code>urlPatterns</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
-1. Let |contexts| be null.
+1. Let |navigables| be null.
 
 1. If the <code>contexts</code> field of |command parameters| is present:
 
-   1. Set |contexts| to an empty [=/set=].
+   1. Set |navigables| to an empty [=/set=].
 
    1. For each |navigable id| of |command parameters|["<code>contexts</code>"]
 
-      1. Let |context| be the result of [=trying=] to [=get a navigable=]
+      1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
          with |navigable id|.
 
-      1. If |context| is not a [=navigable/top-level traversable=], return [=error=]
+      1. If |navigable| is not a [=navigable/top-level traversable=], return [=error=]
          with [=error code=] [=invalid argument=].
 
-      1. Append |context| to |contexts|.
+      1. Append |navigable| to |navigables|.
 
-   1. If |contexts| is an empty [=/set=], return [=error=] with [=error code=]
+   1. If |navigables| is an empty [=/set=], return [=error=] with [=error code=]
       [=invalid argument=].
 
 1. Let |intercept map| be |session|'s [=intercept map=].
@@ -6092,7 +6092,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Set |intercept map|[|intercept|] to a struct with <code>url patterns</code>
    |parsed patterns|, <code>phases</code> |command
    parameters|["<code>phases</code>"] and <code>browsingContexts</code>
-   |contexts|.
+   |navigables|.
 
 1. Return a new [=/map=] matching the
    <code>network.AddInterceptResult</code> production with the
@@ -6950,9 +6950,7 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 
     1. If |preload script|'s <code>contexts</code> is not null:
 
-       1. Let |top level context| be |navigable|’s [=navigable/top-level traversable=].
-
-       1. Let |navigable id| be |top level context|'s id.
+       1. Let |navigable id| be |navigable|’s [=navigable/top-level traversable=]'s id.
 
        1. If <code>contexts</code> does not [=list/contains|contain=] |navigable id|, return.
 
@@ -8902,19 +8900,19 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |arguments| be the <code>arguments</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
-1. Let |contexts| be null.
+1. Let |navigables| be null.
 
 1. If the <code>contexts</code> field of |command parameters| is present:
 
-   1. Set |contexts| to an empty [=/set=].
+   1. Set |navigables| to an empty [=/set=].
 
    1. For each |navigable id| of |command parameters|["<code>contexts</code>"]
 
-      1. Let |context| be the result of [=trying=] to [=get a navigable=] with |navigable id|.
+      1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with |navigable id|.
 
-      1. If |context| is not a [=navigable/top-level traversable=], return [=error=] with [=error code=] [=invalid argument=].
+      1. If |navigable| is not a [=navigable/top-level traversable=], return [=error=] with [=error code=] [=invalid argument=].
 
-      1. Append |context| to |contexts|.
+      1. Append |navigable| to |navigables|.
 
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
@@ -8926,7 +8924,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Set |preload script map|[|script|] to a struct with <code>function
    declaration</code> |function declaration|, <code>arguments</code>
    |arguments|, <code>contexts</code>
-   |contexts|, and <code>sandbox</code> |sandbox|.
+   |navigables|, and <code>sandbox</code> |sandbox|.
 
 1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
@@ -10327,18 +10325,18 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 10, given
   1. If |maybe context| is an [=error=], remove |navigable id| from [=log event
      buffer=] and continue.
 
-  1. Let |context| be |maybe context|'s data
+  1. Let |navigable| be |maybe context|'s data
 
-  1. Let |top level context| be |context|'s [=navigable/top-level traversable=].
+  1. Let |top level navigable| be |navigable|'s [=navigable/top-level traversable=].
 
-  1. If |include global| is true and |top level context| is not in |navigables|,
-     or if |include global| is false and |top level context| is in |navigables|:
+  1. If |include global| is true and |top level navigable| is not in |navigables|,
+     or if |include global| is false and |top level navigable| is in |navigables|:
 
-    1. For each (|event|, |other contexts|) in |events|:
+    1. For each (|event|, |other navigables|) in |events|:
 
       1. [=Emit an event=] with |session| and |event|.
 
-      1. For each |other context id| in |other contexts|:
+      1. For each |other context id| in |other navigables|:
 
         1. If [=log event buffer=] contains |other context id|, remove |event|
            from [=log event buffer=][|other context id|].
@@ -10571,10 +10569,10 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a navigable=]
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
    with |navigable id|.
 
-1. Let |input state| be [=get the input state=] with |session| and |context|'s
+1. Let |input state| be [=get the input state=] with |session| and |navigable|'s
    [=navigable/top-level traversable=].
 
 1. Let |actions options| be a new [=actions options=] with the [=is element
@@ -10586,7 +10584,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
    sequence=] with |input state|, |command parameters|, and |actions options|.
 
 1. [=Try=] to [=dispatch actions=] with |input state|, |actions by tick|,
-   |context|, and |actions options|.
+   |navigable|, and |actions options|.
 
 1. Return [=success=] with data null.
 
@@ -10626,10 +10624,10 @@ The [=remote end steps=] given |session|, and |command parameters| are:
 1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a navigable=]
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
    with |navigable id|.
 
-1. Let |top-level context| be |context|'s [=navigable/top-level traversable=].
+1. Let |top-level context| be |navigable|'s [=navigable/top-level traversable=].
 
 1. Let |input state| be [=get the input state=] with |session| and |top-level context|.
 
@@ -10640,7 +10638,7 @@ The [=remote end steps=] given |session|, and |command parameters| are:
 
 1. Let |undo actions| be |input state|’s [=input cancel list=] in reverse order.
 
-1. [=Try=] to [=dispatch tick actions=] with |undo actions|, 0, |context|, and
+1. [=Try=] to [=dispatch tick actions=] with |undo actions|, 0, |navigable|, and
    |actions options|.
 
 1. [=Reset the input state=] with |session| and |top-level context|.
