@@ -90,6 +90,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
     text: parse a page range; url: dfn-parse-a-page-range
+    text: handler; for: prompt handler configuration; url: dfn-handler
     text: process capabilities; url: dfn-processing-capabilities
     text: readiness state; url: dfn-readiness-state
     text: remote end steps; url: dfn-remote-end-steps
@@ -194,6 +195,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: create a new browsing context; url: browsers.html#creating-a-new-browsing-context
     text: default classic script fetch options; url: webappapis.html#default-classic-script-fetch-options
     text: default view; url: nav-history-apis.html#dom-document-defaultview
+    text: descendant navigables; utl: document-sequences.html#descendant-navigables
     text: environment settings object's Realm; url: webappapis.html#environment-settings-object's-realm
     text: focused area of the document; url: document-sequences.html#focused-area-of-the-document
     text: getting all used history steps; url:browsing-the-web.html#getting-all-used-history-steps
@@ -202,6 +204,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
     text: innerText getter steps; url:dom.html#dom-innertext
     text: input type; url: input.html#dom-input-type
+    text: navigable; for:window; url: document-sequences.html#window-navigable
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
@@ -212,6 +215,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: report an error; url: webappapis.html#report-the-error
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
+    text: select an image source from a source set; url: images.html#select-an-image-source-from-a-source-set
     text: selected files; url: input.html#concept-input-type-file-selected
     text: session history entry; url: browsing-the-web.html#session-history-entry
     text: session history traversal queue; url: document-sequences.html#tn-session-history-traversal-queue
@@ -228,6 +232,9 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: window open steps; url: window-object.html#window-open-steps
     text: worker event loop; url: webappapis.html#worker-event-loop-2
     text: worklet global scopes; url:worklets.html#concept-document-worklet-global-scopes
+spec: INFRA; urlPrefix: https://infra.spec.whatwg.org/
+  type: dfn
+    text: convert a JSON-derived JavaScript value to an Infra value; url: convert-a-json-derived-javascript-value-to-an-infra-value
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
     text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
@@ -243,6 +250,7 @@ spec: CSS-VALUES-3; urlPrefix: https://drafts.csswg.org/css-values-3/
 spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
   type: dfn
     text: CSS pixel; url: #dom-window-devicepixelratio
+    text: evaluate media queries and report changes; url: #evaluate-media-queries-and-report-changes
     text: layout viewport; url: #layout-viewport
     text: scroll height; url: #dom-element-scrollheight
     text: scroll width; url: #dom-element-scrollwidth
@@ -269,6 +277,19 @@ spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
   type: dfn
     text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
     text: toUppercase; url: ch03.pdf#G34078
+spec: ACCNAME; urlPrefix:https://www.w3.org/TR/accname-1.2
+  type: dfn
+    text: accessible name; url: /#dfn-accessible-name
+spec: CORE-AAM; urlPrefix:https://www.w3.org/TR/core-aam-1.2
+  type: dfn
+    text: computed role; url: /#roleMappingComputedRole
+spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
+  type: dfn
+    text: resolution media feature; url: #resolution
+spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
+  type: dfn
+    text: field-name token; url: #fields.names
+    text: method token; url: #method.overview
 </pre>
 
 <pre class="biblio">
@@ -908,7 +929,7 @@ given |resource name|:
    "<code>/session/</code>" prefix.
 
 1. If |session id| is not the string representation of a
-   [[!RFC4122|UUID]], return null.
+   [[!RFC9562|UUID]], return null.
 
 1. Return |session id|.
 
@@ -1154,7 +1175,7 @@ with parameters |session|, |capabilities|, and |flags| is:
 1. Let |webSocketUrl| be the result of [=getting a property=] named
    "<code>webSocketUrl</code>" from |capabilities|.
 
-1. If |webSocketUrl| is [=undefined=] or false, return.
+1. If |webSocketUrl| is [=undefined=], return.
 
 1. [=Assert=]: |webSocketUrl| is true.
 
@@ -1316,7 +1337,7 @@ it is observed via WebDriver, so we avoid using this terminology.
 A [=user context=] has a <dfn export for="user context">user context id</dfn>,
 which is a unique string set upon the user context creation.
 
-A [=navigable=] has an <dfn export>associated user context</dfn>, which is a [=user
+A [=/navigable=] has an <dfn export>associated user context</dfn>, which is a [=user
 context=].
 
 When a new [=/top-level traversable=] is created its [=associated user context=]
@@ -1550,7 +1571,7 @@ session.CapabilityRequest = {
   ? browserVersion: text,
   ? platformName: text,
   ? proxy: session.ProxyConfiguration,
-  ? webSocketUrl: bool,
+  ? unhandledPromptBehavior: session.UserPromptHandler,
   Extensible
 };
 </pre>
@@ -1604,7 +1625,7 @@ session.ProxyConfiguration = {
 }
 
 session.AutodetectProxyConfiguration = (
-   proxyType: "autodetect"
+   proxyType: "autodetect",
    Extensible
 )
 
@@ -1618,7 +1639,7 @@ session.ManualProxyConfiguration = (
    ? ftpProxy: text,
    ? httpProxy: text,
    ? sslProxy: text,
-   ? session.SocksProxyConfiguration
+   ? session.SocksProxyConfiguration,
    ? noProxy: [*text],
    Extensible
 )
@@ -1640,6 +1661,25 @@ session.SystemProxyConfiguration = (
 )
 
 </pre>
+
+#### The session.UserPromptHandler Type #### {#type-session-UserPromptHandler}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+session.UserPromptHandlerType = "accept" / "dismiss" / "ignore";
+
+session.UserPromptHandler = {
+  ? alert: session.UserPromptHandlerType,
+  ? beforeUnload: session.UserPromptHandlerType,
+  ? confirm: session.UserPromptHandlerType,
+  ? default: session.UserPromptHandlerType,
+  ? prompt: session.UserPromptHandlerType,
+};
+</pre>
+
+The <code>session.UserPromptHandler</code> type represents the configuration of
+the user prompt handler.
 
 #### The session.SubscriptionRequest Type #### {#type-session-SubscriptionRequest}
 
@@ -1741,6 +1781,7 @@ This is a [=static command=].
           setWindowRect: bool,
           userAgent: text,
           ? proxy: session.ProxyConfiguration,
+          ? unhandledPromptBehavior: session.UserPromptHandler,
           ? webSocketUrl: text,
           Extensible
         }
@@ -1760,8 +1801,11 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |flags| be a [=/set=] containing "<code>bidi</code>".
 
-1. Let |capabilities| be the result of [=trying=] to [=process capabilities=]
+1. Let |capabilities json| be the result of [=trying=] to [=process capabilities=]
    with |command parameters| and |flags|.
+
+1. Let |capabilities| be [=convert a JSON-derived JavaScript value to an Infra
+   value=] with |capabilities json|.
 
 1. Let |session| be the result of [=trying=] to [=create a session=] with
    |capabilities| and |flags|.
@@ -2198,7 +2242,16 @@ The [=remote end steps=] with |command parameters| are:
 ## The browsingContext Module ## {#module-browsingContext}
 
 The <dfn export for=modules>browsingContext</dfn> module contains commands and
-events relating to browsing contexts.
+events relating to [=navigables=].
+
+Note: For historic reasons this module is called <code>browsingContext</code>
+rather than <code>navigable</code>, and the protocol uses the term
+<code>context</code> to refer to navigables, particularly as a field in command
+and response parameters.
+
+Issue: Update the spec to use [=/navigable=] consistently and remove uses
+of [=/browsing context=]. See
+https://github.com/w3c/webdriver-bidi/issues/91#issuecomment-2144536819.
 
 The progress of navigation is communicated using an immutable <dfn export>WebDriver
 navigation status</dfn> struct, which has the following items:
@@ -2268,6 +2321,9 @@ BrowsingContextEvent = (
 )
 </pre>
 
+A [=remote end=] has a <dfn>device pixel ratio overrides</dfn> which is a weak map
+between [=navigables=] and device pixel ratio overrides. It is initially empty.
+
 ### Types ### {#module-browsingcontext-types}
 
 #### The browsingContext.BrowsingContext Type #### {#type-browsingContext-Browsingcontext}
@@ -2286,6 +2342,10 @@ same as the [=window handle=].
 
 Each [=/browsing context=] also has an <dfn>associated storage partition</dfn>,
 which is the [=storage partition=] it uses to persist data.
+
+Each [=/browsing context=] also has an associated <dfn>original opener</dfn>,
+which is a [=/browsing context=] that caused browsing context to open
+or null, initially set to null.
 
 <div algorithm>
 To <dfn export>get a browsing context</dfn> given |context id|:
@@ -2311,8 +2371,9 @@ browsingContext.InfoList = [*browsingContext.Info]
 browsingContext.Info = {
   children: browsingContext.InfoList / null,
   context: browsingContext.BrowsingContext,
+  originalOpener: browsingContext.BrowsingContext / null,
   url: text,
-  userContext: browser.UserContext
+  userContext: browser.UserContext,
   ? parent: browsingContext.BrowsingContext / null,
 }
 </pre>
@@ -2359,7 +2420,7 @@ TODO: make this return a list in document order
 
 <div algorithm>
 To <dfn>get the browsing context info</dfn> given |context|,
-|max depth| and |is root|:
+|max depth| and |include parent id|:
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
@@ -2396,12 +2457,17 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
 1. Let |user context| be |context|'s [=associated user context=].
 
+1. Let |opener id| be the [=browsing context id=] for |context|'s
+   [=original opener=], if |context|'s [=original opener=] is not null,
+   and null otherwise.
+
 1. Let |context info| be a [=/map=] matching the
    <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |context id|, the <code>parent</code> field set to |parent id|
-   if |is root| is <code>true</code>, or unset otherwise, the <code>url</code>
+   if |include parent id| is <code>true</code>, or unset otherwise, the <code>url</code>
    field set to |url|, the <code>userContext</code> field set to
-   |user context|'s [=user context id=], and the <code>children</code> field
+   |user context|'s [=user context id=], <code>originalOpener</code>
+   field set to |opener id|, and the <code>children</code> field
    set to |child infos|.
 
 1. Return |context info|.
@@ -2413,7 +2479,7 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 |history handling| (default: "<code>default</code>") and |ignore cache| (default: false):
 
 1. Let |navigation id| be the string representation of a
-   [[!RFC4122|UUID]] based on truly random, or pseudo-random numbers.
+   [[!RFC9562|UUID]] based on truly random, or pseudo-random numbers.
 
 1. Let |navigable| be the [=/navigable=] whose [=navigable/active
    document=] is |context|'s [=browsing context/active document=].
@@ -2499,10 +2565,19 @@ To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, a
 
 <pre class="cddl remote-cddl local-cddl">
 browsingContext.Locator = (
+   browsingContext.AccessibilityLocator /
    browsingContext.CssLocator /
    browsingContext.InnerTextLocator /
    browsingContext.XPathLocator
 )
+
+browsingContext.AccessibilityLocator = {
+   type: "accessibility",
+   value: {
+    ? name: text,
+    ? role: text,
+   }
+}
 
 browsingContext.CssLocator = {
    type: "css",
@@ -2582,6 +2657,17 @@ browsingContext.ReadinessState = "none" / "interactive" / "complete"
 
 The <code>browsingContext.ReadinessState</code> type represents the stage of
 document loading at which a navigation command will return.
+
+#### The browsingContext.UserPromptType Type #### {#type-browsingContext-UserPromptType}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+browsingContext.UserPromptType = "alert" / "beforeunload" / "confirm" / "prompt";
+</pre>
+
+The <code>browsingContext.UserPromptType</code> type represents the possible user
+prompt types.
 
 ### Commands ### {#module-browsingContext-commands}
 
@@ -3359,6 +3445,23 @@ To <dfn>locate nodes using inner text</dfn> with given |context nodes|,
 
 1. For each |context node| in |context nodes|:
 
+  1. If |context node| implements {{Document}} or {{DocumentFragment}}:
+
+    Note: when traversing the document or document fragment, <code>max depth</code>
+    is not decreased intentionally to make the search result with
+    <code>document</code> and <code>document.documentElement</code> equivalent.
+
+    1. Let |child nodes| be an empty [=/list=].
+
+    1. For each node |child| in the <a spec=dom>children</a> of |context node|.
+
+      1. [=list/Append=] |child| to |child nodes|.
+
+    1. [=Extend=] |returned nodes| with the result of [=trying=] to [=locate nodes using inner text=]
+      with |child nodes|, |selector|, |max depth|, |match type|, |ignore case|, and |maximum returned node count|.
+
+  1. If |context node| does not implement {{HTMLElement}} then [=continue=].
+
   1. Let |node inner text| be the result of calling the [=innerText getter steps=] with
      |context node| as the [=this=] value.
 
@@ -3372,7 +3475,7 @@ To <dfn>locate nodes using inner text</dfn> with given |context nodes|,
     1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
        <a spec=dom>children</a> of |context node|:
 
-      1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
+      1. [=list/Append=] |child| to |child nodes|.
 
     1. If [=list/size=] of |child nodes| is equal to 0 or |max depth| is equal to 0,
        perform the following steps:
@@ -3385,12 +3488,10 @@ To <dfn>locate nodes using inner text</dfn> with given |context nodes|,
 
     1. Otherwise, perform the following steps:
 
-      1. If |max depth| is not null:
-
-        1. Set |max depth| to |max depth| - 1.
+      1. Let |child max depth| be null if |max depth| is null, or |max depth| - 1 otherwise.
 
       1. Let |child node matches| be the result of [=locate nodes using inner text=]
-         with |child nodes|, |selector|, |max depth|, |match type|,
+         with |child nodes|, |selector|, |child max depth| , |match type|,
          |ignore case|, and |maximum returned node count|.
 
       1. If [=list/size=] of |child node matches| is equal to 0 and |match type| is
@@ -3402,6 +3503,71 @@ To <dfn>locate nodes using inner text</dfn> with given |context nodes|,
    node count|.
 
 1. Return [=success=] with data |returned nodes|.
+
+</div>
+
+<div algorithm="collect nodes using accessibility attributes">
+To <dfn>collect nodes using accessibility attributes</dfn> with given |context nodes|, |selector|,
+|maximum returned node count|, and |returned nodes|:
+
+1. If |returned nodes| is null:
+
+  1. Set |returned nodes| to an empty [=/list=].
+
+1. For each |context node| in |context nodes|:
+
+  1. Let |match| be true.
+
+  1. If |context node| implements {{Element}}:
+
+    1. If |selector| [=map/contains=] "<code>role</code>":
+
+      1. Let |role| be the [=computed role=] of |context node|.
+
+      1. If |selector|["<code>role</code>"] [=is|is not=] |role|:
+
+        1. Set |match| to false.
+
+    1. If |selector| [=map/contains=] "<code>name</code>":
+
+      1. Let |name| be the [=accessible name=] of |context node|.
+
+      1. If |selector|["<code>name</code>"] [=is|is not=] |name|:
+
+        1. Set |match| to false.
+
+  1. Otherwise, set |match| to false.
+
+  1. If |match| is true:
+
+    1. If |maximum returned node count| is not null and [=list/size=] of |returned
+      nodes| is equal to |maximum returned node count|, [=break=].
+
+    1. [=list/Append=] |context node| to |returned nodes|.
+
+  1. Let |child nodes| be an empty [=/list=] and, for each node |child| in the
+     <a spec=dom>children</a> of |context node|:
+
+    1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
+
+  1. [=Try=] to [=collect nodes using accessibility attributes=] with |child nodes|,
+     |selector|, |maximum returned node count|, and |returned nodes|.
+
+1. Return |returned nodes|.
+
+</div>
+
+<div algorithm="locate nodes using accessibility attributes">
+To <dfn>locate nodes using accessibility attributes</dfn> with given |context nodes|, |selector|, and
+|maximum returned node count|:
+
+1. If |selector| does not [=map/contain=] "<code>role</code>" and
+   |selector| does not [=map/contain=] "<code>name</code>", return
+   [=error=] with [=error code=]
+   [=invalid selector=].
+
+1. Return the result of [=collect nodes using accessibility attributes=] with |context nodes|,
+    |selector|, |maximum returned node count|, and null.
 
 </div>
 
@@ -3480,6 +3646,13 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using inner text=]
             given |context nodes|, |selector|, |max depth|, |match type|,
             |ignore case| and |maximum returned node count|.
+
+      <dt>|type| is the string "<code>accessibility</code>"
+      <dd>
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. Let |result nodes| be [=locate nodes using accessibility attributes=]
+            given |context nodes|, |selector|, and |maximum returned node count|.
 
 1. Assert: |maximum returned node count| is null or [=list/size=] of |result nodes| is less
    than or equal to |maximum returned node count|.
@@ -3844,19 +4017,42 @@ The [=remote end steps=] with |command parameters| are:
    1. Otherwise, set the |context|'s [=layout viewport=] to the
       implementation-defined default.
 
+1. Run the [[cssom-view-1#resizing-viewports]] steps.
+
 1. If |command parameters| [=map/contains=] the <code>devicePixelRatio</code> field:
 
    1. Let |device pixel ratio| be the |command
       parameters|["<code>devicePixelRatio</code>"].
 
-   1. If |device pixel ratio| is not null, change the size of the [=CSS Pixel=]
-      in |context|'s [=layout viewport=] such that it corresponds to |device
-      pixel ratio| in device pixels.
+   1. For the |context| and all [=descendant navigables=]:
 
-   1. Otherwise, set the size of the [=CSS Pixel=] in |context|'s [=layout
-      viewport=] to the implementation-defined default.
+      1. Let |navigable| be the [=/navigable=] whose [=navigable/active document=] is
+         |context|'s [=browsing context/active document=].
 
-1. Run the [[cssom-view-1#resizing-viewports]] steps.
+      1. If |device pixel ratio| is not null:
+
+         1. When the [=select an image source from a source set=] are run, act as if
+            the implementation's pixel density was set to |device pixel ratio| when selecting an image.
+
+         1. For the purposes of the [=resolution media feature=], act as if
+            the implementation's resolution is |device pixel ratio| dppx scaled by the page zoom.
+
+         1. [=map/Set=] [=device pixel ratio overrides=][|navigable|] to |device pixel ratio|.
+
+            Note: This will take an effect because of the patch of [[#patchs-determine-the-device-pixel-ratio]].
+
+      1. Otherwise:
+
+         1. When the [=select an image source from a source set=] steps are run, use the implementation's default behavior,
+            without any changes made by previous invocations of these steps.
+
+         1. For the purposes of the [=resolution media feature=], use the implementation's default behavior,
+            without any changes made by previous invocations of these steps.
+
+         1. [=map/Remove=] |navigable| from [=device pixel ratio overrides=].
+
+      1. Run [=evaluate media queries and report changes=] for [=document=] currently loaded
+         in a specified |context|.
 
 1. Return [=success=] with data null.
 
@@ -4016,14 +4212,17 @@ To <dfn>Emit a context created event</dfn> given |session| and |context|:
 
 </div>
 
+
 <div algorithm="remote end event trigger for browsingContext.contextCreated">
 
-The [=remote end event trigger=] is:
+The [=remote end event trigger=] is
+the <dfn export>WebDriver BiDi navigable created</dfn> steps given
+|navigable| and |opener navigable|:
 
-When the [=create a new browsing context=] algorithm is invoked, after the
-[=active document=] of the browsing context is set, run the following steps:
+1. Let |context| be |navigable|'s [=active browsing context=].
 
-1. Let |context| be the newly created browsing context.
+1. Set |context|'s [=original opener=] to |opener navigable|'s [=active browsing context=],
+   if |opener navigable| is provided.
 
 1. Let |related browsing contexts| be a [=/set=] containing |context|.
 
@@ -4063,9 +4262,9 @@ The [=remote end event trigger=] is:
 
 <div algorithm="remote end event trigger for browsingContext.contexDestroyed">
 
-Define the following [=browsing context tree discarded=] steps:
-
-1. Let |context| be the browsing context being discarded.
+The [=remote end event trigger=] is
+the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given
+<var ignore>navigable</var> and |context|:
 
 1. Let |params| be the result of [=get the browsing context info=], given
    |context|, null, and true.
@@ -4375,6 +4574,7 @@ failed</dfn> steps given |context| and |navigation status|:
         browsingContext.UserPromptClosedParameters = {
           context: browsingContext.BrowsingContext,
           accepted: bool,
+          type: browsingContext.UserPromptType,
           ? userText: text
         }
       </pre>
@@ -4383,7 +4583,7 @@ failed</dfn> steps given |context| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
-closed</dfn> steps given |window|, |accepted| and optional |user text|
+closed</dfn> steps given |window|, |type|, |accepted| and optional |user text|
 (default: null).
 
 1. Let |context| be |window|'s [=/browsing context=].
@@ -4393,8 +4593,9 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptClosedParameters</code> production with the
    <code>context</code> field set to |context id|, the <code>accepted</code>
-   field set to |accepted|, and the <code>userText</code> field set to |user
-   text| if |user text| is not null or omitted otherwise.
+   field set to |accepted|, the <code>type</code> field set to |type|, and the
+   <code>userText</code> field set to |user text| if |user text| is not null or
+   omitted otherwise.
 
 1. Let |body| be a [=/map=] matching the
    <code>BrowsingContextUserPromptClosedEvent</code> production, with the
@@ -4422,8 +4623,9 @@ closed</dfn> steps given |window|, |accepted| and optional |user text|
 
         browsingContext.UserPromptOpenedParameters = {
           context: browsingContext.BrowsingContext,
-          type: "alert" / "confirm" / "prompt" / "beforeunload",
+          handler: "accept" / "dismiss" / "ignore",
           message: text,
+          type: browsingContext.UserPromptType,
           ? defaultValue: text
         }
       </pre>
@@ -4439,12 +4641,18 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
 
 1. Let |context id| be the [=browsing context id=] for |context|.
 
+1. Let |handler configuration| be [=get the prompt handler=] with |type|.
+
+1. Let |handler| be |handler configuration|'s [=prompt handler
+   configuration/handler=].
+
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpenedParameters</code> production with the
    <code>context</code> field set to |context id|, the <code>type</code> field
-   set to |type|, the <code>message</code> field set to |message|, and the
+   set to |type|, the <code>message</code> field set to |message|, the
    <code>defaultValue</code> field set to |default value| if |default value| is
-   not null or omitted otherwise.
+   not null or omitted otherwise, and the <code>handler</code> field set to
+   |handler|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpened</code> production, with the
@@ -4456,6 +4664,10 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
    given "<code>browsingContext.userPromptOpened</code>" and |related browsing contexts|:
 
   1. [=Emit an event=] with |session| and |body|.
+
+1. If |handler| is "<code>ignore</code>", set handler to "<code>none</code>".
+
+1. Return |handler|.
 
 </div>
 
@@ -4614,7 +4826,17 @@ To <dfn>update the response</dfn> given |session|, |command| and |command parame
 
   1. For |header| in |command parameters|["<code>headers</code>"]:
 
-    1. Append [=deserialize header=] with |header| to |headers|.
+    1. Let |deserialized header| be [=deserialize header=] with |header|.
+
+    1. If |deserialized header|'s name does not match the [=field-name token=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. If |deserialized header|'s value does not match the [=header value=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. Append |deserialized header| to |headers|.
 
   1. Set |response|'s [=response/header list=] to |headers|.
 
@@ -5865,7 +6087,7 @@ The <dfn export for=commands>network.addIntercept</dfn> command adds a
 <div algorithm="remote end steps for network.addRequestIntercept">
 The [=remote end steps=] given |session| and |command parameters| are:
 
-1. Let |intercept| be the string representation of a [[!RFC4122|UUID]].
+1. Let |intercept| be the string representation of a [[!RFC9562|UUID]].
 
 1. Let |url patterns| be the <code>urlPatterns</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
@@ -5976,8 +6198,12 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. If |command parameters| [=map/contains=] "<code>method</code>":
 
-  1. Let |request|'s [=request/method=] be |command
-     parameters|["<code>method</code>"].
+  1. Let |method| be |command parameters|["<code>method</code>"].
+
+  1. If |method| does not match the [=method token=] production, return [=error=]
+     with [=error code=] "<code>invalid argument</code>".
+
+  1. Let |request|'s [=request/method=] be |method|.
 
 1. If |command parameters| [=map/contains=] "<code>headers</code>":
 
@@ -5985,7 +6211,17 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
   1. For |header| in |command parameters|["<code>headers</code>"]:
 
-    1. Append [=deserialize header=] with |header| to |headers|.
+    1. Let |deserialized header| be [=deserialize header=] with |header|.
+
+    1. If |deserialized header|'s name does not match the [=field-name token=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. If |deserialized header|'s value does not match the [=header value=]
+       production, return [=error=] with [=error code=]
+      "<code>invalid argument</code>".
+
+    1. Append |deserialized header| to |headers|.
 
   1. Set |request|'s [=request/headers list=] to |headers|.
 
@@ -6723,7 +6959,7 @@ before any author-defined script have run.
 TODO: Extend this to scripts in other kinds of realms.
 
 A [=BiDi session=] has a <dfn>preload script map</dfn> which is a [=/map=] in
-which the keys are [[!RFC4122|UUID]]s, and the values are [=structs=] with an <a
+which the keys are [[!RFC9562|UUID]]s, and the values are [=structs=] with an <a
 for=struct>item</a> named <code>function declaration</code>, which is a string,
 <code>arguments</code>, <code>contexts</code>, which is a list or null, and an item named <code>sandbox</code> which is a string
 or null.
@@ -7968,7 +8204,7 @@ To <dfn>set internal ids if needed</dfn> given |serialization internal map|,
     1. If |previously serialized remote value| does not have a field
        <code>internalId</code>, run the following steps:
 
-      1. Let |internal id| be the string representation of a [[!RFC4122|UUID]]
+      1. Let |internal id| be the string representation of a [[!RFC9562|UUID]]
          based on truly random, or pseudo-random numbers.
 
       1. Set the <code>internalId</code> field of
@@ -8714,7 +8950,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
 
-1. Let |script| be the string representation of a [[!RFC4122|UUID]].
+1. Let |script| be the string representation of a [[!RFC9562|UUID]].
 
 1. Let |preload script map| be |session|'s [=preload script map=].
 
@@ -10526,9 +10762,15 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Otherwise, [=update the file selection=] for |element| with |files| as the
    user's selection.
 
+1. If, for any reason, the remote end is unable to set the [=selected files=] of |element| to the files with paths given in |files|,
+   return error with [=error code=] [=unsupported operation=].
+
+   Note: For example remote ends might be unable to set [=selected files=] to files that do not currently exist on the filesystem.
+
 1. Return [=success=] with data null.
 
 </div>
+
 
 # Patches to Other Specifications # {#patches}
 
@@ -10537,27 +10779,6 @@ integration points. It is assumed that these patches will be committed to the ot
 as part of the standards process.
 
 ## HTML ##  {#patches-html}
-
-The [=a browsing context is discarded=] algorithm is modified to read as follows:
-
-<div algorithm>
-To discard a browsing context |browsingContext|, run these steps:
-
-1. If this is not a recursive invocation of this algorithm, call any <dfn export>browsing context
-   tree discarded</dfn> steps defined in other applicable specifications with |browsingContext|.
-
-1. Discard all {{Document}} objects for all the entries in |browsingContext|'s
-   [=session history=].
-
-1. If |browsingContext| is a [=top-level browsing context=], then [=remove a browsing context=]
-   |browsingContext|.
-
-</div>
-
-Issue: The actual patch might be better to split the algorithm into an outer algorithm that is
-called by external callers and an inner algorithm that's used for recursive calls. That's quite hard
-to express as a patch to the specification since it requires changing multiple parts.
-
 
 The [=report an error=] algorithm is modified with an additional step at the
 end:
@@ -10577,3 +10798,27 @@ Other specifications can define <dfn>console steps</dfn>.
    arguments |name|, |printerArgs| and |options| (which is undefined if the
    argument is not provided), call any [=console steps=] defined in
    external specification with arguments |name|, |printerArgs|, and |options|.
+
+
+## CSS ## {#patchs-css}
+
+### Determine the device pixel ratio ### {#patchs-determine-the-device-pixel-ratio}
+
+Insert the following steps at the start of the [=determine the device pixel ratio=] algorithm:
+
+1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
+
+
+# Appendices # {#appendices}
+
+<em>This section is non-normative.</em>
+
+## External specifications ## {#external-specifications}
+
+Note: the list is not exhaustive and might not be up to date.
+
+The following external specifications define additional WebDriver BiDi modules:
+
+1. <a href="https://www.w3.org/TR/permissions/">Permissions</a>
+
+1. <a href="https://webbluetoothcg.github.io/web-bluetooth/">Web Bluetooth</a>
