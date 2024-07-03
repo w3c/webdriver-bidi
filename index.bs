@@ -1435,7 +1435,24 @@ To <dfn>cleanup the session</dfn> given |session|:
 
 1. [=Close the WebSocket connections=] with |session|.
 
+1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
+
 1. Perform any implementation-specific cleanup steps.
+
+</div>
+
+<div algorithm>
+To <dfn>cleanup remote end state</dfn>.
+
+1. [=map/Clear=] the [=before request sent map=].
+
+1. Set the [=default cache behavior=] to "<code>default</code>".
+
+1. [=map/Clear=] the [=navigable cache behavior map=].
+
+1. Perform implementation-defined steps to enable any
+   implementation-specific resource caches that are usually enabled in the
+   current [=remote end=] configuration.
 
 </div>
 
@@ -2332,6 +2349,9 @@ BrowsingContextEvent = (
 
 A [=remote end=] has a <dfn>device pixel ratio overrides</dfn> which is a weak map
 between [=navigables=] and device pixel ratio overrides. It is initially empty.
+
+Note: this map is not cleared when the final session ends i.e. device pixel
+ratio overrides outlive any WebDriver session.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -4230,6 +4250,10 @@ the <dfn export>WebDriver BiDi navigable created</dfn> steps given
 
 1. Let |context| be |navigable|'s [=active browsing context=].
 
+1. If the [=context cache behavior=] with |context| is "<code>bypass</code>",
+   then perform implementation-defined steps to disable any implementation-specific
+   resource caches for network requests originating from |context|.
+
 1. Set |context|'s [=original opener=] to |opener navigable|'s [=active browsing context=],
    if |opener navigable| is provided.
 
@@ -4698,7 +4722,8 @@ NetworkCommand = (
   network.ContinueWithAuth //
   network.FailRequest //
   network.ProvideResponse //
-  network.RemoveIntercept
+  network.RemoveIntercept //
+  network.SetCacheBehavior
 )
 
 </pre>
@@ -4724,6 +4749,13 @@ NetworkEvent = (
 A [=remote end=] has a <dfn>before request sent map</dfn> which is initially an
 empty map.  It's used to track the network events for which a
 <code>network.beforeRequestSent</code> event has already been sent.
+
+A [=remote end=] has a <dfn>default cache behavior</dfn> which is a string. It is
+initially "<code>default</code>".
+
+A [=remote end=] has a <dfn>navigable cache behavior map</dfn> which is a weak
+map between [=/top-level traversables=] and strings representing cache
+behavior. It is initially empty.
 
 ### Network Intercepts ### {#network-intercepts}
 
@@ -4980,7 +5012,6 @@ request in addition to the context.
 
 <div algorithm>
 To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
-
 
 1. Let |request data| be the result of [=get the request data=] with |request|.
 
@@ -6563,6 +6594,134 @@ requests will be affected.
 
 </div>
 
+#### The network.setCacheBehavior Command ####  {#command-network-setCacheBehavior}
+
+The <dfn export for=commands>network.setCacheBehavior</dfn> command configures
+the network cache behavior for certain requests.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      network.SetCacheBehavior = (
+        method: "network.setCacheBehavior",
+        params: network.SetCacheBehaviorParameters
+      )
+
+      network.SetCacheBehaviorParameters = {
+        cacheBehavior: "default" / "bypass",
+        ? contexts: [+browsingContext.BrowsingContext]
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The <dfn export>WebDriver BiDi cache behavior</dfn> steps given |request| are:
+
+1. Let |context| be null.
+
+1. If |request|'s [=request/window=] is an [=environment settings object=]:
+
+  1. Let |environment settings| be |request|'s [=request/window=]
+
+  1. If there is a [=/browsing context=] whose [=active window=] is |environment
+     settings|' [=environment settings object/global object=], set |context| to
+     the [=top-level browsing context=] for that browsing context.
+
+1. If |context| is not null and [=navigable cache behavior map=] [=set/contains=]
+   |context|, return [=navigable cache behavior map=][|context|].
+
+1. Return [=default cache behavior=].
+
+</div>
+
+<div algorithm>
+The <dfn>context cache behavior</dfn> steps given |context| are:
+
+1. Set |top-level context| to the [=top-level browsing context=] for |context|.
+
+1. If [=navigable cache behavior map=] [=map/contains=] |top-level context|, return
+   [=navigable cache behavior map=][|top-level context|].
+
+1. Return [=default cache behavior=].
+
+</div>
+
+<div algorithm="remote end steps for network.setCacheBehavior">
+The [=remote end steps=] given <var ignore>session</var> and |command parameters| are:
+
+1. Let |behavior| be |command parameters|["<code>cacheBehavior</code>"].
+
+1. If |command parameters| does not [=map/contain=] "<code>contexts</code>":
+
+  1. Set the [=default cache behavior=] to |behavior|.
+
+  1. [=map/Clear=] [=navigable cache behavior map=].
+
+  1. Switch on the value of behavior:
+    <dl>
+      <dt>"<code>bypass</code>"
+      <dd>Perform implementation-defined steps to disable any
+        implementation-specific resource caches.
+      <dt>"<code>default</code>"
+      <dd>Perform implementation-defined steps to enable any
+        implementation-specific resource caches that are usually enabled in the
+        current [=remote end=] configuration.
+    </dl>
+
+  1. Return [=success=] with data null.
+
+1. Let |contexts| be an empty [=/set=].
+
+1. For each |context id| of |command parameters|["<code>contexts</code>"]:
+
+  1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+    with |context id|.
+
+  1. If |context| is not a [=top-level browsing context=], return [=error=]
+     with [=error code=] [=invalid argument=].
+
+  1. [=list/Append=] |context| to |contexts|.
+
+1. For each |context| in |contexts|:
+
+    1. If [=navigable cache behavior map=] [=map/contains=] |context|, and
+       [=navigable cache behavior map=][|context|] is equal to |behavior| then
+       continue.
+
+    1. Switch on the value of behavior:
+      <dl>
+        <dt>"<code>bypass</code>"
+        <dd>Perform implementation-defined steps to disable any implementation-specific
+          resource caches for network requests originating from any browsing
+          context for which |context| is the [=top-level browsing context=].
+        <dt>"<code>default</code>"
+        <dd>Perform implementation-defined steps to enable any
+          implementation-specific resource caches that are usually enabled in the
+          current [=remote end=] configuration for network requests
+          originating from any browsing context for which |context| is the
+          [=top-level browsing context=].
+      </dl>
+
+    1. If |behavior| is equal to [=default cache behavior=]:
+
+      1. If [=navigable cache behavior map=] [=map/contains=] |context|,
+         [=map/remove=] [=navigable cache behavior map=][|context|].
+
+    1. Otherwise:
+
+      1. Set [=navigable cache behavior map=][|context|] to |behavior|.
+
+1. Return [=success=] with data null.
+
+</div>
 
 ### Events ### {#module-network-event}
 
