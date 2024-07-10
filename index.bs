@@ -179,12 +179,9 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
     text: 2D context creation algorithm; url: canvas.html#2d-context-creation-algorithm
     text: 2D; url: canvas.html#concept-canvas-2d
-    text: a browsing context is discarded; url: window-object.html#a-browsing-context-is-discarded
     text: a serialization of the bitmap as a file; url: canvas.html#a-serialisation-of-the-bitmap-as-a-file
     text: activation notification; url: interaction.html#activation-notification
-    text: active browsing context; url: document-sequences.html#nav-bc
-    text: active document; for: browsing context; url: document-sequences.html#active-document
-    text: active window; url: document-sequences.html#active-window
+    text: active window; url: document-sequences.html#nav-window
     text: alert; url: timers-and-user-prompts.html#dom-alert
     text: close; url: window-object.html#close-a-browsing-context
     text: disabled; url: form-control-infrastructure.html#concept-fe-disabled
@@ -212,7 +209,6 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: parent; for:navigable; url: document-sequences.html#nav-parent
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: prompt; url: timers-and-user-prompts.html#dom-prompt
-    text: remove a browsing context; url: browsers.html#bcg-remove
     text: report an error; url: webappapis.html#report-the-error
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
@@ -690,40 +686,40 @@ occurred on the [=remote end=].
 
 A [=BiDi session=] has a <dfn export for=event>global event set</dfn>
 which is a [=/set=] containing the event names for events that are enabled for all
-browsing contexts. This initially contains the [=event name=] for events that
+navigables. This initially contains the [=event name=] for events that
 are <dfn export for=event>in the default event set</dfn>.
 
-A [=BiDi session=] has a <dfn export for=event>browsing context event
-map</dfn>, which is a [=/map=] with [=/top-level browsing context=] keys and values
+A [=BiDi session=] has a <dfn export for=event>navigable event map</dfn>,
+which is a [=/map=] with [=/top-level traversable=] keys and values
 that are a [=/set=] of [=event name=]s for events that are enabled in the given
-browsing context.
+navigable.
 
 <div algorithm>
 
-To obtain a list of <dfn>event enabled browsing contexts</dfn> given
+To obtain a list of <dfn>event enabled navigables</dfn> given
 |session| and |event name|:
 
-1. Let |contexts| be an empty [=/set=].
+1. Let |navigables| be an empty [=/set=].
 
-1. For each |context| → |events| of |session|'s [=browsing context event map=]:
+1. For each |navigable| → |events| of |session|'s [=navigable event map=]:
 
-  1. If |events| contains |event name|, append |context| to |contexts|
+  1. If |events| contains |event name|, append |navigable| to |navigables|
 
-1. Return |contexts|.
+1. Return |navigables|.
 
 </div>
 
 <div algorithm>
 
 The <dfn export>set of sessions for which an event is enabled</dfn> given |event
-name| and |browsing contexts| is:
+name| and |navigables| is:
 
 1. Let |sessions| be a new [=/set=].
 
 1. For each |session| in [=active BiDI sessions=]:
 
-  1. If [=event is enabled=] with |session|, |event name| and |browsing
-     contexts|, append |session| to |sessions|.
+  1. If [=event is enabled=] with |session|, |event name| and |navigables|,
+    append |session| to |sessions|.
 
 1. Return |sessions|.
 
@@ -732,25 +728,23 @@ name| and |browsing contexts| is:
 <div algorithm>
 
 To determine if an <dfn export>event is enabled</dfn> given |session|,
-|event name| and |browsing contexts|:
+|event name| and |navigables|:
 
-Note: |browsing contexts| is a set because a [=shared worker=] can be associated
+Note: |navigables| is a set because a [=shared worker=] can be associated
       with multiple contexts.
 
-1. Let |top-level browsing contexts| be an empty [=/set=].
+1. Let |top-level traversables| be an empty [=/set=].
 
-1. For each |browsing context| of |browsing contexts|, append |browsing
-   context|'s [=top-level browsing context=] to |top-level browsing contexts|.
+1. For each |navigable| of |navigables|, append |navigable|'s [=navigable/top-level traversable=] to |top-level traversables|.
 
-1. Let |event map| be the [=browsing context event map=] for |session|.
+1. Let |event map| be the [=navigable event map=] for |session|.
 
-1. For each |browsing context| of |top-level browsing contexts|:
+1. For each |navigable| of |top-level traversables|:
 
-  1. If |event map| [=map/contains=] |browsing context|, let |browsing context
-     events| be |event map|[|browsing context|].  Otherwise let |browsing
-     context events| be null.
+  1. If |event map| [=map/contains=] |navigable|, let |navigable events|
+    be |event map|[|navigable|].  Otherwise let |navigable events| be null.
 
-  1. If |browsing context events| is not null, and |browsing context events|
+  1. If |navigable events| is not null, and |navigable events|
      [=list/contains=] |event name|, return true.
 
 1. If the [=global event set=] for |session| [=list/contains=] |event name| return
@@ -1065,21 +1059,25 @@ To <dfn>handle an incoming message</dfn> given a [=WebSocket connection=]
 
 <div algorithm>
 
-To <dfn>get related browsing contexts</dfn> given an [=script/settings object=]
+To <dfn>get related navigables</dfn> given an [=script/settings object=]
 |settings|:
 
-1. Let |related browsing contexts| be an empty [=/set=]
+1. Let |related navigables| be an empty [=/set=].
 
-1. If |settings|' [=relevant global object=] is a {{Window}}, append |settings|'
-   [=relevant global object=]'s <a>associated <code>Document</code></a>'s
-   [=Document/browsing context=] to |related browsing contexts|.
+1. Let |navigable| be null.
+
+1. If |settings|' [=relevant global object=] is a {{Window}}, set |navigable|
+   to [=relevant global object=]'s <a>associated <code>Document</code></a>'s
+   [=/node navigable=].
 
    Otherwise if the [=realm/global object=] specified by |settings| is a
    {{WorkerGlobalScope}}, for each |owner| in the [=realm/global object=]'s
-   [=owner set=], if |owner| is a [=Document=], append |owner|'s
-   [=Document/browsing context=] to |related browsing contexts|.
+   [=owner set=], if |owner| is a [=Document=], set |navigable| to |owner|'s
+   [=/node navigable=].
 
-1. Return |related browsing contexts|.
+1. If |navigable| is not null, append |navigable| to |related navigables|.
+
+1. Return |related navigables|.
 
 </div>
 
@@ -1210,7 +1208,7 @@ requests to start a WebDriver session, it must:
 
 A common requirement for automation tools is to execute scripts which have
 access to the DOM of a document, but don't have information about any changes to
-the DOM APIs made by scripts running in the browsing context containing the
+the DOM APIs made by scripts running in the navigable containing the
 document.
 
 A [=BiDi session=] has a <dfn>sandbox map</dfn> which is a weak map in which the
@@ -1236,12 +1234,12 @@ provides access to platform objects in an existing {{Window}} realm via
 {{SandboxProxy}} objects.
 
 <div algorithm>
-To <dfn>get or create a sandbox realm</dfn> given |name| and |browsing context|:
+To <dfn>get or create a sandbox realm</dfn> given |name| and |navigable|:
 
 1. If |name| is an empty string, then return [=error=] with
    [=error code=] [=invalid argument=].
 
-1. Let |window| be |browsing context|'s [=active window=].
+1. Let |window| be |navigable|'s [=active window=].
 
 1. If [=sandbox map=] does not contain |window|, set [=sandbox map=][|window|]
    to a new [=/map=].
@@ -1249,7 +1247,7 @@ To <dfn>get or create a sandbox realm</dfn> given |name| and |browsing context|:
 1. Let |sandboxes| be [=sandbox map=][|window|].
 
 1. If |sandboxes| does not contain |name|, set |sandboxes|[|name|] to [=create
-   a sandbox realm=] with |browsing context|.
+   a sandbox realm=] with |navigable|.
 
 1. Return [=success=] with data |sandboxes|[|name|].
 
@@ -1458,10 +1456,10 @@ To <dfn>cleanup remote end state</dfn>.
 
 <div algorithm>
 To <dfn>update the event map</dfn>, given
-|session|, |requested event names|, |browsing contexts|, and |enabled|:
+|session|, |requested event names|, |navigables|, and |enabled|:
 
 Note: The return value of this algorithm is a map between event names and
-contexts. When the events are being enabled, the contexts in the return value
+navigables. When the events are being enabled, the navigables in the return value
 are those for which the event are now enabled but were not previously. When
 events are disabled, the return value is always empty.
 
@@ -1470,7 +1468,7 @@ events are disabled, the return value is always empty.
 
 1. Let |event map| be a new [=/map=].
 
-1. For each |key| → |value| of the [=browsing context event map=] for
+1. For each |key| → |value| of the [=navigable event map=] for
    |session|:
 
   1. Set |event map|[|key|] to a [=set/clone=] of |value|.
@@ -1483,7 +1481,7 @@ events are disabled, the return value is always empty.
 
 1. Let |enabled events| be a new [=/map=].
 
-1. If |browsing contexts| is null:
+1. If |navigables| is null:
 
     1. If |enabled| is true:
 
@@ -1491,16 +1489,16 @@ events are disabled, the return value is always empty.
 
          1. If |global event set| doesn't contain |event name|:
 
-           1. Let |already enabled contexts| be the [=event enabled browsing
-              contexts=] given |session| and |event name|
+           1. Let |already enabled navigables| be the [=event enabled navigables=]
+            given |session| and |event name|.
 
            1. Add |event name| to |global event set|.
 
-           1. For each |context| of |already enabled contexts|, remove |event
-              name| from |event map|[|context|].
+           1. For each |navigable| of |already enabled navigables|, remove |event
+              name| from |event map|[|navigable|].
 
-           1. Let |newly enabled contexts| be a list of all [=top-level browsing
-              contexts=] that are not contained in |already enabled contexts|,
+           1. Let |newly enabled contexts| be a list of all [=/top-level traversable=]
+            that are not contained in |already enabled navigables|,
 
            1. Set |enabled events|[|event name|] to |newly enabled contexts|.
 
@@ -1512,27 +1510,27 @@ events are disabled, the return value is always empty.
            name| from |global event set|. Otherwise return [=error=] with
            [=error code=] [=invalid argument=].
 
-1. Otherwise, if |browsing contexts| is not null:
+1. Otherwise, if |navigables| is not null:
 
   1. Let |targets| be an empty [=/map=].
 
-  1. For each |context id| in |browsing contexts|:
+  1. For each |navigable id| in |navigables|:
 
-    1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-       with |context id|.
+    1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+       with |navigable id|.
 
-    1. Let |top-level context| be the [=top-level browsing context=] for |context|.
+    1. Let |top-level traversable| be the [=navigable/top-level traversable=] for |navigable|.
 
-    1. If |event map| does not contain |top-level context|, set |event
-       map|[|top-level context|] to a new [=/set=].
+    1. If |event map| does not contain |top-level traversable|, set |event
+       map|[|top-level traversable|] to a new [=/set=].
 
-    1. Set |targets|[|top-level context|] to |event map|[|top-level context|].
+    1. Set |targets|[|top-level traversable|] to |event map|[|top-level traversable|].
 
   1. For each |event name| in |event names|:
 
     1. If |enabled| is true and |global event set| contains |event name|, continue.
 
-    1. For each |context| → |target| in |targets|:
+    1. For each |navigable| → |target| in |targets|:
 
       1. If |enabled| is true and |target| does not contain |event name|:
 
@@ -1541,7 +1539,7 @@ events are disabled, the return value is always empty.
         1. If |enabled events| does not contain |event name|, set |enabled
            events|[|event name|] to a new [=/set=].
 
-        1. Append |context| to |enabled events|[|event name|].
+        1. Append |navigable| to |enabled events|[|event name|].
 
       1. If |enabled| is false:
 
@@ -1551,7 +1549,7 @@ events are disabled, the return value is always empty.
 
 1. Set the [=global event set=] for |session| to |global event set|.
 
-1. Set the [=browsing context event map=] for |session| to |event map|.
+1. Set the [=navigable event map=] for |session| to |event map|.
 
 1. Return [=success=] with data |enabled events|.
 
@@ -1896,9 +1894,9 @@ The [=remote end steps=] given |session| and <var ignore>command parameters</var
 #### The session.subscribe Command #### {#command-session-subscribe}
 
 The <dfn export for=commands>session.subscribe</dfn> command enables certain events
-either globally or for a set of browsing contexts
+either globally or for a set of navigables.
 
-Issue: This needs to be generalized to work with realms too
+Issue: This needs to be generalized to work with realms too.
 
 <dl>
    <dt>Command Type</dt>
@@ -1924,19 +1922,19 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let the |list of event names| be the value of the <code>events</code> field of
    |command parameters|
 
-1. Let the |list of contexts| be the value of the <code>contexts</code>
+1. Let the |list of navigables| be the value of the <code>contexts</code>
    field of |command parameters| if it is present or null if it isn't.
 
 1. Let |enabled events| be the result of [=trying=] to [=update the event map=]
-   with |session|, |list of event names| , |list of contexts| and
+   with |session|, |list of event names| , |list of navigables| and
    enabled true.
 
 1. Let |subscribe step events| be a new [=/map=].
 
-1. For each |event name| → |contexts| in |enabled events|:
+1. For each |event name| → |navigables| in |enabled events|:
 
   1. If the [=event=] with [=event name=] |event name| defines [=remote end
-     subscribe steps=], set |subscribe step events|[|event name|] to |contexts|.
+     subscribe steps=], set |subscribe step events|[|event name|] to |navigables|.
 
 1. [=map/Sort in ascending order=] |subscribe step events| using the following less
    than algorithm given two entries with keys |event name one| and |event
@@ -1949,13 +1947,13 @@ The [=remote end steps=] with |session| and |command parameters| are:
     1. Return true if |event one|'s [=subscribe priority=] is less than |event
        two|'s subscribe priority, or false otherwise.
 
-1. If |list of contexts| is null, let |include global| be true, otherwise let
+1. If |list of navigables| is null, let |include global| be true, otherwise let
    |include global| be false.
 
-1. For each |event name| → |contexts| in |subscribe step events|:
+1. For each |event name| → |navigables| in |subscribe step events|:
 
   1. Run the [=remote end subscribe steps=] for the [=event=] with [=event name=]
-     |event name| given |session|, |contexts| and |include global|.
+     |event name| given |session|, |navigables| and |include global|.
 
 1. Return [=success=] with data null.
 
@@ -1964,9 +1962,9 @@ The [=remote end steps=] with |session| and |command parameters| are:
 #### The session.unsubscribe Command #### {#command-session-unsubscribe}
 
 The <dfn export for=commands>session.unsubscribe</dfn> command disables events
-either globally or for a set of browsing contexts
+either globally or for a set of navigables.
 
-Issue: This needs to be generalised to work with realms too
+Issue: This needs to be generalised to work with realms too.
 
 <dl>
    <dt>Command Type</dt>
@@ -2110,7 +2108,7 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
 
   1. [=Cleanup the session=] with |session|.
 
-  1. [=Close=] any [=top-level browsing contexts=] without [=prompting to unload=].
+  1. [=Close=] any [=navigable/top-level traversables=] without [=prompting to unload=].
 
   1. Perform implementation defined steps to clean up resources associated with
      the [=remote end=] under automation.
@@ -2215,7 +2213,7 @@ The [=remote end steps=] are:
 #### The browser.removeUserContext Command #### {#command-browser-removeUserContext}
 
 The <dfn export for=commands>browser.removeUserContext</dfn> command closes a
-user context and all browsing contexts in it without running
+user context and all navigables in it without running
 <code>beforeunload</code> handlers.
 
 <dl>
@@ -2253,7 +2251,7 @@ The [=remote end steps=] with |command parameters| are:
 
 1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
 
-1. For each [=/top-level traversable=] |navigable|:
+1. For each [=navigable/top-level traversable=] |navigable|:
 
   1. If |navigable|'s [=associated user context=] is |user context|:
 
@@ -2274,10 +2272,6 @@ Note: For historic reasons this module is called <code>browsingContext</code>
 rather than <code>navigable</code>, and the protocol uses the term
 <code>context</code> to refer to navigables, particularly as a field in command
 and response parameters.
-
-Issue: Update the spec to use [=/navigable=] consistently and remove uses
-of [=/browsing context=]. See
-https://github.com/w3c/webdriver-bidi/issues/91#issuecomment-2144536819.
 
 The progress of navigation is communicated using an immutable <dfn export>WebDriver
 navigation status</dfn> struct, which has the following items:
@@ -2363,30 +2357,30 @@ ratio overrides outlive any WebDriver session.
 browsingContext.BrowsingContext = text;
 </pre>
 
-Each [=/browsing context=] has an associated <dfn export>browsing context
-id</dfn>, which is a string uniquely identifying that browsing context. This is
-implicitly set when the context is created. For browsing contexts with an
-associated WebDriver [=window handle=] the [=/browsing context id=] must be the
+Each [=/navigable=] has an associated <dfn export>navigable id</dfn>,
+which is a string uniquely identifying that navigable. This is
+implicitly set when the navigable is created. For navigables with an
+associated WebDriver [=window handle=] the [=/navigable id=] must be the
 same as the [=window handle=].
 
-Each [=/browsing context=] also has an <dfn>associated storage partition</dfn>,
+Each [=/navigable=] also has an <dfn>associated storage partition</dfn>,
 which is the [=storage partition=] it uses to persist data.
 
-Each [=/browsing context=] also has an associated <dfn>original opener</dfn>,
-which is a [=/browsing context=] that caused browsing context to open
+Each [=/navigable=] also has an associated <dfn>original opener</dfn>,
+which is a [=/navigable=] that caused the navigable to open
 or null, initially set to null.
 
 <div algorithm>
-To <dfn export>get a browsing context</dfn> given |context id|:
+To <dfn export>get a navigable</dfn> given |navigable id|:
 
-1. If |context id| is null, return [=success=] with data null.
+1. If |navigable id| is null, return [=success=] with data null.
 
-1. If there is no browsing context with [=browsing context id=] |context id| return
+1. If there is no navigable with [=navigable id=] |navigable id| return
    [=error=] with [=error code=] [=no such frame=]
 
-1. Let |context| be the browsing context with id |context id|.
+1. Let |navigable| be the [=/navigable=] with id |navigable id|.
 
-1. Return [=success=] with data |context|
+1. Return [=success=] with data |navigable|.
 
 </div>
 
@@ -2408,59 +2402,45 @@ browsingContext.Info = {
 </pre>
 
 The <code>browsingContext.Info</code> type represents the properties of a
-browsing context.
+navigable.
 
 <div algorithm>
-To <dfn>get the parent browsing context</dfn> given |browsing context|:
-
-1. Let |navigable| be the [=/navigable=] whose [=navigable/active
-   document=] is |browsing context|'s [=browsing context/active document=].
+To <dfn>get the parent navigable</dfn> given |navigable|:
 
 1. Let |parent navigable| be |navigable|'s [=navigable/parent=].
 
 1. If |parent navigable| is null, then return null.
 
-1. Return |parent navigable|'s [=active browsing context=].
+1. Return |parent navigable|.
 
 </div>
 
 <div algorithm>
-To <dfn>get the child browsing contexts</dfn> given |browsing context|:
+To <dfn>get the child navigables</dfn> given |navigable|:
 
 TODO: make this return a list in document order
-
-1. Let |navigable| be the [=/navigable=] whose [=navigable/active
-   document=] is |browsing context|'s [=browsing context/active document=].
 
 1. Let |child navigables| be a [=/set=] containing all navigables that are
    a [=child navigable=] of |navigable|.
 
-1. Let |child browsing contexts| be an empty [=/set=].
-
-1. For each |child navigable| in |child navigables|:
-
-  1. Append |child navigable|'s [=active browsing context=] to |child
-     browsing contexts|.
-
-1. Return |child browsing contexts|.
+1. Return |child navigables|.
 
 </div>
 
 
 <div algorithm>
-To <dfn>get the browsing context info</dfn> given |context|,
+To <dfn>get the navigable info</dfn> given |navigable|,
 |max depth| and |include parent id|:
 
-1. Let |context id| be the [=browsing context id=] for |context|.
+1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
-1. Let |parent browsing context| be [=get the parent browsing
-   context=] given |context|.
+1. Let |navigable| be [=get the parent navigable=] given |navigable|.
 
-1. If |parent browsing context| is not null let |parent id| be the
-   [=browsing context id=] of |parent browsing context|. Otherwise let
+1. If |navigable| is not null let |parent id| be the
+   [=navigable id=] of |navigable|. Otherwise let
    |parent id| be null.
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |document| be |navigable|'s [=active document=].
 
 1. Let |url| be the result of running the [=URL serializer=], given
    |document|'s <a spec=dom>URL</a>.
@@ -2471,28 +2451,28 @@ To <dfn>get the browsing context info</dfn> given |context|,
 
 1. If |max depth| is null, or |max depth| is greater than 0:
 
-  1. Let |child contexts| be [=get the child browsing contexts=] given |context|.
+  1. Let |child navigables| be [=get the child navigables=] given |navigable|.
 
   1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null otherwise.
 
   1. Set |child infos| to an empty [=/list=].
 
-  1. For each |child context| of |child contexts|:
+  1. For each |child context| of |child navigables|:
 
-    1. Let |info| be the result of [=get the browsing context info=] given
+    1. Let |info| be the result of [=get the navigable info=] given
        |child context|, |child depth|, and false.
 
     1. Append |info| to |child infos|
 
-1. Let |user context| be |context|'s [=associated user context=].
+1. Let |user context| be |navigable|'s [=associated user context=].
 
-1. Let |opener id| be the [=browsing context id=] for |context|'s
-   [=original opener=], if |context|'s [=original opener=] is not null,
+1. Let |opener id| be the [=navigable id=] for |navigable|'s
+   [=original opener=], if |navigable|'s [=original opener=] is not null,
    and null otherwise.
 
 1. Let |context info| be a [=/map=] matching the
    <code>browsingContext.Info</code> production with the <code>context</code>
-   field set to |context id|, the <code>parent</code> field set to |parent id|
+   field set to |navigable id|, the <code>parent</code> field set to |parent id|
    if |include parent id| is <code>true</code>, or unset otherwise, the <code>url</code>
    field set to |url|, the <code>userContext</code> field set to
    |user context|'s [=user context id=], <code>originalOpener</code>
@@ -2504,17 +2484,14 @@ To <dfn>get the browsing context info</dfn> given |context|,
 </div>
 
 <div algorithm>
-To <dfn>await a navigation</dfn> given |context|, |request|, |wait condition|, and optionally
+To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|, and optionally
 |history handling| (default: "<code>default</code>") and |ignore cache| (default: false):
 
 1. Let |navigation id| be the string representation of a
    [[!RFC9562|UUID]] based on truly random, or pseudo-random numbers.
 
-1. Let |navigable| be the [=/navigable=] whose [=navigable/active
-   document=] is |context|'s [=browsing context/active document=].
-
 1. [=Navigate=] |navigable| with resource |request|, and using
-   |context|'s [=browsing context/active document=] as the source
+   |navigable|'s [=active document=] as the source
    {{Document}}, with [=navigation id=] |navigation id|, and [=history
    handling behavior=] |history handling|. If |ignore cache| is true,
    the navigation must not load resources from the HTTP cache.
@@ -2660,9 +2637,9 @@ browsingContext.NavigationInfo = {
 The <code>browsingContext.NavigationInfo</code> type provides details of an ongoing navigation.
 
 <div algorithm>
-To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
+To <dfn>get the navigation info</dfn>, given |navigable| and |navigation status|:
 
-1. Let |context id| be the [=browsing context id=] for |context|.
+1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
 1. Let |navigation id| be |navigation status|'s id.
 
@@ -2671,7 +2648,7 @@ To <dfn>get the navigation info</dfn>, given |context| and |navigation status|:
 1. Let |url| be |navigation status|'s url.
 
 1. Return a [=/map=] matching the <code>browsingContext.NavigationInfo</code>
-   production, with the <code>context</code> field set to |context id|, the
+   production, with the <code>context</code> field set to |navigable id|, the
    <code>navigation</code> field set to |navigation id|, the
    <code>timestamp</code> field set to |timestamp|, and the <code>url</code>
    field set to the result of the [=URL serializer=] given |url|.
@@ -2702,7 +2679,7 @@ prompt types.
 
 #### The browsingContext.activate Command ####  {#command-browsingContext-activate}
 
-The <dfn export for=commands>browsingContext.activate</dfn> command activates and focuses the given top-level browsing context.
+The <dfn export for=commands>browsingContext.activate</dfn> command activates and focuses the given [=/top-level traversable=].
 
 <dl>
    <dt>Command Type</dt>
@@ -2730,26 +2707,26 @@ The <dfn export for=commands>browsingContext.activate</dfn> command activates an
 
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |context id| be the value of the |command parameters|["<code>context</code>"] field.
+1. Let |navigable id| be the value of the |command parameters|["<code>context</code>"] field.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with |navigable id|.
 
-1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
+1. If |navigable| is not a [=/top-level traversable=], return [=error=] with [=error code=] [=invalid argument=].
 
-1. Return [=activate a context=] with |context|.
+1. Return [=activate a navigable=] with |navigable|.
 
 </div>
 
 <div algorithm>
-To <dfn>activate a context</dfn> given |context|:
+To <dfn>activate a navigable</dfn> given |navigable|:
 
-1. Run implementation-specific steps so that |context|'s [=traversable navigable=]'s [=system visibility state=] becomes [=visible=]. If this is not possible return [=error=] with error code [=unsupported operation=].
+1. Run implementation-specific steps so that |navigable|'s [=system visibility state=] becomes [=visible=]. If this is not possible return [=error=] with error code [=unsupported operation=].
 
     Note: This can have the side effect of making currently [=visible=] [=navigables=] [=hidden=].
 
     Note: This can change the underlying OS state by causing the window to become unminimized or by other side effects related to changing the [=system visibility state=].
 
-1. Run implementation-specific steps to set the [=top-level traversable/system focus=] on the |context| if it is not focused.
+1. Run implementation-specific steps to set the [=top-level traversable/system focus=] on the |navigable| if it is not focused.
 
     Note: This does not change the [=focused area of the document=] except as mandated by other specifications.
 
@@ -2760,7 +2737,7 @@ To <dfn>activate a context</dfn> given |context|:
 #### The browsingContext.captureScreenshot Command ####  {#command-browsingContext-captureScreenshot}
 
 The <dfn export for=commands>browsingContext.captureScreenshot</dfn> command
-captures an image of the given browsing context, and returns it as a
+captures an image of the given navigable, and returns it as a
 Base64-encoded string.
 
 <dl>
@@ -2897,16 +2874,16 @@ To <dfn>render document to a canvas</dfn> given |document| and |rect|:
 1. Let |canvas| be a new {{HTMLCanvasElement}} with {{HTMLCanvasElement/width}} |paint
    width| and {{HTMLCanvasElement/height}} |paint height|.
 
-1. Let |context| be the result of running the [=2D context creation algorithm=]
+1. Let |canvas context| be the result of running the [=2D context creation algorithm=]
    with |canvas| and null.
 
 1. Set |canvas|'s [=context mode=] to [=2D=].
 
 1. Complete implementation specific steps equivalent to drawing the region of
    the framebuffer representing the region of |document| covered by |rect| to
-   |context|, such that each pixel in the framebuffer corresponds to a pixel in
-   |context| with (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
-   viewport coordinates corresponding to (0,0) in |context| and (|rect|'s
+   |canvas context|, such that each pixel in the framebuffer corresponds to a pixel in
+   |canvas context| with (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
+   viewport coordinates corresponding to (0,0) in |canvas context| and (|rect|'s
    [=x coordinate=] + |rect|'s [=width dimension=], |rect|'s
    [=y coordinate=] + |rect|'s [=height dimension=]) corresponding to (|paint
    width|, |paint height|).
@@ -2960,13 +2937,16 @@ To <dfn>get the origin rectangle</dfn> given |document| and |origin|:
 
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
+1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters| if present, or null otherwise.
 
-1. If the implementation is unable to capture a screenshot of |context| for any
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+    with |navigable id|.
+
+1. If the implementation is unable to capture a screenshot of |navigable| for any
    reason then return [=error=] with [=error code=] [=unsupported operation=].
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |document| be |navigable|'s [=active document=].
 
 1. Immediately after the next invocation of the [=run the animation frame
    callbacks=] algorithm for |document|:
@@ -3054,7 +3034,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 #### The browsingContext.close Command ####  {#command-browsingContext-close}
 
 The <dfn export for=commands>browsingContext.close</dfn> command closes a
-[=top-level browsing context=].
+[=/top-level traversable=].
 
 <dl>
    <dt>Command Type</dt>
@@ -3083,32 +3063,32 @@ The <dfn export for=commands>browsingContext.close</dfn> command closes a
 <div algorithm="remote end steps for browsingContext.close">
 The [=remote end steps=] with |command parameters| are:
 
-  1. Let |context id| be the value of the <code>context</code> field of
+  1. Let |navigable id| be the value of the <code>context</code> field of
      |command parameters|.
 
   1. Let |prompt unload| be the value of the <code>promptUnload</code> field of
      |command parameters|.
 
-  1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-     with |context id|.
+  1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+     with |navigable id|.
 
-  1. Assert: |context| is not null.
+  1. Assert: |navigable| is not null.
 
-  1. If |context| is not a [=top-level browsing context=], return [=error=] with
+  1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
      [=error code=] [=invalid argument=].
 
   1. If |prompt unload| is true:
 
-     1. [=Close=] |context|.
+     1. [=Close=] |navigable|.
 
   1. Otherwise:
 
-     1. [=Close=] |context| without [=prompting to unload=].
+     1. [=Close=] |navigable| without [=prompting to unload=].
 
   1. Return [=success=] with data null.
 
 Issue(w3c/webdriver-bidi#170): There is an open discussion about the behavior
-when closing the last [=top-level browsing context=]. We could expect to close
+when closing the last [=/top-level traversable=]. We could expect to close
 the browser, close the session or leave this up to the implementation.
 
 </div>
@@ -3116,8 +3096,8 @@ the browser, close the session or leave this up to the implementation.
 #### The browsingContext.create Command ####  {#command-browsingContext-create}
 
 The <dfn export for=commands>browsingContext.create</dfn> command creates a new
-[=/browsing context=], either in a new tab or in a new window, and returns its
-[=browsing context id=].
+[=/navigable=], either in a new tab or in a new window, and returns its
+[=navigable id=].
 
 <dl>
    <dt>Command Type</dt>
@@ -3154,21 +3134,21 @@ The [=remote end steps=] with |command parameters| are:
   1. Let |type| be the value of the <code>type</code> field of
      |command parameters|.
 
-  1. Let |reference context id| be the value of the <code>referenceContext</code>
+  1. Let |reference navigable id| be the value of the <code>referenceContext</code>
      field of |command parameters|, if present, or null otherwise.
 
-  1. If |reference context id| is not null, let |reference context| be the
-     result of [=trying=] to [=get a browsing context=] with
-     |reference context id|. Otherwise let |reference context| be null.
+  1. If |reference navigable id| is not null, let |reference navigable| be the
+     result of [=trying=] to [=get a navigable=] with
+     |reference navigable id|. Otherwise let |reference navigable| be null.
 
-  1. If |reference context| is not null and is not a [=top-level browsing context=],
+  1. If |reference navigable| is not null and is not a [=/top-level traversable=],
     return [=error=] with [=error code=] [=invalid argument=].
 
-  1. If the implementation is unable to create a new browsing context for any
+  1. If the implementation is unable to create a new navigable for any
      reason then return [=error=] with [=error code=] [=unsupported operation=].
 
-  1. Let |user context| be the [=default user context=] if |reference context|
-     is null, and |reference context|' [=associated user context=] otherwise.
+  1. Let |user context| be the [=default user context=] if |reference navigable|
+     is null, and |reference navigable|' [=associated user context=] otherwise.
 
   1. Let |user context id| be the value of the <code>userContext</code> field of
      |command parameters| if present, or null otherwise.
@@ -3184,42 +3164,38 @@ The [=remote end steps=] with |command parameters| are:
 
   <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
        but without using the "current browsing context" concept. -->
-  1. Create a new [=top-level browsing context=] by running
-     the [=/create a new top-level traversable=] steps with null and empty string,
+  1. Let |navigable| be the result of trying to [=/create a new top-level traversable=] steps with null and empty string,
      and setting the [=associated user context=] for the newly created [=/top-level traversable=] to |user context|.
-     Which OS window the new [=/browsing context=] is created in depends on |type| and |reference context|:
+     Which OS window the new [=/navigable=] is created in depends on |type| and |reference navigable|:
 
      * If |type| is "<code>tab</code>" and the implementation supports
-       multiple browsing contexts in the same OS window:
+       multiple navigables in the same OS window:
 
-       * The new browsing context should reuse an existing OS window, if any.
+       * The new navigable should reuse an existing OS window, if any.
 
-       * If |reference context| is not null, the new browsing context should
-         reuse the window containing |reference context|, if any. If the
-         top-level browsing contexts inside an OS window have a definite ordering,
-         the new browsing context should be immediately after
-         |reference context|'s [=top-level browsing context=] in that ordering.
+       * If |reference navigable| is not null, the new navigable should
+         reuse the window containing |reference navigable|, if any. If the
+         top-level traversables inside an OS window have a definite ordering,
+         the new navigable should be immediately after
+         |reference navigable|'s [=navigable/top-level traversable=] in that ordering.
 
      * If |type| is "<code>window</code>", and the implementation supports
-       multiple browsing contexts in separate OS windows, the created browsing
+       multiple navigables in separate OS windows, the created browsing
        context should be in a new OS window.
 
-     * Otherwise, the details of how the browsing context is presented to the
+     * Otherwise, the details of how the navigable is presented to the
        user are implementation defined.
 
   1. If the value of the |command parameters|' <code>background</code> field is false:
 
-    1. Let |activate result| be the result of [=activate a context=] with the newly created [=/browsing context=].
+    1. Let |activate result| be the result of [=activate a navigable=] with the newly created [=/navigable=].
 
     1. If |activate result| is an [=error=], return |activate result|.
 
-    Note: Do not invoke the [=/focusing steps=] for the created browsing context if <code>background</code> is true.
-
-  1. Let |context id| be the [=browsing context id=] of the newly created
-     [=/browsing context=].
+    Note: Do not invoke the [=/focusing steps=] for the created navigable if <code>background</code> is true.
 
   1. Let |body| be a [=/map=] matching the <code>browsingContext.CreateResult</code>
-     production, with the <code>context</code> field set to |context id|.
+     production, with the <code>context</code> field set to |navigable|'s [=navigable id=].
 
   1. Return [=success=] with data |body|.
 
@@ -3228,7 +3204,7 @@ The [=remote end steps=] with |command parameters| are:
 #### The browsingContext.getTree Command ####  {#command-browsingContext-getTree}
 
 The <dfn export for=commands>browsingContext.getTree</dfn> command returns a
-tree of all descendent browsing contexts including the given parent itself,
+tree of all descendent navigables including the given parent itself,
 or all top-level contexts when no parent is provided.
 
 <dl>
@@ -3265,23 +3241,23 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |max depth| be the value of the <code>maxDepth</code> field of |command
    parameters| if present, or null otherwise.
 
-1. Let |contexts| be an empty [=/list=].
+1. Let |navigables| be an empty [=/list=].
 
 1. If |root id| is not null, append the result of [=trying=] to
-   [=get a browsing context=] given |root id| to |contexts|.
-   Otherwise append all [=top-level browsing contexts=] to |contexts|.
+   [=get a navigable=] given |root id| to |navigables|.
+   Otherwise append all [=navigable/top-level traversables=] to |navigables|.
 
-1. Let |contexts info| be an empty [=/list=].
+1. Let |navigables infos| be an empty [=/list=].
 
-1. For each |context| of |contexts|:
+1. For each |navigable| of |navigables|:
 
-  1. Let |info| be the result of [=get the browsing context info=] given
-     |context|, |max depth|, and true.
+  1. Let |info| be the result of [=get the navigable info=] given
+     |navigable|, |max depth|, and true.
 
-  1. Append |info| to |contexts info|
+  1. Append |info| to |navigables infos|
 
 1. Let |body| be a [=/map=] matching the <code>browsingContext.GetTreeResult</code>
-   production, with the <code>contexts</code> field set to |contexts info|.
+   production, with the <code>contexts</code> field set to |navigables infos|.
 
 1. Return [=success=] with data |body|.
 
@@ -3320,11 +3296,11 @@ command allows closing an open prompt
 
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
+1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
 
 1. Let |accept| be the value of the <code>accept</code> field of |command
    parameters| if present, or true otherwise.
@@ -3332,18 +3308,18 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |userText| be the value of the <code>userText</code> field of |command
    parameters| if present, or the empty string otherwise.
 
-1. If |context| is currently showing a simple dialog from a call to [=alert=] then
+1. If |navigable| is currently showing a simple dialog from a call to [=alert=] then
    acknowledge the prompt.
 
-   Otherwise if |context| is currently showing a simple dialog from a call to
+   Otherwise if |navigable| is currently showing a simple dialog from a call to
    [=confirm=], then respond positively if |accept| is true, or respond
    negatively if |accept| is false.
 
-   Otherwise if |context| is currently showing a simple dialog from a call to
+   Otherwise if |navigable| is currently showing a simple dialog from a call to
    [=prompt=], then respond with the string value |userText| if |accept| is
    true, or abort if |accept| is false.
 
-   Otherwise, if |context| is currently showing a prompt as part of the [=prompt
+   Otherwise, if |navigable| is currently showing a prompt as part of the [=prompt
    to unload=] steps, then confirm the navigation if |accept| is true, otherwise
    refuse the navigation.
 
@@ -3386,7 +3362,7 @@ list of all nodes matching the specified locator.
 </dl>
 
 <div algorithm="locate nodes using CSS">
-To <dfn>locate nodes using CSS</dfn> with given |context|, |context nodes|,
+To <dfn>locate nodes using CSS</dfn> with given |navigable|, |context nodes|,
 |selector|, |maximum returned node count|, and <var ignore>session</var>:
 
 1. Let |returned nodes| be an empty [=/list=].
@@ -3398,7 +3374,7 @@ To <dfn>locate nodes using CSS</dfn> with given |context|, |context nodes|,
 1. For each |context node| of |context nodes|:
 
   1. Let |elements| be the result of [=match a selector against a tree=] with
-     |parse result| and |context|’s [=active document=] [=root=] using
+     |parse result| and |navigable|’s [=active document=] [=root=] using
      [=scoping root=] |context node|.
 
   1. For each |element| in |elements|:
@@ -3415,7 +3391,7 @@ To <dfn>locate nodes using CSS</dfn> with given |context|, |context nodes|,
 
 <div algorithm="locate nodes using XPath">
 
-To <dfn>locate nodes using XPath</dfn> with given |context|, |context nodes|,
+To <dfn>locate nodes using XPath</dfn> with given |navigable|, |context nodes|,
 |selector|, and |maximum returned node count|:
 
 Note: Owing to the unmaintained state of the XPath specification, this algorithm
@@ -3427,7 +3403,7 @@ without going via the ECMAScript runtime.
 
 1. For each |context node| of |context nodes|:
 
-   1. Let |evaluate result| be the result of calling [=evaluate=] on |context|'s
+   1. Let |evaluate result| be the result of calling [=evaluate=] on |navigable|'s
       [=active document=], with arguments |selector|, |context node|, null,
       [=ORDERED_NODE_SNAPSHOT_TYPE=], and null. If this throws a "[=SyntaxError=]"
       [=DOMException=], return [=error=] with [=error code=] [=invalid selector=];
@@ -3600,15 +3576,15 @@ To <dfn>locate nodes using accessibility attributes</dfn> with given |context no
 <div algorithm="remote end steps for browsingContext.locateNodes">
 The [=remote end steps=] with |session| and |command parameters| are:
 
-1. Let |context id| be |command parameters|["<code>context</code>"].
+1. Let |navigable id| be |command parameters|["<code>context</code>"].
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
 
-1. Assert: |context| is not null.
+1. Assert: |navigable| is not null.
 
-1. Let |realm| be the result of [=trying=] to [=get a realm from a browsing context=]
-   with [=browsing context id=] of |context| and null.
+1. Let |realm| be the result of [=trying=] to [=get a realm from a navigable=]
+   with [=navigable id=] of |navigable| and null.
 
 1. Let |locator| be |command parameters|["<code>locator</code>"].
 
@@ -3623,7 +3599,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |context nodes| be an empty [=/list=].
 
 1. If |start nodes parameter| is null, [=list/append=] the [=document element=]
-   of |context|'s [=active document=] to |context nodes|. Otherwise, for each
+   of |navigable|'s [=active document=] to |context nodes|. Otherwise, for each
    |serialized start node| in |start nodes parameter|:
 
    1. Let |start node| be the result of [=trying=] to [=deserialize shared reference=] given
@@ -3645,7 +3621,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |selector| be |locator|["<code>value</code>"].
 
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using css=]
-            given |context|, |context nodes|, |selector| and |maximum returned
+            given |navigable|, |context nodes|, |selector| and |maximum returned
             nodes|.
 
       <dt>|type| is the string "<code>xpath</code>"
@@ -3653,7 +3629,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |selector| be |locator|["<code>value</code>"].
 
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using xpath=]
-            given |context|, |context nodes|, |selector| and |maximum returned
+            given |navigable|, |context nodes|, |selector| and |maximum returned
             nodes|.
 
       <dt>|type| is the string "<code>innerText</code>"
@@ -3711,7 +3687,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 #### The browsingContext.navigate Command ####  {#command-browsingContext-navigate}
 
 The <dfn export for=commands>browsingContext.navigate</dfn> command navigates a
-browsing context to the given URL.
+navigable to the given URL.
 
 <dl>
    <dt>Command Type</dt>
@@ -3743,13 +3719,13 @@ browsing context to the given URL.
 <div algorithm="remote end steps for browsingContext.navigate">
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
+1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
 
-1. Assert: |context| is not null.
+1. Assert: |navigable| is not null.
 
 1. Let |wait condition| be the value of the <code>wait</code> field of |command
    parameters| if present, or "<code>none</code>" otherwise.
@@ -3757,7 +3733,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |url| be the value of the <code>url</code> field of |command
    parameters|.
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |document| be |navigable|'s [=active document=].
 
 1. Let |base| be |document|'s [=base URL=].
 
@@ -3769,7 +3745,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |request| be a new [=/request=] whose URL is |url record|.
 
-1. Return the result of [=await a navigation=] with |context|, |request| and
+1. Return the result of [=await a navigation=] with |navigable|, |request| and
    |wait condition|.
 
 </div>
@@ -3828,14 +3804,14 @@ PDF document represented as a Base64-encoded string.
 
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
+1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
 
 1. If the implementation is unable to provide a paginated representation of
-   |context| for any reason then return [=error=] with [=error code=]
+   |navigable| for any reason then return [=error=] with [=error code=]
    [=unsupported operation=].
 
 1. Let |margin| be the value of the <code>margin</code> field of |command
@@ -3854,7 +3830,7 @@ Note: The minimum page size is 1 point, which is (2.54 / 72) cm as per
 1. Let |page ranges| be the value of the <code>pageRanges</code> field of
    |command parameters| if present or an empty [=/list=] otherwise.
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |document| be |navigable|'s [=active document=].
 
 1. Immediately after the next invocation of the [=run the animation frame
    callbacks=] algorithm for |document|:
@@ -3926,7 +3902,7 @@ Note: The minimum page size is 1 point, which is (2.54 / 72) cm as per
 #### The browsingContext.reload Command ####  {#command-browsingContext-reload}
 
 The <dfn export for=commands>browsingContext.reload</dfn> command reloads a
-browsing context.
+navigable.
 
 <dl>
    <dt>Command Type</dt>
@@ -3955,13 +3931,13 @@ browsing context.
 <div algorithm="remote end steps for browsingContext.reload">
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
+1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
 
-1. Assert: |context| is not null.
+1. Assert: |navigable| is not null.
 
 1. Let |ignore cache| be the the value of the <code>ignoreCache</code> field of |command
    parameters| if present, or false otherwise.
@@ -3969,13 +3945,13 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |wait condition| be the value of the <code>wait</code> field of |command
    parameters| if present, or "<code>none</code>" otherwise.
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |document| be |navigable|'s [=active document=].
 
 1. Let |url| be |document|'s <a spec=DOM>URL</a>.
 
 1. Let |request| be a new [=/request=] whose URL is |url|.
 
-1. Return the result of [=await a navigation=] with |context|, |request|, |wait
+1. Return the result of [=await a navigation=] with |navigable|, |request|, |wait
    condition|, history handling "<code>reload</code>", and ignore
    cache |ignore cache|.
 
@@ -3983,7 +3959,7 @@ The [=remote end steps=] with |command parameters| are:
 
 #### The browsingContext.setViewport Command ####  {#command-browsingContext-setViewport}
 
-The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies specific viewport characteristics (e.g. viewport width and viewport height) on the given top-level browsing context.
+The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies specific viewport characteristics (e.g. viewport width and viewport height) on the given top-level traversable.
 
 <dl>
    <dt>Command Type</dt>
@@ -4018,16 +3994,16 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies 
 
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of |command
+1. Let |navigable id| be the value of the <code>context</code> field of |command
    parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
-   |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with
+   |navigable id|.
 
-1. If |context| is not a [=top-level browsing context=], return [=error=] with
+1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
    [=error code=] [=invalid argument=].
 
-1. If the implementation is unable to adjust the |context|'s [=layout viewport=]
+1. If the implementation is unable to adjust the |navigable|'s [=layout viewport=]
    parameters with the given |command parameters| for any reason, return
    [=error=] with [=error code=] [=unsupported operation=].
 
@@ -4035,12 +4011,12 @@ The [=remote end steps=] with |command parameters| are:
 
    1. Let |viewport| be the |command parameters|["<code>viewport</code>"].
 
-   1. If |viewport| is not null, set the width of |context|'s [=layout
+   1. If |viewport| is not null, set the width of |navigable|'s [=layout
       viewport=] to be the <code>width</code> of |viewport| in CSS pixels and
-      set the height of the |context|'s [=layout viewport=] to be the
+      set the height of the |navigable|'s [=layout viewport=] to be the
       <code>height</code> of |viewport| in CSS pixels.
 
-   1. Otherwise, set the |context|'s [=layout viewport=] to the
+   1. Otherwise, set the |navigable|'s [=layout viewport=] to the
       implementation-defined default.
 
 1. Run the [[cssom-view-1#resizing-viewports]] steps.
@@ -4050,10 +4026,10 @@ The [=remote end steps=] with |command parameters| are:
    1. Let |device pixel ratio| be the |command
       parameters|["<code>devicePixelRatio</code>"].
 
-   1. For the |context| and all [=descendant navigables=]:
+   1. For the |navigable| and all [=descendant navigables=]:
 
       1. Let |navigable| be the [=/navigable=] whose [=navigable/active document=] is
-         |context|'s [=browsing context/active document=].
+         |navigable|'s [=navigable/active document=].
 
       1. If |device pixel ratio| is not null:
 
@@ -4078,7 +4054,7 @@ The [=remote end steps=] with |command parameters| are:
          1. [=map/Remove=] |navigable| from [=device pixel ratio overrides=].
 
       1. Run [=evaluate media queries and report changes=] for [=document=] currently loaded
-         in a specified |context|.
+         in a specified |navigable|.
 
 1. Return [=success=] with data null.
 
@@ -4116,13 +4092,10 @@ traverses the history of a given navigable by a delta.
 <div algorithm="remote end steps for browsingContext.traverseHistory">
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |browsing context| be the result of [=trying=] to [=get a browsing context=]
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
    with |command parameters|["<code>context</code>"].
 
-1. Assert: |browsing context| is not null.
-
-1. Let |navigable| be the [=/navigable=] whose [=navigable/active
-   document=] is |browsing context|'s [=browsing context/active document=].
+1. Assert: |navigable| is not null.
 
 1. Let |delta| be |command parameters|["<code>delta</code>"].
 
@@ -4213,11 +4186,11 @@ ignore>context</var> and |navigation status| are:
 
 <div algorithm>
 
-To <dfn>Recursively emit context created events</dfn> given |session| and |context|:
+To <dfn>Recursively emit context created events</dfn> given |session| and |navigable|:
 
-1. [=Emit a context created event=] with |session| and |context|.
+1. [=Emit a context created event=] with |session| and |navigable|.
 
-1. For each child browsing context, |child|, of |context|:
+1. For each child navigable, |child|, of |navigable|:
 
   1. [=Recursively emit context created events=] given |session| and |child|.
 
@@ -4225,10 +4198,10 @@ To <dfn>Recursively emit context created events</dfn> given |session| and |conte
 
 <div algorithm>
 
-To <dfn>Emit a context created event</dfn> given |session| and |context|:
+To <dfn>Emit a context created event</dfn> given |session| and |navigable|:
 
-1. Let |params| be the result of [=get the browsing context info=] given
-   |context|, 0, and true.
+1. Let |params| be the result of [=get the navigable info=] given
+   |navigable|, 0, and true.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.ContextCreated</code> production, with the
@@ -4245,33 +4218,30 @@ The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable created</dfn> steps given
 |navigable| and |opener navigable|:
 
-1. Let |context| be |navigable|'s [=active browsing context=].
-
-1. If the [=context cache behavior=] with |context| is "<code>bypass</code>",
-   then perform implementation-defined steps to disable any implementation-specific
-   resource caches for network requests originating from |context|.
-
-1. Set |context|'s [=original opener=] to |opener navigable|'s [=active browsing context=],
+1. Set |navigable|'s [=original opener=] to |opener navigable|,
    if |opener navigable| is provided.
 
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
+1. If the [=context cache behavior=] with |navigable| is "<code>bypass</code>",
+   then perform implementation-defined steps to disable any implementation-specific
+   resource caches for network requests originating from |navigable|.
+
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.contextCreated</code>" and |related browsing
-   contexts|:
+   given "<code>browsingContext.contextCreated</code>" and |related navigables|:
 
-  1. [=Emit a context created event=] given |session| and |context|.
+  1. [=Emit a context created event=] given |session| and |navigable|.
 
 </div>
 
 <div algorithm="remote end subscribe steps for browsingContext.contextCreated">
 
 The [=remote end subscribe steps=], with [=subscribe priority=] 1, given
-|session|, |contexts| and <var ignore>include global</var> are:
+|session|, |navigables| and <var ignore>include global</var> are:
 
-1. For each |context| in |contexts|:
+1. For each |navigable| in |navigables|:
 
-  1. [=Recursively emit context created events=] given |session| and |context|.
+  1. [=Recursively emit context created events=] given |session| and |navigable|.
 
 </div>
 
@@ -4294,26 +4264,23 @@ The [=remote end event trigger=] is:
 
 The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given
-<var ignore>navigable</var> and |context|:
+|navigable| and <var ignore>browsing context</var>:
 
-1. Let |params| be the result of [=get the browsing context info=], given
-   |context|, null, and true.
+1. Let |params| be the result of [=get the navigable info=], given
+   |navigable|, null, and true.
 
 1. Let |body| be a [=/map=] matching the
     <code>browsingContext.ContextDestroyed</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a [=/set=] containing the result of
-   [=get the parent browsing context=] with |context|, if that is not
+1. Let |related navigables| be a [=/set=] containing the result of
+   [=get the parent navigable=] with |navigable|, if that is not
    null, or an empty [=/set=] otherwise.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.contextDestroyed</code>" and |related browsing
-   contexts|:
+   given "<code>browsingContext.contextDestroyed</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
-
-Issue: the way this hooks into HTML feels very fragile. See https://github.com/whatwg/html/issues/6194
 
 Issue: It's unclear if we ought to only fire this event for browsing
 contexts that have active documents; navigation can also cause contexts to
@@ -4336,9 +4303,9 @@ become inaccessible but not yet get discarded because bfcache.
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-started</dfn> steps given |context| and |navigation status|:
+started</dfn> steps given |navigable| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
+1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
 
  1. Let |body| be a [=/map=] matching the
@@ -4347,13 +4314,13 @@ started</dfn> steps given |context| and |navigation status|:
 
 1. Let |navigation id| be |navigation status|'s id.
 
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
 1. [=Resume=] with "<code>navigation started</code>", |navigation id|, and
    |navigation status|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.navigationStarted</code>" and |related browsing contexts|:
+   given "<code>browsingContext.navigationStarted</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -4375,9 +4342,9 @@ started</dfn> steps given |context| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fragment
-navigated</dfn> steps given |context| and |navigation status|:
+navigated</dfn> steps given |navigable| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
+1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
 
 1. Let |body| be a [=/map=] matching the
@@ -4386,13 +4353,13 @@ navigated</dfn> steps given |context| and |navigation status|:
 
 1. Let |navigation id| be |navigation status|'s id.
 
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
+1. Let |related navigable| be a [=/set=] containing navigable|.
 
 1. [=Resume=] with "<code>fragment navigated</code>", |navigation id|, and
    |navigation status|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.fragmentNavigated</code>" and |related browsing contexts|:
+   given "<code>browsingContext.fragmentNavigated</code>" and |related navigable|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -4414,16 +4381,16 @@ navigated</dfn> steps given |context| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi DOM content
-loaded</dfn> steps given |context| and |navigation status|:
+loaded</dfn> steps given |navigable| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
+1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.DomContentLoaded</code> production, with the
    <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
 1. Let |navigation id| be |navigation status|'s id.
 
@@ -4431,7 +4398,7 @@ loaded</dfn> steps given |context| and |navigation status|:
    |navigation status|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.domContentLoaded</code>" and |related browsing contexts|:
+   given "<code>browsingContext.domContentLoaded</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -4453,15 +4420,15 @@ loaded</dfn> steps given |context| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load
-complete</dfn> steps given |context| and |navigation status|:
+complete</dfn> steps given |navigable| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
+1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
 
 1. Let |body| be a [=/map=] matching the <code>browsingContext.Load</code>
    production, with the <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
 1. Let |navigation id| be |navigation status|'s id.
 
@@ -4469,7 +4436,7 @@ complete</dfn> steps given |context| and |navigation status|:
    |navigation status|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.load</code>" and |related browsing contexts|:
+   given "<code>browsingContext.load</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -4491,9 +4458,9 @@ complete</dfn> steps given |context| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download
-started</dfn> steps given |context| and |navigation status|:
+started</dfn> steps given |navigable| and |navigation status|:
 
- 1. Let |params| be the result of [=get the navigation info=] given |context|
+ 1. Let |params| be the result of [=get the navigation info=] given |navigable|
     and |navigation status|.
 
  1. Let |body| be a [=/map=] matching the
@@ -4502,12 +4469,12 @@ started</dfn> steps given |context| and |navigation status|:
 
  1. Let |navigation id| be |navigation status|'s id.
 
- 1. Let |related browsing contexts| be a [=/set=] containing |context|.
+ 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
  1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
 
  1. For each |session| in the [=set of sessions for which an event is enabled=]
-    given "<code>browsingContext.downloadWillBegin</code>" and |related browsing contexts|:
+    given "<code>browsingContext.downloadWillBegin</code>" and |related navigables|:
 
    1. [=Emit an event=] with |session| and |body|.
 
@@ -4529,9 +4496,9 @@ started</dfn> steps given |context| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-aborted</dfn> steps given |context| and |navigation status|:
+aborted</dfn> steps given |navigable| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
+1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
 
 1. Let |body| be a [=/map=] matching the
@@ -4540,12 +4507,12 @@ aborted</dfn> steps given |context| and |navigation status|:
 
 1. Let |navigation id| be |navigation status|'s id.
 
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
 1. [=Resume=] with "<code>navigation aborted</code>", |navigation id|, and |navigation status|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.navigationAborted</code>" and |related browsing contexts|:
+   given "<code>browsingContext.navigationAborted</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -4568,9 +4535,9 @@ aborted</dfn> steps given |context| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-failed</dfn> steps given |context| and |navigation status|:
+failed</dfn> steps given |navigable| and |navigation status|:
 
-1. Let |params| be the result of [=get the navigation info=] given |context|
+1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
 
 1. Let |body| be a [=/map=] matching the
@@ -4579,12 +4546,12 @@ failed</dfn> steps given |context| and |navigation status|:
 
 1. Let |navigation id| be |navigation status|'s id.
 
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
 1. [=Resume=] with "<code>navigation failed</code>", |navigation id|, and |navigation status|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.navigationFailed</code>" and |related browsing contexts|:
+   given "<code>browsingContext.navigationFailed</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -4616,13 +4583,13 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
 closed</dfn> steps given |window|, |type|, |accepted| and optional |user text|
 (default: null).
 
-1. Let |context| be |window|'s [=/browsing context=].
+1. Let |navigable| be |window|'s [=window/navigable=].
 
-1. Let |context id| be the [=browsing context id=] for |context|.
+1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptClosedParameters</code> production with the
-   <code>context</code> field set to |context id|, the <code>accepted</code>
+   <code>context</code> field set to |navigable id|, the <code>accepted</code>
    field set to |accepted|, the <code>type</code> field set to |type|, and the
    <code>userText</code> field set to |user text| if |user text| is not null or
    omitted otherwise.
@@ -4631,10 +4598,10 @@ closed</dfn> steps given |window|, |type|, |accepted| and optional |user text|
    <code>BrowsingContextUserPromptClosedEvent</code> production, with the
    <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.userPromptClosed</code>" and |related browsing contexts|:
+   given "<code>browsingContext.userPromptClosed</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -4667,9 +4634,9 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
 opened</dfn> steps given |window|, |type|, |message|, and optional |default value|
 (default: null).
 
-1. Let |context| be |window|'s [=/browsing context=].
+1. Let |navigable| be |window|'s [=window/navigable=].
 
-1. Let |context id| be the [=browsing context id=] for |context|.
+1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
 1. Let |handler configuration| be [=get the prompt handler=] with |type|.
 
@@ -4678,7 +4645,7 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
 
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpenedParameters</code> production with the
-   <code>context</code> field set to |context id|, the <code>type</code> field
+   <code>context</code> field set to |navigable id|, the <code>type</code> field
    set to |type|, the <code>message</code> field set to |message|, the
    <code>defaultValue</code> field set to |default value| if |default value| is
    not null or omitted otherwise, and the <code>handler</code> field set to
@@ -4688,10 +4655,10 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
    <code>browsingContext.UserPromptOpened</code> production, with the
    <code>params</code> field set to |params|.
 
-1. Let |related browsing contexts| be a [=/set=] containing |context|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>browsingContext.userPromptOpened</code>" and |related browsing contexts|:
+   given "<code>browsingContext.userPromptOpened</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -4771,7 +4738,7 @@ and a [=struct=] with fields <code>request</code>, <code>phase</code>, and
 
 <div algorithm>
 
-To <dfn>get the network intercepts</dfn> given |session|, |event|, |request|, and |context id|:
+To <dfn>get the network intercepts</dfn> given |session|, |event|, |request|, and |navigable id|:
 
 1. Let |session intercepts| be |session|'s [=intercept map=].
 
@@ -4796,7 +4763,7 @@ To <dfn>get the network intercepts</dfn> given |session|, |event|, |request|, an
 
   1. If |intercept|'s <code>contexts</code> is not null:
 
-    1. If |intercept|'s <code>contexts</code> does not [=set/contains|contain=] |context id|:
+    1. If |intercept|'s <code>contexts</code> does not [=set/contains|contain=] |navigable id|:
 
       1. Continue.
 
@@ -5015,22 +4982,22 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
 <!-- TODO: update this to "[=request/navigation id=] once the fetch parts land-->
 1. Let |navigation| be |request|'s [=navigation id=].
 
-1. Let |context id| be null.
+1. Let |navigable id| be null.
 
-1. Let |top-level context id| be null.
+1. Let |top-level navigable id| be null.
 
 1. If |request|'s [=request/window=] is an [=environment settings object=]:
 
   1. Let |environment settings| be |request|'s [=request/window=]
 
-  1. If there is a [=/browsing context=] whose [=active window=] is |environment
-     settings|' [=environment settings object/global object=], set |context id|
-     to the [=browsing context id=] for that context, and set |top-level context id|
-     to be [=top-level browsing context=]'s [=browsing context id=] for that
+  1. If there is a [=/navigable=] whose [=active window=] is |environment
+     settings|' [=environment settings object/global object=], set |navigable id|
+     to the [=navigable id=] for that navigable, and set |top-level navigable id|
+     to be [=/top-level traversable=]'s [=navigable id=] for that
      context.
 
 1. Let |intercepts| be the result of [=get the network intercepts=] with
-   |session|, |event|, |request|, and |top-level context id|.
+   |session|, |event|, |request|, and |top-level navigable id|.
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -5042,7 +5009,7 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
 1. Let |params| be [=/map=] matching the <code>network.BaseParameters</code>
    production, with the <code>request</code> field set to |request data|, the
    |navigation| field set to <code>navigation</code>, the <code>context</code>
-   field set to |context id|, the <code>timestamp</code> field set to
+   field set to |navigable id|, the <code>timestamp</code> field set to
    |timestamp|, the <code>redirectCount</code> field set to |redirect count|, the
    <code>isBlocked</code> field set to |is blocked|, and <code>intercepts</code>
    field set to |intercepts| if |is blocked| is true, or omitted otherwise.
@@ -6129,23 +6096,23 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |url patterns| be the <code>urlPatterns</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
-1. Let |contexts| be null.
+1. Let |navigables| be null.
 
 1. If the <code>contexts</code> field of |command parameters| is present:
 
-   1. Set |contexts| to an empty [=/set=].
+   1. Set |navigables| to an empty [=/set=].
 
-   1. For each |context id| of |command parameters|["<code>contexts</code>"]
+   1. For each |navigable id| of |command parameters|["<code>contexts</code>"]
 
-      1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-         with |context id|.
+      1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+         with |navigable id|.
 
-      1. If |context| is not a [=top-level browsing context=], return [=error=]
+      1. If |navigable| is not a [=/top-level traversable=], return [=error=]
          with [=error code=] [=invalid argument=].
 
-      1. Append |context| to |contexts|.
+      1. Append |navigable| to |navigables|.
 
-   1. If |contexts| is an empty [=/set=], return [=error=] with [=error code=]
+   1. If |navigables| is an empty [=/set=], return [=error=] with [=error code=]
       [=invalid argument=].
 
 1. Let |intercept map| be |session|'s [=intercept map=].
@@ -6162,7 +6129,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Set |intercept map|[|intercept|] to a struct with <code>url patterns</code>
    |parsed patterns|, <code>phases</code> |command
    parameters|["<code>phases</code>"] and <code>browsingContexts</code>
-   |contexts|.
+   |navigables|.
 
 1. Return a new [=/map=] matching the
    <code>network.AddInterceptResult</code> production with the
@@ -6761,13 +6728,13 @@ steps given |request| and |response|:
    Note: This implies that every caller needs to ensure that the [=WebDriver BiDi
    before request sent=] steps are invoked with |request| before these steps.
 
-1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
-   be the result of [=get related browsing contexts=] with |request|'s
-   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+1. If |request|'s [=request/client=] is not null, let |related navigables|
+   be the result of [=get related navigables=] with |request|'s
+   [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>network.authRequired</code>" and |related browsing contexts|:
+   given "<code>network.authRequired</code>" and |related navigables|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.authRequired</code>", and |request|.
@@ -6834,9 +6801,9 @@ request sent</dfn> steps given |request|:
 
 1. Add |redirect count| to [=before request sent map=][|request|].
 
-1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
-   be the result of [=get related browsing contexts=] with |request|'s
-   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+1. If |request|'s [=request/client=] is not null, let |related navigables|
+   be the result of [=get related navigables=] with |request|'s
+   [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
 1. Let |response| be null.
@@ -6844,7 +6811,7 @@ request sent</dfn> steps given |request|:
 1. Let |response status| be "<code>incomplete</code>".
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>network.beforeRequestSent</code>" and |related browsing contexts|:
+   given "<code>network.beforeRequestSent</code>" and |related navigables|:
 
   1. Let |params| be the result of [=process a network event=] with |session|,
      "<code>network.beforeRequestSent</code>", and |request|.
@@ -6919,13 +6886,13 @@ error</dfn> steps given |request|:
    caller needing to explicitly invoke the [=WebDriver BiDi before request
    sent=] steps on every error path.
 
-1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
-   be the result of [=get related browsing contexts=] with |request|'s
-   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+1. If |request|'s [=request/client=] is not null, let |related navigables|
+   be the result of [=get related navigables=] with |request|'s
+   [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>network.fetchError</code>" and |related browsing contexts|:
+   given "<code>network.fetchError</code>" and |related navigables|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.fetchError</code>", and |request|.
@@ -6975,13 +6942,13 @@ completed</dfn> steps given |request| and |response|:
    Note: This implies that every caller needs to ensure that the [=WebDriver BiDi
    before request sent=] steps are invoked with |request| before these steps.
 
-1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
-   be the result of [=get related browsing contexts=] with |request|'s
-   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+1. If |request|'s [=request/client=] is not null, let |related navigables|
+   be the result of [=get related navigables=] with |request|'s
+   [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>network.responseCompleted</code>" and |related browsing contexts|:
+   given "<code>network.responseCompleted</code>" and |related navigables|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.responseCompleted</code>", and |request|.
@@ -7035,15 +7002,15 @@ started</dfn> steps given |request| and |response|:
    Note: This implies that every caller needs to ensure that the [=WebDriver BiDi
    before request sent=] steps are invoked with |request| before these steps.
 
-1. If |request|'s [=request/client=] is not null, let |related browsing contexts|
-   be the result of [=get related browsing contexts=] with |request|'s
-   [=request/client=]. Otherwise let |related browsing contexts| be an empty
+1. If |request|'s [=request/client=] is not null, let |related navigables|
+   be the result of [=get related navigables=] with |request|'s
+   [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
 1. Let |response status| be "<code>incomplete</code>".
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>network.responseStarted</code>" and |related browsing contexts|:
+   given "<code>network.responseStarted</code>" and |related navigables|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.responseStarted</code>", and |request|.
@@ -7139,7 +7106,7 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 1. Let |document| be |environment settings|' [=relevant global object=]'s
    <a>associated <code>Document</code></a>.
 
-1. Let |browsing context| be |document|'s [=/browsing context=].
+1. Let |navigable| be |document|'s [=/navigable=].
 
 1. For each |session| in [=active BiDi sessions=]:
 
@@ -7148,15 +7115,13 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 
     1. If |preload script|'s <code>contexts</code> is not null:
 
-       1. Let |top level context| be |browsing context|’s [=top-level browsing context=].
+       1. Let |navigable id| be |navigable|’s [=navigable/top-level traversable=]'s id.
 
-       1. Let |context id| be |top level context|'s id.
-
-       1. If <code>contexts</code> does not [=list/contains|contain=] |context id|, return.
+       1. If <code>contexts</code> does not [=list/contains|contain=] |navigable id|, return.
 
     1. If |preload script|'s <code>sandbox</code> is not null, let |realm| be [=get
        or create a sandbox realm=] with |preload script|'s <code>sandbox</code> and
-       |browsing context|. Otherwise let |realm| be |environment settings|'
+       |navigable|. Otherwise let |realm| be |environment settings|'
        [=realm execution context=]'s Realm component.
 
     1. Let |arguments| be |preload script|'s <code>arguments</code>.
@@ -7591,7 +7556,7 @@ created.
 
 The [=realm id=] for a realm is opaque and must not be derivable from the handle
 id of the corresponding global object in the [=handle object map=] or, where
-relevant, from the [=browsing context id=] of any [=/browsing context=].
+relevant, from the [=navigable id=] of any [=/navigable=].
 
 Note: this is to ensure that users do not rely on implementation-specific
 relationships between different ids.
@@ -7850,7 +7815,7 @@ Note: there's a 1:1 relationship between the <code>script.RealmInfo</code>
 The <code>script.RealmInfo</code> type represents the properties of a realm.
 
 <div algorithm>
-To <dfn>get the browsing context</dfn> with given |realm|:
+To <dfn>get the navigable</dfn> with given |realm|:
 
 1. Let |global object| be the [=realm/global object=] of the |realm|.
 
@@ -7861,7 +7826,7 @@ To <dfn>get the browsing context</dfn> with given |realm|:
 1. Let |document| be |global object|'s wrapped {{Window}}'s
    <a>associated <code>Document</code></a>.
 
-1. Return |document|'s [=/browsing context=].
+1. Return |document|'s [=/node navigable=].
 
 </div>
 <div algorithm>
@@ -7902,11 +7867,12 @@ To <dfn>get the realm info</dfn> given |environment settings|:
     <dd>
       1. Let |document| be |environment settings|' [=relevant global object=]'s
          <a>associated <code>Document</code></a>.
-      1. Let |browsing context| be |document|'s [=/browsing context=].
-      1. Let |context id| be the [=browsing context id=] for |browsing context|.
+      1. Let |navigable| be |document|'s [=/node navigable=].
+      1. If |navigable| is null, return null.
+      1. Let |navigable id| be the [=navigable id=] for |navigable|.
       1. Let |realm info| be a [=/map=] matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
-         field set to |origin|, and the <code>context</code> field set to |context id|.
+         field set to |origin|, and the <code>context</code> field set to |navigable id|.
 
     <dt>|global object| is {{SandboxWindowProxy}} object
     <dd>
@@ -7914,14 +7880,15 @@ To <dfn>get the realm info</dfn> given |environment settings|:
 
       1. Let |document| be |global object|'s wrapped {{Window}}'s
          <a>associated <code>Document</code></a>.
-      1. Let |browsing context| be |document|'s [=/browsing context=].
-      1. Let |context id| be the [=browsing context id=] for |browsing context|.
+      1. Let |navigable| be |document|'s [=/node navigable=].
+      1. If |navigable| is null, return null.
+      1. Let |navigable id| be the [=navigable id=] for |navigable|.
       1. Let |sandbox name| be the result of [=get a sandbox name=] given
          |realm|.
       1. Assert: |sandbox name| is not null.
       1. Let |realm info| be a [=/map=] matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
-         field set to |origin|, the <code>context</code> field set to |context id|,
+         field set to |origin|, the <code>context</code> field set to |navigable id|,
          and the <code>sandbox</code> field set to |sandbox name|.
 
 
@@ -8069,9 +8036,9 @@ To <dfn>deserialize shared reference</dfn> given |shared reference|, |realm| and
 
 1. Assert |shared reference| matches the <code>script.SharedReference</code> production.
 
-1. Let |browsing context| be [=get the browsing context=] with |realm|.
+1. Let |navigable| be [=get the navigable=] with |realm|.
 
-1. If |browsing context| is <code>null</code>, return [=error=] with [=error code=]
+1. If |navigable| is <code>null</code>, return [=error=] with [=error code=]
    [=no such node=].
 
    Note: This happens when the realm isn't a Window global.
@@ -8080,7 +8047,7 @@ To <dfn>deserialize shared reference</dfn> given |shared reference|, |realm| and
    |shared reference|.
 
 1. Let |node| be result of [=trying=] to [=get a node=] with |session|,
-   |browsing context| and |shared id|.
+   |navigable| and |shared id|.
 
 1. If |node| is <code>null</code>, return [=error=] with [=error code=]
    [=no such node=].
@@ -8345,11 +8312,11 @@ To <dfn>get shared id for a node</dfn> given |node|, and |session|:
 
 1. If |node| does not implement {{Node}}, return null.
 
-1. Let |browsing context| be |node|'s [=node document=]'s [=Document/browsing context=].
+1. Let |navigable| be |node|'s [=/node navigable=].
 
-1. If |browsing context| is null, return null.
+1. If |navigable| is null, return null.
 
-1. Return [=get or create a node reference=] with |session|, |browsing context| and
+1. Return [=get or create a node reference=] with |session|, |navigable| and
    |node|.
 
 </div>
@@ -8639,13 +8606,13 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
     1. Let |window| be the value of |value|'s \[[WindowProxy]] [=internal
        slot=].
 
-    1. Let |browsing context| be |window|'s [=Window/browsing context=].
+    1. Let |navigable| be |window|'s [=window/navigable=].
 
-    1. Let |context id| be the [=browsing context id=] for |browsing context|.
+    1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
     1. Let |serialized| be a [=/map=] matching the
        <code>script.WindowProxyProperties</code> production in the [=local end
-       definition=] with the <code>context</code> property set to |context id|.
+       definition=] with the <code>context</code> property set to |navigable id|.
 
     1. Let |remote value| be a [=/map=] matching the <code>script.WindowProxyRemoteValue</code>
        production in the [=local end definition=], with the <code>handle</code>
@@ -8963,16 +8930,16 @@ To <dfn>get the source</dfn> given |source realm|:
 
   1. Let |document| be environment settings’ <a>associated <code>Document</code></a>.
 
-  1. Let |browsing context| be |document|’s [=Document/browsing context=].
+  1. Let |navigable| be |document|’s [=/node navigable=].
 
-  1. Let |context id| be the [=browsing context id=] for |browsing context|.
+  1. Let |navigable id| be the [=navigable id=] for |navigable| if |navigable| is not null.
 
-  Otherwise let |browsing context| be null.
+  Otherwise let |navigable| be null.
 
 1. Let |source| be a [=/map=] matching the
    <code>script.Source</code> production with the <code>realm</code>
    field set to |realm|, and the <code>context</code> field set
-   to |context id| if |browsing context| is not null, or unset otherwise.
+   to |navigable id| if |navigable| is not null, or unset otherwise.
 
 1. Return |source|.
 
@@ -9000,18 +8967,18 @@ script.Target = (
 
 The <code>script.Target</code> type represents a value that is either a
 <code>script.Realm</code> or a <code>browsingContext.BrowsingContext</code>.
-This is useful in cases where a context identifier can stand in for the realm
-associated with the context's active document.
+This is useful in cases where a navigable identifier can stand in for the realm
+associated with the navigable's active document.
 
 <div algorithm>
-To <dfn>get a realm from a browsing context</dfn> given |context id| and |sandbox|:
+To <dfn>get a realm from a navigable</dfn> given |navigable id| and |sandbox|:
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
 
 1. If |sandbox| is null or is an empty string:
 
-  1. Let |document| be |context|'s [=active document=].
+  1. Let |document| be |navigable|'s [=active document=].
 
   1. Let |environment settings| be the [=environment settings object=] whose
      [=relevant global object=]'s <a>associated <code>Document</code></a> is
@@ -9022,7 +8989,7 @@ To <dfn>get a realm from a browsing context</dfn> given |context id| and |sandbo
 
 1. Otherwise: let |realm| be result of [=trying=] to
    [=get or create a sandbox realm=] given |sandbox| and
-   |context|.
+   |navigable|.
 
 1. Return [=success=] with data |realm|
 
@@ -9039,7 +9006,7 @@ To <dfn>get a realm from a target</dfn> given |target|:
   1. If |target| [=map/contains=] "<code>sandbox</code>", set |sandbox| to
      |target|["<code>sandbox</code>"].
 
-  1. Let |realm| be [=get a realm from a browsing context=] with
+  1. Let |realm| be [=get a realm from a navigable=] with
      |target|["<code>context</code>"] and |sandbox|.
 
 1. Otherwise:
@@ -9098,19 +9065,19 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |arguments| be the <code>arguments</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
 
-1. Let |contexts| be null.
+1. Let |navigables| be null.
 
 1. If the <code>contexts</code> field of |command parameters| is present:
 
-   1. Set |contexts| to an empty [=/set=].
+   1. Set |navigables| to an empty [=/set=].
 
-   1. For each |context id| of |command parameters|["<code>contexts</code>"]
+   1. For each |navigable id| of |command parameters|["<code>contexts</code>"]
 
-      1. Let |context| be the result of [=trying=] to [=get a browsing context=] with |context id|.
+      1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with |navigable id|.
 
-      1. If |context| is not a [=top-level browsing context=], return [=error=] with [=error code=] [=invalid argument=].
+      1. If |navigable| is not a [=/top-level traversable=], return [=error=] with [=error code=] [=invalid argument=].
 
-      1. Append |context| to |contexts|.
+      1. Append |navigable| to |navigables|.
 
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
@@ -9122,7 +9089,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Set |preload script map|[|script|] to a struct with <code>function
    declaration</code> |function declaration|, <code>arguments</code>
    |arguments|, <code>contexts</code>
-   |contexts|, and <code>sandbox</code> |sandbox|.
+   |navigables|, and <code>sandbox</code> |sandbox|.
 
 1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
@@ -9181,7 +9148,7 @@ The [=remote end steps=] with |command parameters| are:
 The <dfn export for=commands>script.callFunction</dfn> command calls a provided
 function with given arguments in a given realm.
 
-<code>RealmInfo</code> can be either a realm or a browsing context.
+<code>RealmInfo</code> can be either a realm or a navigable.
 
 Note: In case of an arrow function in <code>functionDeclaration</code>, the
 <code>this</code> argument doesn't affect function's <code>this</code> binding.
@@ -9362,7 +9329,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 #### The script.evaluate Command ####  {#command-script-evaluate}
 
 The <dfn export for=commands>script.evaluate</dfn> command evaluates a provided
-script in a given realm. For convenience a browsing context can be provided in
+script in a given realm. For convenience a navigable can be provided in
 place of a realm, in which case the realm used is the realm of the browsing
 context's active document.
 
@@ -9472,8 +9439,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 The <dfn export for=commands>script.getRealms</dfn> command returns a list of
 all realms, optionally filtered to [=realms=] of a specific type, or to the
-realm associated with the [=document=] currently loaded in a specified
-[=/browsing context=].
+realm associated with a [=/navigable=]'s [=active document=].
 
 <dl>
    <dt>Command Type</dt>
@@ -9508,12 +9474,12 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. If |command parameters| contains <code>context</code>:
 
-  1. Let |context| be the result of [=trying=] to [=get a browsing context=]
+  1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
      with |command parameters|["<code>context</code>"].
 
-  1. Let |document| be |context|'s [=active document=].
+  1. Let |document| be |navigable|'s [=active document=].
 
-  1. Let |context environment settings| be a [=/list=].
+  1. Let |navigable environment settings| be a [=/list=].
 
   1. For each |settings| of |environment settings|:
 
@@ -9525,9 +9491,9 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
       * The [=realm/global object=] specified by |settings| is a
         {{WorkerGlobalScope}} with |document| in its [=owner set=]
 
-      Append |settings| to |context environment settings|.
+      Append |settings| to |navigable environment settings|.
 
-  1. Set |environment settings| to |context environment settings|.
+  1. Set |environment settings| to |navigable environment settings|.
 
 1. Let |realms| be a list.
 
@@ -9628,11 +9594,10 @@ given |session|, |realm|, |channel properties|, and |message|:
 1. Let |environment settings| be the [=environment settings object=] whose
    [=realm execution context=]'s Realm component is |realm|.
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |environment settings|.
+1. Let |related navigables| be the result of [=get related navigables=] given |environment settings|.
 
 1. If [=event is enabled=] given |session|, "<code>script.message</code>"
-   and |related browsing contexts|:
+   and |related navigables|:
 
   1. If |channel properties| [=map/contains=]
      "<code>serializationOptions</code>", let |serialization options| be the
@@ -9694,14 +9659,13 @@ object:
 
 1. If |realm info| is null, return.
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |environment settings|.
+1. Let |related navigables| be the result of [=get related navigables=] given |environment settings|.
 
 1. Let |body| be a [=/map=] matching the <code>script.RealmCreated</code>
    production, with the <code>params</code> field set to |realm info|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>script.realmCreated</code>" and |related browsing contexts|:
+   given "<code>script.realmCreated</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -9710,25 +9674,29 @@ object:
 <div algorithm="remote end subscribe steps for script.realmCreated">
 
 The [=remote end subscribe steps=] with [=subscribe priority=] 2, given
-|session|, |contexts| and |include global| are:
+|session|, |navigables| and |include global| are:
 
 1. Let |environment settings| be a list of all the [=environment settings objects=]
    that have their [=execution ready flag=] set.
 
 1. For each |settings| of |environment settings|:
 
-  1. Let |related browsing contexts| be a new [=/set=].
+  1. Let |related navigables| be a new [=/set=].
 
   1. If the <a>associated <code>Document</code></a> of |settings|'
      [=relevant global object=] is a [=Document=]:
 
-     1. Let |context| be |settings|'s [=relevant global object=]'s
+     1. Let |navigable| be |settings|'s [=relevant global object=]'s
         <a>associated <code>Document</code></a>'s
-        [=Document/browsing context=]'s [=top-level browsing context=].
+        [=/node navigable=].
 
-     1. If |context| is not in |contexts|, continue.
+     1. If |navigable| is null, continue.
 
-     1. Append |context| to |related browsing contexts|.
+     1. Let |top-level traversible| be |navigable|'s [=navigable/top-level traversable=].
+
+     1. If |top-level traversible| is not in |navigables|, continue.
+
+     1. Append |top-level traversible| to |related navigables|.
 
     Otherwise, if |include global| is false, continue.
 
@@ -9738,7 +9706,7 @@ The [=remote end subscribe steps=] with [=subscribe priority=] 2, given
      production, with the <code>params</code> field set to |realm info|.
 
   1. If [=event is enabled=] given |session|,
-     "<code>script.realmCreated</code>" and |related browsing contexts|:
+     "<code>script.realmCreated</code>" and |related navigables|:
 
     1. [=Emit an event=] with |session| and |body|.
 
@@ -9769,10 +9737,9 @@ The [=remote end event trigger=] is:
 <div algorithm="remote end event trigger for script.realmDestroyed">
 Define the following [=unloading document cleanup steps=] with |document|:
 
-1. Let |related browsing contexts| be an empty [=/set=].
+1. Let |related navigables| be an empty [=/set=].
 
-1. Append |document|'s [=Document/browsing context=] to |related browsing
-   contexts|.
+1. Append |document|'s [=/navigable=] to |related navigables|.
 
 1. For each |worklet global scope| in |document|'s [=worklet global scopes=]:
 
@@ -9787,7 +9754,7 @@ Define the following [=unloading document cleanup steps=] with |document|:
      production, with the <code>params</code> field set to |params|.
 
   1. For each |session| in the [=set of sessions for which an event is enabled=]
-     given "<code>script.realmDestroyed</code>" and |related browsing contexts|:
+     given "<code>script.realmDestroyed</code>" and |related navigables|:
 
     1. [=Emit an event=] with |session| and |body|.
 
@@ -9808,7 +9775,7 @@ Define the following [=unloading document cleanup steps=] with |document|:
    production, with the <code>params</code> field set to |params|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>script.realmDestroyed</code>" and |related browsing contexts|:
+   given "<code>script.realmDestroyed</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
@@ -9819,8 +9786,7 @@ worker=] algorithm:
 1. Let |environment settings| be the [=environment settings object=] for which
    |event loop| is the [=responsible event loop=].
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |environment settings|.
+1. Let |related navigables| be the result of [=get related navigables=] given |environment settings|.
 
 1. Let |realm| be |environment settings|'s [=environment settings object's Realm=].
 
@@ -9953,9 +9919,9 @@ To <dfn>expand a storage partition spec</dfn> given |partition spec|:
 
 1. Otherwise, if |partition spec|["<code>type</code>"] is "<code>context</code>":
 
-  1. Let |browsing context| be the result of [=trying=] to [=get a browsing context=] given |partition spec|["<code>context</code>"].
+  1. Let |navigable| be the result of [=trying=] to [=get a navigable=] given |partition spec|["<code>context</code>"].
 
-  1. Let |partition key| be the [=storage partition key|key=] of |browsing context|'s [=associated storage partition=].
+  1. Let |partition key| be the [=storage partition key|key=] of |navigable|'s [=associated storage partition=].
 
   1. Return [=success=] with data |partition key|.
 
@@ -10279,7 +10245,7 @@ The <dfn export for=modules>log</dfn> module contains functionality and events
 related to logging.
 
 A [=BiDi Session=] has a <dfn>log event buffer</dfn> which is a [=/map=] from
-[=browsing context id=] to a list of log events for that context that have not
+[=navigable id=] to a list of log events for that context that have not
 been emitted. User agents may impose a maximum size on this buffer, subject to
 the condition that if events A and B happen in the same context with A occurring
 before B, and both are added to the buffer, the entry for B must not be removed
@@ -10287,38 +10253,38 @@ before the entry for A.
 
 <div algorithm>
 
-To <dfn>buffer a log event</dfn> given |session|, |contexts| and |event|:
+To <dfn>buffer a log event</dfn> given |session|, |navigables| and |event|:
 
 1. Let |buffer| be |session|'s [=log event buffer=].
 
-1. Let |context ids| be a new list.
+1. Let |navigable ids| be a new list.
 
-1. For each |context| of |contexts|:
+1. For each |navigable| of |navigables|:
 
-  1. Append the [=browsing context id=] for |context| to |context ids|.
+  1. Append the [=navigable id=] for |navigable| to |navigable ids|.
 
-1. For each |context id| in |context ids|:
+1. For each |navigable id| in |navigable ids|:
 
-  1. Let |other contexts| be an empty [=/list=]
+  1. Let |other navigables| be an empty [=/list=]
 
-  1. For each |other id| in |context ids|:
+  1. For each |other id| in |navigable ids|:
 
-   1. If |other id| is not equal to |context id|, append |other id| to |other
-      contexts|.
+   1. If |other id| is not equal to |navigable id|, append |other id| to |other
+      navigables|.
 
-  1. If |buffer| does not contain |context id|, let |buffer|[|context id|] be a
+  1. If |buffer| does not contain |navigable id|, let |buffer|[|navigable id|] be a
      new list.
 
-  1. Append (|event|, |other contexts|) to |buffer|[|context id|].
+  1. Append (|event|, |other navigables|) to |buffer|[|navigable id|].
 
-Note: we store the other contexts here so that each event is only emitted
+Note: we store the other navigables here so that each event is only emitted
 once. In practice this is only relevant for workers that can be associated with
-multiple browsing contexts.
+multiple navigables.
 
-Issue: Do we want to key this on browsing context or top-level browsing context?
+Issue: Do we want to key this on browsing context or top-level traversable?
 The difference is in what happens if an event occurs in a frame and that frame
 is then navigated before the local end subscribes to log events for the top
-level context.
+level navigable.
 
 </div>
 
@@ -10466,11 +10432,10 @@ Define the following [=console steps=] with |method|, |args|, and
 
   1. Let |settings| be the [=current settings object=]
 
-  1. Let |related browsing contexts| be the result of [=get related browsing
-     contexts=] given |settings|.
+  1. Let |related navigables| be the result of [=get related navigables=] given |settings|.
 
   1. If [=event is enabled=] with |session|, "<code>log.entryAdded</code>" and
-     |related browsing contexts|, [=emit an event=] with |session| and |body|.
+     |related navigables|, [=emit an event=] with |session| and |body|.
 
      Otherwise, [=buffer a log event=] with |session|, |related browsing
      contexts|, and |body|.
@@ -10493,13 +10458,12 @@ ignore>line number</var>, <var ignore>column number</var>, |message| and
    |message|, <code>source</code> set to |source|, and the <code>timestamp</code>
    field set to |timestamp|.
 
-1. Let |related browsing contexts| be the result of [=get related browsing
-   contexts=] given |settings|.
+1. Let |related navigables| be the result of [=get related navigables=] given |settings|.
 
 1. For each |session| in [=active BiDi sessions=]:
 
   1. If [=event is enabled=] with |session|, "<code>log.entryAdded</code>" and
-     |related browsing contexts|, [=emit an event=] with |session| and |body|.
+     |related navigables|, [=emit an event=] with |session| and |body|.
 
      Otherwise, [=buffer a log event=] with |session|, |related browsing
      contexts|, and |body|.
@@ -10516,28 +10480,28 @@ Issue: Allow implementation-defined log types
 <div algorithm="remote end subscribe steps for log.entryAdded">
 
 The [=remote end subscribe steps=], with [=subscribe priority=] 10, given
-|session|, |contexts| and |include global| are:
+|session|, |navigables| and |include global| are:
 
-1. For each |context id| → |events| in |session|'s [=log event buffer=]:
+1. For each |navigable id| → |events| in |session|'s [=log event buffer=]:
 
-  1. Let |maybe context| be the result of [=getting a browsing context=] given
-     |context id|.
+  1. Let |maybe context| be the result of [=getting a navigable=] given
+     |navigable id|.
 
-  1. If |maybe context| is an [=error=], remove |context id| from [=log event
+  1. If |maybe context| is an [=error=], remove |navigable id| from [=log event
      buffer=] and continue.
 
-  1. Let |context| be |maybe context|'s data
+  1. Let |navigable| be |maybe context|'s data
 
-  1. Let |top level context| be |context|'s [=top-level browsing context=].
+  1. Let |top level navigable| be |navigable|'s [=navigable/top-level traversable=].
 
-  1. If |include global| is true and |top level context| is not in |contexts|,
-     or if |include global| is false and |top level context| is in |contexts|:
+  1. If |include global| is true and |top level navigable| is not in |navigables|,
+     or if |include global| is false and |top level navigable| is in |navigables|:
 
-    1. For each (|event|, |other contexts|) in |events|:
+    1. For each (|event|, |other navigables|) in |events|:
 
       1. [=Emit an event=] with |session| and |event|.
 
-      1. For each |other context id| in |other contexts|:
+      1. For each |other context id| in |other navigables|:
 
         1. If [=log event buffer=] contains |other context id|, remove |event|
            from [=log event buffer=][|other context id|].
@@ -10589,13 +10553,13 @@ The <dfn>is <code>input.ElementOrigin</code></dfn> steps given |object| are:
 <div algorithm>To <dfn>get Element from <code>input.ElementOrigin</code>
 steps</dfn> given |session|:
 
-1. Return the following steps, given |origin| and |context|:
+1. Return the following steps, given |origin| and |navigable|:
 
   1. Assert: |origin| matches <code>input.ElementOrigin</code>.
 
   <!-- converting to realm here is kind of silly since we immediately convert back
        in [=deserialize remote reference=] -->
-  1. Let |document| be |context|'s [=active document=].
+  1. Let |document| be |navigable|'s [=active document=].
 
   1. Let |reference| be |origin|["<code>element</code>"]
 
@@ -10767,14 +10731,14 @@ specified sequence of user input actions.
 
 The [=remote end steps=] with |session| and |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
+1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
 
-1. Let |input state| be [=get the input state=] with |session| and |context|'s
-   [=top-level browsing context=].
+1. Let |input state| be [=get the input state=] with |session| and |navigable|'s
+   [=navigable/top-level traversable=].
 
 1. Let |actions options| be a new [=actions options=] with the [=is element
    origin=] steps set to [=is input.ElementOrigin=], and the
@@ -10785,7 +10749,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
    sequence=] with |input state|, |command parameters|, and |actions options|.
 
 1. [=Try=] to [=dispatch actions=] with |input state|, |actions by tick|,
-   |context|, and |actions options|.
+   |navigable|, and |actions options|.
 
 1. Return [=success=] with data null.
 
@@ -10822,15 +10786,15 @@ state associated with the current session.
 
 The [=remote end steps=] given |session|, and |command parameters| are:
 
-1. Let |context id| be the value of the <code>context</code> field of
+1. Let |navigable id| be the value of the <code>context</code> field of
    |command parameters|.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=]
-   with |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
 
-1. Let |top-level context| be |context|'s [=top-level browsing context=].
+1. Let |top-level traversable| be |navigable|'s [=navigable/top-level traversable=].
 
-1. Let |input state| be [=get the input state=] with |session| and |top-level context|.
+1. Let |input state| be [=get the input state=] with |session| and |top-level traversable|.
 
 1. Let |actions options| be a new [=actions options=] with the [=is element
    origin=] steps set to [=is input.ElementOrigin=], and the
@@ -10839,10 +10803,10 @@ The [=remote end steps=] given |session|, and |command parameters| are:
 
 1. Let |undo actions| be |input state|’s [=input cancel list=] in reverse order.
 
-1. [=Try=] to [=dispatch tick actions=] with |undo actions|, 0, |context|, and
+1. [=Try=] to [=dispatch tick actions=] with |undo actions|, 0, |navigable|, and
    |actions options|.
 
-1. [=Reset the input state=] with |session| and |top-level context|.
+1. [=Reset the input state=] with |session| and |top-level traversable|.
 
 1. Return [=success=] with data null.
 
@@ -10881,13 +10845,13 @@ to a set of file paths.
 
 The [=remote end steps=] given |session| and |command parameters| are:
 
-1. Let |context id| be the value of the |command
+1. Let |navigable id| be the value of the |command
    parameters|["<code>context</code>"] field.
 
-1. Let |context| be the result of [=trying=] to [=get a browsing context=] with
-   |context id|.
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with
+   |navigable id|.
 
-1. Let |document| be |context|'s [=active document=].
+1. Let |document| be |navigable|'s [=active document=].
 
 1. Let |environment settings| be the [=environment settings object=] whose
    [=relevant global object=]'s <a>associated <code>Document</code></a> is
