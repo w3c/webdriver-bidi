@@ -89,6 +89,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such alert; url: dfn-no-such-alert
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
+    text: no such window; url: dfn-no-such-window
     text: parse a page range; url: dfn-parse-a-page-range
     text: handler; for: prompt handler configuration; url: dfn-handler
     text: process capabilities; url: dfn-processing-capabilities
@@ -253,6 +254,7 @@ spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
     text: visual viewport page left; url: #dom-visualviewport-pageleft
     text: visual viewport page top; url: #dom-visualviewport-pagetop
     text: visual viewport; url: #visual-viewport
+    text: web-exposed screen area; url: #web-exposed-screen-area
 spec: DOM; urlPrefix: https://dom.spec.whatwg.org/
   type: dfn
     text: root; url: #concept-tree-root
@@ -260,6 +262,11 @@ spec: DOM; urlPrefix: https://dom.spec.whatwg.org/
     text: evaluate; url: #dom-xpathevaluatorbase-evaluate
     text: ORDERED_NODE_SNAPSHOT_TYPE; url: #dom-xpathresult-ordered_node_snapshot_type
     text: snapshotItem; url: #dom-xpathresult-snapshotitem
+spec: FULLSCREEN; urlPrefix: https://fullscreen.spec.whatwg.org/
+  type: dfn
+    text: fullscreen an element; url: #fullscreen-an-element
+    text: fullscreen is supported; url: #fullscreen-is-supported
+    text: fully exit fullscreen; url: #fully-exit-fullscreen
 spec: SELECTORS4; urlPrefix: https://drafts.csswg.org/selectors-4/
   type: dfn
     text: match a selector against a tree; url: #match-a-selector-against-a-tree
@@ -2013,8 +2020,10 @@ managing the remote end browser process.
 BrowserCommand = (
   browser.Close //
   browser.CreateUserContext //
+  browser.GetClientWindows //
   browser.GetUserContexts //
-  browser.RemoveUserContext
+  browser.RemoveUserContext //
+  browser.SetClientWindowState //
 )
 </pre>
 
@@ -2028,8 +2037,224 @@ BrowserResult = (
 )
 </pre>
 
+### Windows ### {#module-browser-window}
+
+<!-- This should probably be defined in CSSOM-View -->
+
+Each [=/top-level traversable=] is associated with a single <dfn>client
+window</dfn> which represents a rectangular area containing the
+<a spec=css2>viewport</a> that will be used to render that [=/top-level
+traversable=]'s [=active document=] when its [=visibility state=] is
+"<code>visible</code>", as well as any browser-specific user interface elements
+associated with displaying the traversable (e.g. any URL bar, toolbars, or OS
+window decorations).
+
+A [=client window=] has a <dfn>client window id</dfn> which is a string uniquely
+identifying that window.
+
+A [=client window=] has an <dfn for="client window">x-coordinate</dfn>, which is
+the number of CSS pixels between the left edge of the [=web-exposed screen
+area=] and the left edge of the window, or zero if that doesn't make sense for a
+particular window.
+
+A [=client window=] has an <dfn for="client window">y-coordinate</dfn>, which is
+the number of CSS pixels between the top edge of the [=web-exposed screen
+area=] and the top edge of the window, or zero if that doesn't make sense for a
+particular window.
+
+A [=client window=] has an <dfn for="client window">width</dfn>, which is the
+width of the window's rectangle in CSS pixels.
+
+A [=client window=] has an <dfn for="client window">height</dfn>, which is the
+height of the window's rectangle in CSS pixels.
+
+To <dfn>maximize the client window</dfn> |window| an implementation should either
+perform steps corresponding to the platform notion of maximizing |window|, or
+position |window| such that its [=client window/x-coordinate=] is as close as
+possible to 0, its [=client window/y-coordinate=] is as close as possible to 0,
+its [=client window/width=] is as close as possible to the width of the
+[=web-exposed screen area=] and its [=client window/height=] is as close as possible
+to the height of the [=web-exposed screen area=]. If either of these options are
+supported then <dfn>maximize client window is supported</dfn>.
+
+To <dfn>minimize the client window</dfn> |window| an implementation should either
+perform steps corresponding to the platform notion of minimizing |window|, or
+otherwise hide |window| such that all the [=active documents=] in
+[=/top-level traversables=] associated with |window| have [=visibility state=]
+"<code>hidden</code>" and |window|'s [=client window/width=] and [=client
+window/height=] are both as close as possible to 0. If either of these options
+are supported then <dfn>minimize client window is supported</dfn>.
+
+To <dfn>restore the client window</dfn> |window| an implementation should ensure that it's
+neither in a platform-defined maximized state, nor in a platform-defined
+minimized state, and that if there is one or more [=/top-level traversable=]
+associated with |window|, at least one of those has an [=active document=] in
+the "<code>visible</code>" state. If this is supported then <dfn>restore client
+window is supported</dfn>.
+
+<div algorithm>
+
+To <dfn>get the client window state</dfn> given |window|:
+
+1. Let |documents| be an empty [=/list=].
+
+1. Let |visible documents| be an empty [=/list=].
+
+1. For each [=/top-level traversable=] |traversable|:
+
+  1. If |traversable|'s [=client window=] is not |window| then continue.
+
+  1. Let |document| be |traversable|'s [=active document=].
+
+  1. [=list/Append=] |document| to |documents|.
+
+  1. If |document|'s [=visibility state=] is "<code>visible</code>",
+     [=list/Append=] |document| to |visible documents|.
+
+1. For each |document| in |visible documents|:
+
+  1. If |document|'s [=fullscreen element=] is not null, return
+     "<code>fullscreen</code>".
+
+1. If |visible documents| is [=list/empty=] but |documents| is not
+   [=list/empty=], or if |window| is otherwise in an OS-specific minimized
+   state, return "<code>minimized</code>".
+
+   Note: This will usually, but not necessarily, mean that |window|'s [=client
+   window/width=] and [=client window/height=] are equal to 0.
+
+1. If if |window| is in an OS-specific maximized state return
+   "<code>maximized</code>".
+
+   Note: This will usually, but not necessarily, mean that |window|'s [=client
+   window/width=] is equal to the width of the [=web-exposed screen area=] and
+   |window|'s [=client window/height=] is equal to the height of the
+   [=web-exposed screen area=].
+
+1. Return "<code>normal</code>".
+
+</div>
+
+<div algorithm>
+
+To <dfn>set the client window state</dfn> given |window| and |state|:
+
+1. Let |current state| be [=get the client window state| with |window|.
+
+1. If |current state| is equal to |state|, return [=success=] with data null.
+
+1. Switch on the value of |state|:
+
+   <dl>
+    <dt>"<code>fullscreen</code>"
+    <dd>If not [=fullscreen is supported=] return [=error=] with [=error code=]
+    [=unsupported operation=].
+
+    <dt>"<code>normal</code>"
+    <dd>If not [=restore client window is supported=] for |window| return [=error=] with
+    [=error code=] [=unsupported operation=].
+
+    <dt>"<code>maximize</code>"
+    <dd>If not [=maximize client window is supported=] for |window| return [=error=] with
+    [=error code=] [=unsupported operation=].
+
+    <dt>"<code>minimize</code>"
+    <dd>If not [=minimize client window is supported=] for |window| return [=error=] with
+    [=error code=] [=unsupported operation=].
+   </dl>
+
+1. Let |documents| be an empty [=/list=].
+
+1. For each [=/top-level traversable=] |traversable|:
+
+  1. If |traversable|'s associated [=client window=] is not |window| then
+     continue.
+
+  1. Let |document| be |traversable|'s [=active document=].
+
+  1. Append |document| to |documents|.
+
+1. If |documents| is [=list/empty=] return [=error=] with [=error code=] [=no
+   such window=].
+
+1. If |current state| is "<code>fullscreen</code>":
+
+  1. For each |document| in |documents|:
+
+    1. [=Fully exit fullscreen=] with |document|.
+
+       Note: This is a no-op for documents in window that are not fullscreen.
+
+1. Switch on the value of |state|:
+
+   <dl>
+    <dt>"<code>fullscreen</code>"
+    <dd>
+      1. For each |document| in |documents|:
+
+        1. If |document|'s [=visibility state=] is "<code>visible</code>",
+           [=fullscreen an element=] with |document|'s [=document element=].
+
+        1. [=Break=].
+
+    <dt>"<code>normal</code>"
+    <dd>1. [=Restore the client window=] |window|.
+
+    <dt>"<code>maximize</code>
+    <dd>1. [=Maximize the client window=] |window|.
+
+    <dt>"<code>minimize</code>
+    <dd>1. [=Minimize the client window=] |window|.
+
+1. Return [=success=] with data null.
+
+</div>
 
 ### Types ### {#module-browser-types}
+
+#### The browser.ClientWindow Type #### {#type-browser-ClientWindow}
+
+<pre class="cddl remote-cddl local-cddl">
+browser.ClientWindow = text;
+</pre>
+
+The <code>browser.ClientWidnow</code> uniquely identifies a [=client window=].
+
+#### The browser.ClientWindowInfo Type #### {#type-browser-ClientWindowInfo}
+
+<pre class="cddl remote-cddl local-cddl">
+browser.ClientWindowInfo = {
+  clientWindow: browser.ClientWindow,
+  state: "fullscreen" / "maximized" / "minimized" / "normal",
+  width: js-uint,
+  height: js-uint,
+  x: js-int,
+  y: js-int,
+}
+</pre>
+
+The <code>browser.ClientWindowInfo</code> type represents properties of a
+[=client window=].
+
+<div algorithm>
+To <dfn>get the client window info</dfn> given |client window|:
+
+1. Let |client window id| be the [=client window id=] for |client window|.
+
+1. Let |state| be [=get the client window state=] with |client window|.
+
+1. Let |client window info| be a [=/map=] matching the
+   <code>browser.ClientWindowsInfo</code> production with the
+   <code>clientWindow</code> field set to |client window id|, <code>state</code>
+   field set to |state|, the <code>x</code> field set to |client window|'s
+   [=client window/x-coordinate=], the <code>y</code> field set to |client
+   window|'s [=client window/y-coordinate=], the <code>width</code> field set to
+   |client window|'s [=client window/width=], and the <code>height</code> field
+   set to |client window|'s [=client window/height=].
+
+1. Return |client window info|
+
+</div>
 
 #### The browser.UserContext Type #### {#type-browser-UserContext}
 
@@ -2161,6 +2386,62 @@ The [=remote end steps=] are:
 
 </div>
 
+#### The browser.getClientWindows Command #### {#command-browser-getClientWindows}
+
+The <dfn export for=commands>browser.getClientWindows</dfn> command returns a
+list of [=client windows=]s.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browser.GetClientWindows = (
+        method: "browser.getClientWindows",
+        params: EmptyParams,
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      browser.GetClientWindowsResult = {
+        clientWindows: [ + browser.ClientWindowInfo]
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.getClientWindows">
+
+The [=remote end steps=] are:
+
+1. Let |client window ids| be an empty [=/set=].
+
+1. Let |client windows| be an empty [=/list=].
+
+1. For each [=/top-level traversable=] |traversable|:
+
+  1. Let |client window| be |traversable|'s associated [=client window=]
+
+  1. Let |client window id| be the [=client window id=] for |client window|.
+
+  1. If |client window ids| [=set/contains=] |client window id|, continue.
+
+  1. [=set/Append=] |client window id| to |client window ids|.
+
+  1. Let |client window info| be [=get the client window info=] with |client
+     window|.
+
+  1. [=list/Append=] |client window info| to |client windows|.
+
+1. Let |result| be a [=/map=] matching the
+   <code>browser.GetClientWindowsResult</code> production with the
+   <code>clientWindows</code> field set to |client windows|.
+
+1. Return [=success=] with data |result|.
+
+</div>
+
 
 #### The browser.getUserContexts Command #### {#command-browser-getUserContexts}
 
@@ -2260,6 +2541,92 @@ The [=remote end steps=] with |command parameters| are:
 1. [=set/Remove=] |user context| for the [=set of user contexts=].
 
 1. Return [=success=] with data null.
+
+</div>
+
+#### The browser.setClientWindowState Command #### {#command-browser-setClientWindowState}
+
+The <dfn export for=commands>browser.setClientWindowRect</dfn> command sets the
+dimensions of a [=client window=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      browser.SetClientWindowState = (
+        method: "browser.setClientWindowState",
+        params: browser.SetClientWindowStateParameters
+      )
+
+      browser.SetClientWindowStateParameters = {
+        clientWindow: browser.ClientWindow,
+        browser.ClientWindowNamedState // browser.ClientWindowRectState
+      }
+
+      browser.ClientWindowNamedState = (
+        state: "fullscreen" / "maximized" / "minimized"
+      )
+
+      browser.ClientWindowRectState = (
+        state: "normal",
+        ? width: js-uint,
+        ? height: js-uint,
+        ? x: js-int,
+        ? y: js-int,
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl">
+      browsingContext.ClientWindowInfo
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.setClientWindowRect">
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. If the implementation does not support setting the client window state at
+   all, then return [=error=] with [=error code=] [=unsupported operation=].
+
+1. If there is a [=client window=] with [=client window id=] |command
+   parameters|["<code>clientWindow</code>"], let |window| be that [=client
+   window=]. Otherwise return [=error=] with [=error code=] [=no such window=].
+
+1. [=Try=] to [=set the client window state=] with |window| and |command
+   parameters|["<code>state</code>"].
+
+1. If |command parameters|["<code>state</code>"] is "<code>normal</code>":
+
+  1. If |command parameters| [=map/contains=] "<code>x</code>" and the
+     implementation supports positioning [=client windows=], set the [=client
+     window/x-coordinate=] of |window| to a value that is as close as possible
+     |command parameters|["<code>x</code>"].
+
+   1. If |command parameters| [=map/contains=] "<code>y</code>" and the
+     implementation supports positioning [=client windows=], set the [=client
+     window/y-coordinate=] of |window| to a value that is as close as possible
+     |command parameters|["<code>y</code>"].
+
+   1. If |command parameters| [=map/contains=] "<code>width</code>" and the
+     implementation supports resizing [=client windows=], set the [=client
+     window/width=] of |window| to a value that is as close as possible |command
+     parameters|["<code>width</code>"].
+
+   1. If |command parameters| [=map/contains=] "<code>width</code>" and the
+     implementation supports resizing [=client windows=], set the [=client
+     window/width=] of |window| to a value that is as close as possible |command
+     parameters|["<code>width</code>"].
+
+1. Let |client window info| be [=get the client window info=].
+
+1. Return [=success=] with data |client window info|.
+
+Note: For simplicity this models all client window operations as
+synchronous. Therefore the returned client window dimensions are expected to be
+those after the window has reached its new state.
 
 </div>
 
@@ -2393,6 +2760,7 @@ browsingContext.InfoList = [*browsingContext.Info]
 
 browsingContext.Info = {
   children: browsingContext.InfoList / null,
+  clientWindow: browser.ClientWindow,
   context: browsingContext.BrowsingContext,
   originalOpener: browsingContext.BrowsingContext / null,
   url: text,
@@ -2470,16 +2838,22 @@ To <dfn>get the navigable info</dfn> given |navigable|,
    [=original opener=], if |navigable|'s [=original opener=] is not null,
    and null otherwise.
 
-1. Let |context info| be a [=/map=] matching the
+1. Let |top-level traversable| be |navigable|'s  [=navigable/top-level
+   traversable=].
+
+1. Let |client window id| be the [=client window id=] for |top-level
+   traversable|'s associated [=client window=].
+
+1. Let |navigable info| be a [=/map=] matching the
    <code>browsingContext.Info</code> production with the <code>context</code>
    field set to |navigable id|, the <code>parent</code> field set to |parent id|
-   if |include parent id| is <code>true</code>, or unset otherwise, the <code>url</code>
-   field set to |url|, the <code>userContext</code> field set to
-   |user context|'s [=user context id=], <code>originalOpener</code>
-   field set to |opener id|, and the <code>children</code> field
-   set to |child infos|.
+   if |include parent id| is <code>true</code>, or unset otherwise, the
+   <code>url</code> field set to |url|, the <code>userContext</code> field set
+   to |user context|'s [=user context id=], <code>originalOpener</code> field
+   set to |opener id|, the <code>children</code> field set to |child infos|, and
+   the <code>clientWindow</code> field set to |client window id|.
 
-1. Return |context info|.
+1. Return |navigable info|.
 
 </div>
 
