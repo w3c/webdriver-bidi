@@ -89,7 +89,6 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such alert; url: dfn-no-such-alert
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
-    text: no such window; url: dfn-no-such-window
     text: parse a page range; url: dfn-parse-a-page-range
     text: handler; for: prompt handler configuration; url: dfn-handler
     text: process capabilities; url: dfn-processing-capabilities
@@ -603,6 +602,9 @@ WebDriver BiDi extends the set of [=error codes=] from [[WEBDRIVER|WebDriver]]
 with the following additional codes:
 
 <dl>
+  <dt><dfn for=errors export>no such client window</dfn>
+  <dd>Tried to interact with an unknown [=client window=].
+
   <dt><dfn for=errors export>no such handle</dfn>
   <dd>Tried to deserialize an unknown <code>RemoteObjectReference</code>.
 
@@ -2057,15 +2059,15 @@ the number of CSS pixels between the left edge of the [=web-exposed screen
 area=] and the left edge of the window, or zero if that doesn't make sense for a
 particular window.
 
-A [=client window=] has an <dfn for="client window">y-coordinate</dfn>, which is
+A [=client window=] has a <dfn for="client window">y-coordinate</dfn>, which is
 the number of CSS pixels between the top edge of the [=web-exposed screen
 area=] and the top edge of the window, or zero if that doesn't make sense for a
 particular window.
 
-A [=client window=] has an <dfn for="client window">width</dfn>, which is the
+A [=client window=] has a <dfn for="client window">width</dfn>, which is the
 width of the window's rectangle in CSS pixels.
 
-A [=client window=] has an <dfn for="client window">height</dfn>, which is the
+A [=client window=] has a <dfn for="client window">height</dfn>, which is the
 height of the window's rectangle in CSS pixels.
 
 To <dfn>maximize the client window</dfn> |window| an implementation should either
@@ -2174,8 +2176,8 @@ To <dfn>set the client window state</dfn> given |window| and |state|:
 
   1. Append |document| to |documents|.
 
-1. If |documents| is [=list/empty=] return [=error=] with [=error code=] [=no
-   such window=].
+1. If |documents| is [=list/empty=] return [=error=] with [=error code=]
+   [=no such client window=].
 
 1. If |current state| is "<code>fullscreen</code>":
 
@@ -2405,7 +2407,7 @@ list of [=client window=]s.
    <dd>
     <pre class="cddl local-cddl">
       browser.GetClientWindowsResult = {
-        clientWindows: [ + browser.ClientWindowInfo]
+        clientWindows: [ * browser.ClientWindowInfo]
       }
     </pre>
    </dd>
@@ -2592,35 +2594,35 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
    all, then return [=error=] with [=error code=] [=unsupported operation=].
 
 1. If there is a [=client window=] with [=client window id=] |command
-   parameters|["<code>clientWindow</code>"], let |window| be that [=client
-   window=]. Otherwise return [=error=] with [=error code=] [=no such window=].
+   parameters|["<code>clientWindow</code>"], let |client window| be that [=client
+   window=]. Otherwise return [=error=] with [=error code=] [=no such client window=].
 
-1. [=Try=] to [=set the client window state=] with |window| and |command
+1. [=Try=] to [=set the client window state=] with |client window| and |command
    parameters|["<code>state</code>"].
 
 1. If |command parameters|["<code>state</code>"] is "<code>normal</code>":
 
   1. If |command parameters| [=map/contains=] "<code>x</code>" and the
      implementation supports positioning [=client windows=], set the [=client
-     window/x-coordinate=] of |window| to a value that is as close as possible
-     |command parameters|["<code>x</code>"].
+     window/x-coordinate=] of |client window| to a value that is as close as
+     possible |command parameters|["<code>x</code>"].
 
    1. If |command parameters| [=map/contains=] "<code>y</code>" and the
      implementation supports positioning [=client windows=], set the [=client
-     window/y-coordinate=] of |window| to a value that is as close as possible
-     |command parameters|["<code>y</code>"].
+     window/y-coordinate=] of |client window| to a value that is as close as
+     possible |command parameters|["<code>y</code>"].
 
    1. If |command parameters| [=map/contains=] "<code>width</code>" and the
      implementation supports resizing [=client windows=], set the [=client
-     window/width=] of |window| to a value that is as close as possible |command
-     parameters|["<code>width</code>"].
+     window/width=] of |client window| to a value that is as close as possible
+     |command parameters|["<code>width</code>"].
 
    1. If |command parameters| [=map/contains=] "<code>width</code>" and the
      implementation supports resizing [=client windows=], set the [=client
-     window/width=] of |window| to a value that is as close as possible |command
-     parameters|["<code>width</code>"].
+     window/width=] of |client window| to a value that is as close as possible
+     |command parameters|["<code>width</code>"].
 
-1. Let |client window info| be [=get the client window info=].
+1. Let |client window info| be [=get the client window info=] with |client window|.
 
 1. Return [=success=] with data |client window info|.
 
