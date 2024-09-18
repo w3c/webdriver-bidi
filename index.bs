@@ -1597,6 +1597,7 @@ session.CapabilityRequest = {
   ? platformName: text,
   ? proxy: session.ProxyConfiguration,
   ? unhandledPromptBehavior: session.UserPromptHandler,
+  ? extensions: [*session.Extension],
   Extensible
 };
 </pre>
@@ -1726,6 +1727,31 @@ session.SubscriptionRequest = {
 
 The <code>session.SubscriptionRequest</code> type represents a request to
 subscribe to or unsubscribe from a specific set of events.
+
+#### The session.Extension Type #### {#type-session-Extension}
+
+<pre class="cddl remote-cddl local-cddl">
+Extension = text
+</pre>
+
+The <code>Extension</code> type is base64 encoded web-extension archive (xpi/crx/zip),
+an absolute path to the web-extension archive or absolute path to the unpacked web-extension.
+
+<pre class="cddl remote-cddl local-cddl">
+ExtensionDetails = {
+   extension: Extension,
+   ? installTemporary: bool .default true
+   ? allowPrivateBrowsing: bool .default false
+}
+</pre>
+
+The <code>ExtensionDetails</code> type represents a web-extension with its additional properties.
+
+<pre class="cddl remote-cddl local-cddl">
+session.Extension = Extension / ExtensionDetails
+</pre>
+
+The <code>session.Extension</code> type represents a web-extension to run in the session.
 
 ### Commands ### {#module-session-commands}
 
@@ -2007,6 +2033,68 @@ The [=remote end steps=] with |session| and |command parameters| are:
    |list of event names|, |list of contexts| and enabled false.
 
 1. Return [=success=] with data null.
+
+</div>
+
+#### The session.installWebExtension Command #### {#command-session-installWebExtension}
+
+The <dfn export for=commands>session.installWebExtension</dfn> command installs
+a web-extension for a given session.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+     <pre class="cddl remote-cddl">
+     session.InstallWebExtension = (
+       method: "session.installWebExtension",
+       params: session.InstallWebExtensionParameters
+     )
+
+     session.InstallWebExtensionParameters = {
+       extension: session.Extension
+     }
+     </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+      <pre class="cddl">
+      session.InstallWebExtensionResult = (
+        script.InstallWebExtensionSuccess /
+        script.InstallWebExtensionException
+      )
+
+      session.InstallWebExtensionSuccess = {
+        type: "success",
+        webExtensionId: text
+      }
+
+      session.InstallWebExtensionException = {
+        type: "exception",
+        exceptionDetails: text
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for session.installWebExtension">
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let the |extension| be the value of the <code>extension</code> field of
+   |command parameters|.
+
+1. [=Try=] to install web-extension with |session| and |extension|.
+
+1. If exception is throw
+
+   1. Let |exception details| be the exception message.
+
+   1. Return a new [=/map=] matching the <code>session.InstallWebExtensionException</code>
+      production, with the <code>exceptionDetails</code> field set to
+      |exception details|.
+
+
+1. Return a new map matching the <code>session.InstallWebExtensionSuccess</code> production, with
+   the <code>webExtensionId</code> field set to the web-extension id.
 
 </div>
 
