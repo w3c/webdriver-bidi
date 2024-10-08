@@ -11410,17 +11410,23 @@ The <code>extensions.Extension</code> type represents an extension with its addi
 <div algorithm>
 To <dfn>expand a install path spec</dfn> given |install path spec|:
 
-1. Let |path| be a value of <code>path</code> field of |install path spec| if the value of <code>type</code> of the |install path spec| is equal to <code>path</code>,
-   otherwise perform any implementation-defined steps to create a temporary folder and make its path to be the value of |path|.
+1. Switch on the value of the <code>type</code> field of |install path spec|:
 
-1. Let |archive path| be a value of <code>path</code> field of |install path spec| if the value of <code>type</code> of the |install path spec| is equal to <code>archive-path</code>,
-   otherwise if the value of <code>type</code> of the |install path spec| is equal to <code>archive-path</code> perform any implementation-defined steps to create a temporary file
-   being a result of Base64 decodeing of the value of <code>value</code> filed of |install path spec| and make its path to be the value of |archive path|,
-   otherwise |archive path| is null.
+   <dl>
+    <dt>"<code>path</code>"
+    <dd>Let |path| be a value of <code>path</code> field of |install path spec|.
 
-1. If |archive path| if not null:
+    <dt>"<code>archive-path</code>"
+    <dd>
+      1. Let |archive path| be a value of <code>path</code> field of |install path spec|.
+      1. Perform any implementation-defined steps to extract the archive from <code>archive path</code> to a temporary directory and let |path| be the path to that temporary directory.
 
-   1. Perform any implementation-defined steps to unpack archive into |path|.
+    <dt>"<code>base64</code>"
+    <dd>
+      1. Let |archive path| be a value of <code>path</code> field of |install path spec|.
+      1. Perform any implementation-defined steps to decode <code>archive path</code> to a zip archive and extract that archive to a temporary directory and let |path| be the path to that temporary directory.
+
+   </dl>
 
 1. Let |extension files| be a result of implementation-defined steps to list all paths in |path| folder.
 
