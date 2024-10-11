@@ -603,8 +603,8 @@ WebDriver BiDi extends the set of [=error codes=] from [[WEBDRIVER|WebDriver]]
 with the following additional codes:
 
 <dl>
-  <dt><dfn for=errors export>invalid extension</dfn>
-  <dd>Tried to install invalid extension.
+  <dt><dfn for=errors export>invalid web-extension</dfn>
+  <dd>Tried to install invalid a web-extension.
 
   <dt><dfn for=errors export>no such client window</dfn>
   <dd>Tried to interact with an unknown [=client window=].
@@ -648,7 +648,7 @@ with the following additional codes:
 
 <pre class="cddl local-cddl">
 ErrorCode = "invalid argument" /
-            "invalid extension" /
+            "invalid web-extension" /
             "invalid selector" /
             "invalid session id" /
             "move target out of bounds" /
@@ -11350,62 +11350,62 @@ The [=remote end steps=] given |session| and |command parameters| are:
 </div>
 
 
-## The extensions Module ## {#module-extensions}
+## The webExtensions Module ## {#module-webExtensions}
 
-The <dfn export for=modules>extensions</dfn> module contains functionality for
-managing and interacting with extensions.
+The <dfn export for=modules>webExtensions</dfn> module contains functionality for
+managing and interacting with web-extensions.
 
-### Definition ### {#module-extensions-definition}
+### Definition ### {#module-webExtensions-definition}
 
 [=remote end definition=]
 
 <pre class="cddl remote-cddl">
-ExtensionsCommand = (
-  extensions.Install
+WebExtensionsCommand = (
+  webExtensions.Install
 )
 </pre>
 
 [=local end definition=]
 
 <pre class="cddl local-cddl">
-ExtensionsResult = (
-  extensions.InstallResult
+WebExtensionsResult = (
+  webExtensions.InstallResult
 )
 </pre>
 
-### Types ### {#module-extensions-types}
+### Types ### {#module-webExtensions-types}
 
-#### The extensions.Extension Type #### {#type-extensions-Extension}
+#### The extensions.Extension Type #### {#type-webExtensions-Extension}
 
 <pre class="cddl local-cddl">
-extensions.ExtensionArchive = {
+webExtensions.ExtensionArchive = {
    files: [+text],
 }
 </pre>
 
 <pre class="cddl remote-cddl local-cddl">
-extensions.Extension = {
-   installPath: extensions.ExtensionPath / extensions.ExtensionArchivePath / extensions.ExtensionBase64Encoded,
+webExtensions.Extension = {
+   installPath: webExtensions.ExtensionPath / webExtensions.ExtensionArchivePath / webExtensions.ExtensionBase64Encoded,
    ? allowPrivateBrowsing: bool .default false,
 }
 
-extensions.ExtensionPath = {
+webExtensions.ExtensionPath = {
    type: "path",
    path: text,
 }
 
-extensions.ExtensionArchivePath = {
+webExtensions.ExtensionArchivePath = {
    type: "archive-path",
    path: text,
 }
 
-extensions.ExtensionBase64Encoded = {
+webExtensions.ExtensionBase64Encoded = {
    type: "base64",
    value: text,
 }
 </pre>
 
-The <code>extensions.Extension</code> type represents an extension with its additional properties.
+The <code>webExtensions.Extension</code> type represents an extension with its additional properties.
 
 <div algorithm>
 To <dfn>expand a install path spec</dfn> given |install path spec|:
@@ -11430,7 +11430,7 @@ To <dfn>expand a install path spec</dfn> given |install path spec|:
 
 1. Let |extension files| be a result of implementation-defined steps to list all paths in |path| folder.
 
-1. Let |extension archive| be a map matching the <code>extensions.ExtensionArchive</code> production, with the <code>files</code> field set to |extension files|.
+1. Let |extension archive| be a map matching the <code>webExtensions.ExtensionArchive</code> production, with the <code>files</code> field set to |extension files|.
 
 1. Return [=success=] with data |extension archive|.
 
@@ -11438,35 +11438,35 @@ To <dfn>expand a install path spec</dfn> given |install path spec|:
 
 ### Commands ### {#module-extensions-commands}
 
-#### The extensions.install Command #### {#command-extensions-install}
+#### The webExtensions.install Command #### {#command-extensions-install}
 
-The <dfn export for=commands>extensions.install</dfn> command installs an extension for the session.
+The <dfn export for=commands>webExtensions.install</dfn> command installs an extension for the session.
 
 <dl>
    <dt>Command Type</dt>
    <dd>
      <pre class="cddl remote-cddl">
-     extensions.Install = (
-       method: "extensions.install",
-       params: extensions.InstallParameters
+     webExtensions.Install = (
+       method: "webExtensions.install",
+       params: webExtensions.InstallParameters
      )
 
-     extensions.InstallParameters = {
-       extension: extensions.Extension,
+     webExtensions.InstallParameters = {
+       extension: webExtensions.Extension,
      }
      </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
       <pre class="cddl local-cddl">
-      extensions.InstallResult = {
+      webExtensions.InstallResult = {
         extensionId: text
       }
       </pre>
    </dd>
 </dl>
 
-<div algorithm="remote end steps for extensions.install">
+<div algorithm="remote end steps for webExtensions.install">
 The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let the |extension| be the value of the <code>extension</code> field of |command parameters|
@@ -11479,7 +11479,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |extension files| be a value of <code>files<code> field of |extension archive|.
 
-1. If |extension files| does not include entry <code>manifest.json</code> return [=error=] with code [=invalid extension=]
+1. If |extension files| does not include entry <code>manifest.json</code> return [=error=] with code [=invalid web-extension=]
 
 1. Perform any implementation-defined steps to install the extension into |session|.
 
@@ -11490,7 +11490,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Perform any implementation-defined steps to enable extension to be run in private browsing based on the value of |allow private browsing|.
 
 1. Let |result| be a [=/map=] matching the
-   <code>extensions.InstallResult</code> production with the
+   <code>webExtensions.InstallResult</code> production with the
    <code>extensionId</code> field set to |extension id|.
 
 1. Return [=success=] with data |result|.
