@@ -11383,47 +11383,28 @@ webExtensions.ExtensionArchive = {
 }
 </pre>
 
-<pre class="cddl remote-cddl local-cddl">
-webExtensions.Extension = {
-   installPath: webExtensions.ExtensionPath / webExtensions.ExtensionArchivePath / webExtensions.ExtensionBase64Encoded,
-   ? allowPrivateBrowsing: bool .default false,
-}
-
-webExtensions.ExtensionPath = {
-   type: "path",
-   path: text,
-}
-
-webExtensions.ExtensionArchivePath = {
-   type: "archive-path",
-   path: text,
-}
-
-webExtensions.ExtensionBase64Encoded = {
-   type: "base64",
-   value: text,
-}
-</pre>
-
-The <code>webExtensions.Extension</code> type represents an extension with its additional properties.
-
 <div algorithm>
-To <dfn>expand a install path spec</dfn> given |install path spec|:
+To <dfn>expand a extension data spec</dfn> given |extension data spec|:
 
-1. Switch on the value of the <code>type</code> field of |install path spec|:
+
+1. Let |installation type| be a value of <code>type</code> field of |extension data spec|.
+
+1. If installing |installation type| isn't supported return [=error=] with error code [=unsupported operation=].
+
+1. Switch on the value of the <code>installation type</code>:
 
    <dl>
     <dt>"<code>path</code>"
-    <dd>Let |path| be a value of <code>path</code> field of |install path spec|.
+    <dd>Let |path| be a value of <code>path</code> field of |extension data spec|.
 
     <dt>"<code>archive-path</code>"
     <dd>
-      1. Let |archive path| be a value of <code>path</code> field of |install path spec|.
+      1. Let |archive path| be a value of <code>path</code> field of |extension data spec|.
       1. Perform any implementation-defined steps to extract the archive from <code>archive path</code> to a temporary directory and let |path| be the path to that temporary directory.
 
     <dt>"<code>base64</code>"
     <dd>
-      1. Let |archive path| be a value of <code>path</code> field of |install path spec|.
+      1. Let |archive path| be a value of <code>path</code> field of |extension data spec|.
       1. Perform any implementation-defined steps to decode <code>archive path</code> to a zip archive and extract that archive to a temporary directory and let |path| be the path to that temporary directory.
 
    </dl>
@@ -11445,16 +11426,32 @@ The <dfn export for=commands>webExtensions.install</dfn> command installs an ext
 <dl>
    <dt>Command Type</dt>
    <dd>
-     <pre class="cddl remote-cddl">
-     webExtensions.Install = (
-       method: "webExtensions.install",
-       params: webExtensions.InstallParameters
-     )
+      <pre class="cddl remote-cddl">
+      webExtensions.Install = (
+         method: "webExtensions.install",
+         params: webExtensions.InstallParameters
+      )
 
-     webExtensions.InstallParameters = {
-       extension: webExtensions.Extension,
-     }
-     </pre>
+      webExtensions.InstallParameters = {
+         extensionData: webExtensions.ExtensionPath / webExtensions.ExtensionArchivePath / webExtensions.ExtensionBase64Encoded,
+         ? allowPrivateBrowsing: bool .default false,
+      }
+
+      webExtensions.ExtensionPath = {
+         type: "path",
+         path: text,
+      }
+
+      webExtensions.ExtensionArchivePath = {
+         type: "archive-path",
+         path: text,
+      }
+
+      webExtensions.ExtensionBase64Encoded = {
+         type: "base64",
+         value: text,
+      }
+      </pre>
    </dd>
    <dt>Result Type</dt>
    <dd>
@@ -11469,13 +11466,11 @@ The <dfn export for=commands>webExtensions.install</dfn> command installs an ext
 <div algorithm="remote end steps for webExtensions.install">
 The [=remote end steps=] with |session| and |command parameters| are:
 
-1. Let the |extension| be the value of the <code>extension</code> field of |command parameters|
-
 1. If installing |extension| isn't supported return [=error=] with error code [=unsupported operation=].
 
-1. Let |install path spec| be a value of <code>installPath</code> field of the |extension|.
+1. Let |extension data spec| be a value of <code>extensionData</code> field of the |command parameters|.
 
-1. Let |extension archive| be the result of [=trying=] to [=expand a install path spec=] with |install path spec|.
+1. Let |extension archive| be the result of [=trying=] to [=expand a extension data spec=] with |extension data spec|.
 
 1. Let |extension files| be a value of <code>files<code> field of |extension archive|.
 
