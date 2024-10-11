@@ -11377,12 +11377,6 @@ WebExtensionsResult = (
 
 #### The extensions.Extension Type #### {#type-webExtensions-Extension}
 
-<pre class="cddl local-cddl">
-webExtensions.ExtensionArchive = {
-   files: [+text],
-}
-</pre>
-
 <div algorithm>
 To <dfn>expand a extension data spec</dfn> given |extension data spec|:
 
@@ -11394,26 +11388,24 @@ To <dfn>expand a extension data spec</dfn> given |extension data spec|:
 
    <dl>
     <dt>"<code>path</code>"
-    <dd>Let |path| be a value of <code>path</code> field of |extension data spec|.
+    <dd>
+      1. Let |path| be a value of <code>path</code> field of |extension data spec|.
+      1. Let |entry| be a [=directory entry=] represeting the directory with that |path|.
 
     <dt>"<code>archive-path</code>"
     <dd>
       1. Let |archive path| be a value of <code>path</code> field of |extension data spec|.
-      1. Perform any implementation-defined steps to extract ZIP from |archive path|, if this fails return [=error=] with [=error code=] [=invalid web-extension=].
+      1. Perform any implementation-defined steps to extract ZIP from |archive path| and let |entry| by a [=directory entry=] representing the extraction result, if this fails return [=error=] with [=error code=] [=invalid web-extension=].
 
     <dt>"<code>base64</code>"
     <dd>
       1. Let |archive path| be a value of <code>path</code> field of |extension data spec|.
       1. Let |bytes| be [=for giving-base64 decode=] |extension data spec|["<code>path</code>"].
-      1. Perform any implementation-defined steps to extract ZIP from |bytes|, if this fails return [=error=] with [=error code=] [=invalid web-extension=].
+      1. Perform any implementation-defined steps to extract ZIP from |bytes| and let |entry| by a [=directory entry=] representing the extraction result, if this fails return [=error=] with [=error code=] [=invalid web-extension=].
 
    </dl>
 
-1. Let |extension files| be a result of implementation-defined steps to list all paths in |path| folder.
-
-1. Let |extension archive| be a map matching the <code>webExtensions.ExtensionArchive</code> production, with the <code>files</code> field set to |extension files|.
-
-1. Return [=success=] with data |extension archive|.
+1. Return [=success=] with data |entry|.
 
 </div>
 
@@ -11470,13 +11462,11 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |extension data spec| be a value of <code>extensionData</code> field of the |command parameters|.
 
-1. Let |extension archive| be the result of [=trying=] to [=expand a extension data spec=] with |extension data spec|.
+1. Let |extension directory entry| be the result of [=trying=] to [=expand a extension data spec=] with |extension data spec|.
 
-1. Let |extension files| be a value of <code>files</code> field of |extension archive|.
+1. If |extension directory entry| does not include file <code>manifest.json</code> return [=error=] with [=error code=] [=invalid web-extension=].
 
-1. If |extension files| does not include entry <code>manifest.json</code> return [=error=] with [=error code=] [=invalid web-extension=].
-
-1. Perform implementation defined steps to install |extension archive|. If this fails, return [=error=] with [=error code=] [=invalid extension=]. Otherwise let |extension id| be the unique identifier of the newly installed extension.
+1. Perform implementation defined steps to install |extension directory entry|. If this fails, return [=error=] with [=error code=] [=invalid extension=]. Otherwise let |extension id| be the unique identifier of the newly installed extension.
 
 1. Let |allow private browsing| be a value of <code>allowPrivateBrowsing</code> field of |command parameters| if present, or false otherwise.
 
