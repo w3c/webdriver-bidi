@@ -648,7 +648,7 @@ with the following additional codes:
 
 <pre class="cddl local-cddl">
 ErrorCode = "invalid argument" /
-            "invalid web-extension" /
+            "invalid web extension" /
             "invalid selector" /
             "invalid session id" /
             "move target out of bounds" /
@@ -11375,21 +11375,21 @@ WebExtensionsResult = (
 
 ### Types ### {#module-webExtensions-types}
 
-#### The extensions.Extension Type #### {#type-webExtensions-Extension}
+#### The webExtensions.Extension Type #### {#type-webExtensions-Extension}
 
 <div algorithm>
-To <dfn>expand a extension data spec</dfn> given |extension data spec|:
+To <dfn>expand an extension data spec</dfn> given |extension data spec|:
 
-1. Let |installation type| be a value of <code>type</code> field of |extension data spec|.
+1. Let |type| be |extension data spec["type"]|.
 
-1. If installing |installation type| isn't supported return [=error=] with [=error code=] [=unsupported operation=].
+1. If installing a web extension using |type| isn't supported return [=error=] with [=error code=] [=unsupported operation=].
 
 1. Switch on the value of the <code>installation type</code>:
 
    <dl>
     <dt>"<code>path</code>"
     <dd>
-      1. Let |path| be a value of <code>path</code> field of |extension data spec|.
+      1. Let |path| be |extension data spec|["<code>path</code>"].
       1. Let |entry| be a [=directory entry=] represeting the directory with that |path|.
 
     <dt>"<code>archive-path</code>"
@@ -11409,7 +11409,7 @@ To <dfn>expand a extension data spec</dfn> given |extension data spec|:
 
 </div>
 
-### Commands ### {#module-extensions-commands}
+### Commands ### {#module-webExtensions-commands}
 
 #### The webExtensions.install Command #### {#command-extensions-install}
 
@@ -11435,7 +11435,7 @@ The <dfn export for=commands>webExtensions.install</dfn> command installs an ext
       }
 
       webExtensions.ExtensionArchivePath = {
-         type: "archive-path",
+         type: "archivePath",
          path: text,
       }
 
@@ -11458,19 +11458,19 @@ The <dfn export for=commands>webExtensions.install</dfn> command installs an ext
 <div algorithm="remote end steps for webExtensions.install">
 The [=remote end steps=] with |command parameters| are:
 
-1. If installing extensions isn't supported return [=error=] with error code [=unsupported operation=].
+1. If installing web extensions isn't supported return [=error=] with error code [=unsupported operation=].
 
 1. Let |extension data spec| be a value of <code>extensionData</code> field of the |command parameters|.
 
 1. Let |extension directory entry| be the result of [=trying=] to [=expand a extension data spec=] with |extension data spec|.
 
-1. If |extension directory entry| does not include file <code>manifest.json</code> return [=error=] with [=error code=] [=invalid web-extension=].
+1. If |extension directory entry| does not contain a file named <code>manifest.json</code> return [=error=] with [=error code=] [=invalid web-extension=].
 
 1. Perform implementation defined steps to install a web extension from the path specified by |extension directory entry|. If this fails, return [=error=] with [=error code=] [=invalid web-extension=]. Otherwise let |extension id| be the unique identifier of the newly installed web extension.
 
 1. Let |allow private browsing| be a value of <code>allowPrivateBrowsing</code> field of |command parameters| if present, or false otherwise.
 
-1. Perform any implementation-defined steps to enable extension to be run in private browsing based on the value of |allow private browsing|.
+1. Perform any implementation-defined steps to enable the web extension to be run in private browsing mode based on the value of |allow private browsing|.
 
 1. Let |result| be a [=/map=] matching the
    <code>webExtensions.InstallResult</code> production with the
