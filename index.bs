@@ -11361,7 +11361,8 @@ managing and interacting with web-extensions.
 
 <pre class="cddl remote-cddl">
 WebExtensionsCommand = (
-  webExtensions.Install
+  webExtensions.Install,
+  webExtensions.Uninstall
 )
 </pre>
 
@@ -11418,7 +11419,7 @@ To <dfn>expand a web extension data spec</dfn> given |extension data spec|:
 
 #### The webExtensions.install Command #### {#command-extensions-install}
 
-The <dfn export for=commands>webExtensions.install</dfn> command installs an extension for the session.
+The <dfn export for=commands>webExtensions.install</dfn> command installs a web extension for the session.
 
 <dl>
    <dt>Command Type</dt>
@@ -11488,6 +11489,39 @@ The [=remote end steps=] with |command parameters| are:
    <code>extension</code> field set to |extension id|.
 
 1. Return [=success=] with data |result|.
+
+</div>
+
+#### The webExtensions.uninstall Command #### {#command-extensions-uninstall}
+
+The <dfn export for=commands>webExtensions.uninstall</dfn> command uninstalls a web extension for the session.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      webExtensions.Uninstall = (
+         method: "webExtensions.uninstall",
+         params: webExtensions.InstallParameters
+      )
+
+      webExtensions.UninstallParameters = {
+         extension: webExtensions.Extension,
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for webExtensions.uninstall">
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |extension| be a value of <code>extension</code> field of the |command parameters|.
+
+1. If the browser has no web extensionwith an id equal to |extension|, return [=error=] with [=error code=] [=invalid argument=].
+
+1. Perform any implementation-defined steps to remove the web extension from the browser. If this fails, return [=error=] with [=error code=] [=unknown error=].
+
+1. Return [=success=] with data null.
 
 </div>
 
