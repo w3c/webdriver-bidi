@@ -7526,7 +7526,7 @@ which the keys are [[!RFC9562|UUID]]s, and the values are [=structs=] with an <a
 for=struct>item</a> named <code>function declaration</code>, which is a string,
 <code>arguments</code>, <code>contexts</code>, which is a list or null,
 an item named <code>sandbox</code>, which is a string or null,
-and an item named <code>applyToOpeningContexts</code>, which is a boolean.
+and an item named <code>inherit</code>, which is a boolean.
 
 Note: If executing a [=preload script=] fails, either due to a syntax error, or
 a runtime exception, an [[ECMAScript]] exception is reported in the realm in
@@ -7551,13 +7551,14 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 
        1. While |navigable| is not null:
 
-          1. Let |navigable id| be |navigable|’s [=navigable/top-level traversable=]'s id.
+         1. Let |navigable id| be |navigable|’s [=navigable/top-level traversable=]'s id.
 
-          1. If |preload script|'s <code>contexts</code> [=list/contains=] |navigable id|,
+         1. If |preload script|'s <code>contexts</code> [=list/contains=] |navigable id|,
             set |is script run allowed| to true and break.
 
-          1. If |preload script|'s <code>applyToOpeningContexts</code> is true,
-            set |navigable| to |navigable|'s [=original opener=]. Otherwise, break.
+         1. If |preload script|'s <code>inherit</code> is true, break.
+
+         1. Set |navigable| to |navigable|'s [=original opener=].
 
         1. If |is script run allowed| is false, continue;
 
@@ -9490,7 +9491,7 @@ script=].
         functionDeclaration: text,
         ? arguments: [*script.ChannelValue],
         ? contexts: [+browsingContext.BrowsingContext],
-        ? applyToOpeningContexts: bool .default false,
+        ? inherit: bool .default false,
         ? sandbox: text
       }
       </pre>
@@ -9531,7 +9532,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
 
-1. Let |applyToOpeningContexts| be true if |command parameters|["<code>applyToOpeningContexts</code>"]
+1. Let |inherit| be true if |command parameters|["<code>inherit</code>"]
   is true, and false otherwise.
 
 1. Let |script| be the string representation of a [[!RFC9562|UUID]].
@@ -9542,7 +9543,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
    declaration</code> |function declaration|, <code>arguments</code>
    |arguments|, <code>contexts</code>
    |navigables|, <code>sandbox</code> |sandbox|, and
-   <code>applyToOpeningContexts</code> |applyToOpeningContexts|.
+   <code>inherit</code> |inherit|.
 
 1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
