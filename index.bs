@@ -704,6 +704,11 @@ which is a [=/map=] with [=/top-level traversable=] keys and values
 that are a [=/set=] of [=event name=]s for events that are enabled in the given
 navigable.
 
+A [=BiDi session=] has a <dfn export for=event>navigable inherited event map</dfn>,
+which is a [=/map=] with [=/top-level traversable=] keys and values
+that are a [=/set=] of [=event name=]s for events that are to be inherited by the
+opened navigables.
+
 <div algorithm>
 
 To obtain a list of <dfn>event enabled navigables</dfn> given
@@ -1466,7 +1471,7 @@ To <dfn>cleanup remote end state</dfn>.
 
 <div algorithm>
 To <dfn>update the event map</dfn>, given
-|session|, |requested event names|, |navigables|, and |enabled|:
+|session|, |requested event names|, |navigables|, |inherit|, and |enabled|:
 
 Note: The return value of this algorithm is a map between event names and
 navigables. When the events are being enabled, the navigables in the return value
@@ -1721,6 +1726,7 @@ of the user prompt handler.
 session.SubscriptionRequest = {
   events: [+text],
   ? contexts: [+browsingContext.BrowsingContext],
+  ? inherit: bool .default false,
 }
 </pre>
 
@@ -1935,8 +1941,11 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let the |list of navigables| be the value of the <code>contexts</code>
    field of |command parameters| if it is present or null if it isn't.
 
+1. Let the |inherit| be the value of the <code>inherit</code>
+   field of |command parameters| if it is present or false if it isn't.
+
 1. Let |enabled events| be the result of [=trying=] to [=update the event map=]
-   with |session|, |list of event names| , |list of navigables| and
+   with |session|, |list of event names| , |list of navigables|, |inherit| and
    enabled true.
 
 1. Let |subscribe step events| be a new [=/map=].
@@ -2004,7 +2013,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
    field of |command parameters| if it is present or null if it isn't.
 
 1. [=Try=] to [=update the event map=] with |session|,
-   |list of event names|, |list of contexts| and enabled false.
+   |list of event names|, |list of contexts|, inherit false, and enabled false.
 
 1. Return [=success=] with data null.
 
