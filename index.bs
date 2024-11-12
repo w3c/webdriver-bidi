@@ -648,9 +648,9 @@ with the following additional codes:
 
 <pre class="cddl local-cddl">
 ErrorCode = "invalid argument" /
-            "invalid web extension" /
             "invalid selector" /
             "invalid session id" /
+            "invalid web extension" /
             "move target out of bounds" /
             "no such alert" /
             "no such element" /
@@ -11404,9 +11404,9 @@ The <dfn export for=commands>webExtensions.install</dfn> command installs a web 
       }
 
       webExtensions.ExtensionData = (
-         webExtensions.ExtensionPath /
          webExtensions.ExtensionArchivePath /
-         webExtensions.ExtensionBase64Encoded
+         webExtensions.ExtensionBase64Encoded /
+         webExtensions.ExtensionPath
       )
 
       webExtensions.ExtensionPath = {
@@ -11440,7 +11440,7 @@ The [=remote end steps=] with |command parameters| are:
 
 1. If installing web extensions isn't supported return [=error=] with error code [=unsupported operation=].
 
-1. Let |extension data spec| be a value of <code>extensionData</code> field of the |command parameters|.
+1. Let |extension data spec| be |command parameters|["<code>extensionData</code>"].
 
 1. Let |extension directory entry| be the result of [=trying=] to [=expand a web extension data spec=] with |extension data spec|.
 
@@ -11471,7 +11471,7 @@ To <dfn>expand a web extension data spec</dfn> given |extension data spec|:
 
     <dt>|type| is the string "<code>archivePath</code>"
     <dd>
-      1. Let |archive path| be a value of <code>path</code> field of |extension data spec|.
+      1. Let |archive path| be |extension data spec|["<code>path</code>"].
       1. Perform any implementation-defined steps to extract ZIP from |archive path| and let |entry| be a [=directory entry=] representing the extraction result, if this fails return [=error=] with [=error code=] [=invalid web extension=].
 
     <dt>|type| is the string "<code>base64</code>"
@@ -11481,7 +11481,7 @@ To <dfn>expand a web extension data spec</dfn> given |extension data spec|:
 
    </dl>
 
-1. Return [=success=] with data |entry|.
+1. Return |entry|.
 
 </div>
 
@@ -11508,7 +11508,7 @@ The <dfn export for=commands>webExtensions.uninstall</dfn> command uninstalls a 
 <div algorithm="remote end steps for webExtensions.uninstall">
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |extension| be a value of <code>extension</code> field of the |command parameters|.
+1. Let |extension| be |command parameters|["<code>extension</code>"].
 
 1. If the browser has no web extension with an id equal to |extension|, return [=error=] with [=error code=] [=invalid argument=].
 
