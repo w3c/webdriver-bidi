@@ -694,15 +694,17 @@ occurred on the [=remote end=].
    are run when multiple events are enabled at once, with lower integers
    indicating steps that run earlier.
 
-A [=BiDi session=] has a <dfn export for=event>global event set</dfn>
-which is a [=/set=] containing the event names for events that are enabled for all
-navigables. This initially contains the [=event name=] for events that
-are <dfn export for=event>in the default event set</dfn>.
+A [=BiDi session=] has a <dfn export for=event>global event map</dfn>
+which is a [=/map=] containing the event names for events that are enabled for all
+navigables as keys and a [=/list=] of [=subscriptions=] as values.
 
 A [=BiDi session=] has a <dfn export for=event>navigable event map</dfn>,
 which is a [=/map=] with [=/top-level traversable=] keys and values
-that are a [=/set=] of [=event name=]s for events that are enabled in the given
-navigable.
+that are a [=/map=] containing the event names for events that are enabled for the
+the top-level traversable as keys and a [=/list=] of [=subscriptions=] as values.
+
+A <dfn for=event>subscription</dfn> is a [=/struct=] consisting of a subscription id
+(a string) and an inherit flag (a boolean).
 
 <div algorithm>
 
@@ -713,7 +715,7 @@ To obtain a list of <dfn>event enabled navigables</dfn> given
 
 1. For each |navigable| → |events| of |session|'s [=navigable event map=]:
 
-  1. If |events| contains |event name|, append |navigable| to |navigables|
+  1. If |events| [=map/contain=] |event name|, append |navigable| to |navigables|
 
 1. Return |navigables|.
 
@@ -755,9 +757,9 @@ Note: |navigables| is a set because a [=shared worker=] can be associated
     be |event map|[|navigable|].  Otherwise let |navigable events| be null.
 
   1. If |navigable events| is not null, and |navigable events|
-     [=list/contains=] |event name|, return true.
+     [=map/contains=] |event name|, return true.
 
-1. If the [=global event set=] for |session| [=list/contains=] |event name| return
+1. If the [=global event map=] for |session| [=map/contains=] |event name| return
    true.
 
 1. Return false.
@@ -1466,22 +1468,18 @@ To <dfn>cleanup remote end state</dfn>.
 
 <div algorithm>
 To <dfn>update the event map</dfn>, given
-|session|, |requested event names|, |navigables|, and |enabled|:
+|subscription|, |session|, |requested event names|, |navigables|, and |enabled|:
 
 Note: The return value of this algorithm is a map between event names and
 navigables. When the events are being enabled, the navigables in the return value
 are those for which the event are now enabled but were not previously. When
 events are disabled, the return value is always empty.
 
-1. Let |global event set| be a [=set/clone=] of the [=global event set=] for
+1. Let |global event map| be a [=map/clone=] of the [=global event map=] for
    |session|.
 
-1. Let |event map| be a new [=/map=].
-
-1. For each |key| → |value| of the [=navigable event map=] for
-   |session|:
-
-  1. Set |event map|[|key|] to a [=set/clone=] of |value|.
+1. Let |event map| be a [=map/clone=] of the [=navigable event map=] for
+   |session|.
 
 1. Let |event names| be an empty [=/set=].
 
@@ -1491,73 +1489,120 @@ events are disabled, the return value is always empty.
 
 1. Let |enabled events| be a new [=/map=].
 
-1. If |navigables| is null:
+1. if |subscription| is null:
 
-    1. If |enabled| is true:
+  Note: this is for backward compatibility.
+
+  1. assert |enabled| is false
+
+  1. If |navigables| is null:
+
+    1. For each |event name| in |event names|:
+
+    1. If |global event map| [=map/contains=] |event name|, remove |event
+       name| from |global event map|. Otherwise return [=error=] with
+       [=error code=] [=invalid argument=].
+
+  1. Otherwise, if |navigables| is not null:
+
+    1. Let |targets| be an empty [=/map=].
+
+    1. For each |navigable id| in |navigables|:
+
+      1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+        with |navigable id|.
+
+      1. Let |top-level traversable| be the [=navigable/top-level traversable=] for |navigable|.
+
+      1. If |event map| does not contain |top-level traversable|,
+         set |event map|[|top-level traversable|] to a new [=/set=].
+
+      1. Set |targets|[|top-level traversable|] to |event map|[|top-level traversable|].
+
+    1. For each |event name| in |event names|:
+
+      1. For each |navigable| → |target| in |targets|:
+
+        1. If |enabled| is false:
+
+          1. If |target| contains |event name|, remove |event name| from
+            |target|. Otherwise return [=error=] with [=error code=] [=invalid
+            argument=].
+
+1. If |subscription| is not null:
+
+  1. If |enabled| is true:
+
+    Note: this handles different scopes of event subscriptions (e.g., global or navigable-scoped).
+
+    1. If |navigables| is null:
 
       1. For each |event name| of |event names|:
 
-         1. If |global event set| doesn't contain |event name|:
+        1. If |global event map| doesn't [=map/contain=] |event name|:
 
-           1. Let |already enabled navigables| be the [=event enabled navigables=]
+          1. Let |already enabled navigables| be the [=event enabled navigables=]
             given |session| and |event name|.
 
-           1. Add |event name| to |global event set|.
+          1. Set |global event map|[||event name||] to be a new [=/map=].
 
-           1. For each |navigable| of |already enabled navigables|, remove |event
-              name| from |event map|[|navigable|].
-
-           1. Let |newly enabled contexts| be a list of all [=/top-level traversable=]
+          1. Let |newly enabled contexts| be a list of all [=/top-level traversable=]
             that are not contained in |already enabled navigables|,
 
-           1. Set |enabled events|[|event name|] to |newly enabled contexts|.
+          1. Set |enabled events|[|event name|] to |newly enabled contexts|.
 
-    1. If |enabled| is false:
+        1. [=list/append=] |subscription| to |global event map|[|event name|].
+
+    1. Otherwise, if |navigables| is not null:
+
+      1. Let |targets| be an empty [=/map=].
+
+      1. For each |navigable id| in |navigables|:
+
+        1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+          with |navigable id|.
+
+        1. Let |top-level traversable| be the [=navigable/top-level traversable=] for |navigable|.
+
+        1. If |event map| does not contain |top-level traversable|, set |event map|[|top-level traversable|]
+           to a new [=/map=].
+
+        1. Set |targets|[|top-level traversable|] to |event map|[|top-level traversable|].
 
       1. For each |event name| in |event names|:
 
-        1. If |global event set| [=list/contains=] |event name|, remove |event
-           name| from |global event set|. Otherwise return [=error=] with
-           [=error code=] [=invalid argument=].
+        1. For each |navigable| → |target| in |targets|:
 
-1. Otherwise, if |navigables| is not null:
+          1. TODO: if |target| does not contain |event name|, set |target|[|event name|] to a new list.
 
-  1. Let |targets| be an empty [=/map=].
+          1. [=list/append=] |subscription| to |target|[|event name|].
 
-  1. For each |navigable id| in |navigables|:
+          1. If |enabled events| does not contain |event name|, set |enabled
+            events|[|event name|] to a new [=/set=].
 
-    1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
-       with |navigable id|.
+          1. Append |navigable| to |enabled events|[|event name|].
 
-    1. Let |top-level traversable| be the [=navigable/top-level traversable=] for |navigable|.
+  1. If |enabled| is false:
 
-    1. If |event map| does not contain |top-level traversable|, set |event
-       map|[|top-level traversable|] to a new [=/set=].
+    1. For each |event name| → |subscriptions| in |global event map|:
 
-    1. Set |targets|[|top-level traversable|] to |event map|[|top-level traversable|].
+      1. |=list/remove=| items from |subscriptions| whose subscription id equals |subscription|'s subscription id.
 
-  1. For each |event name| in |event names|:
+      1. TODO: clean up if empty.
 
-    1. If |enabled| is true and |global event set| contains |event name|, continue.
+      1. TODO: maybe error if not found.
 
-    1. For each |navigable| → |target| in |targets|:
+    1. For each |navigable| -> |navigable event map| in |event map|:
 
-      1. If |enabled| is true and |target| does not contain |event name|:
+      1. For each <var ignore>event name</var> -> |subscriptions| in |navigable event map|:
 
-        1. Add |event name| to |target|.
+        1. |=list/remove=| items from |subscriptions| whose subscription id equals |subscription|'s subscription id.
 
-        1. If |enabled events| does not contain |event name|, set |enabled
-           events|[|event name|] to a new [=/set=].
+        1. TODO: clean up if empty.
 
-        1. Append |navigable| to |enabled events|[|event name|].
+        1. TODO: maybe error if not found.
 
-      1. If |enabled| is false:
-
-        1. If |target| contains |event name|, remove |event name| from
-           |target|. Otherwise return [=error=] with [=error code=] [=invalid
-           argument=].
-
-1. Set the [=global event set=] for |session| to |global event set|.
+1. Set the [=global event map=] for |session| to |global event map|.
 
 1. Set the [=navigable event map=] for |session| to |event map|.
 
@@ -1715,6 +1760,14 @@ session.UserPromptHandlerType = "accept" / "dismiss" / "ignore";
 The <code>session.UserPromptHandlerType</code> type represents the behavior
 of the user prompt handler.
 
+#### The session.Subscription Type #### {#type-session-Subscription}
+
+<pre class="cddl remote-cddl local-cddl">
+session.Subscription = text
+</pre>
+
+The <code>session.Subscription</code> type represents a unique subscription identifier.
+
 #### The session.SubscriptionRequest Type #### {#type-session-SubscriptionRequest}
 
 <pre class="cddl remote-cddl">
@@ -1726,6 +1779,17 @@ session.SubscriptionRequest = {
 
 The <code>session.SubscriptionRequest</code> type represents a request to
 subscribe to or unsubscribe from a specific set of events.
+
+#### The session.UnsubscribeRequest Type #### {#type-session-UnsubscribeRequest}
+
+<pre class="cddl remote-cddl">
+session.UnsubscribeRequest = {
+  subscribtion: session.Subscription,
+}
+</pre>
+
+The <code>session.UnsubscribeRequest</code> type represents a request to
+usubscribe using a subscription ID.
 
 ### Commands ### {#module-session-commands}
 
@@ -1920,9 +1984,11 @@ Issue: This needs to be generalized to work with realms too.
    </dd>
    <dt>Result Type</dt>
    <dd>
-      <pre class="cddl">
-      EmptyResult
-      </pre>
+      <pre class="cddl local-cddl">
+        session.SubscriptionRequestResult = {
+          subscription: session.Subscription,
+        }
+    </pre>
    </dd>
 </dl>
 
@@ -1935,8 +2001,10 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let the |list of navigables| be the value of the <code>contexts</code>
    field of |command parameters| if it is present or null if it isn't.
 
+1. Let |subscription| be a [=subscription=] with subscription id set to the string representation of a UUID.
+
 1. Let |enabled events| be the result of [=trying=] to [=update the event map=]
-   with |session|, |list of event names| , |list of navigables| and
+   with |subscription|, |session|, |list of event names| , |list of navigables| and
    enabled true.
 
 1. Let |subscribe step events| be a new [=/map=].
@@ -1982,7 +2050,7 @@ Issue: This needs to be generalised to work with realms too.
      <pre class="cddl remote-cddl">
      session.Unsubscribe = (
        method: "session.unsubscribe",
-       params: session.SubscriptionRequest
+       params: session.SubscriptionRequest / session.UnsubscribeRequest
      )
      </pre>
    </dd>
@@ -2003,7 +2071,13 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let the |list of contexts| be the value of the <code>contexts</code>
    field of |command parameters| if it is present or null if it isn't.
 
-1. [=Try=] to [=update the event map=] with |session|,
+1. Let the |subscription id| be the value of the <code>subscription</code>
+   field of |command parameters| if it is present or null if it isn't.
+
+1. Let |subscription| be a [=subscription=] with subscription id set to
+   |subscription id| if |subscription id| is not null, and null otherwise.
+
+1. [=Try=] to [=update the event map=] with |subscription|, |session|,
    |list of event names|, |list of contexts| and enabled false.
 
 1. Return [=success=] with data null.
