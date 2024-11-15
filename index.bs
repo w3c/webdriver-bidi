@@ -11440,6 +11440,17 @@ The <dfn export for=commands>webExtension.install</dfn> command installs a web e
 </dl>
 
 <div algorithm>
+To <dfn>extract a zip archive</dfn> given |bytes|:
+
+1. Perform implementation defined steps to decode |bytes| using the zip compression algorithm. TODO: Find a better reference for zip decoding.
+
+1. If the previous step failed (e.g. because |bytes| did not represent valid zip-compressed data) then return [=error=] with error code [=invalid web extension=]. Otherwise let |entry| be a [=directory entry=] containing the extracted filesystem entries.
+
+1. Return |entry|.
+
+</div>
+
+<div algorithm>
 To <dfn>expand a web extension data spec</dfn> given |extension data spec|:
 
 1. Let |type| be |extension data spec|["<code>type</code>"].
@@ -11457,12 +11468,13 @@ To <dfn>expand a web extension data spec</dfn> given |extension data spec|:
     <dt>|type| is the string "<code>archivePath</code>"
     <dd>
       1. Let |archive path| be |extension data spec|["<code>path</code>"].
-      1. Perform implementation-defined steps to extract ZIP from |archive path|. If this fails return [=error=] with [=error code=] [=invalid web extension=]. Otherwise let |entry| be a [=directory entry=] representing the extraction result. 
+      1. Perform implementation defined steps to read |bytes| from a file located at |archive path|.
+      1. Let |entry| be the result of [=trying=] to [=extract a zip archive=] given |bytes|.
 
     <dt>|type| is the string "<code>base64</code>"
     <dd>
       1. Let |bytes| be [=forgiving-base64 decode=] |extension data spec|["<code>path</code>"].
-      1. Perform any implementation-defined steps to extract the archive from |bytes| by using the ZIP algorithm, and let |entry| by a [=directory entry=] representing the extraction path, if this fails return [=error=] with [=error code=] [=invalid web extension=].
+      1. Let |entry| be the result of [=trying=] to [=extract a zip archive=] given |bytes|.
 
    </dl>
 
