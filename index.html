@@ -8,7 +8,7 @@
   <meta content="Bikeshed version 742f3d674, updated Mon Nov 4 14:56:54 2024 -0800" name="generator">
   <link href="https://w3c.github.io/webdriver-bidi/" rel="canonical">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="bf74b6fd3c258d10f3f58cc7c69866cea53b960e" name="revision">
+  <meta content="3754ad3221248041e440d29cfbcca58cff0e7c32" name="revision">
   <meta content="dark light" name="color-scheme">
   <link href="https://www.w3.org/StyleSheets/TR/2021/dark.css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css">
 <style>
@@ -641,7 +641,7 @@ var[data-var-color="6"] { --var-vg: #FFBCF2; }
   <div class="head">
    <p data-fill-with="logo"><a class="logo" href="https://www.w3.org/"> <img alt="W3C" height="48" src="https://www.w3.org/StyleSheets/TR/2021/logos/W3C" width="72"> </a> </p>
    <h1 class="p-name no-ref" id="title">WebDriver BiDi</h1>
-   <p id="w3c-state"><a href="https://www.w3.org/standards/types/#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2024-11-14">14 November 2024</time></p>
+   <p id="w3c-state"><a href="https://www.w3.org/standards/types/#ED">Editor’s Draft</a>, <time class="dt-updated" datetime="2024-11-15">15 November 2024</time></p>
    <details open>
     <summary>More details about this document</summary>
     <div data-fill-with="spec-metadata">
@@ -2433,7 +2433,7 @@ managing the remote end browser process.</p>
 </pre>
    <h4 class="heading settled" data-level="7.2.2" id="module-browser-window"><span class="secno">7.2.2. </span><span class="content">Windows</span><a class="self-link" href="#module-browser-window"></a></h4>
    <p>Each <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-traversable" id="ref-for-top-level-traversable⑧">top-level traversable</a> is associated with a single <dfn class="dfn-paneled" data-dfn-type="dfn" data-lt="client window" data-noexport id="client-window">client
-window</dfn> which represents a rectangular area containing the <a data-link-type="dfn" href="https://www.w3.org/TR/CSS21/visuren.html#x1" id="ref-for-x1">viewport</a> that will be used to render that <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-traversable" id="ref-for-top-level-traversable⑨">top-level
+window</dfn> which represents a rectangular area containing the <a data-link-type="dfn">viewport</a> that will be used to render that <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#top-level-traversable" id="ref-for-top-level-traversable⑨">top-level
 traversable</a>'s <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/document-sequences.html#nav-document" id="ref-for-nav-document">active document</a> when its <a data-link-type="dfn" href="https://html.spec.whatwg.org/multipage/interaction.html#visibility-state" id="ref-for-visibility-state">visibility state</a> is
 "<code>visible</code>", as well as any browser-specific user interface elements
 associated with displaying the traversable (e.g. any URL bar, toolbars, or OS
@@ -5586,30 +5586,24 @@ of the request, relative to the <a data-link-type="dfn" href="https://html.spec.
    <h5 class="heading settled" data-level="7.4.3.9" id="type-network-Initiator"><span class="secno">7.4.3.9. </span><span class="content">The network.Initiator Type</span><a class="self-link" href="#type-network-Initiator"></a></h5>
    <p><a data-link-type="dfn" href="#remote-end-definition" id="ref-for-remote-end-definition②②">Remote end definition</a> and <a data-link-type="dfn" href="#local-end-definition" id="ref-for-local-end-definition②⑥">local end definition</a></p>
 <pre class="cddl local-cddl">network.Initiator = {
-    type: "parser" / "script" / "preflight" / "other",
     ? columnNumber: js-uint,
     ? lineNumber: js-uint,
     ? stackTrace: script.StackTrace,
-    ? request: network.Request
+    ? request: network.Request,
+    ? type: "parser" / "script" / "preflight" / "other"
 };
 </pre>
    <p>The <code>network.Initiator</code> type represents the source of a network
 request.</p>
+   <p class="note" role="note"><span class="marker">Note:</span> The <code>type</code> field is included in the definition for backwards
+compatibility, but is no longer set by the <a data-link-type="dfn" href="#get-the-initiator" id="ref-for-get-the-initiator">get the initiator</a> steps, and will
+be removed in a future revision of this specification. Its use is expected to be
+replaced by <code>initiatorType</code> and <code>destination</code> on <code>network.RequestData</code>.</p>
    <div class="algorithm" data-algorithm="get the initiator">
      To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-the-initiator">get the initiator</dfn> given <var>request</var>: 
     <ol>
      <li data-md>
       <p>Let <var>request id</var> be <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id①">request id</a>.</p>
-     <li data-md>
-      <p>Let <var>type</var> be "<code>other</code>".</p>
-     <li data-md>
-      <p>If <var>request</var> is a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#cors-preflight-request" id="ref-for-cors-preflight-request">CORS-Preflight Request</a>, set <var>type</var> to
- "<code>preflight</code>".</p>
-     <li data-md>
-      <p>TODO: Get the <var>type</var>. It’s not quite clear how this ought to work; the CDP
- data depends on whether the navigation was kicked off by the parser or by
- script (so e.g. inserting an image from script causes the initiator to be
- "<code>script</code>"), but that doesn’t correspond to anything in Fetch.</p>
      <li data-md>
       <p>If <var>request</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#request-initiator-type" id="ref-for-request-initiator-type">initiator type</a> is "<code>fetch</code>" or
  "<code>xmlhttprequest</code>":</p>
@@ -5625,11 +5619,9 @@ request.</p>
       <p>TODO: Chrome includes the current parser position as column number / line
 number for parser-inserted resources.</p>
      <li data-md>
-      <p>Return a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑤⑥">map</a> matching the <code>network.Initiator</code> production, with
- the <code>type</code> field set to <var>type</var>, the <code>columnNumber</code> field set to <var>column number</var> if it’s not null, or omitted otherwise, the <code>lineNumber</code> field set to <var>line number</var> if it’s not null, or
- omitted otherwise, the <code>stackTrace</code> field set to <var>stack trace</var> if
- it’s not null, or omitted otherwise, and the <code>request</code> field set
- to <var>request id</var>.</p>
+      <p>Return a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑤⑥">map</a> matching the <code>network.Initiator</code> production, the <code>columnNumber</code> field set to <var>column number</var> if it’s not null, or
+ omitted otherwise, the <code>lineNumber</code> field set to <var>line number</var> if
+ it’s not null, or omitted otherwise, the <code>stackTrace</code> field set to <var>stack trace</var> if it’s not null, or omitted otherwise, and the <code>request</code> field set to <var>request id</var>.</p>
     </ol>
    </div>
    <h5 class="heading settled" data-level="7.4.3.10" id="type-network-Intercept"><span class="secno">7.4.3.10. </span><span class="content">The network.Intercept Type</span><a class="self-link" href="#type-network-Intercept"></a></h5>
@@ -7008,7 +7000,7 @@ credentials.</p>
 
 network.BeforeRequestSentParameters = {
   network.BaseParameters,
-  initiator: network.Initiator,
+  ? initiator: network.Initiator,
 }
 </pre>
    </dl>
@@ -7041,9 +7033,10 @@ request sent</dfn> steps given <var>request</var>:
        <li data-md>
         <p>If <var>params</var> is null then continue.</p>
        <li data-md>
-        <p>Let <var>initiator</var> be the result of <a data-link-type="dfn" href="#get-the-initiator" id="ref-for-get-the-initiator">get the initiator</a> with <var>request</var>.</p>
+        <p>Let <var>initiator</var> be the result of <a data-link-type="dfn" href="#get-the-initiator" id="ref-for-get-the-initiator①">get the initiator</a> with <var>request</var>.</p>
        <li data-md>
-        <p>Set the <code>initiator</code> field of <var>params</var> to <var>initiator</var>.</p>
+        <p>If <var>initiator</var> is not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-is-empty" id="ref-for-map-is-empty">empty</a>, set the <code>initiator</code> field
+ of <var>params</var> to <var>initiator</var>.</p>
        <li data-md>
         <p class="assertion">Assert: <var>params</var> matches the <code>network.BeforeRequestSentParameters</code> production.</p>
        <li data-md>
@@ -10952,7 +10945,6 @@ end:</p>
     <a data-link-type="biblio">[CSS21]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="2a2f1579">canvas</span>
-     <li><span class="dfn-paneled" id="aa17b477">viewport</span>
     </ul>
    <li>
     <a data-link-type="biblio">[CSSOM-VIEW-1]</a> defines the following terms:
@@ -11061,7 +11053,6 @@ end:</p>
      <li><span class="dfn-paneled" id="983dc57c">connection end time</span>
      <li><span class="dfn-paneled" id="006a831c">connection start time</span>
      <li><span class="dfn-paneled" id="7ed2c230">connection timing info</span>
-     <li><span class="dfn-paneled" id="4d7b724c">CORS-preflight request</span>
      <li><span class="dfn-paneled" id="7aab3a36">decoded size</span>
      <li><span class="dfn-paneled" id="3ae34c95">destination</span>
      <li><span class="dfn-paneled" id="88bac656">domain lookup end time</span>
@@ -11258,6 +11249,7 @@ end:</p>
      <li><span class="dfn-paneled" id="860300d4">implementation-defined</span>
      <li><span class="dfn-paneled" id="e5ea84f2">intersection</span>
      <li><span class="dfn-paneled" id="7a87d819">is</span>
+     <li><span class="dfn-paneled" id="dc3369de">is empty</span>
      <li><span class="dfn-paneled" id="c88f3887">item</span>
      <li><span class="dfn-paneled" id="0fa357c3">length</span>
      <li><span class="dfn-paneled" id="649608b9">list</span>
@@ -11367,7 +11359,7 @@ end:</p>
      <li><span class="dfn-paneled" id="59f85222">SyntaxError</span>
     </ul>
    <li>
-    <a data-link-type="biblio">[WEBAUDIO]</a> defines the following terms:
+    <a data-link-type="biblio">[WEBAUDIO-1.0]</a> defines the following terms:
     <ul>
      <li><span class="dfn-paneled" id="8fe058df">AudioWorkletGlobalScope</span>
     </ul>
@@ -11503,8 +11495,8 @@ end:</p>
    <dd><a href="https://www.unicode.org/versions/latest/"><cite>The Unicode Standard</cite></a>. URL: <a href="https://www.unicode.org/versions/latest/">https://www.unicode.org/versions/latest/</a>
    <dt id="biblio-url">[URL]
    <dd>Anne van Kesteren. <a href="https://url.spec.whatwg.org/"><cite>URL Standard</cite></a>. Living Standard. URL: <a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>
-   <dt id="biblio-webaudio">[WEBAUDIO]
-   <dd>Paul Adenot; Hongchan Choi. <a href="https://webaudio.github.io/web-audio-api/"><cite>Web Audio API</cite></a>. URL: <a href="https://webaudio.github.io/web-audio-api/">https://webaudio.github.io/web-audio-api/</a>
+   <dt id="biblio-webaudio-10">[WEBAUDIO-1.0]
+   <dd>Web Audio API 1.1 URL: <a href="https://webaudio.github.io/web-audio-api/">https://webaudio.github.io/web-audio-api/</a>
    <dt id="biblio-webdriver">[WEBDRIVER]
    <dd>Simon Stewart; David Burns. <a href="https://w3c.github.io/webdriver/"><cite>WebDriver</cite></a>. URL: <a href="https://w3c.github.io/webdriver/">https://w3c.github.io/webdriver/</a>
    <dt id="biblio-webdriver2">[WEBDRIVER2]
@@ -11930,7 +11922,6 @@ let dfnPanelData = {
 "4c07280e": {"dfnID":"4c07280e","dfnText":"serialize an Infra value to JSON bytes","external":true,"refSections":[{"refs":[{"id":"ref-for-serialize-an-infra-value-to-json-bytes"},{"id":"ref-for-serialize-an-infra-value-to-json-bytes\u2460"},{"id":"ref-for-serialize-an-infra-value-to-json-bytes\u2461"}],"title":"4. Transport"}],"url":"https://infra.spec.whatwg.org/#serialize-an-infra-value-to-json-bytes"},
 "4cca2ed0": {"dfnID":"4cca2ed0","dfnText":"reset the input state","external":true,"refSections":[{"refs":[{"id":"ref-for-dfn-reset-the-input-state"}],"title":"7.8.3.2. The input.releaseActions Command"}],"url":"https://w3c.github.io/webdriver/#dfn-reset-the-input-state"},
 "4d437809": {"dfnID":"4d437809","dfnText":"qualified name","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-attribute-qualified-name"}],"title":"7.5.3.14. The script.RemoteValue Type"}],"url":"https://dom.spec.whatwg.org/#concept-attribute-qualified-name"},
-"4d7b724c": {"dfnID":"4d7b724c","dfnText":"CORS-preflight request","external":true,"refSections":[{"refs":[{"id":"ref-for-cors-preflight-request"}],"title":"7.4.3.9. The network.Initiator Type"}],"url":"https://fetch.spec.whatwg.org/#cors-preflight-request"},
 "4e30844a": {"dfnID":"4e30844a","dfnText":"computed MIME type","external":true,"refSections":[{"refs":[{"id":"ref-for-computed-mime-type"}],"title":"7.4.3.14. The network.ResponseData Type"}],"url":"https://mimesniff.spec.whatwg.org/#computed-mime-type"},
 "4ef92270": {"dfnID":"4ef92270","dfnText":"domain lookup start time","external":true,"refSections":[{"refs":[{"id":"ref-for-connection-timing-info-domain-lookup-start-time"}],"title":"7.4.3.7. The network.FetchTimingInfo Type"}],"url":"https://fetch.spec.whatwg.org/#connection-timing-info-domain-lookup-start-time"},
 "4fc3ddf9": {"dfnID":"4fc3ddf9","dfnText":"session ID","external":true,"refSections":[{"refs":[{"id":"ref-for-dfn-session-id"},{"id":"ref-for-dfn-session-id\u2460"},{"id":"ref-for-dfn-session-id\u2461"}],"title":"4. Transport"},{"refs":[{"id":"ref-for-dfn-session-id\u2462"}],"title":"7.1.3.2. The session.new Command"}],"url":"https://w3c.github.io/webdriver/#dfn-session-id"},
@@ -12093,7 +12084,6 @@ let dfnPanelData = {
 "a8b5b96c": {"dfnID":"a8b5b96c","dfnText":"fully exit fullscreen","external":true,"refSections":[{"refs":[{"id":"ref-for-fully-exit-fullscreen"}],"title":"7.2.2. Windows"}],"url":"https://fullscreen.spec.whatwg.org/#fully-exit-fullscreen"},
 "a8ffe756": {"dfnID":"a8ffe756","dfnText":"redirect end time","external":true,"refSections":[{"refs":[{"id":"ref-for-fetch-timing-info-redirect-end-time"}],"title":"7.4.3.7. The network.FetchTimingInfo Type"}],"url":"https://fetch.spec.whatwg.org/#fetch-timing-info-redirect-end-time"},
 "a973e0fe": {"dfnID":"a973e0fe","dfnText":"document","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-document"}],"title":"4. Transport"},{"refs":[{"id":"ref-for-concept-document\u2460"}],"title":"7.3.3.11. The browsingContext.setViewport Command"},{"refs":[{"id":"ref-for-concept-document\u2461"}],"title":"7.5.5.2. The script.realmCreated Event"}],"url":"https://dom.spec.whatwg.org/#concept-document"},
-"aa17b477": {"dfnID":"aa17b477","dfnText":"viewport","external":true,"refSections":[{"refs":[{"id":"ref-for-x1"}],"title":"7.2.2. Windows"}],"url":"https://www.w3.org/TR/CSS21/visuren.html#x1"},
 "aa414f4c": {"dfnID":"aa414f4c","dfnText":"NodeList","external":true,"refSections":[{"refs":[{"id":"ref-for-nodelist"}],"title":"7.5.3.14. The script.RemoteValue Type"}],"url":"https://dom.spec.whatwg.org/#nodelist"},
 "aaaa2760": {"dfnID":"aaaa2760","dfnText":"worker event loop","external":true,"refSections":[{"refs":[{"id":"ref-for-worker-event-loop-2"}],"title":"7.5.5.3. The script.realmDestroyed Event"}],"url":"https://html.spec.whatwg.org/multipage/webappapis.html#worker-event-loop-2"},
 "ab3919d2": {"dfnID":"ab3919d2","dfnText":"clone (for map)","external":true,"refSections":[{"refs":[{"id":"ref-for-map-clone"},{"id":"ref-for-map-clone\u2460"},{"id":"ref-for-map-clone\u2461"}],"title":"7.5.3.14. The script.RemoteValue Type"}],"url":"https://infra.spec.whatwg.org/#map-clone"},
@@ -12237,6 +12227,7 @@ let dfnPanelData = {
 "dc126c10": {"dfnID":"dc126c10","dfnText":"ALPN negotiated protocol","external":true,"refSections":[{"refs":[{"id":"ref-for-connection-timing-info-alpn-negotiated-protocol"}],"title":"7.4.3.14. The network.ResponseData Type"}],"url":"https://fetch.spec.whatwg.org/#connection-timing-info-alpn-negotiated-protocol"},
 "dc1cd39b": {"dfnID":"dc1cd39b","dfnText":"URL (for request)","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-request-url"}],"title":"7.4.2. Network Intercepts"},{"refs":[{"id":"ref-for-concept-request-url\u2460"}],"title":"7.4.3.12. The network.RequestData Type"},{"refs":[{"id":"ref-for-concept-request-url\u2461"}],"title":"7.4.4.2. The network.continueRequest Command"}],"url":"https://fetch.spec.whatwg.org/#concept-request-url"},
 "dc248371": {"dfnID":"dc248371","dfnText":"owner set","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-WorkerGlobalScope-owner-set"}],"title":"4. Transport"},{"refs":[{"id":"ref-for-concept-WorkerGlobalScope-owner-set\u2460"}],"title":"7.5.3.11. The script.RealmInfo Type"},{"refs":[{"id":"ref-for-concept-WorkerGlobalScope-owner-set\u2461"}],"title":"7.5.4.5. The script.getRealms Command"}],"url":"https://html.spec.whatwg.org/multipage/workers.html#concept-WorkerGlobalScope-owner-set"},
+"dc3369de": {"dfnID":"dc3369de","dfnText":"is empty","external":true,"refSections":[{"refs":[{"id":"ref-for-map-is-empty"}],"title":"7.4.5.2. The network.beforeRequestSent Event"}],"url":"https://infra.spec.whatwg.org/#map-is-empty"},
 "dc3515ac": {"dfnID":"dc3515ac","dfnText":"resolution media feature","external":true,"refSections":[{"refs":[{"id":"ref-for-resolution"},{"id":"ref-for-resolution\u2460"}],"title":"7.3.3.11. The browsingContext.setViewport Command"}],"url":"https://drafts.csswg.org/mediaqueries-4/#resolution"},
 "dcffbccd": {"dfnID":"dcffbccd","dfnText":"URL","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-url"}],"title":"7.5.3.19. The script.StackTrace Type"}],"url":"https://url.spec.whatwg.org/#concept-url"},
 "deb71015": {"dfnID":"deb71015","dfnText":"traverse the history by a delta","external":true,"refSections":[{"refs":[{"id":"ref-for-traverse-the-history-by-a-delta"}],"title":"7.3.3.12. The browsingContext.traverseHistory Command"}],"url":"https://html.spec.whatwg.org/multipage/browsing-the-web.html#traverse-the-history-by-a-delta"},
@@ -12351,7 +12342,7 @@ let dfnPanelData = {
 "get-the-client-window-state": {"dfnID":"get-the-client-window-state","dfnText":"get the client window state","external":false,"refSections":[{"refs":[{"id":"ref-for-get-the-client-window-state"}],"title":"7.2.2. Windows"},{"refs":[{"id":"ref-for-get-the-client-window-state\u2460"}],"title":"7.2.3.2. The browser.ClientWindowInfo Type"}],"url":"#get-the-client-window-state"},
 "get-the-cookie-store": {"dfnID":"get-the-cookie-store","dfnText":"get the cookie store","external":false,"refSections":[{"refs":[{"id":"ref-for-get-the-cookie-store"}],"title":"7.6.3.1. The storage.getCookies Command"},{"refs":[{"id":"ref-for-get-the-cookie-store\u2460"}],"title":"7.6.3.2. The storage.setCookie Command"},{"refs":[{"id":"ref-for-get-the-cookie-store\u2461"}],"title":"7.6.3.3. The storage.deleteCookies Command"}],"url":"#get-the-cookie-store"},
 "get-the-fetch-timings": {"dfnID":"get-the-fetch-timings","dfnText":"get the fetch timings","external":false,"refSections":[{"refs":[{"id":"ref-for-get-the-fetch-timings"}],"title":"7.4.3.12. The network.RequestData Type"}],"url":"#get-the-fetch-timings"},
-"get-the-initiator": {"dfnID":"get-the-initiator","dfnText":"get the initiator","external":false,"refSections":[{"refs":[{"id":"ref-for-get-the-initiator"}],"title":"7.4.5.2. The network.beforeRequestSent Event"}],"url":"#get-the-initiator"},
+"get-the-initiator": {"dfnID":"get-the-initiator","dfnText":"get the initiator","external":false,"refSections":[{"refs":[{"id":"ref-for-get-the-initiator"}],"title":"7.4.3.9. The network.Initiator Type"},{"refs":[{"id":"ref-for-get-the-initiator\u2460"}],"title":"7.4.5.2. The network.beforeRequestSent Event"}],"url":"#get-the-initiator"},
 "get-the-navigable": {"dfnID":"get-the-navigable","dfnText":"get the navigable","external":false,"refSections":[{"refs":[{"id":"ref-for-get-the-navigable"}],"title":"7.5.3.13. The script.RemoteReference Type"}],"url":"#get-the-navigable"},
 "get-the-navigable-info": {"dfnID":"get-the-navigable-info","dfnText":"get the navigable info","external":false,"refSections":[{"refs":[{"id":"ref-for-get-the-navigable-info"}],"title":"7.3.2.2. The browsingContext.Info Type"},{"refs":[{"id":"ref-for-get-the-navigable-info\u2460"}],"title":"7.3.3.5. The browsingContext.getTree Command"},{"refs":[{"id":"ref-for-get-the-navigable-info\u2461"}],"title":"7.3.4.1. The browsingContext.contextCreated Event"},{"refs":[{"id":"ref-for-get-the-navigable-info\u2462"}],"title":"7.3.4.2. The browsingContext.contextDestroyed Event"}],"url":"#get-the-navigable-info"},
 "get-the-navigation-info": {"dfnID":"get-the-navigation-info","dfnText":"get the navigation info","external":false,"refSections":[{"refs":[{"id":"ref-for-get-the-navigation-info"}],"title":"7.3.4.3. The browsingContext.navigationStarted Event"},{"refs":[{"id":"ref-for-get-the-navigation-info\u2460"}],"title":"7.3.4.4. The browsingContext.fragmentNavigated Event"},{"refs":[{"id":"ref-for-get-the-navigation-info\u2461"}],"title":"7.3.4.6. The browsingContext.domContentLoaded Event"},{"refs":[{"id":"ref-for-get-the-navigation-info\u2462"}],"title":"7.3.4.7. The browsingContext.load Event"},{"refs":[{"id":"ref-for-get-the-navigation-info\u2463"}],"title":"7.3.4.8. The browsingContext.downloadWillBegin Event"},{"refs":[{"id":"ref-for-get-the-navigation-info\u2464"}],"title":"7.3.4.9. The browsingContext.navigationAborted Event"},{"refs":[{"id":"ref-for-get-the-navigation-info\u2465"}],"title":"7.3.4.10. The browsingContext.navigationFailed Event"}],"url":"#get-the-navigation-info"},
@@ -13175,7 +13166,6 @@ let refsData = {
 "https://fetch.spec.whatwg.org/#connection-timing-info-domain-lookup-end-time": {"displayText":"domain lookup end time","export":true,"for_":["connection timing info"],"level":"1","normative":true,"shortname":"fetch","spec":"fetch","status":"current","text":"domain lookup end time","type":"dfn","url":"https://fetch.spec.whatwg.org/#connection-timing-info-domain-lookup-end-time"},
 "https://fetch.spec.whatwg.org/#connection-timing-info-domain-lookup-start-time": {"displayText":"domain lookup start time","export":true,"for_":["connection timing info"],"level":"1","normative":true,"shortname":"fetch","spec":"fetch","status":"current","text":"domain lookup start time","type":"dfn","url":"https://fetch.spec.whatwg.org/#connection-timing-info-domain-lookup-start-time"},
 "https://fetch.spec.whatwg.org/#connection-timing-info-secure-connection-start-time": {"displayText":"secure connection start time","export":true,"for_":["connection timing info"],"level":"1","normative":true,"shortname":"fetch","spec":"fetch","status":"current","text":"secure connection start time","type":"dfn","url":"https://fetch.spec.whatwg.org/#connection-timing-info-secure-connection-start-time"},
-"https://fetch.spec.whatwg.org/#cors-preflight-request": {"displayText":"CORS-preflight request","export":true,"for_":[],"level":"1","normative":true,"shortname":"fetch","spec":"fetch","status":"current","text":"cors-preflight request","type":"dfn","url":"https://fetch.spec.whatwg.org/#cors-preflight-request"},
 "https://fetch.spec.whatwg.org/#fetch-timing-info": {"displayText":"fetch timing info","export":true,"for_":[],"level":"1","normative":true,"shortname":"fetch","spec":"fetch","status":"current","text":"fetch timing info","type":"dfn","url":"https://fetch.spec.whatwg.org/#fetch-timing-info"},
 "https://fetch.spec.whatwg.org/#fetch-timing-info-decoded-body-size": {"displayText":"decoded size","export":true,"for_":["response body info"],"level":"1","normative":true,"shortname":"fetch","spec":"fetch","status":"current","text":"decoded size","type":"dfn","url":"https://fetch.spec.whatwg.org/#fetch-timing-info-decoded-body-size"},
 "https://fetch.spec.whatwg.org/#fetch-timing-info-encoded-body-size": {"displayText":"encoded size","export":true,"for_":["response body info"],"level":"1","normative":true,"shortname":"fetch","spec":"fetch","status":"current","text":"encoded size","type":"dfn","url":"https://fetch.spec.whatwg.org/#fetch-timing-info-encoded-body-size"},
@@ -13323,6 +13313,7 @@ let refsData = {
 "https://infra.spec.whatwg.org/#map-clone": {"displayText":"clone","export":true,"for_":["map"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"clone","type":"dfn","url":"https://infra.spec.whatwg.org/#map-clone"},
 "https://infra.spec.whatwg.org/#map-exists": {"displayText":"contain","export":true,"for_":["map"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"contain","type":"dfn","url":"https://infra.spec.whatwg.org/#map-exists"},
 "https://infra.spec.whatwg.org/#map-getting-the-values": {"displayText":"get the values","export":true,"for_":["map"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"get the values","type":"dfn","url":"https://infra.spec.whatwg.org/#map-getting-the-values"},
+"https://infra.spec.whatwg.org/#map-is-empty": {"displayText":"is empty","export":true,"for_":["map"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"is empty","type":"dfn","url":"https://infra.spec.whatwg.org/#map-is-empty"},
 "https://infra.spec.whatwg.org/#map-remove": {"displayText":"remove","export":true,"for_":["map"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"remove","type":"dfn","url":"https://infra.spec.whatwg.org/#map-remove"},
 "https://infra.spec.whatwg.org/#map-set": {"displayText":"set","export":true,"for_":["map"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"set","type":"dfn","url":"https://infra.spec.whatwg.org/#map-set"},
 "https://infra.spec.whatwg.org/#map-size": {"displayText":"size","export":true,"for_":["map"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"size","type":"dfn","url":"https://infra.spec.whatwg.org/#map-size"},
@@ -13469,7 +13460,7 @@ let refsData = {
 "https://w3c.github.io/webdriver/#dfn-webdriver-active-flag": {"displayText":"webdriver-active flag","export":true,"for_":[],"level":"","normative":true,"shortname":"webdriver","spec":"webdriver","status":"anchor-block","text":"webdriver-active flag","type":"dfn","url":"https://w3c.github.io/webdriver/#dfn-webdriver-active-flag"},
 "https://w3c.github.io/webdriver/#dfn-webdriver-new-session-algorithm": {"displayText":"WebDriver new session algorithm","export":true,"for_":[],"level":"","normative":true,"shortname":"webdriver","spec":"webdriver","status":"anchor-block","text":"webdriver new session algorithm","type":"dfn","url":"https://w3c.github.io/webdriver/#dfn-webdriver-new-session-algorithm"},
 "https://w3c.github.io/webdriver/#dfn-window-handle": {"displayText":"window handle","export":true,"for_":[],"level":"","normative":true,"shortname":"webdriver","spec":"webdriver","status":"anchor-block","text":"window handle","type":"dfn","url":"https://w3c.github.io/webdriver/#dfn-window-handle"},
-"https://webaudio.github.io/web-audio-api/#AudioWorkletGlobalScope": {"displayText":"AudioWorkletGlobalScope","export":true,"for_":[],"level":"1","normative":true,"shortname":"webaudio","spec":"webaudio","status":"current","text":"AudioWorkletGlobalScope","type":"interface","url":"https://webaudio.github.io/web-audio-api/#AudioWorkletGlobalScope"},
+"https://webaudio.github.io/web-audio-api/#AudioWorkletGlobalScope": {"displayText":"AudioWorkletGlobalScope","export":true,"for_":[],"level":"1","normative":true,"shortname":"webaudio","spec":"webaudio-1.0","status":"current","text":"AudioWorkletGlobalScope","type":"interface","url":"https://webaudio.github.io/web-audio-api/#AudioWorkletGlobalScope"},
 "https://webidl.spec.whatwg.org/#dfn-platform-object": {"displayText":"platform object","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"platform object","type":"dfn","url":"https://webidl.spec.whatwg.org/#dfn-platform-object"},
 "https://webidl.spec.whatwg.org/#exceptiondef-typeerror": {"displayText":"TypeError","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"TypeError","type":"exception","url":"https://webidl.spec.whatwg.org/#exceptiondef-typeerror"},
 "https://webidl.spec.whatwg.org/#idl-DOMException": {"displayText":"DOMException","export":true,"for_":[],"level":"","normative":true,"shortname":"web-idl","spec":"web-idl","status":"anchor-block","text":"domexception","type":"dfn","url":"https://webidl.spec.whatwg.org/#idl-DOMException"},
@@ -13477,8 +13468,7 @@ let refsData = {
 "https://webidl.spec.whatwg.org/#this": {"displayText":"this","export":true,"for_":[],"level":"1","normative":true,"shortname":"webidl","spec":"webidl","status":"current","text":"this","type":"dfn","url":"https://webidl.spec.whatwg.org/#this"},
 "https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf#G34078": {"displayText":"toUppercase","export":true,"for_":[],"level":"","normative":true,"shortname":"unicode","spec":"unicode","status":"anchor-block","text":"touppercase","type":"dfn","url":"https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf#G34078"},
 "https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf#G34944": {"displayText":"Unicode Default Case Conversion algorithm","export":true,"for_":[],"level":"","normative":true,"shortname":"unicode","spec":"unicode","status":"anchor-block","text":"unicode default case conversion algorithm","type":"dfn","url":"https://www.unicode.org/versions/Unicode15.0.0/ch03.pdf#G34944"},
-"https://www.w3.org/TR/CSS21/intro.html#canvas": {"displayText":"canvas","export":true,"for_":[],"level":"1","normative":true,"shortname":"css","spec":"css2","status":"current","text":"canvas","type":"dfn","url":"https://www.w3.org/TR/CSS21/intro.html#canvas"},
-"https://www.w3.org/TR/CSS21/visuren.html#x1": {"displayText":"viewport","export":true,"for_":[],"level":"1","normative":true,"shortname":"css","spec":"css2","status":"current","text":"viewport","type":"dfn","url":"https://www.w3.org/TR/CSS21/visuren.html#x1"},
+"https://www.w3.org/TR/CSS21/intro.html#canvas": {"displayText":"canvas","export":true,"for_":[],"level":"1","normative":true,"shortname":"css","spec":"css21","status":"current","text":"canvas","type":"dfn","url":"https://www.w3.org/TR/CSS21/intro.html#canvas"},
 "https://www.w3.org/TR/accname-1.2/#dfn-accessible-name": {"displayText":"accessible name","export":true,"for_":[],"level":"","normative":true,"shortname":"accname","spec":"accname","status":"anchor-block","text":"accessible name","type":"dfn","url":"https://www.w3.org/TR/accname-1.2/#dfn-accessible-name"},
 "https://www.w3.org/TR/core-aam-1.2/#roleMappingComputedRole": {"displayText":"computed role","export":true,"for_":[],"level":"","normative":true,"shortname":"core-aam","spec":"core-aam","status":"anchor-block","text":"computed role","type":"dfn","url":"https://www.w3.org/TR/core-aam-1.2/#roleMappingComputedRole"},
 };
