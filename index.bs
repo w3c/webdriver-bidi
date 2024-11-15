@@ -5745,8 +5745,8 @@ To <dfn>deserialize header</dfn> given |protocol header|:
 network.Initiator = {
     ? columnNumber: js-uint,
     ? lineNumber: js-uint,
-    ? stackTrace: script.StackTrace,
     ? request: network.Request,
+    ? stackTrace: script.StackTrace,
     ? type: "parser" / "script" / "preflight" / "other"
 };
 </pre>
@@ -5760,10 +5760,14 @@ be removed in a future revision of this specification. Its use is expected to be
 replaced by <code>initiatorType</code> and <code>destination</code> on
 <code>network.RequestData</code>.
 
+Note: The <code>request</code> field is included in the definition for backwards
+compatibility, but is no longer set by the [=get the initiator=] steps, and will
+be removed in a future revision of this specification. The network.Initiator is
+included in the BeforeRequestSentParameters which also contain the same request
+id, which makes the information redundant.
+
 <div algorithm>
 To <dfn>get the initiator</dfn> given |request|:
-
-1. Let |request id| be |request|'s [=request id=].
 
 1. If |request|'s [=request/initiator type=] is "<code>fetch</code>" or
    "<code>xmlhttprequest</code>":
@@ -5783,9 +5787,8 @@ To <dfn>get the initiator</dfn> given |request|:
 1. Return a [=/map=] matching the <code>network.Initiator</code> production, the
    <code>columnNumber</code> field set to |column number| if it's not null, or
    omitted otherwise, the <code>lineNumber</code> field set to |line number| if
-   it's not null, or omitted otherwise, the <code>stackTrace</code> field set to
-   |stack trace| if it's not null, or omitted otherwise, and the
-   <code>request</code> field set to |request id|.
+   it's not null, or omitted otherwise and the <code>stackTrace</code> field set
+   to |stack trace| if it's not null, or omitted otherwise.
 
 </div>
 
