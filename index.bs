@@ -605,6 +605,9 @@ WebDriver BiDi extends the set of [=error codes=] from [[WEBDRIVER|WebDriver]]
 with the following additional codes:
 
 <dl>
+  <dt><dfn for=errors export>invalid web extension</dfn>
+  <dd>Tried to install an invalid web extension.
+
   <dt><dfn for=errors export>no such client window</dfn>
   <dd>Tried to interact with an unknown [=client window=].
 
@@ -632,6 +635,9 @@ with the following additional codes:
   <dt><dfn for=errors export>no such user context</dfn>
   <dd>Tried to reference an unknown [=user context=].
 
+  <dt><dfn for=errors export>no such web extension</dfn>
+  <dd>Tried to reference an unknown web extension.
+
   <dt><dfn for=errors export>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
 
@@ -649,6 +655,7 @@ with the following additional codes:
 ErrorCode = "invalid argument" /
             "invalid selector" /
             "invalid session id" /
+            "invalid web extension" /
             "move target out of bounds" /
             "no such alert" /
             "no such element" /
@@ -661,6 +668,7 @@ ErrorCode = "invalid argument" /
             "no such script" /
             "no such storage partition" /
             "no such user context" /
+            "no such web extension" /
             "session not created" /
             "unable to capture screen" /
             "unable to close browser" /
@@ -2148,7 +2156,7 @@ To <dfn>set the client window state</dfn> given |window| and |state|:
 
 1. If |current state| is equal to |state|, return [=success=] with data null.
 
-1. Switch on the value of |state|:
+1. In the following list of conditions and associated steps, run the first set of steps for which the associated condition is true:
 
    <dl>
     <dt>"<code>fullscreen</code>"
@@ -11352,6 +11360,194 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
+
+## The webExtension Module ## {#module-webExtension}
+
+The <dfn export for=modules>webExtension</dfn> module contains functionality for
+managing and interacting with web extensions.
+
+### Definition ### {#module-webExtension-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+WebExtensionsCommand = (
+  webExtension.Install,
+  webExtension.Uninstall
+)
+</pre>
+
+[=local end definition=]
+
+<pre class="cddl local-cddl">
+WebExtensionsResult = (
+  webExtension.InstallResult
+)
+</pre>
+
+### Types ### {#module-webExtension-types}
+
+#### The webExtension.Extension Type #### {#type-webExtension-Extension}
+
+<pre class="cddl remote-cddl local-cddl">
+webExtension.Extension = text
+</pre>
+
+The <code>webExtension.Extension</code> type represents a web extension id within a [=remote end=].
+
+### Commands ### {#module-webExtension-commands}
+
+#### The webExtension.install Command #### {#command-webExtension-install}
+
+The <dfn export for=commands>webExtension.install</dfn> command installs a web extension in the [=remote end=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      webExtension.Install = (
+         method: "webExtension.install",
+         params: webExtension.InstallParameters
+      )
+
+      webExtension.InstallParameters = {
+         extensionData: webExtension.ExtensionData,
+      }
+
+      webExtension.ExtensionData = (
+         webExtension.ExtensionArchivePath /
+         webExtension.ExtensionBase64Encoded /
+         webExtension.ExtensionPath
+      )
+
+      webExtension.ExtensionPath = {
+         type: "path",
+         path: text,
+      }
+
+      webExtension.ExtensionArchivePath = {
+         type: "archivePath",
+         path: text,
+      }
+
+      webExtension.ExtensionBase64Encoded = {
+         type: "base64",
+         value: text,
+      }
+      </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+      webExtension.InstallResult = {
+        extension: webExtension.Extension
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+To <dfn>extract a zip archive</dfn> given |bytes|:
+
+1. Perform implementation defined steps to decode |bytes| using the zip compression algorithm. TODO: Find a better reference for zip decoding.
+
+1. If the previous step failed (e.g. because |bytes| did not represent valid zip-compressed data) then return [=error=] with error code [=invalid web extension=]. Otherwise let |entry| be a [=directory entry=] containing the extracted filesystem entries.
+
+1. Return |entry|.
+
+</div>
+
+<div algorithm>
+To <dfn>expand a web extension data spec</dfn> given |extension data spec|:
+
+1. Let |type| be |extension data spec|["<code>type</code>"].
+
+1. If installing a web extension using |type| isn't supported return [=error=] with [=error code=] [=unsupported operation=].
+
+1. In the following list of conditions and associated steps, run the first set of steps for which the associated condition is true:
+
+   <dl>
+    <dt>|type| is the string "<code>path</code>"
+    <dd>
+      1. Let |path| be |extension data spec|["<code>path</code>"].
+      1. Let |locator| be a [=directory locator=] with [=file system locator/path=] |path| and [=file system locator/root=] corresponding to the root of the file system.
+      1. Let |entry| be [=locate an entry=] given |locator|.
+
+    <dt>|type| is the string "<code>archivePath</code>"
+    <dd>
+      1. Let |archive path| be |extension data spec|["<code>path</code>"].
+      1. Let |locator| be a [=file locator=] with [=file system locator/path=] |archive path| and [=file system locator/root=] corresponding to the root of the file system.
+      1. Let |archive entry| be [=locate an entry=] given |locator|.
+      1. If |archive entry| is null, return null.
+      1. Let |bytes| be |archive entry|'s [=file entry/binary data=].
+      1. Let |entry| be the result of [=trying=] to [=extract a zip archive=] given |bytes|.
+
+    <dt>|type| is the string "<code>base64</code>"
+    <dd>
+      1. Let |bytes| be [=forgiving-base64 decode=] |extension data spec|["<code>path</code>"].
+      1. If |bytes| is failure, return null.
+      1. Let |entry| be the result of [=trying=] to [=extract a zip archive=] given |bytes|.
+
+   </dl>
+
+1. Return |entry|.
+
+</div>
+
+<div algorithm="remote end steps for webExtension.install">
+The [=remote end steps=] with |command parameters| are:
+
+1. If installing web extensions isn't supported return [=error=] with error code [=unsupported operation=].
+
+1. Let |extension data spec| be |command parameters|["<code>extensionData</code>"].
+
+1. Let |extension directory entry| be the result of [=trying=] to [=expand a web extension data spec=] with |extension data spec|.
+
+1. If extension directory entry| is null, return [=error=] with [=error code=] [=invalid web extension=].
+
+1. Perform implementation defined steps to install a web extension from |extension directory entry|. If this fails, return [=error=] with [=error code=] [=invalid web extension=]. Otherwise let |extension id| be the unique identifier of the newly installed web extension.
+
+1. Let |result| be a [=/map=] matching the
+   <code>webExtension.InstallResult</code> production with the
+   <code>extension</code> field set to |extension id|.
+
+1. Return [=success=] with data |result|.
+
+</div>
+
+
+#### The webExtension.uninstall Command #### {#command-webExtension-uninstall}
+
+The <dfn export for=commands>webExtension.uninstall</dfn> command uninstalls a web extension for the [=remote end=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      webExtension.Uninstall = (
+         method: "webExtension.uninstall",
+         params: webExtension.UninstallParameters
+      )
+
+      webExtension.UninstallParameters = {
+         extension: webExtension.Extension,
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for webExtension.uninstall">
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |extension| be |command parameters|["<code>extension</code>"].
+
+1. If the [=remote end=] has no web extension with id equal to |extension|, return [=error=] with [=error code=] [=no such web extension=].
+
+1. Perform any implementation-defined steps to remove the web extension from the [=remote end=]. If this fails, return [=error=] with [=error code=] [=unknown error=].
+
+1. Return [=success=] with data null.
+
+</div>
 
 # Patches to Other Specifications # {#patches}
 
