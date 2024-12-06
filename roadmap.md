@@ -122,4 +122,4 @@ This scenario loads a web extension and accesses its background page. In spec te
 
 - [x] Some items from the previous milestones
 - [x] [Loading a web extension](https://github.com/w3c/webdriver-bidi/pull/778)
-- [ ] Accessing the background page of a web extension
+- [ ] Accessing navigables and service workers of a web extension
