@@ -121,5 +121,5 @@ This scenario changes the browser window dimensions and position, maximizes/mini
 This scenario loads a web extension and accesses its background page. In spec terms, this involves:
 
 - [x] Some items from the previous milestones
-- [ ] Loading a web extension.
+- [x] [Loading a web extension.](https://github.com/w3c/webdriver-bidi/pull/778)
 - [ ] Accessing the background page of a web extension.
