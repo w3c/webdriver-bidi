@@ -1841,7 +1841,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
    1. If the [=event=] with [=event name=] |event name| does not define [=remote end
      subscribe steps=], continue;
 
-   1. Let |existing navigables| be a set of navigables for which either a global
+   1. Let |existing navigables| be a [=/set=] of navigables for which either a global
       subscription is defined or a subscription listing navigables's top-level navigable's id.
 
       TODO: define the step above better.
@@ -1907,11 +1907,10 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. If |command parameters| matches the <code>session.SubscriptionRequest</code> production:
 
-   1. Let the |event names| be the value of the <code>events</code> field of
-      |command parameters|.
+   1. Let |event names| be a [=/set=] of |command parameters|["<code>events</code>"].
 
-   1. Let the |contexts| be the value of the <code>contexts</code>
-      field of |command parameters| if it is present or an empty [=/set=] if it isn't.
+   1. Let |contexts| be a [=/set=] of |command parameters|["<code>contexts</code>"],
+      if it is present or an empty [=/set=] if it isn't.
 
    1. Let |new subscriptions| to be a [=/list=].
 
@@ -1964,10 +1963,15 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Otherwise:
 
-   1. Let the |subscriptions| be |command parameters|[<code>subscriptions</code>].
+   1. Let |subscriptions| be a [=/set=] of |command parameters|[<code>subscriptions</code>].
 
-   1. Remove all subscriptions from |session|'s [=subscriptions=] whose
-      subscription id is one of |subscriptions|.
+   1. Let |items to remove| be an empty [=/list=].
+
+   1. For each |subscription| in |session|'s [=subscriptions=],
+      append |subscription| to |items to remove| if |subscriptions|
+      [=set/contains=] |subscription|'s [=subscription/subscription id=].
+
+   1. [=list/Remove=] |items to remove| from |session|'s [=subscriptions=].
 
 1. Return [=success=] with data null.
 
