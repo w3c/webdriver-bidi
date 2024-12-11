@@ -740,10 +740,7 @@ To determine if an <dfn export>event is enabled</dfn> given |session|,
 Note: |navigables| is a set because a [=shared worker=] can be associated
       with multiple contexts.
 
-1. Let |top-level traversables| be an empty [=/set=].
-
-1. For each |navigable| of |navigables|,
-   append |navigable|'s [=navigable/top-level traversable=] to |top-level traversables|.
+1. Let |top-level traversables| be the result of [=get top-level traversables=] given |navigables|.
 
 1. For each |subscription| in |session|'s [=subscriptions=]:
 
@@ -752,10 +749,12 @@ Note: |navigables| is a set because a [=shared worker=] can be associated
    1. If |subscription|'s [=subscription/contexts=] is an empty set,
       return true.
 
-   1. For each |navigable| of |top-level traversables|:
+   1. Let |subscription navigables| be the result of [=get navigables=] given |subscription|'s [=subscription/contexts=].
 
-      1. Return true if the [=set/intersection=] of |top-level traversables| and
-         |subscription|'s [=subscription/contexts=] is not [=list/empty=].
+   1. Let |subscription top-level traversables| be the result of [=get top-level traversables=] given |subscription navigables|.
+
+   1. Return true if the [=set/intersection=] of |top-level traversables| and
+      |subscription top-level traversables| is not [=list/empty=].
 
 1. Return false.
 
@@ -763,7 +762,7 @@ Note: |navigables| is a set because a [=shared worker=] can be associated
 
 <div algorithm>
 
-The <dfn export>set of navigables for which an event is enabled</dfn>,
+The <dfn export>set of top-level traversables for which an event is enabled</dfn>,
 given |event name| and |session| is:
 
 1. Let |result| be a new [=/set=].
@@ -775,17 +774,19 @@ given |event name| and |session| is:
 
    1. If |subscription|'s is [=subscription/global=]:
 
-      1. For each |navigable| in remote end's [=/navigables=]:
+      1. For each |traversable| in remote end's [=/top-level traversables=]:
 
-        1. [=set/Append=] |navigable| to |result|.
+        1. [=set/Append=] |traversable| to |result|.
 
       1. Break.
 
-   1. For each |context id| in |subscription|'s [=subscription/contexts=]:
+   1. Otherwise:
 
-      1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with |context id|.
+      1. Let |navigables| to the result of [=get navigables=] given |subscription|'s [=subscription/contexts=]:
 
-      1. [=set/Append=] |navigable| to |result| if |navigable| is not null.
+      1. Let |top-level traversables| be the result of [=get top-level traversables=] with |navigables|.
+
+      1. [=set/Append=] each item of |top-level traversables| to |result|.
 
 1. Return |result|.
 
@@ -1098,6 +1099,37 @@ To <dfn>get related navigables</dfn> given an [=script/settings object=]
 
 
 1. Return |related navigables|.
+
+</div>
+
+<div algorithm>
+
+To <dfn>get navigables</dfn> given a [=/list=] of context ids |navigable ids|:
+
+1. Let |result| be an empty [=/set=].
+
+1. For each |navigable id| in |navigable ids|:
+
+   1. Let |navigable| be the [=/navigable=] with id |navigable id|,
+      if such [=/navigable=] exists, and null otherwise.
+
+   1. [=set/Append=] |navigable| to |result| if |navigable| is not null.
+
+1. Return |result|.
+
+</div>
+
+<div algorithm>
+
+To <dfn>get top-level traversables</dfn> given a [=/list=] of [=/navigables=] |navigables|:
+
+1. Let |result| be an empty [=/set=].
+
+1. For each |navigable| in |navigables|:
+
+   1. [=set/Append=] |navigable|'s [=navigable/top-level traversable=] to |result|.
+
+1. Return |result|.
 
 </div>
 
@@ -1871,12 +1903,17 @@ The [=remote end steps=] with |session| and |command parameters| are:
    1. If the [=event=] with [=event name=] |event name| does not define [=remote end
      subscribe steps=], continue;
 
-   1. Let |existing navigables| be a [=set of navigables for which an event is enabled=] given |session| and |event name|.
+   1. Let |existing navigables| be a [=set of top-level traversables for which an event is enabled=] given |session| and |event name|.
 
-   1. Let |newly subscribed navigables| be all [=/navigables=] in the remote end if |context ids| is empty,
-      or navigables identified by ids in |context ids|.
+   1. Let |newly subscribed navigables| be a [=/set=].
 
-   TODO: clarify the above step.
+   1. If |context ids| is not empty:
+
+      1. Let |navigables| be the result of [=get navigables=] given |context ids|.
+
+      1. Set |newly subscribed navigables| be the result of [=get top-level traversables=] given |navigables|.
+
+   1. Otherwise, |newly subscribed navigables| to a [=/set=] of all [=navigable/top-level traversables=] in the remote end.
 
    1. Set |subscribe step events|[|event name|] to [=set/difference=] of
       |newly subscribed navigables| and |existing navigables|.
