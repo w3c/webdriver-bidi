@@ -761,6 +761,36 @@ Note: |navigables| is a set because a [=shared worker=] can be associated
 
 </div>
 
+<div algorithm>
+
+The <dfn export>set of navigables for which an event is enabled</dfn>,
+given |event name| and |session| is:
+
+1. Let |result| be a new [=/set=].
+
+1. For each |subscription| in |session|'s [=subscriptions=]:
+
+   1. If |subscription|'s [=subscription/event names=] [=set/contains|does not contain=] |event name|,
+      continue.
+
+   1. If |subscription|'s is [=subscription/global=]:
+
+      1. For each |navigable| in remote end's [=/navigables=]:
+
+        1. [=set/Append=] |navigable| to |result|.
+
+      1. Break.
+
+   1. For each |context id| in |subscription|'s [=subscription/contexts=]:
+
+      1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with |context id|.
+
+      1. [=set/Append=] |navigable| to |result| if |navigable| is not null.
+
+1. Return |result|.
+
+</div>
+
 # Transport # {#transport}
 
 Message transport is provided using the WebSocket protocol.
@@ -1832,7 +1862,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |subscription| be a [=subscription=] with
    [=subscription/subscription id=] set to the string representation of a UUID,
    [=subscription/event names=] set to |event names|, and
-   [=subscription/contexts=]  set to |context ids|.
+   [=subscription/contexts=] set to |context ids|.
 
 1. Let |subscribe step events| be a new [=/map=].
 
@@ -1841,16 +1871,15 @@ The [=remote end steps=] with |session| and |command parameters| are:
    1. If the [=event=] with [=event name=] |event name| does not define [=remote end
      subscribe steps=], continue;
 
-   1. Let |existing navigables| be a [=/set=] of navigables for which either a global
-      subscription is defined or a subscription listing navigables's top-level navigable's id.
+   1. Let |existing navigables| be a [=set of navigables for which an event is enabled=] given |session| and |event name|.
 
-      TODO: define the step above better.
-
-   1. Let |newly subscribed navigables| be all top-level navigables if |context ids| is empty,
+   1. Let |newly subscribed navigables| be all [=/navigables=] in the remote end if |context ids| is empty,
       or navigables identified by ids in |context ids|.
 
-   1. Set |subscribe step events|[|event name|] to navigables that are included in |newly subscribed navigables|
-      and not included in |existing navigables|.
+   TODO: clarify the above step.
+
+   1. Set |subscribe step events|[|event name|] to [=set/difference=] of
+      |newly subscribed navigables| and |existing navigables|.
 
 1. Append |subscription| to |session|'s [=subscriptions=].
 
@@ -1946,7 +1975,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
               1. If |event map|[|event name|] does not exist,
                  continue.
 
-              1. Remove |contexts| from |event map|[|event name|].
+              1. Set |event map|[|event name|] to the [=set/difference=]
+                 between |event map|[|event name|] and |contexts|.
 
               1. If |event map|[|event name|] is an empty [=/set=],
 
