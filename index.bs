@@ -711,11 +711,12 @@ which is a [=/list=] of [=subscriptions=].
 
 
 A <dfn for=event>subscription</dfn> is a [=/struct=] consisting of a
-<dfn for=subscription>subscription id</dfn> (a string), <dfn for=subscription>event names</dfn> (a [=/set=] of event names)
-and <dfn for=subscription>contexts</dfn> (a [=/set=] of context ids).
+<dfn for=subscription>subscription id</dfn> (a string),
+<dfn for=subscription>event names</dfn> (a [=/set=] of event names)
+and <dfn for=subscription>top-level traversable ids</dfn> (a [=/set=] of IDs of [=/top-level traversables=]).
 
 A [=subscription=] |subscription| is <dfn for="subscription">global</dfn>
-if |subscription|'s [=subscription/contexts=] is an empty set.
+if |subscription|'s [=subscription/top-level traversable ids=] is an empty set.
 
 <div algorithm>
 
@@ -749,9 +750,7 @@ Note: |navigables| is a set because a [=shared worker=] can be associated
 
    1. If |subscription| is  [=subscription/global=] return true.
 
-   1. Let |subscription navigables| be [=get navigables=] given |subscription|'s [=subscription/contexts=].
-
-   1. Let |subscription top-level traversables| be [=get top-level traversables=] given |subscription navigables|.
+   1. Let |subscription top-level traversables| be [=get navigables=] given |subscription|'s [=subscription/top-level traversable ids=].
 
    1. Return true if the [=set/intersection=] of |top-level traversables| and
       |subscription top-level traversables| is not [=list/empty=].
@@ -782,9 +781,7 @@ given |event name| and |session| is:
 
    1. Otherwise:
 
-      1. Let |navigables| to [=get navigables=] given |subscription|'s [=subscription/contexts=]:
-
-      1. Let |top-level traversables| be [=get top-level traversables=] with |navigables|.
+      1. Let |top-level traversables| to [=get navigables=] given |subscription|'s [=subscription/top-level traversable ids=]:
 
       1. [=set/Append=] each item of |top-level traversables| to |result|.
 
@@ -1901,13 +1898,26 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let the |event names| be a [=/set=] containing |command parameters|["<code>events</code>"].
 
-1. Let the |context ids| be a [=/set=] containing the value of <code>contexts</code>
-   field of |command parameters| if it is present or an empty [=/set=] if it isn't.
+1. Let |newly subscribed navigables| be a [=/set=].
+
+1. Let |top-level traversable context ids| be a [=/set=].
+
+1. If |command parameters|[<code>contexts</code>] is not empty:
+
+   1. Let |navigables| be [=get navigables=] given |command parameters|[<code>contexts</code>].
+
+   1. Set |newly subscribed navigables| be [=get top-level traversables=] given |navigables|.
+
+   1. For each |navigable| in |newly subscribed navigables|:
+
+      1. [=set/Append=] |navigable|'s [=navigable id=] to |top-level traversable context ids|.
+
+1. Otherwise, |newly subscribed navigables| to a [=/set=] of all [=navigable/top-level traversables=] in the [=remote end=].
 
 1. Let |subscription| be a [=subscription=] with
    [=subscription/subscription id=] set to the string representation of a UUID,
    [=subscription/event names=] set to |event names|, and
-   [=subscription/contexts=] set to |context ids|.
+   [=subscription/top-level traversable ids=] set to |top-level traversable context ids|.
 
 1. Let |subscribe step events| be a new [=/map=].
 
@@ -1917,16 +1927,6 @@ The [=remote end steps=] with |session| and |command parameters| are:
      subscribe steps=], continue;
 
    1. Let |existing navigables| be a [=set of top-level traversables for which an event is enabled=] given |session| and |event name|.
-
-   1. Let |newly subscribed navigables| be a [=/set=].
-
-   1. If |context ids| is not empty:
-
-      1. Let |navigables| be [=get navigables=] given |context ids|.
-
-      1. Set |newly subscribed navigables| be [=get top-level traversables=] given |navigables|.
-
-   1. Otherwise, |newly subscribed navigables| to a [=/set=] of all [=navigable/top-level traversables=] in the [=remote end=].
 
    1. Set |subscribe step events|[|event name|] to [=set/difference=] of
       |newly subscribed navigables| and |existing navigables|.
@@ -1944,7 +1944,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
     1. Return true if |event one|'s [=subscribe priority=] is less than |event
        two|'s subscribe priority, or false otherwise.
 
-1. If |context ids| is null, let |include global| be true, otherwise let
+1. If |subscription| is [=subscription/global=], let |include global| be true, otherwise let
    |include global| be false.
 
 1. For each |event name| → |navigables| in |subscribe step events|:
@@ -1991,17 +1991,29 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
    1. Let |event names| be a [=/set=] of |command parameters|["<code>events</code>"].
 
-   1. Let |contexts| be a [=/set=] of |command parameters|["<code>contexts</code>"],
-      if |command parameters| [=map/contains=] "<code>contexts</code>", or an empty [=/set=] otherwise.
+   1. Let |top-level traversable context ids| be a [=/set=].
+
+   1. If |command parameters|[<code>contexts</code>] is not empty:
+
+      1. Let |navigables| be [=get navigables=] given |command parameters|[<code>contexts</code>].
+
+      1. Set |top-level traversables| be [=get top-level traversables=] given |navigables|.
+
+      1. For each |navigable| in |top-level traversables|:
+
+         1. [=set/Append=] |navigable|'s [=navigable id=] to |top-level traversable context ids|.
 
    1. Let |new subscriptions| to be a [=/list=].
 
    1. For each |subscription| of |session|'s [=subscriptions=]:
 
-      1. If [=set/intersection=] of |subscription|'s [=subscription/event names=] and |event names| is an empty [=/set=],
-         continue.
+      1. If [=set/intersection=] of |subscription|'s [=subscription/event names=] and |event names| is an empty [=/set=]:
 
-      1. If |contexts| is an empty [=/set=]:
+         1. [=list/append=] |subscription| to |new subscriptions|.
+
+         1. Continue.
+
+      1. If |top-level traversable context ids| is an empty [=/set=]:
 
         1. |=list/Remove=| all items [=list/contains|contained=] in |event names| from |subscription|'s [=subscription/event names=].
 
@@ -2023,7 +2035,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
           1. For each |event name| in |subscription|'s [=subscription/event names=]:
 
-              1. Set |event map|[|event name|] to [=set/clone=] of |subscription|'s [=subscription/contexts=].
+              1. Set |event map|[|event name|] to [=set/clone=] of |subscription|'s [=subscription/top-level traversable ids=].
 
           1. For each |event name| in |event names|:
 
@@ -2031,18 +2043,20 @@ The [=remote end steps=] with |session| and |command parameters| are:
                  continue.
 
               1. Set |event map|[|event name|] to the [=set/difference=]
-                 between |event map|[|event name|] and |contexts|.
+                 between |event map|[|event name|] and |top-level traversable context ids|.
 
               1. If |event map|[|event name|] is an empty [=/set=],
 
                 1. [=map/Remove=] |event map|[|event name|].
 
-          1. For each |event name| → |remaining contexts| in |event map|:
+          1. For each |event name| → |remaining top-level traversable ids| in |event map|:
 
-            1. Let |subscription| be a [=subscription=] with
+            1. Let |partial subscription| be a [=subscription=] with
                [=subscription/subscription id=] to |subscription|'s [=subscription/subscription id=],
                [=subscription/event names=] set to a new [=/set=] containing |event name|,
-               [=subscription/contexts=] set to |remaining contexts|.
+               [=subscription/top-level traversable ids=] set to |remaining top-level traversable ids|.
+
+            1. [=list/append=] |partial subscription| to |new subscriptions|.
 
    1. Set |session|'s [=subscriptions=] to |new subscriptions|.
 
