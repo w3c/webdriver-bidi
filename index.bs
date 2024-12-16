@@ -709,6 +709,10 @@ occurred on the [=remote end=].
 A [=BiDi session=] has a <dfn export for=event>subscriptions</dfn>
 which is a [=/list=] of [=subscriptions=].
 
+A [=BiDi session=] has <dfn export for=event>internally removed subscription ids</dfn>
+which is a [=/set=] of [=subscription/subscription id=] that identifies IDs that
+were issues to the client but have been removed internally since then.
+
 A <dfn for=event>subscription</dfn> is a [=/struct=] consisting of a
 <dfn for=subscription>subscription id</dfn> (a string),
 <dfn for=subscription>event names</dfn> (a [=/set=] of event names)
@@ -2063,17 +2067,30 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
    1. Let |subscriptions| be a [=/set=] of |command parameters|[<code>subscriptions</code>].
 
-   1. Let |items to remove| be an empty [=/list=].
+   1. Let |subscriptions to remove| be an empty [=/set=].
 
-   1. For each |subscription| in |session|'s [=subscriptions=],
-      append |subscription| to |items to remove| if |subscriptions|
-      [=set/contains=] |subscription|'s [=subscription/subscription id=].
+   1. Let |found subscription ids| be an empty [=/set=].
 
-   1. If |items to remove| is empty:
+   1. For each |subscription| in |session|'s [=subscriptions=]:
+
+      1. If |subscriptions| [=set/contains=] |subscription|'s [=subscription/subscription id=]:
+
+         1. [=set/Append=] |subscription| to |subscriptions to remove|.
+
+         1. [=set/Append=] |subscription|'s [=subscription/subscription id=] to |found subscription ids|.
+
+   1. Let |not found subscriptions| be [=set/difference=] between |subscriptions| and |found subscription ids|.
+
+   1. Set |not found subscriptions| be [=set/difference=] between |found subscription ids| and |session|'s [=internally removed subscription ids=].
+
+   1. If |not found subscriptions| is not empty:
 
       1. Return [=error=] with [=error code=] [=invalid argument=].
 
-   1. [=list/Remove=] |items to remove| from |session|'s [=subscriptions=].
+   1. Set |session|'s [=internally removed subscription ids=] to
+      [=set/difference=] between |session|'s [=internally removed subscription ids=] |subscriptions|.
+
+   1. [=list/Remove=] each item in |subscriptions to remove| from |session|'s [=subscriptions=].
 
 1. Return [=success=] with data null.
 
@@ -4727,6 +4744,22 @@ the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given |navigable|
    given "<code>browsingContext.contextDestroyed</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
+
+  1. Let |subscriptions to remove| be a [=/set=].
+
+  1. For each |subscription| in |session|'s [=subscriptions=]:
+
+     1. If |subscription|'s [=subscription/top-level traversable ids=] [=set/contains=] |navigable|'s [=navigable id=];
+
+        1. [=set/Remove=] |navigable|'s [=navigable id=] from |subscription|'s [=subscription/top-level traversable ids=].
+
+        1. If |subscription|'s [=subscription/top-level traversable ids=] is empty:
+
+           1. [=set/Append=] |subscription| to |subscriptions to remove|.
+
+           1. Append |subscription|'s [=subscription/subscription id=] to |session|'s [=internally removed subscription ids=].
+
+  1. [=list/Remove=] |subscriptions to remove| from |session|'s [=subscriptions=].
 
 Issue: It's unclear if we ought to only fire this event for browsing
 contexts that have active documents; navigation can also cause contexts to
