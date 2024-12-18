@@ -719,9 +719,8 @@ occurred on the [=remote end=].
 
 A [=BiDi session=] has <dfn for=event>subscriptions</dfn> which is a [=/list=] of [=subscriptions=].
 
-A [=BiDi session=] has <dfn for=event>internally removed subscription ids</dfn>
-which is a [=/set=] of [=subscription/subscription id=] that identifies IDs that
-were issued to the client but have been removed internally since then.
+A [=BiDi session=] has a <dfn for=event>known subscription ids</dfn> which is a [=/set=] of
+all [=subscription/subscription ids=] that have been issued to the [=local end=] but which have not yet been unsubscribed.
 
 A <dfn for=event>subscription</dfn> is a [=/struct=] consisting of a
 <dfn for=subscription>subscription id</dfn> (a string),
@@ -1951,6 +1950,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Append |subscription| to |session|'s [=subscriptions=].
 
+1. Append |subscription|'s [=subscription/subscription id=] to |session|'s [=known subscription ids=].
+
 1. [=map/Sort in ascending order=] |subscribe step events| using the following less
    than algorithm given two entries with keys |event name one| and |event
    name two|:
@@ -2088,9 +2089,13 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
    1. Let |subscriptions| be [=set/create=] given of |command parameters|[<code>subscriptions</code>].
 
-   1. Let |subscriptions to remove| be an empty [=/set=].
+   1. Let |unknown subscription ids| to [=set/difference=] between |subscriptions| and |session|'s [=known subscription ids=].
 
-   1. Let |found subscription ids| be an empty [=/set=].
+   1. If |unknown subscription ids| is not empty:
+
+      1. Return [=error=] with [=error code=] [=invalid argument=].
+
+   1. Let |subscriptions to remove| be an empty [=/set=].
 
    1. For each |subscription| in |session|'s [=subscriptions=]:
 
@@ -2098,18 +2103,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
          1. [=set/Append=] |subscription| to |subscriptions to remove|.
 
-         1. [=set/Append=] |subscription|'s [=subscription/subscription id=] to |found subscription ids|.
-
-   1. Let |not found subscriptions| be [=set/difference=] between |subscriptions| and |found subscription ids|.
-
-   1. Set |not found subscriptions| to [=set/difference=] between |not found subscriptions| and |session|'s [=internally removed subscription ids=].
-
-   1. If |not found subscriptions| is not empty:
-
-      1. Return [=error=] with [=error code=] [=invalid argument=].
-
-   1. Set |session|'s [=internally removed subscription ids=] to
-      [=set/difference=] between |session|'s [=internally removed subscription ids=] and |subscriptions|.
+   1. Set |session|'s [=known subscription ids=] to
+      [=set/difference=] between |session|'s [=known subscription ids=] and |subscriptions|.
 
    1. [=list/Remove=] each item in |subscriptions to remove| from |session|'s [=subscriptions=].
 
@@ -4777,8 +4772,6 @@ the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given |navigable|
         1. If |subscription|'s [=subscription/top-level traversable ids=] is empty:
 
            1. [=set/Append=] |subscription| to |subscriptions to remove|.
-
-           1. Append |subscription|'s [=subscription/subscription id=] to |session|'s [=internally removed subscription ids=].
 
   1. [=list/Remove=] |subscriptions to remove| from |session|'s [=subscriptions=].
 
