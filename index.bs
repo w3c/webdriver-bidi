@@ -713,11 +713,13 @@ all [=subscription/subscription ids=] that have been issued to the [=local end=]
 
 A <dfn for=event>subscription</dfn> is a [=/struct=] consisting of a
 <dfn for=subscription>subscription id</dfn> (a string),
-<dfn for=subscription>event names</dfn> (a [=/set=] of event names)
-and <dfn for=subscription>top-level traversable ids</dfn> (a [=/set=] of IDs of [=/top-level traversables=]).
+<dfn for=subscription>event names</dfn> (a [=/set=] of event names),
+<dfn for=subscription>top-level traversable ids</dfn> (a [=/set=] of IDs of [=/top-level traversables=])
+and <dfn for=subscription>user context ids</dfn> (a [=/set=] of IDs of [=user contexts=]).
 
 A [=subscription=] |subscription| is <dfn for="subscription">global</dfn>
-if |subscription|'s [=subscription/top-level traversable ids=] is an empty set.
+if |subscription|'s [=subscription/top-level traversable ids=] is an empty set
+and |subscription|'s [=user context ids=] is an empty set.
 
 <div algorithm>
 
@@ -750,10 +752,19 @@ Note: |navigables| is a set because a [=shared worker=] can be associated
 
    1. If |subscription| is [=subscription/global=] return true.
 
-   1. Let |subscription top-level traversables| be [=get navigables by ids=] with |subscription|'s [=subscription/top-level traversable ids=].
+   1. If [=subscription/user context ids=] is not empty:
 
-   1. If the [=set/intersection=] of |top-level traversables| and
-      |subscription top-level traversables| is not [=list/empty=] return true.
+      1. [=list/For each=] |navigable| in |top-level traversables|:
+
+         1. If |subscription|'s [=subscription/user context ids=] [=set/contains=]
+            |navigable|'s [=associated user context=]'s [=user context id=], return true.
+
+   1. Otherwise:
+
+      1. Let |subscription top-level traversables| be [=get navigables by ids=] with |subscription|'s [=subscription/top-level traversable ids=].
+
+      1. If the [=set/intersection=] of |top-level traversables| and
+          |subscription top-level traversables| is not [=list/empty=] return true.
 
 1. Return false.
 
@@ -778,6 +789,14 @@ given |event name| and |session| is:
         1. [=set/Append=] |traversable| to |result|.
 
       1. [=Break=].
+
+   1. Otherwise, if [=subscription/user context ids=] is not empty:
+
+      1. For each |traversable| in remote end's [=/top-level traversables=]:
+
+         1. [=set/Append=] |traversable| to |result| if
+            |subscription|'s [=subscription/user context ids=] [=set/contains=]
+            |traversable|'s [=associated user context=]'s [=user context id=].
 
    1. Otherwise:
 
@@ -1459,6 +1478,31 @@ To <dfn export>get user context</dfn> given |user context id|:
 
 </div>
 
+When a [=user context=] is [=set/remove|removed=] from the
+[=set of user contexts=], [=remove user context subscriptions=]:
+
+<div algorithm>
+
+To <dfn export>remove user context subscriptions</dfn>:
+
+1. For each |session| in [=active sessions=]:
+
+  1. Let |subscriptions to remove| be a [=/set=].
+
+  1. For each |subscription| in |session|'s [=subscriptions=]:
+
+     1. If |subscription|'s [=subscription/user context ids=] [=set/contains=] |navigable|'s [=associated user context=]'s [=user context id=];
+
+        1. [=set/Remove=] |navigable|'s [=associated user context=]'s [=user context id=] from |subscription|'s [=subscription/user context ids=].
+
+        1. If |subscription|'s [=subscription/user context ids=] is empty:
+
+           1. [=set/Append=] |subscription| to |subscriptions to remove|.
+
+  1. [=list/Remove=] |subscriptions to remove| from |session|'s [=subscriptions=].
+
+</div>
+
 # Modules # {#modules}
 
 ## The session Module ## {#module-session}
@@ -1685,6 +1729,7 @@ The <code>session.Subscription</code> type represents a unique subscription iden
 session.SubscriptionRequest = {
   events: [+text],
   ? contexts: [+browsingContext.BrowsingContext],
+  ? userContexts: [+browser.UserContext],
 }
 </pre>
 
@@ -1946,12 +1991,26 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
       1. [=set/Append=] |navigable|'s [=navigable id=] to |top-level traversable context ids|.
 
+1. Otherwise, if |input user context ids| is not empty:
+
+    1. [=list/For each=] |user context id| of |input user context ids|:
+
+       1. Let |user context| be [=get user context=] with |user context id|.
+
+       1. If |user context| is null, return [=error=] with [=error code=] [=invalid argument=].
+
+       1. [=list/For each=] |top-level traversable| in the list of all [=/top-level traversables=]
+          whose [=associated user context=] is |user context|:
+
+          1. [=list/Append=] |top-level traversable| to |subscription navigables|.
+
 1. Otherwise, set |subscription navigables| to a [=/set=] of all [=navigable/top-level traversables=] in the [=remote end=].
 
 1. Let |subscription| be a [=subscription=] with
    [=subscription/subscription id=] set to the string representation of a [[!RFC9562|UUID]],
-   [=subscription/event names=] set to |event names|, and
-   [=subscription/top-level traversable ids=] set to |top-level traversable context ids|.
+   [=subscription/event names=] set to |event names|,
+   [=subscription/top-level traversable ids=] set to |top-level traversable context ids| and
+   [=subscription/user context ids=] set to |input user context ids|.
 
 1. Let |subscribe step events| be a new [=/map=].
 
@@ -2097,6 +2156,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
         1. If |subscription| is [=subscription/global=]:
 
           1. [=list/append=] |subscription| to |new subscriptions|.
+
+        1. Otherwise, if |subscription|'s [=subscription/user context ids=] is not empty, [=continue=].
 
         1. Otherwise:
 
