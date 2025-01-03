@@ -123,3 +123,4 @@ This scenario loads a web extension and accesses its background page. In spec te
 - [x] Some items from the previous milestones
 - [x] Installing a web extension
 - [ ] Accessing navigables and service workers of a web extension
+- [ ] Uninstalling a web extension
