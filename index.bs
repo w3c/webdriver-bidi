@@ -789,6 +789,29 @@ given |event name| and |session| is:
 
 </div>
 
+<div algorithm>
+To <dfn>obtain a set of event names</dfn> given a |name|:
+
+1. Let |events| be an empty [=/set=].
+
+1. If |name| contains a U+002E (period):
+
+  1. If |name| is the [=event name=] for an event, append |name| to |events|
+     and return [=success=] with data |events|.
+
+  1. Return an [=error=] with [=error code=] [=invalid argument=]
+
+1. Otherwise |name| is interpreted as representing all the events in a
+   module. If |name| is not a [=module name=] return an [=error=] with
+   [=error code=] [=invalid argument=].
+
+1. Append the [=event name=] for each [=event=] in the module with name |name| to
+   |events|.
+
+1. Return [=success=] with data |events|.
+
+</div>
+
 # Transport # {#transport}
 
 Message transport is provided using the WebSocket protocol.
@@ -1897,7 +1920,11 @@ Issue: This needs to be generalized to work with realms too.
 <div algorithm="remote end steps for session.subscribe">
 The [=remote end steps=] with |session| and |command parameters| are:
 
-1. Let the |event names| be [=set/create|create a set=] with |command parameters|["<code>events</code>"].
+1. Let |event names| be an empty [=/set=].
+
+1. For each entry |name| in |command parameters|["<code>events</code>"],
+   let |event names| be the [=set/union=] of |event names| and the result of
+   [=trying=] to [=obtain a set of event names=] with |name|.
 
 1. Let |subscription navigables| be a [=/set=].
 
@@ -2001,7 +2028,11 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. If |command parameters| matches the <code>session.UnsubscribeByAttributesRequest</code> production:
 
-   1. Let |event names| be [=set/create|create a set=] with |command parameters|["<code>events</code>"].
+   1. Let |event names| be an empty [=/set=].
+
+   1. For each entry |name| in |command parameters|["<code>events</code>"],
+      let |event names| be the [=set/union=] of |event names| and the result of
+      [=trying=] to [=obtain a set of event names=] with |name|.
 
    1. Let |top-level traversable context ids| be a [=/set=].
 
