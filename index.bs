@@ -2054,21 +2054,47 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
    1. Let |new subscriptions| to be a [=/list=].
 
+   1. Let |match| be false.
+
    1. For each |subscription| of |session|'s [=subscriptions=]:
+
+      1. If |match| is true:
+
+         1. [=list/append=] |subscription| to |new subscriptions|.
+
+         1. [=Continue=].
 
       1. If [=set/intersection=] of |subscription|'s [=subscription/event names=] and |event names| is an empty [=/set=]:
 
          1. [=list/append=] |subscription| to |new subscriptions|.
 
-         1. Continue.
+         1. [=Continue=].
 
       1. If |top-level traversable context ids| is an empty [=/set=]:
 
-        1. [=list/Remove=] all items [=list/contains|contained=] in |event names| from |subscription|'s [=subscription/event names=].
+         1. If |subscription|'s [=subscription/top-level traversable ids=] [=set/size=] is not zero:
 
-        1. If |subscription|'s [=subscription/event names=] is not empty:
+            1. [=list/append=] |subscription| to |new subscriptions|.
 
-          1. [=list/append=] |subscription| to |new subscriptions|.
+            1. [=Continue=].
+
+         1. Let |subscription event names| be [=set/clone=] of |subscription|'s [=subscription/event names=].
+
+         1. For each |event name| of |event names|:
+
+            1. If |subscription event names| [=set/contains=] |event name|:
+
+               1. [=list/Remove=] |event name| from |event names|.
+
+               1. [=list/Remove=] |event name| from |subscription event names|.
+
+         1. If |event names| [=set/size=] is zero, set |match| to true.
+
+         1. If |subscription event names| is not empty:
+
+            1. Set |subscription|'s [=subscription/event names=] to |subscription event names|.
+
+            1. [=list/append=] |subscription| to |new subscriptions|.
 
       1. Otherwise:
 
@@ -2080,23 +2106,41 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
           Note: unsubscribe by contexts is deprecated and will be removed in the future versions.
 
+          1. If [=set/intersection=] of |event names| and |subscription|'s [=subscription/event names=]|'s [=set/size=]
+             does not equal |event names|'s [=set/size=]:
+
+             1. [=list/append=] |subscription| to |new subscriptions|.
+
+             1. [=Continue=].
+
           1. Let |event map| be an empty [=/map=].
 
           1. For each |event name| in |subscription|'s [=subscription/event names=]:
 
               1. Set |event map|[|event name|] to [=set/clone=] of |subscription|'s [=subscription/top-level traversable ids=].
 
+          1. Let |context ids to remove| be an empty [=/set=].
+
           1. For each |event name| in |event names|:
 
               1. If |event map|[|event name|] does not exist,
-                 continue.
+                 [=continue=].
 
-              1. Set |event map|[|event name|] to the [=set/difference=]
-                 between |event map|[|event name|] and |top-level traversable context ids|.
+              1. For each |top-level traversable id| of |top-level traversable context ids|:
+
+                 1. If |event map|[|event name|] [=set/contains=] |top-level traversable id|:
+
+                    1. [=list/Append=] |top-level traversable id| to |context ids to remove|.
+
+                    1. [=list/Remove=] |top-level traversable id| from |event map|[|event name|].
 
               1. If |event map|[|event name|] is an empty [=/set=],
 
                 1. [=map/Remove=] |event map|[|event name|].
+
+          1. For each |top-level traversable id| of |context ids to remove|:
+
+             1. [=list/Remove=] |top-level traversable id| from |top-level traversable context ids|.
 
           1. For each |event name| → |remaining top-level traversable ids| in |event map|:
 
@@ -2106,6 +2150,10 @@ The [=remote end steps=] with |session| and |command parameters| are:
                [=subscription/top-level traversable ids=] set to |remaining top-level traversable ids|.
 
             1. [=list/append=] |partial subscription| to |new subscriptions|.
+
+          1. If |top-level traversable context ids| is empty, set |match| to true.
+
+   1. If |match| is false, return [=error=] with [=error code=] [=invalid argument=].
 
    1. Set |session|'s [=subscriptions=] to |new subscriptions|.
 
