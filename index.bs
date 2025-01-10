@@ -1328,8 +1328,55 @@ To <dfn>get or create a sandbox realm</dfn> given |name| and |navigable|:
 <div algorithm>
 To <dfn>create a sandbox realm</dfn> with |window|:
 
-Issue: Define creation of sandbox realm. This is going to return a
-{{SandboxWindowProxy}} wrapping |window|.
+1. Let |window environment settings| be the [=environment settings object=] whose
+   [=relevant global object=] is |window|.
+
+1. Let |global| be a new {{SandboxWindowProxy}} wrapping |window|.
+
+   Issue: This is the key step but it's basically totally undefined.
+
+1. Let |agent| be |window environment settings|'s [=realm=]'s <a spec=html for=realm>agent</a>.
+
+1. Let |execution context| be the result of [=creating a new realm=] given |agent| using
+   |global| as the host-defined global object.
+
+1. Let |realm| be the value of |execution context|'s Realm component.
+
+1. Let |settings object| be a new [=environment settings object=] whose algorithms are defined as follows:
+
+  <dl>
+    <dt>The [=realm execution context=].
+    <dd>Return |execution context|.
+
+    <dt>The [=environment settings object/module map=]
+    <dd>Return |global|'s module map.
+        Issue: Need to define module map for {{SandboxWindowProxy}} objects.
+
+    <dt>The [=API base URL=]
+    <dd>Return |window environment settings|' [=API base url=].
+
+    <dt>[=environment settings object/origin=]
+    <dd>Return |window environment settings|' [=environment settings object/origin=].
+
+    <dt>[=environment settings object/policy container=]
+    <dd>Return |window environment settings|' [=environment settings object/policy container=].
+
+    <dt>The [=environment settings object/cross-origin isolated capability=]
+    <dd>Return true.
+
+    <dt>The [=time origin=]
+    <dd>Return |window environment settings|' [=time origin=].
+
+1. Set |settings object|'s [=environment/id=] to a new unique opaque string,
+   [=creation URL=] to |window environment settings|' [=creation URL=],
+   [=top-level creation URL=] to |window environment settings|' [=top-level
+   creation URL=], [=target browsing context=] to |window environment settings|'
+   [=target browsing context=], [=active service worker=] to null, and
+   [=top-level origin=] to |window environment settings|' [=top-level origin=].
+
+1. Set |realm|'s \[[HostDefined]] field to |settings object|.
+
+1. Return |realm|
 
 </div>
 
@@ -7660,8 +7707,8 @@ TODO: Extend this to scripts in other kinds of realms.
 A [=BiDi session=] has a <dfn>preload script map</dfn> which is a [=/map=] in
 which the keys are [[!RFC9562|UUID]]s, and the values are [=structs=] with an <a
 for=struct>item</a> named <code>function declaration</code>, which is a string,
-<code>arguments</code>, <code>contexts</code>, which is a list or null, and an item named <code>sandbox</code> which is a string
-or null.
+<code>arguments</code>, <code>contexts</code>, which is a list or null, and an
+item named <code>sandbox</code> which is a string or null.
 
 Note: If executing a [=preload script=] fails, either due to a syntax error, or
 a runtime exception, an [[ECMAScript]] exception is reported in the realm in
@@ -7686,10 +7733,12 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 
        1. If |preload script|'s <code>contexts</code> does not [=list/contains|contain=] |navigable id|, continue.
 
-    1. If |preload script|'s <code>sandbox</code> is not null, let |realm| be [=get
-       or create a sandbox realm=] with |preload script|'s <code>sandbox</code> and
-       |navigable|. Otherwise let |realm| be |environment settings|'
-       [=realm execution context=]'s Realm component.
+    1. If |preload script|'s <code>sandbox</code> is not null, let |realm| be
+       [=get or create a sandbox realm=] with |preload script|'s
+       <code>sandbox</code> and |navigable|, and set |environment settings| to
+       the [=environment settings object=] whose [=realm execution context=]'s
+       Realm component is |realm|. Otherwise let |realm| be
+       |environment settings|' [=realm execution context=]'s Realm component.
 
     1. Let |exception reporting global| be be |environment settings|'
        [=realm execution context=]'s Realm component's [=realm/global object=].
