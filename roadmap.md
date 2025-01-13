@@ -18,6 +18,7 @@ This scenario loads a web page and uses BiDi event subscription to efficiently g
 - [x] [Emitting a log event](https://w3c.github.io/webdriver-bidi/#event-log-entryAdded)
 - [x] [Serialization and deserialization of JavaScript values](https://w3c.github.io/webdriver-bidi/#data-types-protocolValue)
 - [x] [Unsubscribing from events](https://w3c.github.io/webdriver-bidi/#command-session-unsubscribe)
+- [ ] [Subscribing to events in a user context](https://github.com/w3c/webdriver-bidi/pull/836)
 
 ### Extracting content
 
@@ -60,6 +61,7 @@ In this scenario a `MutationObserver` is installed by a bootstrap script as earl
 - [x] [Installing the preload script](https://w3c.github.io/webdriver-bidi/#preload-scripts)
 - [x] [Back channel for communicating with the client](https://w3c.github.io/webdriver-bidi/#type-script-Channel)
 - [x] [Removing a preload script](https://w3c.github.io/webdriver-bidi/#command-script-removePreloadScript)
+- [ ] [Adding preload scripts per user context](https://github.com/w3c/webdriver-bidi/issues/849)
 
 ### Replacing resources with test data
 
@@ -67,6 +69,8 @@ This scenario loads a web page and uses network request interception to replace 
 
 - [x] Some items from the previous scenarios
 - [x] [Intercepting network requests](https://github.com/w3c/webdriver-bidi/issues/66)
+- [ ] [Accessing network request body](https://github.com/w3c/webdriver-bidi/issues/748)
+- [ ] [Accessing network response body](https://github.com/w3c/webdriver-bidi/issues/747)
 
 ### HTTP authentication
 
@@ -114,7 +118,7 @@ This scenario sets cookies to be used when loading a web page and its subresourc
 This scenario changes the browser window dimensions and position, maximizes/minimizes the window, and toggles full-screen mode while testing the side effects of these actions on the web page.
 
 - [x] Some items from the previous milestones
-- [ ] [Add commands for resizing and positioning browser windows](https://github.com/w3c/webdriver-bidi/issues/398)
+- [x] [Add commands for resizing and positioning browser windows](https://github.com/w3c/webdriver-bidi/issues/398)
 
 ### Web extensions
 
