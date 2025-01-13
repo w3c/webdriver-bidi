@@ -97,6 +97,8 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such alert; url: dfn-no-such-alert
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
+    text: no such response; url: dfn-no-such-response
+    text: no response body; url: dfn-no-response-body
     text: parse a page range; url: dfn-parse-a-page-range
     text: handler; for: prompt handler configuration; url: dfn-handler
     text: process capabilities; url: dfn-capabilities-processing
@@ -673,6 +675,7 @@ ErrorCode = "invalid argument" /
             "invalid session id" /
             "invalid web extension" /
             "move target out of bounds" /
+            "no response body" /
             "no such alert" /
             "no such element" /
             "no such frame" /
@@ -681,6 +684,7 @@ ErrorCode = "invalid argument" /
             "no such intercept" /
             "no such node" /
             "no such request" /
+            "no such response" /
             "no such script" /
             "no such storage partition" /
             "no such user context" /
@@ -5872,6 +5876,7 @@ NetworkCommand = (
   network.ContinueResponse //
   network.ContinueWithAuth //
   network.FailRequest //
+  network.GetResponseBody //
   network.ProvideResponse //
   network.RemoveIntercept //
   network.SetCacheBehavior
@@ -5900,6 +5905,9 @@ NetworkEvent = (
 A [=remote end=] has a <dfn>before request sent map</dfn> which is initially an
 empty map.  It's used to track the network events for which a
 <code>network.beforeRequestSent</code> event has already been sent.
+
+A [=remote end=] has a <dfn>response map</dfn> that maps a [=request id=]
+to [=/response=]. Implementations may remove data from [=response map=] map at any time.
 
 A [=remote end=] has a <dfn>default cache behavior</dfn> which is a string. It is
 initially "<code>default</code>".
@@ -7644,6 +7652,63 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
+#### The network.getResponseBody Command ####  {#command-network-getResponseBody}
+
+The <dfn export for=commands>network.getResponseBody</dfn> command retrieved the
+response body data if it is available.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      network.GetResponseBody = (
+        method: "network.getResponseBody",
+        params: network.GetResponseBodyParameters
+      )
+
+      network.GetResponseBodyParameters = {
+        request: network.Request,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      script.GetResponseBodyResult = {
+        body: network.BytesValue,
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.getResponseBody">
+The [=remote end steps=] given <var ignore>session</var> and |command parameters| are:
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. If [=response map=] does not [=map/contain=] |request id|:
+
+  1. Return [=error=] with [=error code=] [=no such response=].
+
+1. Let |response| be [=response map=][|request id|].
+
+1. If |response|'s [=response/body=] is null,
+
+  1. Return [=error=] with [=error code=] [=no response body=].
+
+Issue: what do we do with bodies that are too large? The limit is often
+determined on the transport level and the implementation might not know
+it.
+
+1. Let |body| be a [=/map=] matching the <code>script.GetResponseBodyResult</code> production,
+   with the <code>body</code> field set to base-64 encoded value of |response|'s [=response/body=].
+   TODO: specify exact steps how to read the body.
+
+1. Return [=success=] with data |body|.
+
+</div>
+
+
 #### The network.provideResponse Command ####  {#command-network-provideResponse}
 
 The <dfn export for=commands>network.provideResponse</dfn> command continues a
@@ -8201,6 +8266,9 @@ completed</dfn> steps given |request| and |response|:
    be the result of [=get related navigables=] with |request|'s
    [=request/client=]. Otherwise let |related navigables| be an empty
    set.
+
+1. If the implementation is configured to save response data for |request|,
+   set [=response map=][|request|'s [=request id=]] to |response|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>network.responseCompleted</code>" and |related navigables|:
