@@ -3075,6 +3075,7 @@ To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|,
 browsingContext.Locator = (
    browsingContext.AccessibilityLocator /
    browsingContext.CssLocator /
+   browsingContext.ContextLocator /
    browsingContext.InnerTextLocator /
    browsingContext.XPathLocator
 )
@@ -3090,6 +3091,13 @@ browsingContext.AccessibilityLocator = {
 browsingContext.CssLocator = {
    type: "css",
    value: text
+}
+
+browsingContext.ContextLocator = {
+  type: "context",
+  value: {
+    context: browsingContext.BrowsingContext,
+  }
 }
 
 browsingContext.InnerTextLocator = {
@@ -3891,6 +3899,18 @@ To <dfn>locate nodes using CSS</dfn> with given |navigable|, |context nodes|,
 
 </div>
 
+<div algorithm="locate the container element">
+To <dfn>locate the container element</dfn> given |navigable|:
+
+1. Let |returned nodes| be an empty [=/list=].
+
+1. If |navigable|'s [=navigable/container=] is not null,
+   append |navigable|'s [=navigable/container=] to |returned nodes|.
+
+1. Return |returned nodes|.
+
+</div>
+
 <div algorithm="locate nodes using XPath">
 
 To <dfn>locate nodes using XPath</dfn> with given |navigable|, |context nodes|,
@@ -4157,6 +4177,25 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
          1. Let |result nodes| be [=locate nodes using accessibility attributes=]
             given |context nodes|, |selector|, and |maximum returned node count|.
+
+      <dt>|type| is the string "<code>context</code>"
+      <dd>
+
+         1. If |start nodes parameter| is not null,
+            return [=error=] with [=error code=] "<code>invalid argument</code>".
+
+         1. Let |selector| be |locator|["<code>value</code>"].
+
+         1. Let |context id| be |selector|["<code>context</code>"].
+
+         1. Let |child navigable| be the result of [=trying=] to [=get a navigable=] with |context id|.
+
+         1. If |child navigable|'s [=navigable/parent=] is not |navigable|,
+            return [=error=] with [=error code=] "<code>invalid argument</code>".
+
+         1. Let |result nodes| be [=locate the container element=] given |child navigable|.
+
+         1. Assert: For each |node| in |result nodes|, |node|'s [=/node navigable=] is |navigable|.
 
 1. Assert: |maximum returned node count| is null or [=list/size=] of |result nodes| is less
    than or equal to |maximum returned node count|.
