@@ -2840,6 +2840,7 @@ BrowsingContextEvent = (
   browsingContext.HistoryUpdated //
   browsingContext.Load //
   browsingContext.NavigationAborted //
+  browsingContext.NavigationCommitted //
   browsingContext.NavigationFailed //
   browsingContext.NavigationStarted //
   browsingContext.UserPromptClosed //
@@ -3041,9 +3042,13 @@ To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|,
 
   1. Return [=success=] with data |body|.
 
-1. If |wait condition| is "<code>interactive</code>", let |event name| be
-   "<code>domContentLoaded</code>", otherwise let |event name| be
-   "<code>load</code>".
+1. If |wait condition| is "<code>committed</code>", let |event name| be
+   "<code>committed</code>".
+
+1. Otherwise, if |wait condition| is "<code>interactive</code>", let |event name| be
+   "<code>domContentLoaded</code>".
+
+1. Otherwise, let |event name| be "<code>load</code>".
 
 1. Let (|event received|, |status|) be [=await=] given «|event name|,
     "<code>download started</code>", "<code>navigation aborted</code>",
@@ -3168,7 +3173,7 @@ To <dfn>get the navigation info</dfn>, given |navigable| and |navigation status|
 #### The browsingContext.ReadinessState Type #### {#type-browsingContext-ReadinessState}
 
 <pre class="cddl remote-cddl">
-browsingContext.ReadinessState = "none" / "interactive" / "complete"
+browsingContext.ReadinessState = "none" / "committed" / "interactive" / "complete"
 </pre>
 
 The <code>browsingContext.ReadinessState</code> type represents the stage of
@@ -5111,6 +5116,44 @@ aborted</dfn> steps given |navigable| and |navigation status|:
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.navigationAborted</code>" and |related navigables|:
+
+  1. [=Emit an event=] with |session| and |body|.
+
+</div>
+
+#### The browsingContext.navigationCommitted Event #### {#event-browsingContext-navigationCommitted}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        browsingContext.NavigationCommitted = (
+         method: "browsingContext.navigationCommitted",
+         params: browsingContext.NavigationInfo
+        )
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
+committed</dfn> steps given |navigable| and |navigation status|:
+
+1. Let |params| be the result of [=get the navigation info=] given |navigable|
+   and |navigation status|.
+
+1. Let |body| be a [=/map=] matching the
+    <code>browsingContext.NavigationCommitted</code> production, with the
+    <code>params</code> field set to |params|.
+
+1. Let |navigation id| be |navigation status|'s id.
+
+1. Let |related navigables| be a [=/set=] containing |navigable|.
+
+1. [=Resume=] with "<code>navigation committed</code>", |navigation id|, and |navigation status|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.navigationCommitted</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
