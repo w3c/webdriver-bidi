@@ -3032,16 +3032,6 @@ To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|,
 1. Assert: |navigate status|'s status is "<code>pending</code>" and
    |navigation id| is not null.
 
-1. If |wait condition| is "<code>none</code>":
-
-  1. Let |body| be a [=/map=] matching the
-     <code>browsingContext.NavigateResult</code> production, with the
-     <code>navigation</code> field set to |navigation id|, and the
-     <code>url</code> field set to the result of the [=URL serializer=] given
-     |navigate status|'s url.
-
-  1. Return [=success=] with data |body|.
-
 1. If |wait condition| is "<code>committed</code>", let |event name| be
    "<code>committed</code>".
 
@@ -3173,7 +3163,7 @@ To <dfn>get the navigation info</dfn>, given |navigable| and |navigation status|
 #### The browsingContext.ReadinessState Type #### {#type-browsingContext-ReadinessState}
 
 <pre class="cddl remote-cddl">
-browsingContext.ReadinessState = "none" / "committed" / "interactive" / "complete"
+browsingContext.ReadinessState = "none" / "interactive" / "complete"
 </pre>
 
 The <code>browsingContext.ReadinessState</code> type represents the stage of
@@ -4273,8 +4263,11 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Assert: |navigable| is not null.
 
-1. Let |wait condition| be the value of the <code>wait</code> field of |command
-   parameters| if present, or "<code>none</code>" otherwise.
+1. Let |wait condition| be "<code>committed</code>".
+
+1. If |command parameters| [=map/contains=] <code>wait</code>
+   and |command parameters|[<code>wait</code>] is not "<code>none</code>",
+   set |wait condition| to |command parameters|[<code>wait</code>].
 
 1. Let |url| be the value of the <code>url</code> field of |command
    parameters|.
@@ -4488,8 +4481,11 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |ignore cache| be the the value of the <code>ignoreCache</code> field of |command
    parameters| if present, or false otherwise.
 
-1. Let |wait condition| be the value of the <code>wait</code> field of |command
-   parameters| if present, or "<code>none</code>" otherwise.
+1. Let |wait condition| be "<code>committed</code>".
+
+1. If |command parameters| [=map/contains=] <code>wait</code>
+   and |command parameters|[<code>wait</code>] is not "<code>none</code>",
+   set |wait condition| to |command parameters|[<code>wait</code>].
 
 1. Let |document| be |navigable|'s [=active document=].
 
