@@ -2054,21 +2054,43 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
    1. Let |new subscriptions| to be a [=/list=].
 
+   1. Let |matched events| to be a [=/set=].
+
+   1. Let |matched contexts| to be a [=/set=].
+
    1. For each |subscription| of |session|'s [=subscriptions=]:
 
       1. If [=set/intersection=] of |subscription|'s [=subscription/event names=] and |event names| is an empty [=/set=]:
 
          1. [=list/append=] |subscription| to |new subscriptions|.
 
-         1. Continue.
+         1. [=Continue=].
 
       1. If |top-level traversable context ids| is an empty [=/set=]:
 
-        1. [=list/Remove=] all items [=list/contains|contained=] in |event names| from |subscription|'s [=subscription/event names=].
+         1. If |subscription| is not [=subscription/global=]:
 
-        1. If |subscription|'s [=subscription/event names=] is not empty:
+            1. [=list/append=] |subscription| to |new subscriptions|.
 
-          1. [=list/append=] |subscription| to |new subscriptions|.
+            1. [=Continue=].
+
+         1. Let |subscription event names| be [=set/clone=] of |subscription|'s [=subscription/event names=].
+
+         1. For each |event name| of |event names|:
+
+            1. If |subscription event names| [=set/contains=] |event name|:
+
+               1. [=list/Append=] |event name| to |matched events|.
+
+               1. [=list/Remove=] |event name| from |subscription event names|.
+
+         1. If |subscription event names| is not empty:
+
+            1. Let |cloned subscription| be a [=subscription=] with
+               [=subscription/subscription id=] set to |subscription|'s [=subscription/subscription id=],
+               [=subscription/event names=] set to a new [=/set=] containing |subscription event names|.
+
+            1. [=list/append=] |cloned subscription| to |new subscriptions|.
 
       1. Otherwise:
 
@@ -2089,10 +2111,17 @@ The [=remote end steps=] with |session| and |command parameters| are:
           1. For each |event name| in |event names|:
 
               1. If |event map|[|event name|] does not exist,
-                 continue.
+                 [=continue=].
 
-              1. Set |event map|[|event name|] to the [=set/difference=]
-                 between |event map|[|event name|] and |top-level traversable context ids|.
+              1. For each |top-level traversable id| of |top-level traversable context ids|:
+
+                 1. If |event map|[|event name|] [=set/contains=] |top-level traversable id|:
+
+                    1. [=list/Append=] |top-level traversable id| to |matched contexts|.
+
+                    1. [=list/Append=] |event name| to |matched events|.
+
+                    1. [=list/Remove=] |top-level traversable id| from |event map|[|event name|].
 
               1. If |event map|[|event name|] is an empty [=/set=],
 
@@ -2106,6 +2135,11 @@ The [=remote end steps=] with |session| and |command parameters| are:
                [=subscription/top-level traversable ids=] set to |remaining top-level traversable ids|.
 
             1. [=list/append=] |partial subscription| to |new subscriptions|.
+
+   1. If |matched events| is not [=set/equal=] to |event names|, return [=error=] with [=error code=] [=invalid argument=].
+
+   1. If |top-level traversable context ids| is not empty and |matched contexts| is not [=set/equal=] to
+      |top-level traversable context ids|, return [=error=] with [=error code=] [=invalid argument=].
 
    1. Set |session|'s [=subscriptions=] to |new subscriptions|.
 
