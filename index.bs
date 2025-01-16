@@ -208,10 +208,12 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: navigable; for:window; url: nav-history-apis.html#window-navigable
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
+    text: ongoing navigation; url: browsing-the-web.html#ongoing-navigation
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
     text: parent; for:navigable; url: document-sequences.html#nav-parent
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: prompt; url: timers-and-user-prompts.html#dom-prompt
+    text: reload; url: browsing-the-web.html#reload
     text: report an error; url: webappapis.html#report-the-error
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
@@ -3086,23 +3088,7 @@ To <dfn>get the navigable info</dfn> given |navigable|,
 </div>
 
 <div algorithm>
-To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|, and optionally
-|history handling| (default: "<code>default</code>") and |ignore cache| (default: false):
-
-1. Let |navigation id| be the string representation of a
-   [[!RFC9562|UUID]] based on truly random, or pseudo-random numbers.
-
-1. [=Navigate=] |navigable| with resource |request|, and using
-   |navigable|'s [=active document=] as the source
-   {{Document}}, with [=navigation id=] |navigation id|, and [=history
-   handling behavior=] |history handling|. If |ignore cache| is true,
-   the navigation must not load resources from the HTTP cache.
-
-   Issue: property specify how the |ignore cache| flag works. This needs to
-   consider whether only the first load of a resource bypasses the cache
-   (i.e. whether this is like initially clearing the cache and proceeding like
-   normal), or whether resources not directly loaded by the HTML parser
-   (e.g. loads initiated by scripts or stylesheets) also bypass the cache.
+To <dfn>await a navigation</dfn> given |navigation id| and |wait condition|:
 
 1.  Let (|event received|, |navigate status|) be [=await=] given
     «"<code>navigation started</code>", "<code>navigation failed</code>",
@@ -4384,10 +4370,13 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. If |url record| is failure, return [=error=] with [=error code=] [=invalid
    argument=].
 
-1. Let |request| be a new [=/request=] whose URL is |url record|.
+1. [=Navigate=] |navigable| to [=/URL=] |url record| using
+   |navigable|'s [=active document=] as the source
+   {{Document}} with userInvolvement "<code>browser UI</code>".
 
-1. Return the result of [=await a navigation=] with |navigable|, |request| and
-   |wait condition|.
+1. Let |navigation id| be |navigable|'s [=ongoing navigation=].
+
+1. Return the result of [=await a navigation=] with |navigation id| and |wait condition|.
 
 </div>
 
@@ -4586,15 +4575,19 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |wait condition| be the value of the <code>wait</code> field of |command
    parameters| if present, or "<code>none</code>" otherwise.
 
-1. Let |document| be |navigable|'s [=active document=].
+1. [=Reload=] |navigable| with userInvolvement "<code>browser UI</code>".
+   If |ignore cache| is true, the navigation must not load resources from the HTTP cache.
 
-1. Let |url| be |document|'s <a spec=DOM>URL</a>.
+   Issue: property specify how the |ignore cache| flag works. This needs to
+   consider whether only the first load of a resource bypasses the cache
+   (i.e. whether this is like initially clearing the cache and proceeding like
+   normal), or whether resources not directly loaded by the HTML parser
+   (e.g. loads initiated by scripts or stylesheets) also bypass the cache.
 
-1. Let |request| be a new [=/request=] whose URL is |url|.
+1. Let |navigation id| be |navigable|'s [=ongoing navigation=].
 
-1. Return the result of [=await a navigation=] with |navigable|, |request|, |wait
-   condition|, history handling "<code>reload</code>", and ignore
-   cache |ignore cache|.
+1. Return the result of [=await a navigation=] with |navigation id| and
+   |wait condition|.
 
 </div>
 
