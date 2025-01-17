@@ -5907,7 +5907,21 @@ empty map.  It's used to track the network events for which a
 <code>network.beforeRequestSent</code> event has already been sent.
 
 A [=remote end=] has a <dfn>response map</dfn> that maps a [=request id=]
-to [=/response=]. Implementations may remove data from [=response map=] map at any time.
+to [=/response=]. Responses must be removed on the following conditions:
+
+- when a browsing context group switch or destruction happens, responses
+  associated with the previous browsing context group are removed.
+
+- when a navigation commits a new document, resources associated with the
+  previous document are removed.
+
+- when a worker scope is removed the responses provided by the worker are
+  removed.
+
+- when a user-configured (command to be defined) per navigable size limit is
+  exceeded, the oldest response body is evicted until there is space for
+  the new body. Evicted resources should result in a distinct error
+  code.
 
 A [=remote end=] has a <dfn>default cache behavior</dfn> which is a string. It is
 initially "<code>default</code>".
