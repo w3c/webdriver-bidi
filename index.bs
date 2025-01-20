@@ -7797,10 +7797,12 @@ before any author-defined script have run.
 TODO: Extend this to scripts in other kinds of realms.
 
 A [=BiDi session=] has a <dfn>preload script map</dfn> which is a [=/map=] in
-which the keys are [[!RFC9562|UUID]]s, and the values are [=structs=] with an <a
-for=struct>item</a> named <code>function declaration</code>, which is a string,
-<code>arguments</code>, <code>contexts</code>, which is a list or null, and an item named <code>sandbox</code> which is a string
-or null.
+which the keys are [[!RFC9562|UUID]]s, and the values are [=structs=] with
+an [=struct/item=] named <code>function declaration</code>, which is a string,
+an [=struct/item=] named <code>arguments</code>, which is a list,
+an [=struct/item=] named <code>contexts</code>, which is a list or null,
+an [=struct/item=] named <code>sandbox</code>, which is a string or null,
+and an [=struct/item=] named <code>user contexts</code>, which is a [=/set=].
 
 Note: If executing a [=preload script=] fails, either due to a syntax error, or
 a runtime exception, an [[ECMAScript]] exception is reported in the realm in
@@ -7814,16 +7816,26 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 
 1. Let |navigable| be |document|'s [=/navigable=].
 
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. Let |user context id| be |user context|'s [=user context id=].
+
 1. For each |session| in [=active BiDi sessions=]:
 
   1. For each |preload script| in |session|'s [=preload script map=]'s
      [=values=]:
 
+    1. If |preload script|'s <code>user contexts</code>'s [=set/size=] is not zero:
+
+       1. If |preload script|'s <code>user contexts</code> does not [=list/contain=] |user context id|,
+          [=continue=].
+
     1. If |preload script|'s <code>contexts</code> is not null:
 
        1. Let |navigable id| be |navigable|’s [=navigable/top-level traversable=]'s id.
 
-       1. If |preload script|'s <code>contexts</code> does not [=list/contains|contain=] |navigable id|, continue.
+       1. If |preload script|'s <code>contexts</code> does not [=list/contain=] |navigable id|,
+          [=continue=].
 
     1. If |preload script|'s <code>sandbox</code> is not null, let |realm| be [=get
        or create a sandbox realm=] with |preload script|'s <code>sandbox</code> and
@@ -9754,6 +9766,7 @@ script=].
         functionDeclaration: text,
         ? arguments: [*script.ChannelValue],
         ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
         ? sandbox: text
       }
       </pre>
@@ -9771,11 +9784,17 @@ script=].
 <div algorithm="remote end steps for script.addPreloadScript">
 The [=remote end steps=] given |session| and |command parameters| are:
 
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
 1. Let |function declaration| be the <code>functionDeclaration</code> field of |command
    parameters|.
 
 1. Let |arguments| be the <code>arguments</code> field of |command
    parameters| if present, or an empty [=/list=] otherwise.
+
+1. Let |user contexts| to be a [=/set=].
 
 1. Let |navigables| be null.
 
@@ -9791,6 +9810,16 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
       1. Append |navigable| to |navigables|.
 
+1. Otherwise, if |command parameters| [=map/contains=] <code>userContexts</code>:
+
+  1. Set |user contexts| to [=set/create|create a set=] with |command parameters|["<code>userContexts</code>"].
+
+  1. For each |user context id| of |user contexts|:
+
+    1. Set |user context| to [=get user context=] with |user context id|.
+
+    1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
+
 1. Let |sandbox| be the value of the "<code>sandbox</code>" field in |command
    parameters|, if present, or null otherwise.
 
@@ -9798,10 +9827,12 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |preload script map| be |session|'s [=preload script map=].
 
-1. Set |preload script map|[|script|] to a struct with <code>function
-   declaration</code> |function declaration|, <code>arguments</code>
-   |arguments|, <code>contexts</code>
-   |navigables|, and <code>sandbox</code> |sandbox|.
+1. Set |preload script map|[|script|] to a struct with
+   <code>function  declaration</code> |function declaration|,
+   <code>arguments</code> |arguments|,
+   <code>contexts</code> |navigables|,
+   <code>sandbox</code> |sandbox|, and
+   <code>user contexts</code> |user contexts|.
 
 1. Return a new [=/map=] matching the <code>script.AddPreloadScriptResult</code> with the
    <code>script</code> field set to |script|.
