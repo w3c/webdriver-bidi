@@ -2966,6 +2966,13 @@ between [=navigables=] and device pixel ratio overrides. It is initially empty.
 Note: this map is not cleared when the final session ends i.e. device pixel
 ratio overrides outlive any WebDriver session.
 
+A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map
+between [=user contexts=] and [=structs=], with an [=struct/item=] named <code>viewport</code>
+and an [=struct/item=] named <code>devicePixelRatio</code>, which is a float or null.
+An [=struct/item=] <code>viewport</code> is a [=struct=] or null, with an [=struct/item=]
+named <code>height</code>, which is an integer, and an [=struct/item=] named <code>width</code>,
+which is an integer.
+
 ### Types ### {#module-browsingcontext-types}
 
 #### The browsingContext.BrowsingContext Type #### {#type-browsingContext-Browsingcontext}
@@ -4629,9 +4636,10 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies 
       )
 
       browsingContext.SetViewportParameters = {
-        context: browsingContext.BrowsingContext,
+        ? context: browsingContext.BrowsingContext,
         ? viewport: browsingContext.Viewport / null,
         ? devicePixelRatio: (float .gt 0.0) / null,
+        ? userContexts: [+browser.UserContext],
       }
 
       browsingContext.Viewport = {
@@ -4648,34 +4656,141 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies 
    </dd>
 </dl>
 
+<div algorithm>
+To <dfn>set device pixel ratio override</dfn> given |navigable| and |device pixel ratio|:
+
+1. Let |navigable| be the [=/navigable=] whose [=navigable/active document=] is
+   |navigable|'s [=navigable/active document=].
+
+1. If |device pixel ratio| is not null:
+
+   1. When the [=select an image source from a source set=] are run, act as if
+      the implementation's pixel density was set to |device pixel ratio| when selecting an image.
+
+   1. For the purposes of the [=resolution media feature=], act as if
+      the implementation's resolution is |device pixel ratio| dppx scaled by the page zoom.
+
+   1. [=map/Set=] [=device pixel ratio overrides=][|navigable|] to |device pixel ratio|.
+
+      Note: This will take an effect because of the patch of [[#patchs-determine-the-device-pixel-ratio]].
+
+1. Otherwise:
+
+   1. When the [=select an image source from a source set=] steps are run, use the implementation's default behavior,
+      without any changes made by previous invocations of these steps.
+
+   1. For the purposes of the [=resolution media feature=], use the implementation's default behavior,
+      without any changes made by previous invocations of these steps.
+
+   1. [=map/Remove=] |navigable| from [=device pixel ratio overrides=].
+
+1. Run [=evaluate media queries and report changes=] for [=/document=] currently loaded
+   in a specified |navigable|.
+
+</div>
+
+
+<div algorithm>
+To <dfn>set viewport</dfn> given |navigable| and |viewport|:
+
+1. If |viewport| is not null, set the width of |navigable|'s [=layout
+   viewport=] to be the <code>width</code> of |viewport| in CSS pixels and
+   set the height of the |navigable|'s [=layout viewport=] to be the
+   <code>height</code> of |viewport| in CSS pixels.
+
+1. Otherwise, set the |navigable|'s [=layout viewport=] to the
+   implementation-defined default.
+
+</div>
+
+<div algorithm="set viewport when a top-level traversable is created">
+
+When the [=set up a window environment settings object=]
+algorithm is invoked, immediately prior to returning the settings
+object:
+
+1. Let |environment settings| be the newly created [=environment settings
+   object=].
+
+1. Let |related navigables| be the result of [=get related navigables=] given |environment settings|.
+
+1. For each |navigable| of |related navigables|:
+
+   1. If |navigable| is not a [=/top-level traversable=], continue.
+
+   1. Let |user context| be |navigable|'s [=associated user context=].
+
+   1. If [=viewport overrides map=] [=map/contains=] |user context|:
+
+      1. If |viewport overrides map|[|user context|] [=map/contains=] the <code>viewport</code> field:
+
+         1. [=Set viewport=] with |navigable| and |viewport overrides map|[|user context|]["<code>viewport</code>"].
+
+      1. If |viewport overrides map|[|user context|] [=map/contains=] the <code>devicePixelRatio</code> field:
+
+         1. For the |navigable| and all [=descendant navigables=]:
+
+            1. [=Set device pixel ratio override=] with |navigable| and |viewport overrides map|[|user context|]["<code>devicePixelRatio</code>""].
+
 <div algorithm="remote end steps for browsingContext.setViewport">
 
 The [=remote end steps=] with |command parameters| are:
 
-1. Let |navigable id| be the value of the <code>context</code> field of |command
-   parameters|.
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
 
-1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with
-   |navigable id|.
+1. Let |navigables| be a [=/set=].
 
-1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
-   [=error code=] [=invalid argument=].
+1. If the <code>context</code> field of |command parameters| is present:
 
-1. If the implementation is unable to adjust the |navigable|'s [=layout viewport=]
-   parameters with the given |command parameters| for any reason, return
-   [=error=] with [=error code=] [=unsupported operation=].
+   1. Let |navigable id| be the value of the <code>context</code> field of |command
+      parameters|.
+
+   1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with
+      |navigable id|.
+
+   1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
+      [=error code=] [=invalid argument=].
+
+   1. If the implementation is unable to adjust the |navigable|'s [=layout viewport=]
+      parameters with the given |command parameters| for any reason, return
+      [=error=] with [=error code=] [=unsupported operation=].
+
+   1. [=set/Append=] |navigable| to |navigables|.
+
+1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
+
+   1. For each |user context id| of |command parameters|["<code>userContexts</code>"]:
+
+      1. Set |user context| to [=get user context=] with |user context id|.
+
+      1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
+
+      1. [=map/Set=] [=viewport overrides map=][|user context|] to a new [=/map=].
+
+      1. If |command parameters| [=map/contains=] the <code>viewport</code> field:
+
+         1. Set |viewport overrides map|[|user context|]["<code>viewport</code>"]
+            to |command parameters|["<code>viewport</code>"].
+
+      1. If |command parameters| [=map/contains=] the <code>devicePixelRatio</code> field:
+
+         1. Set |viewport overrides map|[|user context|]["<code>devicePixelRatio</code>"]
+            to |command parameters|["<code>devicePixelRatio</code>"].
+
+      1. [=list/For each=] |top-level traversable| in the list of all [=/top-level traversables=]
+         whose [=associated user context=] is |user context|:
+
+         1. [=list/Append=] |top-level traversable| to |navigables|.
 
 1. If |command parameters| [=map/contains=] the <code>viewport</code> field:
 
    1. Let |viewport| be the |command parameters|["<code>viewport</code>"].
 
-   1. If |viewport| is not null, set the width of |navigable|'s [=layout
-      viewport=] to be the <code>width</code> of |viewport| in CSS pixels and
-      set the height of the |navigable|'s [=layout viewport=] to be the
-      <code>height</code> of |viewport| in CSS pixels.
+   1. For each |navigable| of |navigables|:
 
-   1. Otherwise, set the |navigable|'s [=layout viewport=] to the
-      implementation-defined default.
+      1. [=Set viewport=] with |navigable| and |viewport|.
 
 1. Run the [[cssom-view-1#resizing-viewports]] steps.
 
@@ -4684,35 +4799,11 @@ The [=remote end steps=] with |command parameters| are:
    1. Let |device pixel ratio| be the |command
       parameters|["<code>devicePixelRatio</code>"].
 
-   1. For the |navigable| and all [=descendant navigables=]:
+   1. For each |navigable| of |navigables|:
 
-      1. Let |navigable| be the [=/navigable=] whose [=navigable/active document=] is
-         |navigable|'s [=navigable/active document=].
+      1. For the |navigable| and all [=descendant navigables=]:
 
-      1. If |device pixel ratio| is not null:
-
-         1. When the [=select an image source from a source set=] are run, act as if
-            the implementation's pixel density was set to |device pixel ratio| when selecting an image.
-
-         1. For the purposes of the [=resolution media feature=], act as if
-            the implementation's resolution is |device pixel ratio| dppx scaled by the page zoom.
-
-         1. [=map/Set=] [=device pixel ratio overrides=][|navigable|] to |device pixel ratio|.
-
-            Note: This will take an effect because of the patch of [[#patchs-determine-the-device-pixel-ratio]].
-
-      1. Otherwise:
-
-         1. When the [=select an image source from a source set=] steps are run, use the implementation's default behavior,
-            without any changes made by previous invocations of these steps.
-
-         1. For the purposes of the [=resolution media feature=], use the implementation's default behavior,
-            without any changes made by previous invocations of these steps.
-
-         1. [=map/Remove=] |navigable| from [=device pixel ratio overrides=].
-
-      1. Run [=evaluate media queries and report changes=] for [=/document=] currently loaded
-         in a specified |navigable|.
+         1. [=Set device pixel ratio override=] with |navigable| and |device pixel ratio|.
 
 1. Return [=success=] with data null.
 
