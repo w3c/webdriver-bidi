@@ -11705,6 +11705,70 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
+### Events ### {#module-input-events}
+
+#### The input.fileDialogOpened Event #### {#event-input-fileDialogOpened}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl remote-cddl">
+         input.FileDialogOpened = (
+            method: "input.fileDialogOpened",
+            params: input.FileDialogInfo
+         )
+
+         input.FileDialogInfo = {
+            context: browsingContext.BrowsingContext,
+            element: script.SharedReference,
+            multiple: bool,
+         }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi picker shown</dfn>
+steps given |session|, |element| and |picker type|.
+
+1. If |picker type| is null, return false.
+
+1. Assert |picker type| is "<code>file upload</code>".
+
+1. Assert |element| implements {{HTMLInputElement}}.
+
+1. Let |navigable| be the |element|'s [=node document=]'s [=/navigable=].
+
+1. Let |navigable id| be |navigable|'s [=navigable id=].
+
+1. Let |multiple| be <code>true</code> if |element|'s <{input/multiple}> attribute is
+   set, or <code>false</code> otherwise.
+
+1. Let |related navigables| be a [=/set=] containing |navigable|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=] given
+   "<code>input.fileDialogOpened</code>" and |related navigables|:
+
+  1. Let |shared id| be [=get shared id for a node=] with |element| and |session|.
+
+  1. Let |params| be a [=/map=] matching the <code>input.FileDialogInfo</code>
+     production with the <code>context</code> field set to |navigable id|, the
+     <code>element</code> field set to |shared id| and <code>multiple</code> field
+     set to |multiple|.
+
+  1. Let |body| be a [=/map=] matching the <code>input.fileDialogOpened</code>
+     production, with the <code>params</code> field set to |params|.
+
+  1. [=Emit an event=] with |session| and |body|.
+
+1. Let |intercepted| be <code>false</code>.
+
+Issue: Set |intercepted| based on capabilities.
+
+1. Return |intercepted|.
+
+</div>
+
 
 ## The webExtension Module ## {#module-webExtension}
 
