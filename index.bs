@@ -2966,12 +2966,15 @@ between [=navigables=] and device pixel ratio overrides. It is initially empty.
 Note: this map is not cleared when the final session ends i.e. device pixel
 ratio overrides outlive any WebDriver session.
 
-A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map
-between [=user contexts=] and [=structs=], with an [=struct/item=] named <code>viewport</code>
-and an [=struct/item=] named <code>devicePixelRatio</code>, which is a float or null.
-An [=struct/item=] <code>viewport</code> is a [=struct=] or null, with an [=struct/item=]
-named <code>height</code>, which is an integer, and an [=struct/item=] named <code>width</code>,
-which is an integer.
+A <dfn for="viewport-configuration">viewport dimensions</dfn> is a [=struct=] with an [=struct/item=] named
+<dfn attribute for="viewport-dimensions">height</dfn> which is an integer and
+a [=struct/item=] named <dfn attribute for="viewport-dimensions">width</dfn> which is an integer.
+
+A <dfn>viewport configuration</dfn> is a [=struct=] with an [=struct/item=] named
+<dfn attribute for="viewport-configuration">viewport</dfn> which is a [=viewport-configuration/viewport dimensions=]
+or null and an [=struct/item=] named <dfn attribute for="viewport-configuration">devicePixelRatio</dfn> which is a float or null.
+
+A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map between [=user contexts=] and [=viewport configuration=].
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -4705,36 +4708,32 @@ To <dfn>set viewport</dfn> given |navigable| and |viewport|:
 
 <div algorithm="set viewport when a top-level traversable is created">
 
-When the [=set up a window environment settings object=]
-algorithm is invoked, immediately prior to returning the settings
-object:
+After creating a document in a new [=navigable/top-level traversable=] |navigable| and
+before the [=run WebDriver BiDi preload scripts=] algorithm is invoked:
 
-1. Let |environment settings| be the newly created [=environment settings
-   object=].
+1. Let |user context| be |navigable|'s [=associated user context=].
 
-1. Let |related navigables| be the result of [=get related navigables=] given |environment settings|.
+1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
-1. For each |navigable| of |related navigables|:
+   1. If |viewport overrides map|[|user context|] [=map/contains=] the <code>viewport</code> field:
 
-   1. If |navigable| is not a [=/top-level traversable=], continue.
+      1. [=Set viewport=] with |navigable| and |viewport overrides map|[|user context|]["<code>viewport</code>"].
 
-   1. Let |user context| be |navigable|'s [=associated user context=].
+   1. If |viewport overrides map|[|user context|] [=map/contains=] the <code>devicePixelRatio</code> field:
 
-   1. If [=viewport overrides map=] [=map/contains=] |user context|:
+      1. For the |navigable| and all [=descendant navigables=]:
 
-      1. If |viewport overrides map|[|user context|] [=map/contains=] the <code>viewport</code> field:
+         1. [=Set device pixel ratio override=] with |navigable| and |viewport overrides map|[|user context|]["<code>devicePixelRatio</code>""].
 
-         1. [=Set viewport=] with |navigable| and |viewport overrides map|[|user context|]["<code>viewport</code>"].
-
-      1. If |viewport overrides map|[|user context|] [=map/contains=] the <code>devicePixelRatio</code> field:
-
-         1. For the |navigable| and all [=descendant navigables=]:
-
-            1. [=Set device pixel ratio override=] with |navigable| and |viewport overrides map|[|user context|]["<code>devicePixelRatio</code>""].
+</div>
 
 <div algorithm="remote end steps for browsingContext.setViewport">
 
 The [=remote end steps=] with |command parameters| are:
+
+1. If the implementation is unable to adjust the [=layout viewport=]
+   parameters with the given |command parameters| for any reason, return
+   [=error=] with [=error code=] [=unsupported operation=].
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
    and |command parameters| [=map/contains=] "<code>context</code>",
@@ -4753,19 +4752,21 @@ The [=remote end steps=] with |command parameters| are:
    1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
       [=error code=] [=invalid argument=].
 
-   1. If the implementation is unable to adjust the |navigable|'s [=layout viewport=]
-      parameters with the given |command parameters| for any reason, return
-      [=error=] with [=error code=] [=unsupported operation=].
-
    1. [=set/Append=] |navigable| to |navigables|.
 
 1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be a [=/set=].
 
    1. For each |user context id| of |command parameters|["<code>userContexts</code>"]:
 
       1. Set |user context| to [=get user context=] with |user context id|.
 
       1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
+
+      1. [=set/Append=] |user context| to |user contexts|.
+
+   1. For each |user context| of |user contexts|:
 
       1. [=map/Set=] [=viewport overrides map=][|user context|] to a new [=/map=].
 
