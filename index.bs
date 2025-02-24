@@ -112,6 +112,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: unable to capture screen; url: dfn-unable-to-capture-screen
     text: unknown command; url: dfn-unknown-command
     text: unknown error; url: dfn-unknown-error
+    text: user prompt handler; url: dfn-user-prompt-handler
     text: unsupported operation; url: dfn-unsupported-operation
     text: web element reference; url: dfn-web-element-reference
     text: webdriver-active flag; url: dfn-webdriver-active-flag
@@ -1293,6 +1294,16 @@ with parameters |session|, |capabilities|, and |flags| is:
 
 1. Set |session|'s [=BiDi flag=] to true.
 
+1. Let |suppress file dialog flag| be false.
+
+1. If |capabilities| contains a property named "<code>suppressFileDialog</code>":
+
+   1. Assert |capabilities|["<code>suppressFileDialog</code>"] is a boolean.
+
+   1. Set |suppress file dialog flag| to |capabilities|["<code>suppressFileDialog</code>"].
+
+1. Set |session|'s [=suppress file dialog flag=] to |suppress file dialog flag|.
+
 1. Append "<code>bidi</code>" to flags.
 
 </div>
@@ -1610,6 +1621,7 @@ session.CapabilityRequest = {
   ? browserVersion: text,
   ? platformName: text,
   ? proxy: session.ProxyConfiguration,
+  ? suppressFileDialog: bool,
   ? unhandledPromptBehavior: session.UserPromptHandler,
   Extensible
 };
@@ -1629,6 +1641,13 @@ Value type: boolean
 Description: Defines the current session's support for bidirectional connection.
 </pre>
 
+<pre class=simpledef>
+Capability: <dfn>suppress file dialog</dfn>
+Key: "<code>suppressFileDialog</code>"
+Value type: boolean
+Description: Defines whether the remote end should suppress file dialogs.
+</pre>
+
 <div algorithm="webSocketUrl capability deserialization algorithm">
 The [=additional capability deserialization algorithm=] for the
 "<code>webSocketUrl</code>" capability, with parameter |value| is:
@@ -1643,6 +1662,27 @@ The [=additional capability deserialization algorithm=] for the
 <div algorithm="webSocketUrl capability serialization algorithm">
 The [=matched capability serialization algorithm=] for the "<code>webSocketUrl</code>" capability,
 with parameter |value| is:
+
+1. If |value| is false, return [=success=] with data null.
+
+1. Return [=success=] with data true.
+
+</div>
+
+<div algorithm="suppressFileDialog capability deserialization algorithm">
+The [=additional capability deserialization algorithm=] for the
+"<code>suppressFileDialog</code>" capability, with parameter |value| is:
+
+1. If |value| is not a boolean, return [=error=] with [=error code|code=]
+   [=invalid argument=].
+
+1. Return [=success=] with data |value|.
+
+</div>
+
+<div algorithm="suppressFileDialog capability serialization algorithm">
+The [=matched capability serialization algorithm=] for the
+"<code>suppressFileDialog</code>" capability, with parameter |value| is:
 
 1. If |value| is false, return [=success=] with data null.
 
@@ -1711,7 +1751,7 @@ session.UserPromptHandler = {
   ? beforeUnload: session.UserPromptHandlerType,
   ? confirm: session.UserPromptHandlerType,
   ? default: session.UserPromptHandlerType,
-  ? fileUpload: session.UserPromptHandlerType,
+  ? fileDialog: session.UserPromptHandlerType,
   ? prompt: session.UserPromptHandlerType,
 };
 </pre>
@@ -1865,6 +1905,7 @@ This is a [=static command=].
           browserVersion: text,
           platformName: text,
           setWindowRect: bool,
+          suppressFileDialog: bool,
           userAgent: text,
           ? proxy: session.ProxyConfiguration,
           ? unhandledPromptBehavior: session.UserPromptHandler,
@@ -11711,6 +11752,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 ### Events ### {#module-input-events}
 
+A [=BiDi session=] has an <dfn>suppress file dialog flag</dfn> which is a boolean. It
+indicates whether the file dialogs should be suppressed.
+
 #### The input.fileDialogOpened Event #### {#event-input-fileDialogOpened}
 
 <dl>
@@ -11750,6 +11794,8 @@ steps given |session|, |element| and |picker type|.
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
+1. Let |suppressed| be false.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=] given
    "<code>input.fileDialogOpened</code>" and |related navigables|:
 
@@ -11765,11 +11811,32 @@ steps given |session|, |element| and |picker type|.
 
   1. [=Emit an event=] with |session| and |body|.
 
-1. Let |intercepted| be <code>false</code>.
+  1. If |session|'s [=suppress file dialog flag=] is true, set |suppressed| to true.
 
-Issue: Set |intercepted| based on capabilities in WebDriver Classic.
+1. Let |user prompt handler| be [=user prompt handler=].
 
-1. Return |intercepted|.
+1. Let |dismissed| be false.
+
+1. If |user prompt handler| is not null:
+
+   1. Assert |user prompt handler| is a [=map=].
+
+   1. If |user prompt handler| [=map/contains=] "<code>fileDialog</code>":
+
+      1. if |user prompt handler|["<code>fileDialog</code>"] is not equal to
+         "<code>ignore</code>", set |dismissed| to true.
+
+   1. Otherwise if |user prompt handler| [=map/contains=] "<code>default</code>" and
+      |user prompt handler|["<code>fileDialog</code>"] is not equal to
+      "<code>ignore</code>", set |dismissed| to true.
+
+1. If |dismissed| is true:
+
+  1. Dismiss the file dialog and return true.
+
+Issue: Specify what dismiss means.
+
+1. Return |intercepted| or |suppressed|.
 
 </div>
 
