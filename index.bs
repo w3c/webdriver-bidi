@@ -11725,7 +11725,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
          input.FileDialogInfo = {
             context: browsingContext.BrowsingContext,
-            element: script.SharedReference,
+            ? element: script.SharedReference,
             multiple: bool,
          }
       </pre>
@@ -11734,28 +11734,34 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 <div algorithm>
 The [=remote end event trigger=] is the
-<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given |element|:
-
-1. Assert |element| implements {{HTMLInputElement}}.
+<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given |element| and |options|:
 
 1. Let |navigable| be the |element|'s [=node document=]'s [=/navigable=].
 
 1. Let |navigable id| be |navigable|'s [=navigable id=].
 
-1. Let |multiple| be <code>true</code> if |element|'s <{input/multiple}> attribute is
-   set, or <code>false</code> otherwise.
+1. Let |multiple| be <code>false</code>.
+
+1. If |element| is not null and |element|'s <{input/multiple}> attribute is set,
+    set |multiple| to <code>true</code>.
+
+1. If |options| is not null and |options|["<code>multiple</code>"] is true,
+   set |multiple| to <code>true</code>.
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=] given
    "<code>input.fileDialogOpened</code>" and |related navigables|:
 
-  1. Let |shared id| be [=get shared id for a node=] with |element| and |session|.
-
   1. Let |params| be a [=/map=] matching the <code>input.FileDialogInfo</code>
-     production with the <code>context</code> field set to |navigable id|, the
-     <code>element</code> field set to |shared id| and <code>multiple</code> field
-     set to |multiple|.
+     production with the <code>context</code> field set to |navigable id| and
+     <code>multiple</code> field set to |multiple|.
+
+  1. If |element| is not null:
+
+    1. Let |shared id| be [=get shared id for a node=] with |element| and |session|.
+
+    1. Set |params|["<code>element</code>"] to |shared id|.
 
   1. Let |body| be a [=/map=] matching the <code>input.fileDialogOpened</code>
      production, with the <code>params</code> field set to |params|.
