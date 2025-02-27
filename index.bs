@@ -93,6 +93,8 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such alert; url: dfn-no-such-alert
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
+    text: no such response; url: dfn-no-such-response
+    text: no response body; url: dfn-no-response-body
     text: parse a page range; url: dfn-parse-a-page-range
     text: handler; for: prompt handler configuration; url: dfn-handler
     text: process capabilities; url: dfn-capabilities-processing
@@ -659,6 +661,7 @@ ErrorCode = "invalid argument" /
             "invalid session id" /
             "invalid web extension" /
             "move target out of bounds" /
+            "no response body" /
             "no such alert" /
             "no such element" /
             "no such frame" /
@@ -667,6 +670,7 @@ ErrorCode = "invalid argument" /
             "no such intercept" /
             "no such node" /
             "no such request" /
+            "no such response" /
             "no such script" /
             "no such storage partition" /
             "no such user context" /
@@ -4936,6 +4940,9 @@ the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given |navigable|
 1. Let |related navigables| be a [=/set=] containing |navigable|'s [=navigable/parent=],
    if that is not null, or an empty [=/set=] otherwise.
 
+1. For each |session| in [=active BiDi sessions=], [=delete collected response bodies=]
+   with |session|, |navigable| and null.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.contextDestroyed</code>" and |related navigables|:
 
@@ -5264,6 +5271,9 @@ given |navigable| and |navigation status|:
 
 1. [=Resume=] with "<code>navigation committed</code>", |navigation id|, and |navigation status|.
 
+1. For each |session| in [=active BiDi sessions=], [=delete collected response bodies=]
+   with |session|, |navigable| and |navigation id|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.navigationCommitted</code>" and |related navigables|:
 
@@ -5438,8 +5448,10 @@ NetworkCommand = (
   network.ContinueResponse //
   network.ContinueWithAuth //
   network.FailRequest //
+  network.GetResponseBody //
   network.ProvideResponse //
   network.RemoveIntercept //
+  network.SetBodyCollectorConfiguration //
   network.SetCacheBehavior
 )
 
@@ -5463,10 +5475,6 @@ NetworkEvent = (
 
 </pre>
 
-A [=remote end=] has a <dfn>before request sent map</dfn> which is initially an
-empty map.  It's used to track the network events for which a
-<code>network.beforeRequestSent</code> event has already been sent.
-
 A [=remote end=] has a <dfn>default cache behavior</dfn> which is a string. It is
 initially "<code>default</code>".
 
@@ -5481,7 +5489,7 @@ and modify network requests and responses.
 
 A [=BiDi session=] has an <dfn>intercept map</dfn> which is a [=/map=] between
 intercept id and a [=struct=] with fields <code>url patterns</code>,
-<code>phases</code>, and <code>browsingContexts</code> that define the properties
+<code>phases</code>, and <code>contexts</code> that define the properties
 of active network intercepts. It is initially empty.
 
 A [=BiDi session=] has a <dfn>blocked request map</dfn>, used to track the
@@ -5637,6 +5645,152 @@ To <dfn>update the response</dfn> given |session|, |command| and |command parame
 1. Return |response|
 
 </div>
+
+### Network Responses ### {#network-responses}
+
+A <dfn>network body collector configuration</dfn> is a struct which defines how
+a navigable should collect the content of network request and response bodies.
+
+A [=BiDi session=] has <dfn>navigable network collector configurations</dfn> which is a weak map between [=navigables=] and [=network body collector configuration=]. It is initially empty.
+
+A [=BiDi session=] has <dfn>user context network collector configurations</dfn>
+which is a weak map between [=user contexts=] and [=network body collector configuration=].
+It is initially empty.
+
+A [=BiDi session=] has a <dfn>global network collector configuration</dfn> which is a [=network body collector configuration=]. It is initially null.
+
+A [=BiDi session=] has <dfn>collected responses</dfn> which is a list of
+[=struct=] with fields <code>navigable id</code>, <code>navigation</code>,
+<code>request id</code> and <code>response</code> that contains the collected
+network responses for the current session. It is initially empty.
+
+<div algorithm>
+To <dfn>get network body collector configuration</dfn> given |session| and
+|navigable|:
+
+1. Let |top-level navigable| be [=/top-level traversable=] for |navigable|.
+
+1. If |session|'s [=navigable network collector configurations=]
+   [=map/contains=] |top-level navigable|:
+
+   1. Return |session|'s [=navigable network collector configurations=][|top-level navigable|].
+
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If |session|'s [=user context network collector configurations=]
+   [=map/contains=] |user context|:
+
+   1. Return |session|'s [=user context network collector configurations=][|user context|].
+
+1. Return |session|'s [=global network collector configuration=].
+
+</div>
+
+<div algorithm>
+To <dfn>get available collector size</dfn> given |session|, |navigable| and |max total body size|:
+
+1. Let |available size| be |max total body size|.
+
+1. Let |collected responses| be |session|'s [=collected responses=].
+
+1. For each |collected response| of |collected responses|:
+
+  1. If the <code>response</code> field of |collected response| is null,
+     continue.
+
+  1. If the <code>navigable</code> field of |collected response| is not
+     |navigable|, continue.
+
+  1. Let |response| be the <code>response</code> field of |collected response|.
+
+  1. Remove |response|'s [=response body info=]'s [=decoded size=] from |available size|.
+
+1. Return |available size|.
+
+</div>
+
+<div algorithm>
+To <dfn>maybe collect the response body</dfn> given |session|, |request| and |response|:
+
+1. Let |navigable| be null.
+
+1. If |request|'s [=request/window=] is an [=environment settings object=]:
+
+  1. Let |environment settings| be |request|'s [=request/window=]
+
+  1. If there is a [=/navigable=] whose [=active window=] is |environment
+     settings|' [=environment settings object/global object=], set |navigable|
+     to be that navigable.
+
+1. If |navigable| is null, return.
+
+1. Let |collected responses| be |session|'s [=collected responses=].
+
+1. Let |network body collector configuration| be the result of [=get network body collector configuration=] with |session| and |navigable|.
+
+1. If |network body collector configuration| is not null:
+
+  1. Let |max total body size| be |network body collector configuration|'s
+     <code>max total body size</code>.
+
+  1. Let |max resource body size| be |network body collector configuration|'s
+     <code>max resource body size</code>.
+
+  1. Let |response size| be |response|'s [=response body info=]'s
+     [=decoded size=].
+
+  1. Let |response to collect| be null.
+
+  1. Let |request id| be request's [=request id=].
+
+  1. If |response size| is less than or equal to |max resource body size|:
+
+    1. Set |response to collect| to |response|.
+
+    1. If |response size| is greater than [=get available collector size=] with
+       |session|, |navigable| and |max total body size|:
+
+      1. For each |collected response| of |collected responses|:
+
+        1. If the <code>response</code> field of |collected response| is null,
+           continue.
+
+        1. If the <code>navigable</code> field of |collected response| is not
+           |navigable|, continue.
+
+        1. Set the <code>response</code> field of |collected response| to null.
+
+        1. If [=get available collector size=] with |session|, |navigable| and
+           |max total body size| is greater than |response size|, break.
+
+  1. [=list/Add=] a struct with <code>navigation</code> |navigable|'s
+     [=ongoing navigation=], <code>navigable id</code> |navigable|'s
+     [=navigable id=], <code>request id</code> |request id|,
+     <code>response</code> |response to collect| to |collected responses|.
+
+</div>
+
+
+<div algorithm>
+To <dfn>delete collected response bodies</dfn> given |session|, |navigable| and
+|navigation|:
+
+1. For each |collected response| in |session|'s [=collected responses=]:
+
+  1. Let |response navigation| be collected response|'s <code>navigation</code>
+     field.
+
+  1. Let |response navigable id| be collected response|'s <code>navigable id</code>
+     field.
+
+  1. If |response navigable id| is not |navigable|'s [=navigable id=], continue.
+
+  1. If |navigation| is not null, |response navigation| is |navigation|, continue.
+
+  1. Set |collected response|'s <code>response</code> field to null.
+
+</div>
+
 
 ### Types ### {#module-network-types}
 
@@ -7211,6 +7365,72 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
+#### The network.getResponseBody Command ####  {#command-network-getResponseBody}
+
+The <dfn export for=commands>network.getResponseBody</dfn> command retrieved the
+response body data if it is available.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      network.GetResponseBody = (
+        method: "network.getResponseBody",
+        params: network.GetResponseBodyParameters
+      )
+
+      network.GetResponseBodyParameters = {
+        request: network.Request,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      script.GetResponseBodyResult = {
+        body: network.BytesValue,
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.getResponseBody">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. Let |collected responses| be |session|'s [=collected responses=].
+
+1. Let |match| be null.
+
+1. For each |collected response| of |collected responses|:
+
+  1. If the <code>request id</code> field of |collected response| is |request id|,
+     set |match| to |collected response|, break.
+
+1. If |match| is null:
+
+  1. Return [=error=] with [=error code=] [=no such response=].
+
+1. Let |response| the <code>response</code> field of |match|.
+
+1. If |response| is null,
+
+  1. Return [=error=] with [=error code=] [=no response body=].
+
+Issue: what do we do with bodies that are too large? The limit is often
+determined on the transport level and the implementation might not know
+it.
+
+1. Let |body| be a [=/map=] matching the <code>script.GetResponseBodyResult</code> production,
+   with the <code>body</code> field set to base-64 encoded value of |response|'s [=response/body=].
+   TODO: specify exact steps how to read the body.
+
+1. Return [=success=] with data |body|.
+
+</div>
+
+
 #### The network.provideResponse Command ####  {#command-network-provideResponse}
 
 The <dfn export for=commands>network.provideResponse</dfn> command continues a
@@ -7269,7 +7489,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
-
 #### The network.removeIntercept Command ####  {#command-network-removeIntercept}
 
 The <dfn export for=commands>network.removeIntercept</dfn> command removes a
@@ -7315,6 +7534,112 @@ blocked by this intercept. Only future requests or future phases of existing
 requests will be affected.
 
 1. Return [=success=] with data [=null=].
+
+</div>
+
+#### The network.setBodyCollectorConfiguration Command ####  {#command-network-setBodyCollectorConfiguration}
+
+The <dfn export for=commands>network.setBodyCollectorConfiguration</dfn> command configures
+the network body collectors.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      network.SetBodyCollectorConfiguration = (
+        method: "network.setBodyCollectorConfiguration",
+        params: network.SetBodyCollectorConfigurationParameters
+      )
+
+      network.SetBodyCollectorConfigurationParameters = {
+        ? contexts: [+browsingContext.BrowsingContext],
+        maxTotalBodySize: js-uint,
+        ?maxResourceBodySize: js-uint,
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <code>
+      EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.setBodyCollectorConfiguration">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |input context ids| be [=set/create|create a set=] with
+   |command parameters|[<code>contexts</code>].
+
+1. Let |max total body size| be |command parameters|
+   ["<code>maxTotalBodySize</code>"].
+
+1. Let |max resource body size| be |command parameters|
+   ["<code>maxResourceBodySize</code>"].
+
+1. Let |input user context ids| be [=set/create|create a set=] with
+   |command parameters|[<code>userContexts</code>].
+
+1. If |input user context ids| is not empty and |input context ids| is not
+   empty, return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |input user context ids| is not empty and |input context ids| is not
+   empty, return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |body collector configuration| be a struct with <code>max total body size</code>
+   |max total body size| and <code>max resource body size</code> |max resource body size|.
+
+1. If |input context ids| is not empty:
+
+   1. Let |navigables| be [=get navigables by ids=] with |input context ids|.
+
+   1. If [=list/size=] of |navigables| does not equal [=list/size=] of
+      |input context ids|:
+
+      1. Return [=error=] with [=error code=] [=invalid argument=].
+
+   1. Set |collector navigables| to [=get top-level traversables=] with
+      |navigables|.
+
+   1. For each |navigable| in |collector navigables|:
+
+     1. Let |navigable configurations| be |session|'s
+        [=navigable network collector configurations=].
+
+     1. [=map/Set=] |navigable configurations|[|navigable|] to |body collector configuration|.
+
+1. Otherwise, if |input user context ids| is not empty:
+
+    1. [=list/For each=] |user context id| of |input user context ids|:
+
+       1. Let |user context| be [=get user context=] with |user context id|.
+
+       1. If |user context| is null, return [=error=] with [=error code=]
+          [=invalid argument=].
+
+       1. For each |traversable| in remote end's [=/top-level traversables=]:
+
+          1. If |traversable|'s [=associated user context=] is |user context|,
+             [=map/Remove=] |session|'s [=navigable network collector configurations=][|traversable|].
+
+       1. Let |user context configurations| be |session|'s
+          [=user context network collector configurations=].
+
+       1. [=map/Set=] |user context configurations|[|user context|] to |body collector configuration|.
+
+1. Otherwise:
+
+   1. Set |session|'s [=user context network collector configurations=] to an
+      empty [=/map=].
+
+   1. Set |session|'s [=navigable network collector configurations=] to an empty
+      [=/map=].
+
+   1. Set |session|'s [=global network collector configuration=] to |body collector configuration|.
+
+1. Return [=success=] with data null.
 
 </div>
 
@@ -7707,6 +8032,8 @@ completed</dfn> steps given |request| and |response|:
    be the result of [=get related navigables=] with |request|'s
    [=request/client=]. Otherwise let |related navigables| be an empty
    set.
+
+1. [=Maybe collect the response body=] |session|, |request| and |response|.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>network.responseCompleted</code>" and |related navigables|:
