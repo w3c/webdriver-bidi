@@ -4664,11 +4664,13 @@ To <dfn>set device pixel ratio override</dfn> given |navigable| and |device pixe
 
 1. If |device pixel ratio| is not null:
 
-   1. When the [=select an image source from a source set=] steps are run, act as if
-      the implementation's pixel density was set to |device pixel ratio| when selecting an image.
+   1. For [=/document=] currently loaded in a specified |navigable|:
 
-   1. For the purposes of the [=resolution media feature=], act as if
-      the implementation's resolution is |device pixel ratio| dppx scaled by the page zoom.
+      1. When the [=select an image source from a source set=] steps are run, act as if
+         the implementation's pixel density was set to |device pixel ratio| when selecting an image.
+
+      1. For the purposes of the [=resolution media feature=], act as if
+         the implementation's resolution is |device pixel ratio| dppx scaled by the page zoom.
 
    1. [=map/Set=] [=device pixel ratio overrides=][|navigable|] to |device pixel ratio|.
 
@@ -4676,11 +4678,13 @@ To <dfn>set device pixel ratio override</dfn> given |navigable| and |device pixe
 
 1. Otherwise:
 
-   1. When the [=select an image source from a source set=] steps are run, use the implementation's default behavior,
-      without any changes made by previous invocations of these steps.
+   1. For [=/document=] currently loaded in a specified |navigable|:
 
-   1. For the purposes of the [=resolution media feature=], use the implementation's default behavior,
-      without any changes made by previous invocations of these steps.
+      1. When the [=select an image source from a source set=] steps are run, use the implementation's default behavior,
+         without any changes made by previous invocations of these steps.
+
+      1. For the purposes of the [=resolution media feature=], use the implementation's default behavior,
+         without any changes made by previous invocations of these steps.
 
    1. [=map/Remove=] |navigable| from [=device pixel ratio overrides=].
 
@@ -4705,22 +4709,23 @@ To <dfn>set viewport</dfn> given |navigable| and |viewport|:
 
 <div algorithm="set viewport when a top-level traversable is created">
 
-After creating a document in a new [=navigable/top-level traversable=] |navigable| and
+After creating a document in a new [=navigable=] |navigable| and
 before the [=run WebDriver BiDi preload scripts=] algorithm is invoked:
+
+TODO: Move it as a hook in the html spec instead.
 
 1. Let |user context| be |navigable|'s [=associated user context=].
 
 1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
-   1. If the <code>viewport</code> field of [=viewport overrides map=][|user context|] is not null:
+   1. If |navigable| is a [=/top-level traversable=] and the <code>viewport</code> field of
+      [=viewport overrides map=][|user context|] is not null:
 
       1. [=Set viewport=] with |navigable| and [=viewport overrides map=][|user context|]["<code>viewport</code>"].
 
    1. If the <code>devicePixelRatio</code> field of [=viewport overrides map=][|user context|] is not null:
 
-      1. For the |navigable| and all [=descendant navigables=]:
-
-         1. [=Set device pixel ratio override=] with |navigable| and [=viewport overrides map=][|user context|]["<code>devicePixelRatio</code>""].
+      1. [=Set device pixel ratio override=] with |navigable| and [=viewport overrides map=][|user context|]["<code>devicePixelRatio</code>""].
 
 </div>
 
@@ -4767,12 +4772,12 @@ The [=remote end steps=] with |command parameters| are:
 
       1. [=map/Set=] [=viewport overrides map=][|user context|] to a struct.
 
-      1. If |command parameters| [=map/contains=] the <code>viewport</code> field:
+      1. If |command parameters| [=map/contains=] "<code>viewport</code>":
 
          1. Set [=viewport overrides map=][|user context|]["<code>viewport</code>"]
             to |command parameters|["<code>viewport</code>"].
 
-      1. If |command parameters| [=map/contains=] the <code>devicePixelRatio</code> field:
+      1. If |command parameters| [=map/contains=] "<code>devicePixelRatio</code>":
 
          1. Set [=viewport overrides map=][|user context|]["<code>devicePixelRatio</code>"]
             to |command parameters|["<code>devicePixelRatio</code>"].
