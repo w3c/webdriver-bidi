@@ -112,6 +112,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: unable to capture screen; url: dfn-unable-to-capture-screen
     text: unknown command; url: dfn-unknown-command
     text: unknown error; url: dfn-unknown-error
+    text: user prompt handler; url: dfn-user-prompt-handler
     text: unsupported operation; url: dfn-unsupported-operation
     text: web element reference; url: dfn-web-element-reference
     text: webdriver-active flag; url: dfn-webdriver-active-flag
@@ -1711,12 +1712,16 @@ session.UserPromptHandler = {
   ? beforeUnload: session.UserPromptHandlerType,
   ? confirm: session.UserPromptHandlerType,
   ? default: session.UserPromptHandlerType,
+  ? file: session.UserPromptHandlerType,
   ? prompt: session.UserPromptHandlerType,
 };
 </pre>
 
 The <code>session.UserPromptHandler</code> type represents the configuration of
 the user prompt handler.
+
+Note: <code>file</code> handles file picker. "accept" and "dismiss" dismisses
+the picker. "ignore" keeps the picker open.
 
 #### The session.UserPromptHandlerType Type #### {#type-session-UserPromptHandlerType}
 
@@ -11798,6 +11803,90 @@ The [=remote end steps=] given |session| and |command parameters| are:
    Note: For example remote ends might be unable to set [=selected files=] to files that do not currently exist on the filesystem.
 
 1. Return [=success=] with data null.
+
+</div>
+
+### Events ### {#module-input-events}
+
+#### The input.fileDialogOpened Event #### {#event-input-fileDialogOpened}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl remote-cddl">
+         input.FileDialogOpened = (
+            method: "input.fileDialogOpened",
+            params: input.FileDialogInfo
+         )
+
+         input.FileDialogInfo = {
+            context: browsingContext.BrowsingContext,
+            ? element: script.SharedReference,
+            multiple: bool,
+         }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given |element| and optionally
+|file picker options| (default: null):
+
+1. Let |navigable| be the |element|'s [=node document=]'s [=/navigable=].
+
+1. Let |navigable id| be |navigable|'s [=navigable id=].
+
+1. Let |multiple| be <code>false</code>.
+
+1. If |element| is not null and |element|'s <{input/multiple}> attribute is set,
+    set |multiple| to <code>true</code>.
+
+1. If |file picker options| is not null:
+
+   1. If |file picker options|["<code>multiple</code>"] is true, set |multiple| to
+      <code>true</code>.
+
+1. Let |related navigables| be a [=/set=] containing |navigable|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=] given
+   "<code>input.fileDialogOpened</code>" and |related navigables|:
+
+  1. Let |params| be a [=/map=] matching the <code>input.FileDialogInfo</code>
+     production with the <code>context</code> field set to |navigable id| and
+     <code>multiple</code> field set to |multiple|.
+
+  1. If |element| is not null:
+
+    1. Let |shared id| be [=get shared id for a node=] with |element| and |session|.
+
+    1. Set |params|["<code>element</code>"] to |shared id|.
+
+  1. Let |body| be a [=/map=] matching the <code>input.fileDialogOpened</code>
+     production, with the <code>params</code> field set to |params|.
+
+  1. [=Emit an event=] with |session| and |body|.
+
+1. Let |dismissed| be false.
+
+1. For each |session| in [=active BiDi sessions=]:
+
+  1. Let |user prompt handler| be |session|'s [=user prompt handler=].
+
+  1. If |user prompt handler| is not null:
+
+   1. Assert |user prompt handler| is a [=/map=].
+
+   1. If |user prompt handler| [=map/contains=] "<code>file</code>":
+
+      1. If |user prompt handler|["<code>file</code>"] is not equal to
+         "<code>ignore</code>", set |dismissed| to true.
+
+   1. Otherwise if |user prompt handler| [=map/contains=] "<code>default</code>" and
+      |user prompt handler|["<code>default</code>"] is not equal to
+      "<code>ignore</code>", set |dismissed| to true.
+
+1. Return |dismissed|.
 
 </div>
 
