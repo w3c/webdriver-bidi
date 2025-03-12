@@ -427,6 +427,7 @@ Command = {
 CommandData = (
   BrowserCommand //
   BrowsingContextCommand //
+  EmulationCommand //
   InputCommand //
   NetworkCommand //
   ScriptCommand //
@@ -4713,7 +4714,7 @@ To <dfn>set viewport</dfn> given |navigable| and |viewport|:
 
 </div>
 
-<div algorithm="set viewport when a navigable is created">
+<div algorithm="set viewport and geolocation override when a navigable is created">
 
 After creating a document in a new [=/navigable=] |navigable| and
 before the [=run WebDriver BiDi preload scripts=] algorithm is invoked:
@@ -4721,6 +4722,11 @@ before the [=run WebDriver BiDi preload scripts=] algorithm is invoked:
 TODO: Move it as a hook in the html spec instead.
 
 1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If [=geolocation overrides map=] [=map/contains=] |user context| and
+   |navigable| is a [=/top-level traversable=]:
+
+   1. [=Set the system coordinates=] with [=geolocation overrides map=][|user context|] and |navigable|.
 
 1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
@@ -5520,6 +5526,126 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
 1. If |handler| is "<code>ignore</code>", set handler to "<code>none</code>".
 
 1. Return |handler|.
+
+</div>
+
+## The emulation Module ## {#module-emulation}
+
+The <dfn export for=modules>emulation</dfn> module contains commands and events
+relating to emulation of browser APIs.
+
+### Definition ### {#module-emulation-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+EmulationCommand = (
+  emulation.setGeolocationOverride
+)
+</pre>
+
+A <dfn>geolocation override</dfn> is a [=struct=] with an [=struct/item=] named
+<dfn attribute for="geolocation override">latitude</dfn> which is a float,
+a [=struct/item=] named <dfn attribute for="viewport-dimensions">longitude</dfn> which is a float,
+a [=struct/item=] named <dfn attribute for="viewport-dimensions">accuracy</dfn> which is a float,
+a [=struct/item=] named <dfn attribute for="viewport-dimensions">altitude</dfn> which is a float or null,
+a [=struct/item=] named <dfn attribute for="viewport-dimensions">altitudeAccuracy</dfn> which is a float or null,
+a [=struct/item=] named <dfn attribute for="viewport-dimensions">heading</dfn> which is a float or null,
+a [=struct/item=] named <dfn attribute for="viewport-dimensions">speed</dfn> which is a float or null.
+
+A [=remote end=] has a <dfn>geolocation overrides map</dfn> which is a weak map between [=user contexts=] and [=geolocation override=].
+
+
+### Commands ### {#module-emulation-commands}
+
+#### The emulation.setGeolocationOverride Command ####  {#command-emulation-setGeolocationOverride}
+
+The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modifies geolocation characteristics on the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      emulation.SetGeolocationOverride = (
+        method: "emulation.setGeolocationOverride",
+        params: emulation.SetGeolocationOverrideParameters
+      )
+
+      emulation.SetGeolocationOverrideParameters = {
+        coordinates: emulation.GeolocationCoordinates / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.GeolocationCoordinates = {
+         latitude: float,
+         longitude: float,
+         ? accuracy: float .default 1.0,
+         ? altitude: float / null .default null,
+         ? altitudeAccuracy: float / null .default null,
+         ? heading: float / null .default null,
+         ? speed: float / null .default null,
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for emulation.setGeolocationOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |navigables| be a [=/set=].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. For each |context| of |command parameters|["<code>contexts</code>"]:
+
+      1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with
+         |context|.
+
+      1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
+         [=error code=] [=invalid argument=].
+
+      1. [=set/Append=] |navigable| to |navigables|.
+
+1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be a [=/set=].
+
+   1. For each |user context id| of |command parameters|["<code>userContexts</code>"]:
+
+      1. Set |user context| to [=get user context=] with |user context id|.
+
+      1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
+
+      1. [=set/Append=] |user context| to |user contexts|.
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=map/Set=] [=geolocation overrides map=][|user context|] to a |command parameters|["<code>coordinates</code>"].
+
+      1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]
+         whose [=associated user context=] is |user context|:
+
+         1. [=list/Append=] |top-level traversable| to |navigables|.
+
+1. Otherwise, return [=error=] with [=error code=] [=invalid argument=].
+
+1. For each |navigable| of |navigables|:
+
+   1. [=Set the system coordinates=] with |command parameters|["<code>coordinates</code>"] and |navigable|.
+
+1. Return [=success=] with data null.
 
 </div>
 
@@ -12125,6 +12251,10 @@ Insert the following steps at the start of the [=determine the device pixel rati
 
 1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
 
+
+## Geolocation ## {#patchs-geolocation}
+
+<dfn>Set the system coordinates</dfn> algorithm is going to be added in the geolocation specification.
 
 # Appendices # {#appendices}
 
