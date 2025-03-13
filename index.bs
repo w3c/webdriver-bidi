@@ -1191,6 +1191,25 @@ To <dfn>get valid navigables by ids</dfn> given a [=/list=] of context ids |navi
 
 </div>
 
+<div algorithm>
+
+To <dfn>get valid top-level traversables by ids</dfn> given a [=/list=] of context ids |navigable ids|:
+
+1. Let |result| be an empty [=/set=].
+
+1. For each |navigable id| in |navigable ids|:
+
+   1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with |navigable id|.
+
+   1. If |navigable| is not a [=/top-level traversable=], return [=error=]
+      with [=error code=] [=invalid argument=].
+
+   1. [=set/Append=] |navigable| to |result|.
+
+1. Return [=success=] with data |result|.
+
+</div>
+
 <div algorithm> To <dfn export>emit an event</dfn> given |session|, and |body|:
 
 1. [=Assert=]: |body| has [=map/size=] 2 and [=map/contains=] "<code>method</code>"
@@ -1517,6 +1536,24 @@ To <dfn export>get user context</dfn> given |user context id|:
    1. Return |user context|.
 
 1. Return null.
+
+</div>
+
+<div algorithm>
+
+To <dfn export>get valid user contexts</dfn> given |user context ids|:
+
+1. Let |result| be an empty [=/set=].
+
+1. For each |user context id| of |user context ids|:
+
+   1. Set |user context| to [=get user context=] with |user context id|.
+
+   1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
+
+   1. [=set/Append=] |user context| to |result|.
+
+1. Return |result|.
 
 </div>
 
@@ -4770,15 +4807,7 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
 
-   1. Let |user contexts| be a [=/set=].
-
-   1. For each |user context id| of |command parameters|["<code>userContexts</code>"]:
-
-      1. Set |user context| to [=get user context=] with |user context id|.
-
-      1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
-
-      1. [=set/Append=] |user context| to |user contexts|.
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
 
    1. For each |user context| of |user contexts|:
 
@@ -5604,31 +5633,19 @@ The [=remote end steps=] with |command parameters| are:
    and |command parameters| [=map/contains=] "<code>context</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
 1. Let |navigables| be a [=/set=].
 
 1. If the <code>contexts</code> field of |command parameters| is present:
 
-   1. For each |context| of |command parameters|["<code>contexts</code>"]:
-
-      1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with
-         |context|.
-
-      1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
-         [=error code=] [=invalid argument=].
-
-      1. [=set/Append=] |navigable| to |navigables|.
+   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=] with |command parameters|["<code>contexts</code>"].
 
 1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
 
-   1. Let |user contexts| be a [=/set=].
-
-   1. For each |user context id| of |command parameters|["<code>userContexts</code>"]:
-
-      1. Set |user context| to [=get user context=] with |user context id|.
-
-      1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
-
-      1. [=set/Append=] |user context| to |user contexts|.
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
 
    1. For each |user context| of |user contexts|:
 
@@ -5638,8 +5655,6 @@ The [=remote end steps=] with |command parameters| are:
          whose [=associated user context=] is |user context|:
 
          1. [=list/Append=] |top-level traversable| to |navigables|.
-
-1. Otherwise, return [=error=] with [=error code=] [=invalid argument=].
 
 1. For each |navigable| of |navigables|:
 
