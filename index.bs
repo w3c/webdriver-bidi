@@ -2913,6 +2913,9 @@ The progress of navigation is communicated using an immutable
 
   <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-url">url</dfn></dt>
   <dd>The URL which is being loaded in the navigation</dd>
+
+  <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-suggested-filename">suggestedFilename</dfn></dt>
+  <dd>An optional suggested filename. Provided if the navigation is a download</dd>
 </dl>
 
 ### Definition ### {#module-browsingContext-definition}
@@ -5267,8 +5270,13 @@ complete</dfn> steps given |navigable| and |navigation status|:
       <pre class="cddl local-cddl">
         browsingContext.DownloadWillBegin = (
          method: "browsingContext.downloadWillBegin",
-         params: browsingContext.NavigationInfo
+         params: browsingContext.DownloadWillBeginParams
         )
+
+        browsingContext.DownloadWillBeginParams = {
+          suggestedFilename: text,
+          browsingContext.NavigationInfo
+        }
       </pre>
    </dd>
 </dl>
@@ -5277,8 +5285,16 @@ complete</dfn> steps given |navigable| and |navigation status|:
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download
 started</dfn> steps given |navigable| and |navigation status|:
 
- 1. Let |params| be the result of [=get the navigation info=] given |navigable|
-    and |navigation status|.
+ 1. Let |navigation info| be the result of [=get the navigation info=] given |navigable| and
+    |navigation status|.
+
+1. Let |params| be a [=/map=] matching the <code>browsingContext.DownloadWillBeginParams</code>
+   production, with the <code>context</code> field set to |navigation info|["<code>context</code>"],
+   the <code>navigation</code> field set to |navigation info|["<code>navigation</code>"], the
+   <code>timestamp</code> field set to |navigation info|["<code>timestamp</code>"], the
+   <code>url</code> field set to |navigation info|["<code>url</code>"] and
+   <code>suggestedFilename</code> field set to |navigation status|'s
+   <code>suggestedFilename</code>.
 
  1. Let |body| be a [=/map=] matching the
      <code>browsingContext.DownloadWillBegin</code> production, with the
