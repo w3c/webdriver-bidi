@@ -180,6 +180,9 @@ spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
     text: y coordinate; url: rectangle-y-coordinate
     text: width dimension; url: rectangle-width-dimension
     text: height dimension; url: rectangle-height-dimension
+spec: GEOLOCATION; urlPrefix: https://www.w3.org/TR/geolocation/
+  type: dfn
+    text: set emulated position data; url: #dfn-set-emulated-position-data
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
     text: 2D context creation algorithm; url: canvas.html#2d-context-creation-algorithm
@@ -427,6 +430,7 @@ Command = {
 CommandData = (
   BrowserCommand //
   BrowsingContextCommand //
+  EmulationCommand //
   InputCommand //
   NetworkCommand //
   ScriptCommand //
@@ -1190,6 +1194,25 @@ To <dfn>get valid navigables by ids</dfn> given a [=/list=] of context ids |navi
 
 </div>
 
+<div algorithm>
+
+To <dfn>get valid top-level traversables by ids</dfn> given a [=/list=] of context ids |navigable ids|:
+
+1. Let |result| be an empty [=/set=].
+
+1. For each |navigable id| in |navigable ids|:
+
+   1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with |navigable id|.
+
+   1. If |navigable| is not a [=/top-level traversable=], return [=error=]
+      with [=error code=] [=invalid argument=].
+
+   1. [=set/Append=] |navigable| to |result|.
+
+1. Return [=success=] with data |result|.
+
+</div>
+
 <div algorithm> To <dfn export>emit an event</dfn> given |session|, and |body|:
 
 1. [=Assert=]: |body| has [=map/size=] 2 and [=map/contains=] "<code>method</code>"
@@ -1516,6 +1539,24 @@ To <dfn export>get user context</dfn> given |user context id|:
    1. Return |user context|.
 
 1. Return null.
+
+</div>
+
+<div algorithm>
+
+To <dfn export>get valid user contexts</dfn> given |user context ids|:
+
+1. Let |result| be an empty [=/set=].
+
+1. For each |user context id| of |user context ids|:
+
+   1. Set |user context| to [=get user context=] with |user context id|.
+
+   1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
+
+   1. [=set/Append=] |user context| to |result|.
+
+1. Return |result|.
 
 </div>
 
@@ -4713,7 +4754,7 @@ To <dfn>set viewport</dfn> given |navigable| and |viewport|:
 
 </div>
 
-<div algorithm="set viewport when a navigable is created">
+<div algorithm="configure new navigable">
 
 After creating a document in a new [=/navigable=] |navigable| and
 before the [=run WebDriver BiDi preload scripts=] algorithm is invoked:
@@ -4721,6 +4762,11 @@ before the [=run WebDriver BiDi preload scripts=] algorithm is invoked:
 TODO: Move it as a hook in the html spec instead.
 
 1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If |navigable| is a [=/top-level traversable=]:
+
+   1. If [=geolocation overrides map=] [=map/contains=] |user context|,
+      [=set emulated position data=] with |navigable| and [=geolocation overrides map=][|user context|].
 
 1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
@@ -4764,15 +4810,7 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
 
-   1. Let |user contexts| be a [=/set=].
-
-   1. For each |user context id| of |command parameters|["<code>userContexts</code>"]:
-
-      1. Set |user context| to [=get user context=] with |user context id|.
-
-      1. If |user context| is null, return [=error=] with [=error code=] [=no such user context=].
-
-      1. [=set/Append=] |user context| to |user contexts|.
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
 
    1. For each |user context| of |user contexts|:
 
@@ -5520,6 +5558,116 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
 1. If |handler| is "<code>ignore</code>", set handler to "<code>none</code>".
 
 1. Return |handler|.
+
+</div>
+
+## The emulation Module ## {#module-emulation}
+
+The <dfn export for=modules>emulation</dfn> module contains commands and events
+relating to emulation of browser APIs.
+
+### Definition ### {#module-emulation-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+EmulationCommand = (
+  emulation.setGeolocationOverride
+)
+</pre>
+
+A <dfn>geolocation override</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn attribute for="geolocation override">latitude</dfn> which is a float;
+* [=struct/item=] named <dfn attribute for="geolocation override">longitude</dfn> which is a float;
+* [=struct/item=] named <dfn attribute for="geolocation override">accuracy</dfn> which is a float;
+* [=struct/item=] named <dfn attribute for="geolocation override">altitude</dfn> which is a float or null;
+* [=struct/item=] named <dfn attribute for="geolocation override">altitudeAccuracy</dfn> which is a float or null;
+* [=struct/item=] named <dfn attribute for="geolocation override">heading</dfn> which is a float or null;
+* [=struct/item=] named <dfn attribute for="geolocation override">speed</dfn> which is a float or null.
+
+A [=remote end=] has a <dfn>geolocation overrides map</dfn> which is a weak map between [=user contexts=] and [=geolocation override=].
+
+
+### Commands ### {#module-emulation-commands}
+
+#### The emulation.setGeolocationOverride Command ####  {#command-emulation-setGeolocationOverride}
+
+The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modifies geolocation characteristics on the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      emulation.SetGeolocationOverride = (
+        method: "emulation.setGeolocationOverride",
+        params: emulation.SetGeolocationOverrideParameters
+      )
+
+      emulation.SetGeolocationOverrideParameters = {
+        coordinates: emulation.GeolocationCoordinates / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.GeolocationCoordinates = {
+         latitude: float,
+         longitude: float,
+         ? accuracy: float .default 1.0,
+         ? altitude: float / null .default null,
+         ? altitudeAccuracy: float / null .default null,
+         ? heading: float / null .default null,
+         ? speed: float / null .default null,
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for emulation.setGeolocationOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>altitudeAccuracy</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>altitude</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |navigables| be a [=/set=].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=] with |command parameters|["<code>contexts</code>"].
+
+1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=map/Set=] [=geolocation overrides map=][|user context|] to a |command parameters|["<code>coordinates</code>"].
+
+      1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]
+         whose [=associated user context=] is |user context|:
+
+         1. [=list/Append=] |top-level traversable| to |navigables|.
+
+1. For each |navigable| of |navigables|:
+
+   1. [=Set emulated position data=] with |navigable| and |command parameters|["<code>coordinates</code>"].
+
+1. Return [=success=] with data null.
 
 </div>
 
