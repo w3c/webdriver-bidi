@@ -97,8 +97,6 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: no such alert; url: dfn-no-such-alert
     text: no such element; url: dfn-no-such-element
     text: no such frame; url: dfn-no-such-frame
-    text: no such response; url: dfn-no-such-response
-    text: no response body; url: dfn-no-response-body
     text: parse a page range; url: dfn-parse-a-page-range
     text: handler; for: prompt handler configuration; url: dfn-handler
     text: process capabilities; url: dfn-capabilities-processing
@@ -679,17 +677,16 @@ ErrorCode = "invalid argument" /
             "invalid session id" /
             "invalid web extension" /
             "move target out of bounds" /
-            "no response body" /
             "no such alert" /
+            "no such collector"
             "no such element" /
             "no such frame" /
             "no such handle" /
             "no such history entry" /
-            "no such collector" /
             "no such intercept" /
+            "no such network body" /
             "no such node" /
             "no such request" /
-            "no such response" /
             "no such script" /
             "no such storage partition" /
             "no such user context" /
@@ -699,6 +696,7 @@ ErrorCode = "invalid argument" /
             "unable to close browser" /
             "unable to set cookie" /
             "unable to set file input" /
+            "unavailable network body" /
             "underspecified storage partition" /
             "unknown command" /
             "unknown error" /
@@ -5893,7 +5891,7 @@ NetworkCommand = (
   network.ContinueResponse //
   network.ContinueWithAuth //
   network.FailRequest //
-  network.GetResponseBody //
+  network.GetNetworkBody //
   network.ProvideResponse //
   network.RemoveDataCollector //
   network.RemoveIntercept //
@@ -6168,7 +6166,7 @@ To <dfn>update navigable network collector sizes</dfn> given |session| and |top-
 </div>
 
 <div algorithm>
-To <dfn>maybe collect network data</dfn> given |session|, |request| and |response|:
+To <dfn>maybe collect network response body</dfn> given |session|, |request| and |response|:
 
 1. Let |navigable| be null.
 
@@ -6209,6 +6207,7 @@ To <dfn>maybe collect network data</dfn> given |session|, |request| and |respons
 
 1. Let |collector data| be a new [=/map=] matching the
          <code>network.CollectorData</code> production, with the
+         <code>bodyType</code> field set to "response",
          <code>data</code> field set to |response to collect|,
          <code>navigable</code> field set to |navigable|'s [=navigable id=],
          <code>navigation</code> field set to |navigable|'s [=ongoing-navigation=],
@@ -6404,6 +6403,17 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
 
 </div>
 
+#### The network.BodyType Type #### {#type-network-BodyType}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+network.BodyType = "request" / "response"
+</pre>
+
+The <code>network.BodyType</code> type represents the different types of network bodies
+that can be collected.
+
 #### The network.BytesValue Type #### {#type-network-BytesValue}
 
 <pre class="cddl" data-cddl-module="local-cddl,remote-cddl">
@@ -6474,6 +6484,7 @@ The <code>network.Collector</code> type represents the id of a [=network data co
 
 <pre class="cddl local-cddl remote-cddl">
 network.CollectorData = {
+    bodyType: network.BodyType,
     data: network.BytesValue / null,
     navigable: browsingContext.BrowsingContext,
     navigation: browsingContext.Navigation,
@@ -7584,7 +7595,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Otherwise, set |top-level traversables to update| to the list of all [=/top-level traversables=].
 
 1. Let |collector data| be a new [=/map=] matching the
-   <code>network.CollectorData</code> production with
+   <code>network.CollectorInfo</code> production with
    the <code>resourceMaxSize</code> field set to |resource max size|,
    the <code>totalMaxSize</code> field set to |total max size|,
    the <code>userContexts</code> field set to |input user context ids| and
@@ -7998,21 +8009,22 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
-#### The network.getResponseBody Command ####  {#command-network-getResponseBody}
+#### The network.getNetworkBody Command ####  {#command-network-getNetworkBody}
 
-The <dfn export for=commands>network.getResponseBody</dfn> command retrieved the
-response body data if it is available.
+The <dfn export for=commands>network.getNetworkBody</dfn> command retrieves a
+network body data if it is available.
 
 <dl>
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      network.GetResponseBody = (
-        method: "network.getResponseBody",
-        params: network.GetResponseBodyParameters
+      network.GetNetworkBody = (
+        method: "network.getNetworkBody",
+        params: network.GetNetworkBodyParameters
       )
 
-      network.GetResponseBodyParameters = {
+      network.GetNetworkBodyParameters = {
+        bodyType: network.BodyType,
         request: network.Request,
       }
       </pre>
@@ -8020,15 +8032,17 @@ response body data if it is available.
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      script.GetResponseBodyResult = {
+      script.GetNetworkBodyResult = {
         data: network.BytesValue,
       }
     </pre>
    </dd>
 </dl>
 
-<div algorithm="remote end steps for network.getResponseBody">
+<div algorithm="remote end steps for network.getNetworkBody">
 The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |body type| be |command parameters|["<code>bodyType</code>"].
 
 1. Let |request id| be |command parameters|["<code>request</code>"].
 
@@ -8038,20 +8052,21 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. For each |collected data| of |collected network data|:
 
-  1. If the <code>request</code> field of |collected data| is |request id|,
+  1. If the <code>request</code> field of |collected data| is |request id|
+     and the <code>bodyType</code> field of |collected data| is |body type|,
      set |match| to |collected data|, break.
 
 1. If |match| is null:
 
-  1. Return [=error=] with [=error code=] [=no such response=].
+  1. Return [=error=] with [=error code=] [=no such network body=].
 
 1. Let |response| the <code>response</code> field of |match|.
 
 1. If |response| is null,
 
-  1. Return [=error=] with [=error code=] [=no response body=].
+  1. Return [=error=] with [=error code=] [=unavailable network body=].
 
-1. Let |body| be a [=/map=] matching the <code>script.GetResponseBodyResult</code> production,
+1. Let |body| be a [=/map=] matching the <code>script.GetNetworkBodyResult</code> production,
    with the <code>data</code> field set to the <code>data</code> field of |collected data|.
 
 1. Return [=success=] with data |body|.
@@ -8706,7 +8721,7 @@ completed</dfn> steps given |request| and |response|:
   1. Assert: |params| matches the <code>network.ResponseCompletedParameters</code>
      production.
 
-  1. [=Maybe collect network data=] with |session|, |request| and |response|.
+  1. [=Maybe collect network response body=] with |session|, |request| and |response|.
 
   1. Let |body| be a map matching the <code>network.ResponseCompleted</code>
      production, with the <code>params</code> field set to |params|.
