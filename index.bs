@@ -635,7 +635,7 @@ with the following additional codes:
   <dd>Tried to havigate to an unknown [=session history entry=].
 
   <dt><dfn for=errors export>no such collector</dfn>
-  <dd>Tried to remove an unknown [=network data collector=].
+  <dd>Tried to remove an unknown [=network body collector=].
 
   <dt><dfn for=errors export>no such intercept</dfn>
   <dd>Tried to remove an unknown [=network intercept=].
@@ -5885,7 +5885,7 @@ relating to network requests.
 <pre class="cddl" data-cddl-module="remote-cddl">
 
 NetworkCommand = (
-  network.AddDataCollector //
+  network.AddBodyCollector //
   network.AddIntercept //
   network.ContinueRequest //
   network.ContinueResponse //
@@ -5893,7 +5893,7 @@ NetworkCommand = (
   network.FailRequest //
   network.GetNetworkBody //
   network.ProvideResponse //
-  network.RemoveDataCollector //
+  network.RemoveBodyCollector //
   network.RemoveIntercept //
   network.SetCacheBehavior
 )
@@ -6095,19 +6095,19 @@ To <dfn>update the response</dfn> given |session|, |command| and |command parame
 
 ### Network Data ### {#network-data}
 
-A <dfn>network data collector</dfn> is a mechanism to allow remote ends to collect
+A <dfn>network body collector</dfn> is a mechanism to allow remote ends to collect
 network data such as network response bodies.
 
 A [=BiDi session=] has <dfn>network collectors</dfn> which is a [=/map=] between
-network data collector id and <code>network.CollectorInfo</code>. It is initially empty.
+network body collector id and <code>network.CollectorInfo</code>. It is initially empty.
 
 A [=BiDi session=] has <dfn>navigable network collector sizes</dfn> which is a weak map
 between [=/top-level traversables=] and <code>network.CollectorSizes</code>. It describes
 the effective collector sizes for all [=/navigables=] under a [=/top-level traversable=].
 It is initially empty.
 
-A [=BiDi session=] has <dfn>collected network data</dfn> which is a list of
-<code>network.CollectorData</code>. It is initially empty.
+A [=BiDi session=] has <dfn>collected network bodies</dfn> which is a list of
+<code>network.CollectorBody</code>. It is initially empty.
 
 <div algorithm>
 To <dfn>match collector info</dfn> given |collector info| and |navigable|:
@@ -6205,16 +6205,16 @@ To <dfn>maybe collect network response body</dfn> given |session|, |request| and
 
   1. [=Fully read=] |response|’s [=response/body=] given |processBody| and |processBodyError|.
 
-1. Let |collector data| be a new [=/map=] matching the
-         <code>network.CollectorData</code> production, with the
+1. Let |collector body| be a new [=/map=] matching the
+         <code>network.CollectorBody</code> production, with the
+         <code>body</code> field set to |response to collect|,
          <code>bodyType</code> field set to "response",
-         <code>data</code> field set to |response to collect|,
          <code>navigable</code> field set to |navigable|'s [=navigable id=],
          <code>navigation</code> field set to |navigable|'s [=ongoing-navigation=],
          <code>request</code> field set to |request|'s [=request id=] and
          <code>size</code> field set to |response size|.
 
-1. [=list/Append=] |collector data| to |session|'s [=collected network data=].
+1. [=list/Append=] |collector body| to |session|'s [=collected network bodies=].
 
 </div>
 
@@ -6224,28 +6224,28 @@ To <dfn>allocate size to record data</dfn> given |session|, |navigable|,
 
 1. Let |available size| be |max total size|.
 
-1. For each |collected data| in |session|'s [=collected network data=]:
+1. For each |collected body| in |session|'s [=collected network bodies=]:
 
-  1. Let |navigable id| be |collected data|'s <code>navigable</code>
+  1. Let |navigable id| be |collected body|'s <code>navigable</code>
      field.
 
   1. If |navigable id| is not |navigable|'s [=navigable id=], continue.
 
-  1. If |collected data|'s <code>data</code> is not null:
+  1. If |collected body|'s <code>data</code> is not null:
 
-    1. Decrease |available size| by |collected data|'s <code>size</code>.
+    1. Decrease |available size| by |collected body|'s <code>size</code>.
 
 1. If |requested size| is greater than |available size|:
 
-  1. For each |collected data| in |session|'s [=collected network data=] in order:
+  1. For each |collected body| in |session|'s [=collected network bodies=] in order:
 
     1. If |navigable id| is not |navigable|'s [=navigable id=], continue.
 
-    1. If |collected data|'s <code>data</code> is not null:
+    1. If |collected body|'s <code>data</code> is not null:
 
-      1. Increase |available size| by |collected data|'s <code>size</code>.
+      1. Increase |available size| by |collected body|'s <code>size</code>.
 
-      1. Set |collected data|'s <code>data</code> field to null.
+      1. Set |collected body|'s <code>data</code> field to null.
 
       1. If |available size| is greater than or equal to |requested size|, return.
 
@@ -6255,19 +6255,19 @@ To <dfn>allocate size to record data</dfn> given |session|, |navigable|,
 To <dfn>delete collected response bodies</dfn> given |session|, |navigable| and
 |current navigation|:
 
-1. For each |collected data| in |session|'s [=collected network data=]:
+1. For each |collected body| in |session|'s [=collected network bodies=]:
 
-  1. Let |navigation| be |collected data|'s <code>navigation</code>
+  1. Let |navigation| be |collected body|'s <code>navigation</code>
      field.
 
-  1. Let |navigable id| be |collected data|'s <code>navigable</code>
+  1. Let |navigable id| be |collected body|'s <code>navigable</code>
      field.
 
   1. If |navigable id| is not |navigable|'s [=navigable id=], continue.
 
   1. If |current navigation| is not null and |current navigation| is |navigation|, continue.
 
-  1. Set |collected data|'s <code>data</code> field to null.
+  1. Set |collected body|'s <code>data</code> field to null.
 
 </div>
 
@@ -6476,16 +6476,16 @@ Note: this takes a [=byte sequence=] and returns a <code>network.BytesValue</cod
 network.Collector = text
 </pre>
 
-The <code>network.Collector</code> type represents the id of a [=network data collector=].
+The <code>network.Collector</code> type represents the id of a [=network body collector=].
 
-#### The network.CollectorData Type #### {#type-network-CollectorData}
+#### The network.CollectorBody Type #### {#type-network-CollectorBody}
 
 [=Remote end definition=] and [=local end definition=]
 
 <pre class="cddl local-cddl remote-cddl">
-network.CollectorData = {
+network.CollectorBody = {
+    body: network.BytesValue / null,
     bodyType: network.BodyType,
-    data: network.BytesValue / null,
     navigable: browsingContext.BrowsingContext,
     navigation: browsingContext.Navigation,
     request: network.Request,
@@ -6493,8 +6493,8 @@ network.CollectorData = {
 };
 </pre>
 
-The <code>network.CollectorData</code> type represents network data stored via a
-[=network data collector=].
+The <code>network.CollectorBody</code> type represents a network body stored via a
+[=network body collector=].
 
 #### The network.CollectorInfo Type #### {#type-network-CollectorInfo}
 
@@ -6508,7 +6508,7 @@ network.CollectorInfo = {
 };
 </pre>
 
-The <code>network.CollectorInfo</code> type represents a [=network data collector=].
+The <code>network.CollectorInfo</code> type represents a [=network body collector=].
 
 #### The network.CollectorSizes Type #### {#type-network-CollectorSizes}
 
@@ -6521,7 +6521,7 @@ network.CollectorSizes = {
 };
 </pre>
 
-The <code>network.CollectorSizes</code> type represents the sizes used by a [=network data collector=].
+The <code>network.CollectorSizes</code> type represents the sizes used by a [=network body collector=].
 
 #### The network.Cookie Type #### {#type-network-Cookie}
 
@@ -7512,21 +7512,21 @@ To <dfn>match URL pattern</dfn> given |url pattern| and |url string|:
 
 ### Commands ### {#module-network-commands}
 
-#### The network.addDataCollector Command ####  {#command-network-addDataCollector}
+#### The network.addBodyCollector Command ####  {#command-network-addBodyCollector}
 
-The <dfn export for=commands>network.addDataCollector</dfn> command configures
-the data collector map.
+The <dfn export for=commands>network.addBodyCollector</dfn> command configures
+the body collector map.
 
 <dl>
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      network.AddDataCollector = (
-        method: "network.addDataCollector",
-        params: network.AddDataCollectorParameters
+      network.AddBodyCollector = (
+        method: "network.addBodyCollector",
+        params: network.AddBodyCollectorParameters
       )
 
-      network.AddDataCollectorParameters = {
+      network.AddBodyCollectorParameters = {
         ? contexts: [+browsingContext.BrowsingContext],
         bodyMaxSize: js-uint,
         totalMaxSize: js-uint,
@@ -7542,7 +7542,7 @@ the data collector map.
    </dd>
 </dl>
 
-<div algorithm="remote end steps for network.addDataCollector">
+<div algorithm="remote end steps for network.addBodyCollector">
 The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |collector| be the string representation of a [[!RFC9562|UUID]].
@@ -7594,20 +7594,20 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Otherwise, set |top-level traversables to update| to the list of all [=/top-level traversables=].
 
-1. Let |collector data| be a new [=/map=] matching the
+1. Let |collector info| be a new [=/map=] matching the
    <code>network.CollectorInfo</code> production with
    the <code>bodyMaxSize</code> field set to |body max size|,
    the <code>totalMaxSize</code> field set to |total max size|,
    the <code>userContexts</code> field set to |input user context ids| and
    the <code>contexts</code> field set to |top-level traversable ids|.
 
-1. Set |session|'s [=network collectors=][|collector|] to |collector data|.
+1. Set |session|'s [=network collectors=][|collector|] to |collector info|.
 
 1. For each |traversable| in |top-level traversables to update|, [=update navigable network collector sizes=]
    with |session| and |traversable|.
 
 1. Return a new [=/map=] matching the
-   <code>network.AddDataCollectorResult</code> production with the
+   <code>network.AddBodyCollectorResult</code> production with the
    <code>collector</code> field set to |collector|.
 
 </div>
@@ -8046,15 +8046,15 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |request id| be |command parameters|["<code>request</code>"].
 
-1. Let |collected network data| be |session|'s [=collected network data=].
+1. Let |collected network bodies| be |session|'s [=collected network bodies=].
 
 1. Let |match| be null.
 
-1. For each |collected data| of |collected network data|:
+1. For each |collected body| of |collected network bodies|:
 
-  1. If the <code>request</code> field of |collected data| is |request id|
-     and the <code>bodyType</code> field of |collected data| is |body type|,
-     set |match| to |collected data|, break.
+  1. If the <code>request</code> field of |collected body| is |request id|
+     and the <code>bodyType</code> field of |collected body| is |body type|,
+     set |match| to |collected body|, break.
 
 1. If |match| is null:
 
@@ -8067,7 +8067,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
   1. Return [=error=] with [=error code=] [=unavailable network body=].
 
 1. Let |body| be a [=/map=] matching the <code>script.GetNetworkBodyResult</code> production,
-   with the <code>data</code> field set to the <code>data</code> field of |collected data|.
+   with the <code>data</code> field set to the <code>data</code> field of |collected body|.
 
 1. Return [=success=] with data |body|.
 
@@ -8132,21 +8132,21 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
-#### The network.removeDataCollector Command ####  {#command-network-removeDataCollector}
+#### The network.removeBodyCollector Command ####  {#command-network-removeBodyCollector}
 
-The <dfn export for=commands>network.removeDataCollector</dfn> command removes a
-[=network data collector=].
+The <dfn export for=commands>network.removeBodyCollector</dfn> command removes a
+[=network body collector=].
 
 <dl>
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      network.RemoveDataCollector = (
-        method: "network.removeDataCollector",
-        params: network.RemoveDataCollectorParameters
+      network.RemoveBodyCollector = (
+        method: "network.removeBodyCollector",
+        params: network.RemoveBodyCollectorParameters
       )
 
-      network.RemoveDataCollectorParameters = {
+      network.RemoveBodyCollectorParameters = {
         collector: network.Collector
       }
     </pre>
@@ -8159,7 +8159,7 @@ The <dfn export for=commands>network.removeDataCollector</dfn> command removes a
    </dd>
 </dl>
 
-<div algorithm="remote end steps for network.removeDataCollector">
+<div algorithm="remote end steps for network.removeBodyCollector">
 The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |collector| be the value of the "<code>collector</code>" field in |command
@@ -8170,22 +8170,22 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If |collectors| does not [=map/contain=] |collector|, return
    [=error=] with [=error code=] [=no such collector=].
 
-1. Let |collector data| be |collectors|[|collector|].
+1. Let |collector info| be |collectors|[|collector|].
 
 1. Let |top-level traversables to update| be an empty [=/set=].
 
-1. If |collector data|'s <code>contexts</code> field is present:
+1. If |collector info|'s <code>contexts</code> field is present:
 
-  1. For each |navigable id| of |collector data|'s <code>contexts</code> field:
+  1. For each |navigable id| of |collector info|'s <code>contexts</code> field:
 
     1. Let |navigable| be the [=/navigable=] with id |navigable id|
        if such [=/navigable=] exists, and null otherwise.
 
     1. [=set/Append=] |navigable| to |top-level traversables to update| if |navigable| is not null.
 
-1. Otherwise if |collector data|'s <code>userContexts</code> field is present:
+1. Otherwise if |collector info|'s <code>userContexts</code> field is present:
 
-  1. For each |user context id| of |collector data|'s <code>userContexts</code> field:
+  1. For each |user context id| of |collector info|'s <code>userContexts</code> field:
 
     1. Let |user context| be [=get user context=] with |user context id|.
 
