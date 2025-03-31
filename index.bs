@@ -51,6 +51,7 @@ spec: RFC6265bis; urlPrefix: https://datatracker.ietf.org/doc/html/draft-ietf-ht
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithms
+    text: accept insecure TLS; url: dfn-accept-insecure-tls
     text: actions; url: actions
     text: actions options; url: dfn-actions-options
     text: active sessions; url: dfn-active-sessions
@@ -1453,6 +1454,13 @@ A <dfn export>user context</dfn> represents a collection of zero or more
 an associated [=storage partition=], so that [=remote end=] data is not shared
 between different [=user contexts=].
 
+Each [=user context=] has an associated <dfn>accept insecure TLS override</dfn> flag
+which is an optional boolean that indicates whether untrusted or self-signed TLS
+certificates are treated as trusted. The default value of the flag is unset.
+
+Note: If [=accept insecure TLS override=] is set, it overrides the
+[=accept insecure TLS=] flag's behavior.
+
 Issue: Unclear that this is the best way to formally define the concept of a
 user context or the interaction with storage.
 
@@ -2655,8 +2663,12 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
       <pre class="cddl remote-cddl">
       browser.CreateUserContext = (
         method: "browser.createUserContext",
-        params: EmptyParams,
+        params: browser.CreateUserContextParameters,
       )
+
+      browser.CreateUserContextParameters = {
+        ? acceptInsecureCerts: bool
+      }
       </pre>
    </dd>
    <dt>Return Type</dt>
@@ -2669,9 +2681,14 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 
 <div algorithm="remote end steps for browser.createUserContext">
 
-The [=remote end steps=] are:
+The [=remote end steps=] with |command parameters| are:
 
 1. Let |user context| be a new [=user context=].
+
+1. If |command parameters| [=map/contain=] "<code>acceptInsecureCerts</code>":
+
+  1. Set |user context|'s [=accept insecure TLS override=] to
+     |command parameters|["<code>acceptInsecureCerts</code>"].
 
 1. [=set/Append=] |user context| to the [=set of user contexts=].
 
@@ -5124,6 +5141,14 @@ become inaccessible but not yet get discarded because bfcache.
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
 started</dfn> steps given |navigable| and |navigation status|:
+
+1. If |navigable|'s [=associated user context=]'s [=accept insecure TLS override=]
+   is true, then perform implementation-defined steps to disable any certificate
+   errors that would normally hinder navigation to the requested address.
+
+1. If |navigable|'s [=associated user context=]'s [=accept insecure TLS override=]
+   is false, then perform implementation-defined steps to restore the default
+   certificate errors handling.
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
