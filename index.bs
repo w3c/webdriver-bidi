@@ -64,6 +64,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: close the session; url: dfn-close-the-session
     text: cookie domain; url: dfn-cookie-domain
     text: cookie expiry time; url: dfn-cookie-expiry-time
+    text: deserialize as a proxy; url: dfn-deserialize-as-a-proxy
     text: cookie HTTP only; url: dfn-cookie-http-only
     text: cookie name; url: dfn-cookie-name
     text: cookie path; url: dfn-cookie-path
@@ -2677,7 +2678,8 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
       )
 
       browser.CreateUserContextParameters = {
-        ? acceptInsecureCerts: bool
+        ? acceptInsecureCerts: bool,
+        ? proxy: session.ProxyConfiguration
       }
       </pre>
    </dd>
@@ -2760,6 +2762,14 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
   1. [=set/Append=] |user context| to |session|'s
      [=user contexts with insecure certificates overrides=].
+
+1. If |command parameters| [=map/contains=] "<code>proxy</code>":
+
+   1. Let |proxy| be [=deserialize as a proxy=] with |command parameters|["<code>proxy</code>"].
+
+   1. Take implementation-defined steps to set the |user context|'s proxy using the
+      |proxy| proxy configuration. If the |proxy| cannot be configured return
+      [=error=] with [=error code=] [=invalid argument=].
 
 1. [=set/Append=] |user context| to the [=set of user contexts=].
 
