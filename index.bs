@@ -2656,8 +2656,12 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
       <pre class="cddl remote-cddl">
       browser.CreateUserContext = (
         method: "browser.createUserContext",
-        params: EmptyParams,
+        params: browser.CreateUserContextParameters,
       )
+
+      browser.CreateUserContextParameters = {
+        ? acceptInsecureCerts: bool
+      }
       </pre>
    </dd>
    <dt>Return Type</dt>
@@ -2670,9 +2674,26 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 
 <div algorithm="remote end steps for browser.createUserContext">
 
-The [=remote end steps=] are:
+The [=remote end steps=] with |command parameters| are:
 
 1. Let |user context| be a new [=user context=].
+
+1. If |command parameters| [=map/contain=] "<code>acceptInsecureCerts</code>":
+
+  Note: If "<code>acceptInsecureCerts</code>" is set, it overrides the
+  [=accept insecure TLS=] flag's behavior.
+
+  1. If |command parameters|["<code>acceptInsecureCerts</code>"] is true, then
+     perform implementation-defined steps to disable any certificate errors in the
+     scope of |user context|.
+
+  1. If |command parameters|["<code>acceptInsecureCerts</code>"] is false, then
+     perform implementation-defined steps to force certificate checks in the scope of
+     |user context|.
+
+  1. If |command parameters|["<code>acceptInsecureCerts</code>"] is null, then
+     perform implementation-defined steps to restore the default handling of
+     certificate errors in the scope of |user context|.
 
 1. [=set/Append=] |user context| to the [=set of user contexts=].
 
@@ -7713,63 +7734,6 @@ The [=remote end steps=] given <var ignore>session</var> and |command parameters
     1. Otherwise:
 
       1. Set [=navigable cache behavior map=][|navigable|] to |behavior|.
-
-1. Return [=success=] with data null.
-
-</div>
-
-#### The network.setAcceptInsecureCerts Command ####  {#command-network-setAcceptInsecureCerts}
-
-The <dfn export for=commands>network.setAcceptInsecureCerts</dfn> command configures
-handling of untrusted or self-signed TLS certificates.
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-    <pre class="cddl remote-cddl">
-      network.SetAcceptInsecureCerts = (
-        method: "network.setAcceptInsecureCerts",
-        params: network.SetAcceptInsecureCertsParameters
-      )
-
-      network.SetAcceptInsecureCertsParameters = {
-        userContexts: [+browser.UserContext],
-        ? acceptInsecureCerts: (bool / null) .default null,
-      }
-    </pre>
-   </dd>
-   <dt>Return Type</dt>
-   <dd>
-    <code>
-      EmptyResult
-    </code>
-   </dd>
-</dl>
-
-<div algorithm="remote end steps for network.setAcceptInsecureCerts">
-
-Note: If <code>acceptInsecureCerts</code> is set, it overrides the
-[=accept insecure TLS=] flag's behavior set via capabilities.
-
-The [=remote end steps=] given <var ignore>session</var> and |command parameters| are:
-
-1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-   with |command parameters|["<code>userContexts</code>"].
-
-1. For each |user context| of |user contexts|:
-
-
-  1. If |command parameters|["<code>acceptInsecureCerts</code>"] is true, then
-     perform implementation-defined steps to disable any certificate errors in the
-     scope of |user context|.
-
-  1. If |command parameters|["<code>acceptInsecureCerts</code>"] is false, then
-     perform implementation-defined steps to force certificate checks in the scope of
-     |user context|.
-
-  1. If |command parameters|["<code>acceptInsecureCerts</code>"] is null, then
-     perform implementation-defined steps to restore the default handling of
-     certificate errors in the scope of |user context|.
 
 1. Return [=success=] with data null.
 
