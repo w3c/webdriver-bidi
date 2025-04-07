@@ -2655,8 +2655,12 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
       <pre class="cddl remote-cddl">
       browser.CreateUserContext = (
         method: "browser.createUserContext",
-        params: EmptyParams,
+        params: browser.CreateUserContextParams,
       )
+
+      browser.CreateUserContextParams = {
+        ? unhandledPromptBehavior: session.UserPromptHandler
+      }
       </pre>
    </dd>
    <dt>Return Type</dt>
@@ -2669,9 +2673,13 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 
 <div algorithm="remote end steps for browser.createUserContext">
 
-The [=remote end steps=] are:
+The [=remote end steps=] with |command parameters| are:
 
 1. Let |user context| be a new [=user context=].
+
+1. If |command parameters| [=map/contains=] "<code>unhandledPromptBehavior</code>",
+   [=map/set=] [=unhandled prompt behavior overrides map=][|user context|] to
+   |command parameters|["<code>unhandledPromptBehavior</code>"].
 
 1. [=set/Append=] |user context| to the [=set of user contexts=].
 
@@ -3029,11 +3037,6 @@ A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map bet
 A [=remote end=] has an <dfn>unhandled prompt behavior overrides map</dfn> which is a
 weak map between [=user contexts=] and [=/map=] matching the
 <code>session.UserPromptHandlerType</code> production.
-
-A [=remote end=] has a <dfn>navigable to unhandled prompt behavior map</dfn> which is a weak map
-between [=navigables=] and and [=/map=] matching the <code>session.UserPromptHandlerType</code> production.
-
-Issue: check the wording.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -4784,10 +4787,6 @@ TODO: Move it as a hook in the html spec instead.
    1. If [=geolocation overrides map=] [=map/contains=] |user context|,
       [=set emulated position data=] with |navigable| and [=geolocation overrides map=][|user context|].
 
-   1. If [=unhandled prompt behavior overrides map=] [=map/contains=] |user context|,
-      set |navigable|'s [=navigable to unhandled prompt behavior map=][|navigable|]
-      to [=unhandled prompt behavior overrides map=][|user context|].
-
 1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
    1. If |navigable| is a [=/top-level traversable=] and the <code>viewport</code> field of
@@ -4873,75 +4872,6 @@ The [=remote end steps=] with |command parameters| are:
       1. For the |navigable| and all [=descendant navigables=]:
 
          1. [=Set device pixel ratio override=] with |navigable| and |device pixel ratio|.
-
-1. Return [=success=] with data null.
-
-</div>
-
-#### The browsingContext.setUnhandledUserPromptBehavior Command ####  {#command-browsingContext-setUnhandledUserPromptBehavior}
-
-The <dfn export for=commands>browsingContext.setUnhandledUserPromptBehavior</dfn>
-command allows closing an open prompt
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-      <pre class="cddl remote-cddl">
-      browsingContext.SetUnhandledUserPromptBehavior = (
-        method: "browsingContext.setUnhandledUserPromptBehavior",
-        params: browsingContext.SetUnhandledUserPromptBehaviorParameters
-      )
-
-      browsingContext.SetUnhandledUserPromptBehaviorParameters = {
-        unhandledPromptBehavior: session.UserPromptHandler / null,
-        ? contexts: [+browsingContext.BrowsingContext],
-        ? userContexts: [+browser.UserContext],
-      }
-      </pre>
-   </dd>
-   <dt>Result Type</dt>
-   <dd>
-      <code>
-      EmptyResult
-      </code>
-   </dd>
-</dl>
-
-<div algorithm="remote end steps for browsingContext.setUnhandledUserPromptBehavior">
-
-The [=remote end steps=] with |command parameters| are:
-
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>context</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
-1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
-1. Let |navigables| be a [=/set=].
-
-1. If the <code>contexts</code> field of |command parameters| is present:
-
-   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=] with |command parameters|["<code>contexts</code>"].
-
-1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. [=map/Set=] [=unhandled prompt behavior overrides map=][|user context|] to |command parameters|["<code>unhandledPromptBehavior</code>"].
-
-      1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]
-         whose [=associated user context=] is |user context|:
-
-         1. [=list/Append=] |top-level traversable| to |navigables|.
-
-1. For each |navigable| of |navigables|:
-
-   1. Set |navigable|'s [=navigable to unhandled prompt behavior map=][|navigable|]
-      to |command parameters|["<code>unhandledPromptBehavior</code>"].
 
 1. Return [=success=] with data null.
 
@@ -5627,16 +5557,16 @@ closed</dfn> steps given |window|, |type|, |accepted| and optional |user text|
 <div algorithm>
 To <dfn>get navigable's user prompt handler</dfn> given |type| and |navigable|:
 
-1. If [=navigable to unhandled prompt behavior map=] contains |navigable|:
+1. Let |user context| be |navigable|'s [=associated user context=].
 
-  1. Let |behavior map| be [=navigable to unhandled prompt behavior map=][|navigable|].
+1. If [=unhandled prompt behavior overrides map=] contains |user context|:
 
-  1. If |behavior map| is not null:
+  1. Let |behavior map| be [=unhandled prompt behavior overrides map=][|user context|].
 
-    1. If |behavior map| contains |type|, return |behavior map|[|type|].
+  1. If |behavior map| contains |type|, return |behavior map|[|type|].
 
-    1. If |behavior map| contains <code>"default"</code>, return
-       |behavior map|[<code>"default"</code>].
+  1. If |behavior map| contains <code>"default"</code>, return
+     |behavior map|[<code>"default"</code>].
 
 1. Let |handler configuration| be [=get the prompt handler=] with |type|.
 
