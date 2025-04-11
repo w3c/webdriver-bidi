@@ -1505,6 +1505,10 @@ time. However they are not required to remove such [=user contexts=]. [=User
 contexts=] that are not [=empty user contexts=] must not be removed from the
 [=set of user contexts=].
 
+A [=BiDi session=] has a
+<dfn>user contexts with insecure certificates overrides</dfn>, which is a [=/set=] of
+[=user contexts=].
+
 When a [=user context=] is [=set/remove|removed=] from the
 [=set of user contexts=], [=remove user context subscriptions=].
 
@@ -1607,6 +1611,14 @@ To <dfn>end the session</dfn> given |session|:
 To <dfn>cleanup the session</dfn> given |session|:
 
 1. [=Close the WebSocket connections=] with |session|.
+
+1. For each |user context| in the |session|'s
+   [=user contexts with insecure certificates overrides=]:
+
+   1. [=Override insecure certificates behavior=] with |user context| and null.
+
+   1. [=set/Remove=] |user context| from |session|'s
+      [=user contexts with insecure certificates overrides=].
 
 1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
 
@@ -2674,7 +2686,46 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 
 <div algorithm="remote end steps for browser.createUserContext">
 
-The [=remote end steps=] with |command parameters| are:
+<div algorithm>
+To <dfn>override insecure certificates behavior</dfn> given |user context| and
+|acceptInsecureCerts|:
+
+1. If |acceptInsecureCerts| is null:
+
+  Note: restore default behavior.
+
+  1. If [=remote end=]'s [=accept insecure TLS=] flag is true,
+     [=override insecure certificates behavior=] with |user context| and true.
+
+  1. Otherwise, [=override insecure certificates behavior=] with |user context| and
+     false.
+
+  1. Return.
+
+1. If |acceptInsecureCerts| is true:
+
+   1. If [=remote end=] doesn't support accepting insecure TLS connections,
+      return [=error=] with [=error code=] [=unsupported operation=].
+
+   1. Perform implementation-defined steps to disable any certificate errors in the
+      scope of |user context|. This should affect all the network requests associated
+      with the |user context|, e.g. initiated by [=/navigable=] which
+      [=associated user context=] is |user context|.
+
+   1. Return.
+
+1. Assert |acceptInsecureCerts| is false.
+
+1. Perform implementation-defined steps to enable all the required TLS certificates
+   checks for all associated with |user context| network requests. This should affect
+   all the network requests associated with the |user context|, e.g. initiated by
+   [=/navigable=] which [=associated user context=] is |user context|.
+
+TODO: mention service workers.
+
+</div>
+
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |user context| be a new [=user context=].
 
@@ -2683,17 +2734,11 @@ The [=remote end steps=] with |command parameters| are:
   Note: If "<code>acceptInsecureCerts</code>" is set, it overrides the
   [=accept insecure TLS=] flag's behavior.
 
-  1. If |command parameters|["<code>acceptInsecureCerts</code>"] is true, then
-     perform implementation-defined steps to disable any certificate errors in the
-     scope of |user context|.
+  1. [=Override insecure certificates behavior=] with |user context| and
+     |command parameters|["<code>acceptInsecureCerts</code>"].
 
-  1. If |command parameters|["<code>acceptInsecureCerts</code>"] is false, then
-     perform implementation-defined steps to force certificate checks in the scope of
-     |user context|.
-
-  1. If |command parameters|["<code>acceptInsecureCerts</code>"] is null, then
-     perform implementation-defined steps to restore the default handling of
-     certificate errors in the scope of |user context|.
+  1. [=set/Append=] |user context| to |session|'s
+     [=user contexts with insecure certificates overrides=].
 
 1. [=set/Append=] |user context| to the [=set of user contexts=].
 
