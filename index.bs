@@ -22,6 +22,9 @@ Test Suite: https://github.com/web-platform-tests/wpt/tree/master/webdriver/test
 </pre>
 
 <pre class=anchors>
+spec: RFC5280; urlPrefix: https://datatracker.ietf.org/doc/html/rfc5280
+  type: dfn
+    text: Basic Certificate Processing; url: section-6.1.3
 spec: RFC6455; urlPrefix: https://datatracker.ietf.org/doc/html/rfc6455
   type: dfn
     text: WebSocket URI; url: section-3
@@ -51,6 +54,7 @@ spec: RFC6265bis; urlPrefix: https://datatracker.ietf.org/doc/html/draft-ietf-ht
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithms
+    text: accept insecure TLS; url: dfn-accept-insecure-tls
     text: actions; url: actions
     text: actions options; url: dfn-actions-options
     text: active sessions; url: dfn-active-sessions
@@ -1503,6 +1507,10 @@ time. However they are not required to remove such [=user contexts=]. [=User
 contexts=] that are not [=empty user contexts=] must not be removed from the
 [=set of user contexts=].
 
+A [=BiDi session=] has a
+<dfn>user contexts with insecure certificates overrides</dfn>, which is a [=/set=] of
+[=user contexts=].
+
 When a [=user context=] is [=set/remove|removed=] from the
 [=set of user contexts=], [=remove user context subscriptions=].
 
@@ -1605,6 +1613,14 @@ To <dfn>end the session</dfn> given |session|:
 To <dfn>cleanup the session</dfn> given |session|:
 
 1. [=Close the WebSocket connections=] with |session|.
+
+1. For each |user context| in the |session|'s
+   [=user contexts with insecure certificates overrides=]:
+
+   1. [=Restore insecure certificates behavior=] with |user context|.
+
+   1. [=set/Remove=] |user context| from |session|'s
+      [=user contexts with insecure certificates overrides=].
 
 1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
 
@@ -2654,8 +2670,12 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
       <pre class="cddl remote-cddl">
       browser.CreateUserContext = (
         method: "browser.createUserContext",
-        params: EmptyParams,
+        params: browser.CreateUserContextParameters,
       )
+
+      browser.CreateUserContextParameters = {
+        ? acceptInsecureCerts: bool
+      }
       </pre>
    </dd>
    <dt>Return Type</dt>
@@ -2668,9 +2688,60 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 
 <div algorithm="remote end steps for browser.createUserContext">
 
-The [=remote end steps=] are:
+<div algorithm>
+To <dfn>restore insecure certificates behavior</dfn> given |user context|:
+
+1. If [=endpoint node=]'s [=accept insecure TLS=] flag is true,
+   [=override insecure certificates behavior=] with |user context| and true.
+
+1. Otherwise, [=override insecure certificates behavior=] with |user context| and
+   false.
+
+</div>
+
+<div algorithm>
+To <dfn>override insecure certificates behavior</dfn> given |user context| and
+|acceptInsecureCerts|:
+
+1. If |acceptInsecureCerts| is true:
+
+   1. If [=endpoint node=] doesn't support accepting insecure TLS connections,
+      return [=error=] with [=error code=] [=unsupported operation=].
+
+   1. Perform implementation-defined steps to skip steps 6.1.3.a and any other
+      implementation-specific validation steps of [=Basic Certificate Processing=]
+      for all network requests associated with |user context|. This should affect all
+      the network requests associated with the |user context|, e.g. initiated by
+      [=/navigables=] whose [=associated user context=] is |user context|.
+
+   1. Return.
+
+1. Assert |acceptInsecureCerts| is false.
+
+1. Perform implementation-defined steps to restore step 6.1.3.a and all other skipped
+   validation steps of [=Basic Certificate Processing=] for all network requests
+   associated with |user context|. This should affect all the network requests
+   associated with the |user context|, e.g. initiated by [=/navigables=] whose
+   [=associated user context=] is |user context|.
+
+TODO: mention service workers.
+
+</div>
+
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |user context| be a new [=user context=].
+
+1. If |command parameters| [=map/contain=] "<code>acceptInsecureCerts</code>":
+
+  Note: If "<code>acceptInsecureCerts</code>" is set, it overrides the
+  [=accept insecure TLS=] flag's behavior.
+
+  1. [=Override insecure certificates behavior=] with |user context| and
+     |command parameters|["<code>acceptInsecureCerts</code>"].
+
+  1. [=set/Append=] |user context| to |session|'s
+     [=user contexts with insecure certificates overrides=].
 
 1. [=set/Append=] |user context| to the [=set of user contexts=].
 
