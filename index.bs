@@ -5732,9 +5732,16 @@ relating to emulation of browser APIs.
 
 <pre class="cddl" data-cddl-module="remote-cddl">
 EmulationCommand = (
+  emulation.SetForcedColorsModeThemeOverride //
   emulation.SetGeolocationOverride
 )
 </pre>
+
+The <dfn>forced colors mode theme override</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn attribute for="forced colors mode theme override">theme</dfn> which is a string.
+
+A [=remote end=] has a <dfn>forced colors mode theme overrides map</dfn> which is a weak map
+between [=user contexts=] and [=forced colors mode theme override=].
 
 A <dfn>geolocation override</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn attribute for="geolocation override">latitude</dfn> which is a float;
@@ -5747,8 +5754,77 @@ A <dfn>geolocation override</dfn> is a [=struct=] with:
 
 A [=remote end=] has a <dfn>geolocation overrides map</dfn> which is a weak map between [=user contexts=] and [=geolocation override=].
 
-
 ### Commands ### {#module-emulation-commands}
+
+#### The emulation.setForcedColorsModeThemeOverride Command ####  {#command-emulation-setForcedColorsModeThemeOverride}
+
+The <dfn export for=commands>emulation.setForcedColorsModeThemeOverride</dfn> command modifies
+[=forced colors mode=] theming characteristics on the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      emulation.SetForcedColorsModeThemeOverride = (
+        method: "emulation.setForcedColorsModeThemeOverride",
+        params: emulation.SetForcedColorsModeThemeOverrideParameters
+      )
+
+      emulation.SetForcedColorsModeThemeOverrideParameters = {
+        theme: [+emulation.ForcedColorsModeAutomationTheme],
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.ForcedColorsModeAutomationTheme = "none" / "light" / "dark"
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for emulation.setForcedColorsModeThemeOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |navigables| be a [=/set=].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=] with |command parameters|["<code>contexts</code>"].
+
+1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=map/Set=] [=forced colors mode theme overrides map=][|user context|] to |command parameters|["<code>theme</code>"].
+
+      1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]
+         whose [=associated user context=] is |user context|:
+
+         1. [=list/Append=] |top-level traversable| to |navigables|.
+
+1. For each |navigable| of |navigables|:
+
+   1. [=Set emulated theme data=] with |navigable| and |command parameters|["<code>theme</code>"].
+
+1. Return [=success=] with data null.
+
+</div>
 
 #### The emulation.setGeolocationOverride Command ####  {#command-emulation-setGeolocationOverride}
 
