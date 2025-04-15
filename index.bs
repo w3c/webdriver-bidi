@@ -5144,7 +5144,7 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 1, given
 </dl>
 The [=remote end event trigger=] is:
 
-<div algorithm="remote end event trigger for browsingContext.contexDestroyed">
+<div algorithm="remote end event trigger for browsingContext.contextDestroyed">
 
 The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given |navigable|:
@@ -5158,9 +5158,6 @@ the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given |navigable|
 
 1. Let |related navigables| be a [=/set=] containing |navigable|'s [=navigable/parent=],
    if that is not null, or an empty [=/set=] otherwise.
-
-1. For each |session| in [=active BiDi sessions=], [=delete collected response bodies=]
-   with |session|, |navigable| and null.
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.contextDestroyed</code>" and |related navigables|:
@@ -5584,9 +5581,6 @@ given |navigable| and |navigation status|:
 
 1. [=Resume=] with "<code>navigation committed</code>", |navigation id|, and |navigation status|.
 
-1. For each |session| in [=active BiDi sessions=], [=delete collected response bodies=]
-   with |session|, |navigable| and |navigation id|.
-
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.navigationCommitted</code>" and |related navigables|:
 
@@ -5934,14 +5928,12 @@ A [=remote end=] has a <dfn>navigable cache behavior map</dfn> which is a weak
 map between [=/top-level traversables=] and strings representing cache
 behavior. It is initially empty.
 
-### Network Body Collection### {#network-body-collection}
+### Network Body Collection ### {#network-body-collection}
 
 A <dfn for="network">body</dfn> is a [=/struct=] consisting of
 an [=struct/item=] named <code>bytes</code>, which is a <code>network.BytesValue</code> or null,
 an [=struct/item=] named <code>cloned body</code>, which is a [=response/body=] or null,
 an [=struct/item=] named <code>collectors</code>, which is a list of <code>network.Collector</code>,
-an [=struct/item=] named <code>navigable</code>, which is a <code>browsingContext.BrowsingContext</code>,
-an [=struct/item=] named <code>navigation</code>, which is a <code>browsingContext.Navigation</code>,
 an [=struct/item=] named <code>request</code>, which is a <code>network.Request</code>,
 an [=struct/item=] named <code>size</code>, which is a js-uint or null,
 an [=struct/item=] named <code>type</code>, which is a <code>network.BodyType</code>.
@@ -5952,14 +5944,17 @@ an [=struct/item=] named <code>contexts</code>, which is a list of <code>browsin
 an [=struct/item=] named <code>body types</code>, which is a list of <code>network.BodyType</code>,
 an [=struct/item=] named <code>collector</code>, which is a <code>network.Collector</code>,
 an [=struct/item=] named <code>collector type</code>, which is a <code>network.CollectorType</code>,
-an [=struct/item=] named <code>total max size</code>, which is a js-uint,
 an [=struct/item=] named <code>user contexts</code>, which is a list of <code>browser.UserContext</code>.
 
 A [=BiDi session=] has <dfn>network collectors</dfn> which is a [=/map=] between
 <code>network.Collector</code> and a [=network/collector=]. It is initially empty.
 
-A [=BiDi session=] has <dfn>collected network bodies</dfn> which is a list of
+A [=remote end=] has <dfn>collected network bodies</dfn> which is a list of
 [=network/body|bodies=]. It is initially empty.
+
+A [=remote end=] has a <dfn>max total body size</dfn> which is an integer representing
+the size allocated to collect network bodies in [=collected network bodies=]. Its
+value is implementation-defined.
 
 <div algorithm>
 To <dfn>get navigable for request</dfn> given request:
@@ -6004,32 +5999,32 @@ To <dfn export>clone network response body</dfn> given |request| and |response b
 
 Note: This hook is intended to be triggered by the fetch spec when the response is set.
 
-1. Let |navigable| be [=get navigable for request=] with |request|.
-
 1. For each |session| in [=active BiDi sessions=]:
 
    Note: Should check for collectors matching navigable + response here already?
    Otherwise we can do it only in [=maybe collect network response body=] so that
    clients can add the collector as late as possible?
 
-   1. Let |collected body| be a struct with
+   1. If |session|'s [=network collectors=] is not [=list/empty=]:
+
+      1. Let |collected body| be a struct with
             <code>bytes</code> field set to null,
             <code>cloned body</code> field set to [=body/clone=] with |response body|,
             <code>collectors</code> field set to an empty list,
-            <code>navigable</code> field set to |navigable|'s [=navigable id=],
-            <code>navigation</code> field set to |navigable|'s [=ongoing-navigation=],
             <code>request</code> field set to |request|'s [=request id=],
             <code>size</code> field set to null,
             <code>type</code> field set to "response".
 
-   1. [=list/Append=] |collected body| to |session|'s [=collected network bodies=].
+      1. [=list/Append=] |collected body| to [=collected network bodies=].
+
+      1. Return.
 
 </div>
 
 <div algorithm>
-To <dfn>get collected body</dfn> given |session|, |request id| and |body type|.
+To <dfn>get collected body</dfn> given |request id| and |body type|.
 
-1. For |collected body| of |session|'s [=collected network bodies=]:
+1. For |collected body| of [=collected network bodies=]:
 
    1. If |collected body|'s <code>request</code> is |request id| and
       |collected body|'s <code>type</code> is |body type|, return |collected body|.
@@ -6045,6 +6040,10 @@ To <dfn>maybe collect network response body</dfn> given |session| and |request|:
 
 1. If |navigable| is null, return.
 
+NOTE: This prevents from collecting bodies not related to a navigable.
+We still need to retrieve the navigable to check against the collector
+configuration but we could still accept null here.
+
 1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
 
 1. Let |collectors| be an empty list.
@@ -6057,9 +6056,12 @@ To <dfn>maybe collect network response body</dfn> given |session| and |request|:
 
 1. If |collectors| is [=list/empty=], return.
 
-1. Let |collected body| be [=get collected body=] with |session|, |request|'s [=request id=] and "response".
+1. Let |collected body| be [=get collected body=] with |request|'s [=request id=] and "response".
 
-1. Assert |collected body| is not null.
+1. If |collected body| is null, return.
+
+Note: This might happen if there are no collectors setup when the response is created,
+and [=clone network response body=] does not clone the corresponding body.
 
 1. Let |bytes| be null.
 
@@ -6083,15 +6085,12 @@ To <dfn>maybe collect network response body</dfn> given |session| and |request|:
 
 1. For |collector| in |collectors|:
 
-   1. If |size| is greater than |collector|'s <code>max body size</code>, remove |collector| from |collectors|.
+   1. If |size| is less than or equal to |collector|'s <code>max body size</code>,
+      [=list/Append=] |collector|'s <code>collector</code> to |collected body|'s <code>collectors</code>.
 
-1. If |collectors| is [=list/empty=], return.
+1. If |collected body|'s <code>collectors</code> is [=list/empty=], return.
 
-1. For |collector| in |collectors|:
-
-   1. [=Allocate size to record body=] given |session|, |navigable|, |collector| and |size|.
-
-   1. [=list/Append=] |collector|'s <code>collector</code> to |collected body|'s <code>collectors</code>
+1. [=Allocate size to record body=] given |size|.
 
 1. Set |collected body|'s <code>bytes</code> to |bytes|.
 
@@ -6100,20 +6099,13 @@ To <dfn>maybe collect network response body</dfn> given |session| and |request|:
 </div>
 
 <div algorithm>
-To <dfn>allocate size to record body</dfn> given |session|, |navigable|,
-|collector| and |size|:
+To <dfn>allocate size to record body</dfn> given |size|:
 
-1. Let |available size| be |collector|'s <code>max total size</code>.
+1. Let |available size| be [=max total body size=].
 
 1. Let |already collected bodies| be an empty list.
 
-1. For each |collected body| in |session|'s [=collected network bodies=]:
-
-   1. If |collected body|'s <code>navigable</code> is not |navigable|'s
-      [=navigable id=], continue.
-
-   1. If |collected body|'s <code>collectors</code> does not [=list/contain=]
-      |collector|'s <code>collector</code>, continue.
+1. For each |collected body| in [=collected network bodies=] in order:
 
    1. If |collected body|'s <code>bytes</code> is not null:
 
@@ -6123,40 +6115,15 @@ To <dfn>allocate size to record body</dfn> given |session|, |navigable|,
 
 1. If |size| is greater than |available size|:
 
-   1. For each |collected body| in |already collected bodies|'s in order:
+   1. For each |collected body| in |already collected bodies| in order:
 
       1. Increase |available size| by |collected body|'s <code>size</code>.
 
-      1. [=list/Remove=] |collector|'s <code>collector</code> from |collected body|'s
-         <code>collectors</code>.
+      1. Set |collected body|'s <code>bytes</code> field to null.
 
-      1. If |collected body|'s <code>collectors</code> is [=list/empty=]:
-
-         1. Set |collected body|'s <code>bytes</code> field to null.
-
-         1. Set |collected body|'s <code>size</code> field to null.
+      1. Set |collected body|'s <code>size</code> field to null.
 
       1. If |available size| is greater than or equal to |size|, return.
-
-</div>
-
-<div algorithm>
-To <dfn>delete collected response bodies</dfn> given |session|, |navigable| and
-|current navigation|:
-
-1. For each |collected body| in |session|'s [=collected network bodies=]:
-
-  1. Let |navigation| be |collected body|'s <code>navigation</code>
-     field.
-
-  1. Let |navigable id| be |collected body|'s <code>navigable</code>
-     field.
-
-  1. If |navigable id| is not |navigable|'s [=navigable id=], continue.
-
-  1. If |current navigation| is not null and |current navigation| is |navigation|, continue.
-
-  1. Set |collected body|'s <code>bytes</code> field to null.
 
 </div>
 
@@ -7549,11 +7516,10 @@ The <dfn export for=commands>network.addBodyCollector</dfn> adds a
       )
 
       network.AddBodyCollectorParameters = {
-        ? contexts: [+browsingContext.BrowsingContext],
         bodyMaxSize: js-uint,
         bodyTypes: [+network.BodyType],
         collectorType: network.collectorType,
-        totalMaxSize: js-uint,
+        ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
       }
     </pre>
@@ -7583,14 +7549,14 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |collector type| be |command parameters|
    ["<code>collectorType</code>"].
 
-1. Let |total max size| be |command parameters|
-   ["<code>totalMaxSize</code>"].
-
 1. Let |input user context ids| be [=set/create|create a set=] with
    |command parameters|[<code>userContexts</code>].
 
 1. If |input user context ids| is not empty and |input context ids| is not
    empty, return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |body max size| is greater than [=max total body size=],
+   return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |input context ids| is not [=set/empty=]:
 
@@ -7616,8 +7582,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
    <code>collector</code> field set to |collector id|,
    <code>collector type</code> field set to |collector type|,
    <code>contexts</code> field set to |input context ids|,
-   <code>user contexts</code> field set to |input user context ids|,
-   <code>total max size</code> field set to |total max size|.
+   <code>user contexts</code> field set to |input user context ids|.
 
 1. Set |session|'s [=network collectors=][|collector id|] to |collector|.
 
@@ -7970,6 +7935,70 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
+#### The network.disownBody Command ####  {#command-network-disownBody}
+
+The <dfn export for=commands>network.disownBody</dfn> command releases a
+collected network body for a given [=network/collector=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      network.DisownBody = (
+        method: "network.disownBody",
+        params: network.disownBodyParameters
+      )
+
+      network.disownBodyParameters = {
+        bodyType: network.BodyType,
+        collector: network.Collector,
+        request: network.Request,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <code>
+      EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.disownBody">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |body type| be the value of the "<code>bodyType</code>" field in |command
+   parameters|.
+
+1. Let |collector id| be the value of the "<code>collector</code>" field in |command
+   parameters|.
+
+1. Let |request id| be the value of the "<code>request</code>" field in |command
+   parameters|.
+
+1. Let |collectors| be |session|'s [=network collectors=].
+
+1. If |collectors| does not [=map/contain=] |collector id|, return
+   [=error=] with [=error code=] [=no such collector=].
+
+1. Let |collected body| be [=get collected body=] with |request id| and |body type|.
+
+1. If |collected body| is null, return [=error=] with [=error code=] [=no such network body=].
+
+1. If |collected body|'s <code>collectors</code> [=list/contains=] |collector id|:
+
+   1. [=list/Remove=] |collector id| from |collected body|'s <code>collectors</code>.
+
+   1. If |collected body|'s <code>collectors</code> is [=list/empty=]:
+
+      1. Set |collected body|'s <code>bytes</code> field to null.
+
+      1. Set |collected body|'s <code>size</code> field to null.
+
+1. Return [=success=] with data [=null=].
+
+</div>
+
 #### The network.failRequest Command ####  {#command-network-failRequest}
 
 The <dfn export for=commands>network.failRequest</dfn> command fails a
@@ -8040,7 +8069,7 @@ network body data if it is available.
 
       network.GetNetworkBodyParameters = {
         bodyType: network.BodyType,
-        collector: network.Collector,
+        ?collector: network.Collector,
         request: network.Request,
       }
       </pre>
@@ -8060,28 +8089,27 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |body type| be |command parameters|["<code>bodyType</code>"].
 
-1. Let |collector id| be |command parameters|["<code>collector</code>"].
-
 1. Let |request id| be |command parameters|["<code>request</code>"].
 
-1. Let |collectors| be |session|'s [=network collectors=].
+1. Let |collector id| be null.
 
-1. If |collectors| does not [=map/contain=] |collector id|, return
-   [=error=] with [=error code=] [=no such collector=].
+1. If |command parameters| [=map/contains=] "<code>collector</code>":
 
-1. Let |collector| be |session|'s [=network collectors=]["<code>collector id</code>"].
+   1. Let |collectors| be |session|'s [=network collectors=].
 
-1. If |collector|'s <code>collector type</code> is not "blob",
-   return error with [=error code=] [=unsupported operation=].
+   1. If |collectors| does not [=map/contain=] |collector id|, return
+      [=error=] with [=error code=] [=no such collector=].
 
-1. Let |collected body| be [=get collected body=] given |session|, |request id| and |body type|.
+   1. Set |collector id| to |command parameters|["<code>collector</code>"].
+
+1. Let |collected body| be [=get collected body=] given |request id| and |body type|.
 
 1. If |collected body| is null:
 
    1. Return [=error=] with [=error code=] [=no such network body=].
 
-1. If |collected body|'s <code>collectors</code> does not [=list/contain=]
-   |collector|:
+1. If |collector id| is not null and if |collected body|'s <code>collectors</code>
+   does not [=list/contain=] |collector id|:
 
    1. Return [=error=] with [=error code=] [=no such network body=].
 
@@ -8157,70 +8185,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
-#### The network.releaseBody Command ####  {#command-network-releaseBody}
-
-The <dfn export for=commands>network.releaseBody</dfn> command releases a
-collected network body for a given [=network/collector=].
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-    <pre class="cddl remote-cddl">
-      network.ReleaseBody = (
-        method: "network.releaseBody",
-        params: network.releaseBodyParameters
-      )
-
-      network.releaseBodyParameters = {
-        bodyType: network.BodyType,
-        collector: network.Collector,
-        request: network.Request,
-      }
-    </pre>
-   </dd>
-   <dt>Return Type</dt>
-   <dd>
-    <code>
-      EmptyResult
-    </code>
-   </dd>
-</dl>
-
-<div algorithm="remote end steps for network.releaseBody">
-The [=remote end steps=] given |session| and |command parameters| are:
-
-1. Let |body type| be the value of the "<code>bodyType</code>" field in |command
-   parameters|.
-
-1. Let |collector id| be the value of the "<code>collector</code>" field in |command
-   parameters|.
-
-1. Let |request id| be the value of the "<code>request</code>" field in |command
-   parameters|.
-
-1. Let |collectors| be |session|'s [=network collectors=].
-
-1. If |collectors| does not [=map/contain=] |collector id|, return
-   [=error=] with [=error code=] [=no such collector=].
-
-1. Let |collected body| be [=get collected body=] with |session|, |request id| and |body type|.
-
-1. If |collected body| is null, return [=error=] with [=error code=] [=no such network body=].
-
-1. If |collected body|'s <code>collectors</code> [=list/contains=] |collector id|:
-
-   1. [=list/Remove=] |collector id| from |collected body|'s <code>collectors</code>.
-
-   1. If |collected body|'s <code>collectors</code> is [=list/empty=]:
-
-      1. Set |collected body|'s <code>bytes</code> field to null.
-
-      1. Set |collected body|'s <code>size</code> field to null.
-
-1. Return [=success=] with data [=null=].
-
-</div>
-
 #### The network.removeBodyCollector Command ####  {#command-network-removeBodyCollector}
 
 The <dfn export for=commands>network.removeBodyCollector</dfn> command removes a
@@ -8261,7 +8225,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. [=map/Remove=] |collector id| from |session|'s [=network collectors=].
 
-1. For |collected body| in |session|'s [=collected network bodies=]:
+1. For |collected body| in [=collected network bodies=]:
 
    1. If |collected body|'s <code>collectors</code> [=list/contains=] |collector id|:
 
@@ -8776,6 +8740,8 @@ completed</dfn> steps given |request| and |response|:
    [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
+1. [=Maybe collect network response body=] with and |request|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>network.responseCompleted</code>" and |related navigables|:
 
@@ -8790,8 +8756,6 @@ completed</dfn> steps given |request| and |response|:
 
   1. Assert: |params| matches the <code>network.ResponseCompletedParameters</code>
      production.
-
-  1. [=Maybe collect network response body=] with |session| and |request|.
 
   1. Let |body| be a map matching the <code>network.ResponseCompleted</code>
      production, with the <code>params</code> field set to |params|.
