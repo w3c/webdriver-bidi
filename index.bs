@@ -5623,7 +5623,8 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
       )
 
       emulation.SetGeolocationOverrideParameters = {
-        coordinates: emulation.GeolocationCoordinates / null,
+        ? coordinates: emulation.GeolocationCoordinates / null,
+        ? error: emulation.GeolocationPositionError / null,
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
       }
@@ -5636,6 +5637,11 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
          ? altitudeAccuracy: (float .ge 0.0) / null .default null,
          ? heading: (0.0...360.0) / null .default null,
          ? speed: (float .ge 0.0) / null .default null,
+      }
+
+      emulation.GeolocationPositionError = {
+         code: js-uint,
+         message: text
       }
     </pre>
    </dd>
@@ -5651,9 +5657,24 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
 
 The [=remote end steps=] with |command parameters| are:
 
-1. If |command parameters| [=map/contains=] "<code>altitudeAccuracy</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>altitude</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
+1. If |command parameters| [=map/contains=] "<code>coordinates</code>"
+   and |command parameters| [=map/contains=] "<code>error</code>", return [=error=]
+   with [=error code=] [=invalid argument=].
+
+1. If |command parameters| [=map/contains=] "<code>coordinates</code>" and
+   |command parameters|["<code>coordinates</code>"] [=map/contains=]
+   "<code>altitudeAccuracy</code>" and
+   |command parameters|["<code>coordinates</code>"] doesn't [=map/contain=]
+   "<code>altitude</code>", return [=error=] with [=error code=]
+   [=invalid argument=].
+
+1. If |command parameters| [=map/contains=] "<code>coordinates</code>", let
+   |emulated position data| be |command parameters|["<code>coordinates</code>"].
+
+1. Otherwise, let |emulated position data| be |command parameters|["<code>error</code>"].
+
+Note: Setting either the <code>coordinates</code> parameter or the <code>error</code>
+parameter to <code>null</code> removes the geolocation override.
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
    and |command parameters| [=map/contains=] "<code>context</code>",
@@ -5675,7 +5696,7 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=geolocation overrides map=][|user context|] to |command parameters|["<code>coordinates</code>"].
+      1. [=map/Set=] [=geolocation overrides map=][|user context|] to |emulated position data|.
 
       1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]
          whose [=associated user context=] is |user context|:
@@ -5684,7 +5705,7 @@ The [=remote end steps=] with |command parameters| are:
 
 1. For each |navigable| of |navigables|:
 
-   1. [=Set emulated position data=] with |navigable| and |command parameters|["<code>coordinates</code>"].
+   1. [=Set emulated position data=] with |navigable| and |emulated position data|.
 
 1. Return [=success=] with data null.
 
