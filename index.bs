@@ -182,6 +182,7 @@ spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
     text: height dimension; url: rectangle-height-dimension
 spec: GEOLOCATION; urlPrefix: https://www.w3.org/TR/geolocation/
   type: dfn
+    text: POSITION_UNAVAILABLE; url: #dom-geolocationpositionerror-position_unavailable
     text: set emulated position data; url: #dfn-set-emulated-position-data
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
@@ -5624,7 +5625,7 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
 
       emulation.SetGeolocationOverrideParameters = {
         ? coordinates: emulation.GeolocationCoordinates / null,
-        ? error: emulation.GeolocationPositionError / null,
+        ? error: emulation.GeolocationPositionError,
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
       }
@@ -5640,8 +5641,7 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
       }
 
       emulation.GeolocationPositionError = {
-         code: js-uint,
-         message: text
+         type: "positionUnavailable"
       }
     </pre>
    </dd>
@@ -5672,13 +5672,16 @@ The [=remote end steps=] with |command parameters| are:
    "<code>altitude</code>", return [=error=] with [=error code=]
    [=invalid argument=].
 
-1. If |command parameters| [=map/contains=] "<code>coordinates</code>", let
-   |emulated position data| be |command parameters|["<code>coordinates</code>"].
+1. If |command parameters| [=map/contains=] "<code>error</code>":
 
-1. Otherwise, let |emulated position data| be |command parameters|["<code>error</code>"].
+   1. Assert |command parameters|["<code>error</code>"]["<code>type</code>"] equals
+      "<code>positionUnavailable</code>".
 
-Note: Setting either the <code>coordinates</code> parameter or the <code>error</code>
-parameter to <code>null</code> removes the geolocation override.
+   1. Let |emulated position data| be a [=/map=] with value of
+      «"code" → [=POSITION_UNAVAILABLE=], "message" → ""».
+
+1. Otherwise, let |emulated position data| be
+   |command parameters|["<code>coordinates</code>"].
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
    and |command parameters| [=map/contains=] "<code>context</code>",
