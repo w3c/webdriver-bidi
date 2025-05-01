@@ -2656,8 +2656,12 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
       <pre class="cddl remote-cddl">
       browser.CreateUserContext = (
         method: "browser.createUserContext",
-        params: EmptyParams,
+        params: browser.CreateUserContextParams,
       )
+
+      browser.CreateUserContextParams = {
+        ? proxy: session.ProxyConfiguration
+      }
       </pre>
    </dd>
    <dt>Return Type</dt>
@@ -2670,9 +2674,18 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 
 <div algorithm="remote end steps for browser.createUserContext">
 
-The [=remote end steps=] are:
+The [=remote end steps=] with |command parameters| are:
 
 1. Let |user context| be a new [=user context=].
+
+1. If |command parameters| [=map/contains=] "<code>proxy</code>":
+
+   1. Let |proxy configuration| be |command parameters|["<code>proxy</code>"].
+
+   1. Take implementation-defined steps to ensure that requests originating from the
+      |user context| use the proxy defined by the |proxy configuration|. If the
+      defined proxy cannot be configured return [=error=] with [=error code=]
+      [=invalid argument=].
 
 1. [=set/Append=] |user context| to the [=set of user contexts=].
 
