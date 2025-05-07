@@ -2690,6 +2690,22 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 <div algorithm="remote end steps for browser.createUserContext">
 
 <div algorithm>
+A <dfn>request originates in user context</dfn> given |request| and |user context|
+are:
+
+1. Let |settings| be |request|'s [=request/client=].
+
+1. Let |related navigables| be [=get related navigables=] with |settings|.
+
+1. For |navigable| in |related navigables|:
+
+  1. If |navigable|'s [=associated user context=] is |user context| return true.
+
+1. Return false.
+
+</div>
+
+<div algorithm>
 To <dfn>restore insecure certificates behavior</dfn> given |user context|:
 
 1. If [=endpoint node=]'s [=accept insecure TLS=] flag is true,
@@ -2709,23 +2725,21 @@ To <dfn>override insecure certificates behavior</dfn> given |user context| and
    1. If [=endpoint node=] doesn't support accepting insecure TLS connections,
       return [=error=] with [=error code=] [=unsupported operation=].
 
-   1. Perform implementation-defined steps to skip steps 6.1.3.a and any other
-      implementation-specific validation steps of [=Basic Certificate Processing=]
-      for all network requests associated with |user context|. This should affect all
-      the network requests associated with the |user context|, e.g. initiated by
-      [=/navigables=] whose [=associated user context=] is |user context|.
+   1. For any network request |request| for which the
+      [=request originates in user context=] steps with |request| and |user context|
+      return true, when running the [=Basic Certificate Processing=] steps for that
+      request, skip step a, along with any other implementation-specific certificate
+      validation steps.
 
    1. Return.
 
 1. Assert |acceptInsecureCerts| is false.
 
-1. Perform implementation-defined steps to restore step 6.1.3.a and all other skipped
-   validation steps of [=Basic Certificate Processing=] for all network requests
-   associated with |user context|. This should affect all the network requests
-   associated with the |user context|, e.g. initiated by [=/navigables=] whose
-   [=associated user context=] is |user context|.
-
-TODO: mention service workers.
+1. For any network request |request| for which the
+   [=request originates in user context=] steps with |request| and |user context|
+   return true, when running the [=Basic Certificate Processing=] steps for that
+   request, the step a, along with any other implementation-specific certificate
+   validation steps, must not be skipped.
 
 </div>
 
