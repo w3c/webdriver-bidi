@@ -8498,10 +8498,10 @@ script.LocalValue = (
   script.PrimitiveProtocolValue /
   script.ChannelValue /
   script.ArrayLocalValue /
-  script.DateLocalValue /
+  { script.DateLocalValue } /
   script.MapLocalValue /
   script.ObjectLocalValue /
-  script.RegExpLocalValue /
+  { script.RegExpLocalValue } /
   script.SetLocalValue
 )
 
@@ -8512,10 +8512,10 @@ script.ArrayLocalValue = {
   value: script.ListLocalValue,
 }
 
-script.DateLocalValue = {
+script.DateLocalValue = (
   type: "date",
   value: text
-}
+)
 
 script.MappingLocalValue = [*[(script.LocalValue / text), script.LocalValue]];
 
@@ -8534,10 +8534,10 @@ script.RegExpValue = {
   ? flags: text,
 }
 
-script.RegExpLocalValue = {
+script.RegExpLocalValue = (
   type: "regexp",
   value: script.RegExpValue,
-}
+)
 
 script.SetLocalValue = {
   type: "set",
@@ -9291,14 +9291,16 @@ script.FunctionRemoteValue = {
 }
 
 script.RegExpRemoteValue = {
+  script.RegExpLocalValue,
   ? handle: script.Handle,
   ? internalId: script.InternalId,
-} .and script.RegExpLocalValue
+}
 
 script.DateRemoteValue = {
+  script.DateLocalValue,
   ? handle: script.Handle,
   ? internalId: script.InternalId,
-} .and script.DateLocalValue
+}
 
 script.MapRemoteValue = {
   type: "map",
