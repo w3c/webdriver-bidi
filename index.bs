@@ -1514,6 +1514,9 @@ A [=BiDi session=] has a
 <dfn>user context to accept insecure certificates override map</dfn>, which is a
 [=/map=] between [=user contexts=] and boolean.
 
+A [=BiDi session=] has a <dfn>user context to proxy configuration map</dfn>, which is
+a [=/map=] between [=user contexts=] and [=proxy configuration=].
+
 When a [=user context=] is [=set/remove|removed=] from the
 [=set of user contexts=], [=remove user context subscriptions=].
 
@@ -1621,6 +1624,9 @@ To <dfn>cleanup the session</dfn> given |session|:
 
    1. [=map/Remove=] |session|'s
       [=user context to accept insecure certificates override map=][|user context|].
+
+   1. [=map/Remove=] |session|'s
+      [=user context to proxy configuration map=][|user context|].
 
 1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
 
@@ -2713,10 +2719,12 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
    1. Let |proxy configuration| be |command parameters|["<code>proxy</code>"].
 
-   1. Take implementation-defined steps to ensure that requests originating from the
-      |user context| use the proxy defined by the |proxy configuration|. If the
-      defined proxy cannot be configured return [=error=] with [=error code=]
-      [=invalid argument=].
+   1. If the |proxy configuration| cannot be configured return [=error=] with
+      [=error code=] [=invalid argument=].
+
+   1. [=map/Set=] |session|'s
+      [=user context to proxy configuration map=][|user context|]
+      to |proxy configuration|.
 
 1. [=set/Append=] |user context| to the [=set of user contexts=].
 
@@ -7937,6 +7945,20 @@ request sent</dfn> steps given |request|:
             1. Otherwise, when running the [=Basic Certificate Processing=] steps
                for |request|, perform all steps along with any implementation-defined
                certificate validation steps.
+
+         Note: |user context| can be in not more then one
+         [=user context to proxy configuration map=].
+
+         1. If |session|'s [=user context to proxy configuration map=]
+            [=set/contains|contain=] |user context|:
+
+            1. Let |proxy configuration| be |session|'s
+               [=user context to proxy configuration map=][|user context|].
+
+            1. Assert |proxy configuration| can be configured.
+
+            1. Take implementation-defined steps to ensure that |request| uses
+               the proxy defined by the |proxy configuration|.
 
 1. If [=before request sent map=] does not contain |request|, set [=before
    request sent map=][|request|] to a new set.
