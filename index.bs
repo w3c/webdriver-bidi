@@ -1514,9 +1514,6 @@ A [=BiDi session=] has a
 <dfn>user context to accept insecure certificates override map</dfn>, which is a
 [=/map=] between [=user contexts=] and boolean.
 
-A [=BiDi session=] has a <dfn>user context to proxy configuration map</dfn>, which is
-a [=/map=] between [=user contexts=] and [=proxy configuration=].
-
 When a [=user context=] is [=set/remove|removed=] from the
 [=set of user contexts=], [=remove user context subscriptions=].
 
@@ -1624,9 +1621,6 @@ To <dfn>cleanup the session</dfn> given |session|:
 
    1. [=map/Remove=] |session|'s
       [=user context to accept insecure certificates override map=][|user context|].
-
-   1. [=map/Remove=] |session|'s
-      [=user context to proxy configuration map=][|user context|].
 
 1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
 
@@ -2680,8 +2674,7 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
       )
 
       browser.CreateUserContextParameters = {
-        ? acceptInsecureCerts: bool,
-        ? proxy: session.ProxyConfiguration
+        ? acceptInsecureCerts: bool
       }
       </pre>
    </dd>
@@ -2714,17 +2707,6 @@ The [=remote end steps=] with |session| and |command parameters| are:
    1. [=map/Set=] |session|'s
       [=user context to accept insecure certificates override map=][|user context|]
       to |acceptInsecureCerts|.
-
-1. If |command parameters| [=map/contains=] "<code>proxy</code>":
-
-   1. Let |proxy configuration| be |command parameters|["<code>proxy</code>"].
-
-   1. If the |proxy configuration| cannot be configured return [=error=] with
-      [=error code=] [=invalid argument=].
-
-   1. [=map/Set=] |session|'s
-      [=user context to proxy configuration map=][|user context|]
-      to |proxy configuration|.
 
 1. [=set/Append=] |user context| to the [=set of user contexts=].
 
@@ -7910,18 +7892,19 @@ and |user context| are:
   1. If |navigable|'s [=associated user context=] is |user context| return true.
 
 1. Return false.
+
 </div>
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi before
 request sent</dfn> steps given |request|:
 
-1. For each |session| in [=active BiDI sessions=]
+1. For each |user context| in the [=set of user contexts=]:
 
-   1. For each |user context| in the [=set of user contexts=]:
+   1. If  [=request originates in user context=] steps with |request| and
+      |user context| return true:
 
-      1. If  [=request originates in user context=] steps with |request| and
-         |user context| return true:
+      1. For each |session| in [=active BiDI sessions=]
 
          Note: |user context| can be in not more then one
          [=user context to accept insecure certificates override map=].
@@ -7945,20 +7928,6 @@ request sent</dfn> steps given |request|:
                for the |request|, the step a, along with any other
                implementation-defined certificate validation steps, must not be
                skipped.
-
-         Note: |user context| can be in not more then one
-         [=user context to proxy configuration map=].
-
-         1. If |session|'s [=user context to proxy configuration map=]
-            [=set/contains|contain=] |user context|:
-
-            1. Let |proxy configuration| be |session|'s
-               [=user context to proxy configuration map=][|user context|].
-
-            1. Assert |proxy configuration| can be configured.
-
-            1. Take implementation-defined steps to ensure that |request| uses
-               the proxy defined by the |proxy configuration|.
 
 1. If [=before request sent map=] does not contain |request|, set [=before
    request sent map=][|request|] to a new set.
