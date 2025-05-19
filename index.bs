@@ -5428,7 +5428,7 @@ started</dfn> steps given |navigable| and |navigation status|:
 
         browsingContext.DownloadFinishedParams = {
           status: browsingContext.DownloadFinishedStatus
-          ? filepath: text,
+          ? filepath: text / null,
           browsingContext.BaseNavigationInfo
         }
       </pre>
@@ -5439,30 +5439,38 @@ started</dfn> steps given |navigable| and |navigation status|:
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download finished</dfn>
 steps given |navigable| and |navigation status|:
 
- 1. Let |navigation info| be the result of [=get the navigation info=] given |navigable| and
-    |navigation status|.
+1. Let |navigation info| be the result of [=get the navigation info=] given
+   |navigable| and |navigation status|.
 
-1. Let |params| be a [=/map=] matching the <code>browsingContext.DownloadFinishedParams</code>
-   production, with the <code>context</code> field set to |navigation info|["<code>context</code>"],
-   the <code>navigation</code> field set to |navigation info|["<code>navigation</code>"], the
-   <code>timestamp</code> field set to |navigation info|["<code>timestamp</code>"], the
-   <code>url</code> field set to |navigation info|["<code>url</code>"], the
-   <code>status</code> field set to |navigation info|["<code>status</code>"], and
-   <code>filepath</code> field set to |navigation status|'s
+1. Assert |navigation info|["<code>status</code>"] is not "<code>pending</code>".
+
+1. Let |params| be a [=/map=] matching the
+   <code>browsingContext.DownloadFinishedParams</code> production, with the
+   <code>status</code> field set to |navigation info|["<code>status</code>"], the <code>context</code> field set to
+   |navigation info|["<code>context</code>"], the <code>navigation</code> field set
+   to |navigation info|["<code>navigation</code>"], the <code>timestamp</code> field
+   set to |navigation info|["<code>timestamp</code>"], and the <code>url</code> field
+   set to |navigation info|["<code>url</code>"].
+
+1. If |navigation info|["<code>status</code>"] is "<code>complete</code>", set
+   |params|["<code>filepath</code>"] to |navigation status|'s
    <code>downloadedFilepath</code>.
 
- 1. Let |body| be a [=/map=] matching the
-     <code>browsingContext.DownloadFinished</code> production, with the
-     <code>params</code> field set to |params|.
+   Note: <code>downloadedFilepath</code> can be null for completed download if the
+   file is not available for whatever reason.
 
- 1. Let |navigation id| be |navigation status|'s id.
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.DownloadFinished</code> production, with the
+   <code>params</code> field set to |params|.
 
- 1. Let |related navigables| be a [=/set=] containing |navigable|.
+1. Let |navigation id| be |navigation status|'s id.
 
- 1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
- 1. For each |session| in the [=set of sessions for which an event is enabled=]
-    given "<code>browsingContext.downloadFinished</code>" and |related navigables|:
+1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.downloadFinished</code>" and |related navigables|:
 
    1. [=Emit an event=] with |session| and |body|.
 
