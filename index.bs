@@ -5424,10 +5424,18 @@ started</dfn> steps given |navigable| and |navigation status|:
          params: browsingContext.DownloadFinishedParams
         )
 
-        browsingContext.DownloadFinishedStatus = "canceled" / "complete"
+        browsingContext.DownloadFinishedParams = (
+          browsingContext.DownloadCanceledParams //
+          browsingContext.DownloadCompleteParams //
+        )
 
-        browsingContext.DownloadFinishedParams = {
-          status: browsingContext.DownloadFinishedStatus
+        browsingContext.DownloadCanceledParams = {
+          status: "canceled"
+          browsingContext.BaseNavigationInfo
+        }
+
+        browsingContext.DownloadCompleteParams = {
+          status: "complete"
           ? filepath: text / null,
           browsingContext.BaseNavigationInfo
         }
@@ -5442,22 +5450,30 @@ steps given |navigable| and |navigation status|:
 1. Let |navigation info| be the result of [=get the navigation info=] given
    |navigable| and |navigation status|.
 
-1. Assert |navigation info|["<code>status</code>"] is not "<code>pending</code>".
-
-1. Let |params| be a [=/map=] matching the
-   <code>browsingContext.DownloadFinishedParams</code> production, with the
-   <code>status</code> field set to |navigation info|["<code>status</code>"], the <code>context</code> field set to
-   |navigation info|["<code>context</code>"], the <code>navigation</code> field set
-   to |navigation info|["<code>navigation</code>"], the <code>timestamp</code> field
-   set to |navigation info|["<code>timestamp</code>"], and the <code>url</code> field
-   set to |navigation info|["<code>url</code>"].
-
-1. If |navigation info|["<code>status</code>"] is "<code>complete</code>", set
-   |params|["<code>filepath</code>"] to |navigation status|'s
-   <code>downloadedFilepath</code>.
+1. Assert |navigation info|["<code>status</code>"] is "<code>complete</code>" or
+   "<code>canceled</code>".
 
    Note: <code>downloadedFilepath</code> can be null for completed download if the
-   file is not available for whatever reason.
+   filepath is not available for whatever reason.
+
+1. If |navigation info|["<code>status</code>"] is "<code>complete</code>", let
+   |params| be a [=/map=] matching the
+   <code>browsingContext.DownloadCompleteParams</code> production, with the
+   <code>filepath</code> field set to
+   |navigation info|["<code>downloadedFilepath</code>"], the <code>context</code>
+   field set to |navigation info|["<code>context</code>"], the
+   <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
+   the <code>timestamp</code> field set to
+   |navigation info|["<code>timestamp</code>"], and the <code>url</code> field set to
+   |navigation info|["<code>url</code>"].
+
+1. Otherwise, let |params| be a [=/map=] matching the
+   <code>browsingContext.DownloadCanceledParams</code> production, with the
+   <code>context</code> field set to |navigation info|["<code>context</code>"], the
+   <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
+   the <code>timestamp</code> field set to
+   |navigation info|["<code>timestamp</code>"], and the <code>url</code> field set to
+   |navigation info|["<code>url</code>"].
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.DownloadFinished</code> production, with the
