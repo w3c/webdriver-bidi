@@ -5782,8 +5782,8 @@ A <dfn>geolocation override</dfn> is a [=struct=] with:
 A [=remote end=] has a <dfn>geolocation overrides map</dfn> which is a weak map between [=user contexts=] and [=geolocation override=].
 
 A [=remote end=] has a <dfn>orientation overrides map</dfn> which is a weak map
-between [=user contexts=] and <code>emulation.OrientationAngel</code>.
-
+between [=user contexts=] and [=/map=] matching the
+<code>emulation.Orientation</code>.
 
 ### Commands ### {#module-emulation-commands}
 
@@ -5906,10 +5906,22 @@ changes in [=ScreenOrientation=] of the given top-level traversables or user con
         params: emulation.SetOrientationOverrideParameters
       )
 
-      emulation.Orientation = (0, 90, 180, 270)
+      emulation.OrientationAngel = (0, 90, 180, 270)
+
+      emulation.OrientationType = (
+          "portrait-primary",
+          "portrait-secondary",
+          "landscape-primary",
+          "landscape-secondary"
+      )
+
+      emulation.Orientation = {
+        angel: emulation.OrientationAngel,
+        type: emulation.OrientationType
+      }
 
       emulation.SetOrientationOverrideParameters = {
-        orientation: emulation.Orientation,
+        orientation: emulation.Orientation / null,
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
       }
@@ -5925,22 +5937,25 @@ changes in [=ScreenOrientation=] of the given top-level traversables or user con
 
 <div algorithm>
 
-To <dfn>set emulated orientation</dfn> given |top-level navigable|,
-|orientation angel| and |orientation type|:
+To <dfn>set emulated orientation</dfn> given |emulated orientation|:
 
 Issue: Move this algorithm to screen orientation specification.
 
-1. If |orientation angel| is not null, set [=current orientation angle=] to
-   |orientation angel|.
+1. If |emulated orientation| is null:
 
-1. Otherwise, set |top-level navigable|'s [=current orientation angle=] to
-   implementation-defined default.
+   1. Set |top-level navigable|'s [=current orientation angle=] to
+      implementation-defined default.
 
-1. If |orientation type| is null, set [=current orientation type=] to
-   |orientation type|.
+   1. Set |top-level navigable|'s [=current orientation type=] to
+      implementation-defined default.
 
-1. Otherwise, set |top-level navigable|'s [=current orientation type=] to
-   implementation-defined default.
+1. Otherwise:
+
+   1. Set [=current orientation angle=] to
+      |emulated orientation|["<code>orientationAngel</code>"].
+
+   1. Set [=current orientation type=] to
+      |emulated orientation|["<code>orientationType</code>"].
 
 1. Run the [=screen orientation change steps=] with the |top-level navigable|'s
    [=active document=].
