@@ -4864,9 +4864,9 @@ TODO: Move it as a hook in the html spec instead.
    1. If [=geolocation overrides map=] [=map/contains=] |user context|,
       [=set emulated position data=] with |navigable| and [=geolocation overrides map=][|user context|].
 
-   1. If [=orientation overrides map=] [=map/contains=] |user context|,
-      [=set emulated orientation=] with |navigable| and
-      [=orientation overrides map=][|user context|].
+   1. If [=screen orientation overrides map=] [=map/contains=] |user context|,
+      [=set emulated screen orientation=] with |navigable| and
+      [=screen orientation overrides map=][|user context|].
 
 1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
@@ -5767,7 +5767,7 @@ relating to emulation of browser APIs.
 <pre class="cddl" data-cddl-module="remote-cddl">
 EmulationCommand = (
   emulation.SetGeolocationOverride //
-  emulation.SetOrientationOverride
+  emulation.SetScreenOrientationOverride
 )
 </pre>
 
@@ -5782,9 +5782,9 @@ A <dfn>geolocation override</dfn> is a [=struct=] with:
 
 A [=remote end=] has a <dfn>geolocation overrides map</dfn> which is a weak map between [=user contexts=] and [=geolocation override=].
 
-A [=remote end=] has a <dfn>orientation overrides map</dfn> which is a weak map
-between [=user contexts=] and [=/map=] matching the
-<code>emulation.Orientation</code> production.
+A [=remote end=] has a <dfn>screen orientation overrides map</dfn> which is a weak
+map between [=user contexts=] and [=/map=] matching the
+<code>emulation.ScreenOrientation</code> production.
 
 ### Commands ### {#module-emulation-commands}
 
@@ -5893,31 +5893,31 @@ The [=remote end steps=] with |command parameters| are:
 
 </div>
 
-#### The emulation.setOrientationOverride Command ####  {#command-emulation-setOrientationOverride}
+#### The emulation.setScreenOrientationOverride Command ####  {#command-emulation-setScreenOrientationOverride}
 
-The <dfn export for=commands>emulation.setOrientationOverride</dfn> command emulates
-[=screen orientation=] of the given top-level traversables or user contexts.
+The <dfn export for=commands>emulation.setScreenOrientationOverride</dfn> command
+emulates [=screen orientation=] of the given top-level traversables or user contexts.
 
 <dl>
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl remote-cddl">
-      emulation.SetOrientationOverride = (
-        method: "emulation.setOrientationOverride",
-        params: emulation.SetOrientationOverrideParameters
+      emulation.SetScreenOrientationOverride = (
+        method: "emulation.setScreenOrientationOverride",
+        params: emulation.SetScreenOrientationOverrideParameters
       )
 
-      emulation.OrientationAngle = 0 / 90 / 180 / 270
+      emulation.ScreenOrientationAngle = 0 / 90 / 180 / 270
 
-      emulation.OrientationType = "portrait-primary" / "portrait-secondary" / "landscape-primary" / "landscape-secondary"
+      emulation.ScreenOrientationType = "portrait-primary" / "portrait-secondary" / "landscape-primary" / "landscape-secondary"
 
-      emulation.Orientation = {
-        angle: emulation.OrientationAngle,
-        type: emulation.OrientationType
+      emulation.ScreenOrientation = {
+        angle: emulation.ScreenOrientationAngle,
+        type: emulation.ScreenOrientationType
       }
 
-      emulation.SetOrientationOverrideParameters = {
-        orientation: emulation.Orientation / null,
+      emulation.SetScreenOrientationOverrideParameters = {
+        screenOrientation: emulation.ScreenOrientation / null,
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
       }
@@ -5933,11 +5933,11 @@ The <dfn export for=commands>emulation.setOrientationOverride</dfn> command emul
 
 <div algorithm>
 
-To <dfn>set emulated orientation</dfn> given |emulated orientation|:
+To <dfn>set emulated screen orientation</dfn> given |emulated screen orientation|:
 
 Issue: Move this algorithm to screen orientation specification.
 
-1. If |emulated orientation| is null:
+1. If |emulated screen orientation| is null:
 
    1. Set |top-level navigable|'s [=current orientation angle=] to
       implementation-defined default.
@@ -5948,17 +5948,17 @@ Issue: Move this algorithm to screen orientation specification.
 1. Otherwise:
 
    1. Set [=current orientation angle=] to
-      |emulated orientation|["<code>orientationAngle</code>"].
+      |emulated screen orientation|["<code>angle</code>"].
 
    1. Set [=current orientation type=] to
-      |emulated orientation|["<code>orientationType</code>"].
+      |emulated screen orientation|["<code>type</code>"].
 
 1. Run the [=screen orientation change steps=] with the |top-level navigable|'s
    [=active document=].
 
 </div>
 
-<div algorithm="remote end steps for emulation.setOrientationOverride">
+<div algorithm="remote end steps for emulation.setScreenOrientationOverride">
 
 The [=remote end steps=] with |command parameters| are:
 
@@ -5974,7 +5974,8 @@ The [=remote end steps=] with |command parameters| are:
    and |command parameters| doesn't [=map/contain=] "<code>context</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
-1. Otherwise, let |emulated orientation| be |command parameters|["<code>orientation</code>"].
+1. Otherwise, let |emulated screen orientation| be
+   |command parameters|["<code>screenOrientation</code>"].
 
 1. Let |navigables| be a [=/set=].
 
@@ -5992,8 +5993,8 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=orientation overrides map=][|user context|] to
-         |emulated orientation|.
+      1. [=map/Set=] [=screen orientation overrides map=][|user context|] to
+         |emulated screen orientation|.
 
       1. [=list/For each=] |top-level traversable| of the list of all
          [=/top-level traversables=] whose [=associated user context=] is
@@ -6003,7 +6004,8 @@ The [=remote end steps=] with |command parameters| are:
 
 1. For each |navigable| of |navigables|:
 
-   1. [=Set emulated orientation=] with |navigable| and |emulated orientation|.
+   1. [=Set emulated screen orientation=] with |navigable| and
+      |emulated screen orientation|.
 
 1. Return [=success=] with data null.
 
