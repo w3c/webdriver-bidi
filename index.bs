@@ -5934,6 +5934,8 @@ A <dfn for="network">body</dfn> is a [=/struct=] consisting of
 an [=struct/item=] named <code>bytes</code>, which is a <code>network.BytesValue</code> or null,
 an [=struct/item=] named <code>cloned body</code>, which is a [=response/body=] or null,
 an [=struct/item=] named <code>collectors</code>, which is a list of <code>network.Collector</code>,
+an [=struct/item=] named <code>decode body steps</code>, which is an algorithm,
+an [=struct/item=] named <code>pending</code>, which is a boolean,
 an [=struct/item=] named <code>request</code>, which is a <code>network.Request</code>,
 an [=struct/item=] named <code>size</code>, which is a js-uint or null,
 an [=struct/item=] named <code>type</code>, which is a <code>network.BodyType</code>.
@@ -5961,9 +5963,9 @@ To <dfn>get navigable for request</dfn> given request:
 
 1. Let |navigable| be null.
 
-1. If |request|'s [=request/window=] is an [=environment settings object=]:
+1. If |request|'s [=request/client=] is an [=environment settings object=]:
 
-   1. Let |environment settings| be |request|'s [=request/window=]
+   1. Let |environment settings| be |request|'s [=request/client=]
 
    1. If there is a [=/navigable=] whose [=active window=] is |environment
       settings|' [=environment settings object/global object=], set |navigable|
@@ -5995,25 +5997,27 @@ To <dfn>match collector for navigable</dfn> given |collector| and |navigable|:
 </div>
 
 <div algorithm>
-To <dfn export>clone network response body</dfn> given |request| and |response body|:
+To <dfn export>clone network response body</dfn> given |sessions|, |request| and |response body|:
 
 Note: This hook is intended to be triggered by the fetch spec when the response is set.
 
-1. For each |session| in [=active BiDi sessions=]:
+Note: Should check for collectors matching navigable + response here already?
+Otherwise we can do it only in [=maybe collect network response body=] so that
+clients can add the collector as late as possible?
 
-   Note: Should check for collectors matching navigable + response here already?
-   Otherwise we can do it only in [=maybe collect network response body=] so that
-   clients can add the collector as late as possible?
+1. For each |session| in |sessions|:
 
    1. If |session|'s [=network collectors=] is not [=list/empty=]:
 
       1. Let |collected body| be a struct with
-            <code>bytes</code> field set to null,
-            <code>cloned body</code> field set to [=body/clone=] with |response body|,
-            <code>collectors</code> field set to an empty list,
-            <code>request</code> field set to |request|'s [=request id=],
-            <code>size</code> field set to null,
-            <code>type</code> field set to "response".
+         <code>bytes</code> field set to null,
+         <code>cloned body</code> field set to [=body/clone=] with |response body|,
+         <code>collectors</code> field set to an empty list,
+         <code>decode body steps</code> field set null,
+         <code>pending</code> field set to true,
+         <code>request</code> field set to |request|'s [=request id=],
+         <code>size</code> field set to null,
+         <code>type</code> field set to "response".
 
       1. [=list/Append=] |collected body| to [=collected network bodies=].
 
@@ -6034,7 +6038,24 @@ To <dfn>get collected body</dfn> given |request id| and |body type|.
 </div>
 
 <div algorithm>
-To <dfn>maybe collect network response body</dfn> given |session| and |request|:
+To <dfn>maybe abort network response body collection</dfn> given |request|:
+
+1. Let |collected body| be [=get collected body=] with |request|'s [=request id=] and "response".
+
+1. If |collected body| is null, return.
+
+1. Set |collected body|'s <code>pending</code> to false.
+
+1. [=Resume=] with "<code>network body collected</code>" and (|request|'s [=request id=], "response").
+
+</div>
+
+<div algorithm>
+To <dfn>maybe collect network response body</dfn> given |sessions|, |request| and |response|:
+
+1. If |response|'s [=response/status=] is a [=redirect status=], return.
+
+   Note: For redirects, only the final response body has to be stored.
 
 1. Let |navigable| be [=get navigable for request=] with |request|.
 
@@ -6048,11 +6069,13 @@ configuration but we could still accept null here.
 
 1. Let |collectors| be an empty list.
 
-1. For each |collector| in |session|'s [=network collectors=]:
+1. For each |session| in |sessions|:
 
-   1. If |collector|'s <code>body types</code> [=list/contains=] "response" and if [=match collector for navigable=] with |collector| and |top-level navigable|:
+   1. For each |collector| in |session|'s [=network collectors=]:
 
-      1. [=list/Append=] |collector| to |collectors|.
+      1. If |collector|'s <code>body types</code> [=list/contains=] "response" and if [=match collector for navigable=] with |collector| and |top-level navigable|:
+
+         1. [=list/Append=] |collector| to |collectors|.
 
 1. If |collectors| is [=list/empty=], return.
 
@@ -6065,11 +6088,20 @@ and [=clone network response body=] does not clone the corresponding body.
 
 1. Let |bytes| be null.
 
+1. Let |decodeBodySteps| be null.
+
 1. Let |size| be null.
 
 1. Let |processBody| given |nullOrBytes| be this step:
 
    1. If |nullOrBytes| is not null:
+
+      1. Optionally, set |nullOrBytes| to the result of running implementation-defined encoding steps
+         with |nullOrBytes| and let |decodeBodySteps| be the steps to reverse those encoding steps.
+
+         Note: Implementations are allowed to store encoded network bodies as long as they
+         are able to decode the content later on and provide the exact same |nullOrBytes| as the ones
+         exposed by fetch.
 
       1. Set |bytes| to [=serialize protocol bytes=] with |nullOrBytes|.
 
@@ -6079,22 +6111,26 @@ and [=clone network response body=] does not clone the corresponding body.
 
 1. [=Fully read=] |collected body|’s <code>cloned body</code> given |processBody| and |processBodyError|.
 
-1. If |bytes| is null, return.
+1. If |bytes| is not null:
 
-   Note: Should this be reflected on the collected body struct, eg with a status?
+   1. For |collector| in |collectors|:
 
-1. For |collector| in |collectors|:
+      1. If |size| is less than or equal to |collector|'s <code>max body size</code>,
+         [=list/Append=] |collector|'s <code>collector</code> to |collected body|'s <code>collectors</code>.
 
-   1. If |size| is less than or equal to |collector|'s <code>max body size</code>,
-      [=list/Append=] |collector|'s <code>collector</code> to |collected body|'s <code>collectors</code>.
+   1. If |collected body|'s <code>collectors</code> is not [=list/empty=]:
 
-1. If |collected body|'s <code>collectors</code> is [=list/empty=], return.
-
-1. [=Allocate size to record body=] given |size|.
+      1. [=Allocate size to record body=] given |size|.
 
 1. Set |collected body|'s <code>bytes</code> to |bytes|.
 
+1. Set |collected body|'s <code>decode body steps</code> to |decodeBodySteps|.
+
+1. Set |collected body|'s <code>pending</code> to false.
+
 1. Set |collected body|'s <code>size</code> to |size|.
+
+1. [=Resume=] with "<code>network body collected</code>" and (|request|'s [=request id=], "response").
 
 </div>
 
@@ -6428,7 +6464,7 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
 [=Remote end definition=] and [=local end definition=]
 
 <pre class="cddl remote-cddl local-cddl">
-network.BodyType = "request" / "response"
+network.BodyType = "response"
 </pre>
 
 The <code>network.BodyType</code> type represents the different types of network bodies
@@ -8108,6 +8144,10 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Return [=error=] with [=error code=] [=no such network body=].
 
+1. If |collected body|'s <code>pending</code> is true:
+
+   1. [=Await=] with "network body collected" and (|request id|, |body type|).
+
 1. If |collector id| is not null and if |collected body|'s <code>collectors</code>
    does not [=list/contain=] |collector id|:
 
@@ -8119,8 +8159,11 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Return [=error=] with [=error code=] [=unavailable network body=].
 
+1. If |collected body|'s <code>decode body steps</code> is not null, set |bytes| to
+   the the result of running |collected body|'s <code>decode body steps</code>.
+
 1. Let |body| be a [=/map=] matching the <code>script.GetNetworkBodyResult</code> production,
-   with the <code>bytes</code> field set to |collected body|'s <code>bytes</code>.
+   with the <code>bytes</code> field set to |bytes|.
 
 1. Return [=success=] with data |body|.
 
@@ -8684,12 +8727,13 @@ error</dfn> steps given |request|:
    [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
+1. [=Maybe abort network response body collection=] with |request|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>network.fetchError</code>" and |related navigables|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.fetchError</code>", and |request|.
-
 
   1. TODO: Set the <code>errorText</code> field of |params|.
 
@@ -8740,10 +8784,12 @@ completed</dfn> steps given |request| and |response|:
    [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
-1. [=Maybe collect network response body=] with and |request|.
+1. Let |sessions| be the [=set of sessions for which an event is enabled=]
+   given "<code>network.responseCompleted</code>" and |related navigables|.
 
-1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>network.responseCompleted</code>" and |related navigables|:
+1. [=Maybe collect network response body=] with |sessions|, |request| and |response|.
+
+1. For each |session| in |sessions|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.responseCompleted</code>", and |request|.
@@ -8804,8 +8850,12 @@ started</dfn> steps given |request| and |response|:
 
 1. Let |response status| be "<code>incomplete</code>".
 
-1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>network.responseStarted</code>" and |related navigables|:
+1. Let |sessions| be the [=set of sessions for which an event is enabled=]
+   given "<code>network.responseStarted</code>" and |related navigables|.
+
+1. [=Clone network response body=] with |sessions|, |request| and |response|.
+
+1. For each |session| in |sessions|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.responseStarted</code>", and |request|.
