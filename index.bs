@@ -219,6 +219,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: navigable; for:window; url: nav-history-apis.html#window-navigable
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
+    text: ongoing-navigation; url: browsing-the-web.html#ongoing-navigation
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
     text: parent; for:navigable; url: document-sequences.html#nav-parent
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
@@ -307,6 +308,9 @@ spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
   type: dfn
     text: field-name token; url: #fields.names
     text: method token; url: #method.overview
+spec: STREAMS; urlPrefix: https://streams.spec.whatwg.org/
+  type: dfn
+    text: ReadableStream; url: #readablestream
 </pre>
 
 <pre class="biblio">
@@ -633,8 +637,14 @@ with the following additional codes:
   <dt><dfn for=errors export>no such history entry</dfn>
   <dd>Tried to havigate to an unknown [=session history entry=].
 
+  <dt><dfn for=errors export>no such collector</dfn>
+  <dd>Tried to remove an unknown [=network/collector=].
+
   <dt><dfn for=errors export>no such intercept</dfn>
   <dd>Tried to remove an unknown [=network intercept=].
+
+  <dt><dfn for=errors export>no such network body</dfn>
+  <dd>Tried to reference an unknown [=network/body=].
 
   <dt><dfn for=errors export>no such node</dfn>
   <dd>Tried to deserialize an unknown <code>SharedReference</code>.
@@ -665,6 +675,10 @@ with the following additional codes:
 
   <dt><dfn for=errors export>unable to set file input</dfn>
   <dd>Tried to set a file input, but failed to do so.
+
+  <dt><dfn for=errors export>unavailable network body</dfn>
+  <dd>Tried to get network body which was not collected or already evicted.
+
 </dl>
 
 <pre class="cddl local-cddl">
@@ -674,11 +688,13 @@ ErrorCode = "invalid argument" /
             "invalid web extension" /
             "move target out of bounds" /
             "no such alert" /
+            "no such collector" /
             "no such element" /
             "no such frame" /
             "no such handle" /
             "no such history entry" /
             "no such intercept" /
+            "no such network body" /
             "no such node" /
             "no such request" /
             "no such script" /
@@ -690,6 +706,7 @@ ErrorCode = "invalid argument" /
             "unable to close browser" /
             "unable to set cookie" /
             "unable to set file input" /
+            "unavailable network body" /
             "underspecified storage partition" /
             "unknown command" /
             "unknown error" /
@@ -5123,7 +5140,7 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 1, given
 </dl>
 The [=remote end event trigger=] is:
 
-<div algorithm="remote end event trigger for browsingContext.contexDestroyed">
+<div algorithm="remote end event trigger for browsingContext.contextDestroyed">
 
 The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given |navigable|:
@@ -5782,12 +5799,15 @@ relating to network requests.
 <pre class="cddl remote-cddl">
 
 NetworkCommand = (
+  network.AddBodyCollector //
   network.AddIntercept //
   network.ContinueRequest //
   network.ContinueResponse //
   network.ContinueWithAuth //
   network.FailRequest //
+  network.GetNetworkBody //
   network.ProvideResponse //
+  network.RemoveBodyCollector //
   network.RemoveIntercept //
   network.SetCacheBehavior
 )
@@ -5823,6 +5843,241 @@ A [=remote end=] has a <dfn>navigable cache behavior map</dfn> which is a weak
 map between [=/top-level traversables=] and strings representing cache
 behavior. It is initially empty.
 
+### Network Body Collection ### {#network-body-collection}
+
+A <dfn for="network">body</dfn> is a [=/struct=] consisting of
+an [=struct/item=] named <code>bytes</code>, which is a <code>network.BytesValue</code> or null,
+an [=struct/item=] named <code>cloned body</code>, which is a [=response/body=] or null,
+an [=struct/item=] named <code>collectors</code>, which is a list of <code>network.Collector</code>,
+an [=struct/item=] named <code>decode body steps</code>, which is an algorithm,
+an [=struct/item=] named <code>pending</code>, which is a boolean,
+an [=struct/item=] named <code>request</code>, which is a <code>network.Request</code>,
+an [=struct/item=] named <code>size</code>, which is a js-uint or null,
+an [=struct/item=] named <code>type</code>, which is a <code>network.BodyType</code>.
+
+A <dfn for="network">collector</dfn> is a [=/struct=] consisting of
+an [=struct/item=] named <code>body max size</code>, which is a js-uint,
+an [=struct/item=] named <code>contexts</code>, which is a list of <code>browsingContext.BrowsingContext</code>,
+an [=struct/item=] named <code>body types</code>, which is a list of <code>network.BodyType</code>,
+an [=struct/item=] named <code>collector</code>, which is a <code>network.Collector</code>,
+an [=struct/item=] named <code>collector type</code>, which is a <code>network.CollectorType</code>,
+an [=struct/item=] named <code>user contexts</code>, which is a list of <code>browser.UserContext</code>.
+
+A [=BiDi session=] has <dfn>network collectors</dfn> which is a [=/map=] between
+<code>network.Collector</code> and a [=network/collector=]. It is initially empty.
+
+A [=remote end=] has <dfn>collected network bodies</dfn> which is a list of
+[=network/body|bodies=]. It is initially empty.
+
+A [=remote end=] has a <dfn>max total body size</dfn> which is an integer representing
+the size allocated to collect network bodies in [=collected network bodies=]. Its
+value is implementation-defined.
+
+<div algorithm>
+To <dfn>get navigable for request</dfn> given request:
+
+1. Let |navigable| be null.
+
+1. If |request|'s [=request/client=] is an [=environment settings object=]:
+
+   1. Let |environment settings| be |request|'s [=request/client=]
+
+   1. If there is a [=/navigable=] whose [=active window=] is |environment
+      settings|' [=environment settings object/global object=], set |navigable|
+      to be that navigable.
+
+1. Return |navigable|.
+
+</div>
+
+<div algorithm>
+To <dfn>match collector for navigable</dfn> given |collector| and |navigable|:
+
+1. If |collector|'s <code>contexts</code> is not [=list/empty=]:
+
+  1. If |collector|'s <code>contexts</code> [=list/contains=] |navigable|'s [=navigable id=], return true.
+
+  1. Otherwise, return false.
+
+1. If |collector|'s <code>user contexts</code> is not [=list/empty=]:
+
+  1. Let |user context| be |navigable|'s [=associated user context=].
+
+  1. If |collector|'s <code>user contexts</code> [=list/contains=] |user context|'s [=user context id=], return true.
+
+  1. Otherwise, return false.
+
+1. Return true.
+
+</div>
+
+<div algorithm>
+To <dfn export>clone network response body</dfn> given |sessions|, |request| and |response body|:
+
+Note: This hook is intended to be triggered by the fetch spec when the response is set.
+
+Note: Should check for collectors matching navigable + response here already?
+Otherwise we can do it only in [=maybe collect network response body=] so that
+clients can add the collector as late as possible?
+
+1. For each |session| in |sessions|:
+
+   1. If |session|'s [=network collectors=] is not [=list/empty=]:
+
+      1. Let |collected body| be a struct with
+         <code>bytes</code> field set to null,
+         <code>cloned body</code> field set to [=body/clone=] with |response body|,
+         <code>collectors</code> field set to an empty list,
+         <code>decode body steps</code> field set null,
+         <code>pending</code> field set to true,
+         <code>request</code> field set to |request|'s [=request id=],
+         <code>size</code> field set to null,
+         <code>type</code> field set to "response".
+
+      1. [=list/Append=] |collected body| to [=collected network bodies=].
+
+      1. Return.
+
+</div>
+
+<div algorithm>
+To <dfn>get collected body</dfn> given |request id| and |body type|.
+
+1. For |collected body| of [=collected network bodies=]:
+
+   1. If |collected body|'s <code>request</code> is |request id| and
+      |collected body|'s <code>type</code> is |body type|, return |collected body|.
+
+1. Return null.
+
+</div>
+
+<div algorithm>
+To <dfn>maybe abort network response body collection</dfn> given |request|:
+
+1. Let |collected body| be [=get collected body=] with |request|'s [=request id=] and "response".
+
+1. If |collected body| is null, return.
+
+1. Set |collected body|'s <code>pending</code> to false.
+
+1. [=Resume=] with "<code>network body collected</code>" and (|request|'s [=request id=], "response").
+
+</div>
+
+<div algorithm>
+To <dfn>maybe collect network response body</dfn> given |sessions|, |request| and |response|:
+
+1. If |response|'s [=response/status=] is a [=redirect status=], return.
+
+   Note: For redirects, only the final response body has to be stored.
+
+1. Let |navigable| be [=get navigable for request=] with |request|.
+
+1. If |navigable| is null, return.
+
+NOTE: This prevents from collecting bodies not related to a navigable.
+We still need to retrieve the navigable to check against the collector
+configuration but we could still accept null here.
+
+1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
+
+1. Let |collectors| be an empty list.
+
+1. For each |session| in |sessions|:
+
+   1. For each |collector| in |session|'s [=network collectors=]:
+
+      1. If |collector|'s <code>body types</code> [=list/contains=] "response" and if [=match collector for navigable=] with |collector| and |top-level navigable|:
+
+         1. [=list/Append=] |collector| to |collectors|.
+
+1. If |collectors| is [=list/empty=], return.
+
+1. Let |collected body| be [=get collected body=] with |request|'s [=request id=] and "response".
+
+1. If |collected body| is null, return.
+
+Note: This might happen if there are no collectors setup when the response is created,
+and [=clone network response body=] does not clone the corresponding body.
+
+1. Let |bytes| be null.
+
+1. Let |decodeBodySteps| be null.
+
+1. Let |size| be null.
+
+1. Let |processBody| given |nullOrBytes| be this step:
+
+   1. If |nullOrBytes| is not null:
+
+      1. Optionally, set |nullOrBytes| to the result of running implementation-defined encoding steps
+         with |nullOrBytes| and let |decodeBodySteps| be the steps to reverse those encoding steps.
+
+         Note: Implementations are allowed to store encoded network bodies as long as they
+         are able to decode the content later on and provide the exact same |nullOrBytes| as the ones
+         exposed by fetch.
+
+      1. Set |bytes| to [=serialize protocol bytes=] with |nullOrBytes|.
+
+      1. Set |size| to |nullOrBytes|'s length.
+
+1. Let |processBodyError| be this step: Do nothing.
+
+1. [=Fully read=] |collected body|’s <code>cloned body</code> given |processBody| and |processBodyError|.
+
+1. If |bytes| is not null:
+
+   1. For |collector| in |collectors|:
+
+      1. If |size| is less than or equal to |collector|'s <code>max body size</code>,
+         [=list/Append=] |collector|'s <code>collector</code> to |collected body|'s <code>collectors</code>.
+
+   1. If |collected body|'s <code>collectors</code> is not [=list/empty=]:
+
+      1. [=Allocate size to record body=] given |size|.
+
+1. Set |collected body|'s <code>bytes</code> to |bytes|.
+
+1. Set |collected body|'s <code>decode body steps</code> to |decodeBodySteps|.
+
+1. Set |collected body|'s <code>pending</code> to false.
+
+1. Set |collected body|'s <code>size</code> to |size|.
+
+1. [=Resume=] with "<code>network body collected</code>" and (|request|'s [=request id=], "response").
+
+</div>
+
+<div algorithm>
+To <dfn>allocate size to record body</dfn> given |size|:
+
+1. Let |available size| be [=max total body size=].
+
+1. Let |already collected bodies| be an empty list.
+
+1. For each |collected body| in [=collected network bodies=] in order:
+
+   1. If |collected body|'s <code>bytes</code> is not null:
+
+      1. Decrease |available size| by |collected body|'s <code>size</code>.
+
+      1. [=list/Append=] |collected body| to |already collected bodies|
+
+1. If |size| is greater than |available size|:
+
+   1. For each |collected body| in |already collected bodies| in order:
+
+      1. Increase |available size| by |collected body|'s <code>size</code>.
+
+      1. Set |collected body|'s <code>bytes</code> field to null.
+
+      1. Set |collected body|'s <code>size</code> field to null.
+
+      1. If |available size| is greater than or equal to |size|, return.
+
+</div>
+
 ### Network Intercepts ### {#network-intercepts}
 
 A <dfn>network intercept</dfn> is a mechanism to allow remote ends to intercept
@@ -5830,7 +6085,7 @@ and modify network requests and responses.
 
 A [=BiDi session=] has an <dfn>intercept map</dfn> which is a [=/map=] between
 intercept id and a [=struct=] with fields <code>url patterns</code>,
-<code>phases</code>, and <code>browsingContexts</code> that define the properties
+<code>phases</code>, and <code>contexts</code> that define the properties
 of active network intercepts. It is initially empty.
 
 A [=BiDi session=] has a <dfn>blocked request map</dfn>, used to track the
@@ -6119,6 +6374,17 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
 
 </div>
 
+#### The network.BodyType Type #### {#type-network-BodyType}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+network.BodyType = "response"
+</pre>
+
+The <code>network.BodyType</code> type represents the different types of network bodies
+that can be collected.
+
 #### The network.BytesValue Type #### {#type-network-BytesValue}
 
 <pre class="cddl local-cddl remote-cddl">
@@ -6172,6 +6438,30 @@ Note: this takes a [=byte sequence=] and returns a <code>network.BytesValue</cod
    with |value| set to |text|.
 
 </div>
+
+#### The network.Collector Type #### {#type-network-Collector}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl local-cddl remote-cddl">
+network.Collector = text
+</pre>
+
+The <code>network.Collector</code> type represents the id of a [=network/collector=].
+
+#### The network.CollectorType Type #### {#type-network-CollectorType}
+
+[=Remote end definition=] and [=local end definition=]
+
+<pre class="cddl remote-cddl local-cddl">
+network.CollectorType = "blob"
+</pre>
+
+Note: In the future we might also support the "stream" collector type for clients
+which want to read the bodies gathered by a given collector via a stream.
+
+The <code>network.CollectorType</code> type represents the different types of body collectors
+that can be added.
 
 #### The network.Cookie Type #### {#type-network-Cookie}
 
@@ -7162,6 +7452,97 @@ To <dfn>match URL pattern</dfn> given |url pattern| and |url string|:
 
 ### Commands ### {#module-network-commands}
 
+#### The network.addBodyCollector Command ####  {#command-network-addBodyCollector}
+
+The <dfn export for=commands>network.addBodyCollector</dfn> adds a
+[=network/collector=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      network.AddBodyCollector = (
+        method: "network.addBodyCollector",
+        params: network.AddBodyCollectorParameters
+      )
+
+      network.AddBodyCollectorParameters = {
+        bodyMaxSize: js-uint,
+        bodyTypes: [+network.BodyType],
+        collectorType: network.collectorType,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <code>
+      EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.addBodyCollector">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |collector id| be the string representation of a [[!RFC9562|UUID]].
+
+1. Let |input context ids| be [=set/create|create a set=] with
+   |command parameters|[<code>contexts</code>].
+
+1. Let |body max size| be |command parameters|
+   ["<code>bodyMaxSize</code>"].
+
+1. Let |body types| be [=set/create|create a set=] with
+   |command parameters|["<code>bodyTypes</code>"].
+
+1. Let |collector type| be |command parameters|
+   ["<code>collectorType</code>"].
+
+1. Let |input user context ids| be [=set/create|create a set=] with
+   |command parameters|[<code>userContexts</code>].
+
+1. If |input user context ids| is not empty and |input context ids| is not
+   empty, return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |body max size| is greater than [=max total body size=],
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |input context ids| is not [=set/empty=]:
+
+   1. Let |navigables| be the result of [=trying=] to [=get valid navigables by ids=]
+      with |input context ids|.
+
+   1. For each |navigable| in |navigables|:
+
+      1. If |navigable| is not a [=/top-level traversable=], return [=error=]
+         with [=error code=] [=invalid argument=].
+
+1. Otherwise, if |input user context ids| is not [=set/empty=]:
+
+    1. [=list/For each=] |user context id| of |input user context ids|:
+
+       1. Let |user context| be [=get user context=] with |user context id|.
+
+       1. If |user context| is null, return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |collector| be a struct with
+   <code>body max size</code> field set to |body max size|,
+   <code>body types</code> field set to |body types|,
+   <code>collector</code> field set to |collector id|,
+   <code>collector type</code> field set to |collector type|,
+   <code>contexts</code> field set to |input context ids|,
+   <code>user contexts</code> field set to |input user context ids|.
+
+1. Set |session|'s [=network collectors=][|collector id|] to |collector|.
+
+1. Return a new [=/map=] matching the
+   <code>network.AddBodyCollectorResult</code> production with the
+   <code>collector</code> field set to |collector id|.
+
+</div>
+
 #### The network.addIntercept Command ####  {#command-network-addIntercept}
 
 The <dfn export for=commands>network.addIntercept</dfn> command adds a
@@ -7505,6 +7886,70 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
+#### The network.disownBody Command ####  {#command-network-disownBody}
+
+The <dfn export for=commands>network.disownBody</dfn> command releases a
+collected network body for a given [=network/collector=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      network.DisownBody = (
+        method: "network.disownBody",
+        params: network.disownBodyParameters
+      )
+
+      network.disownBodyParameters = {
+        bodyType: network.BodyType,
+        collector: network.Collector,
+        request: network.Request,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <code>
+      EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.disownBody">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |body type| be the value of the "<code>bodyType</code>" field in |command
+   parameters|.
+
+1. Let |collector id| be the value of the "<code>collector</code>" field in |command
+   parameters|.
+
+1. Let |request id| be the value of the "<code>request</code>" field in |command
+   parameters|.
+
+1. Let |collectors| be |session|'s [=network collectors=].
+
+1. If |collectors| does not [=map/contain=] |collector id|, return
+   [=error=] with [=error code=] [=no such collector=].
+
+1. Let |collected body| be [=get collected body=] with |request id| and |body type|.
+
+1. If |collected body| is null, return [=error=] with [=error code=] [=no such network body=].
+
+1. If |collected body|'s <code>collectors</code> [=list/contains=] |collector id|:
+
+   1. [=list/Remove=] |collector id| from |collected body|'s <code>collectors</code>.
+
+   1. If |collected body|'s <code>collectors</code> is [=list/empty=]:
+
+      1. Set |collected body|'s <code>bytes</code> field to null.
+
+      1. Set |collected body|'s <code>size</code> field to null.
+
+1. Return [=success=] with data [=null=].
+
+</div>
+
 #### The network.failRequest Command ####  {#command-network-failRequest}
 
 The <dfn export for=commands>network.failRequest</dfn> command fails a
@@ -7558,6 +8003,87 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Return [=success=] with data null.
 
 </div>
+
+#### The network.getNetworkBody Command ####  {#command-network-getNetworkBody}
+
+The <dfn export for=commands>network.getNetworkBody</dfn> command retrieves a
+network body data if it is available.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      network.GetNetworkBody = (
+        method: "network.getNetworkBody",
+        params: network.GetNetworkBodyParameters
+      )
+
+      network.GetNetworkBodyParameters = {
+        bodyType: network.BodyType,
+        ?collector: network.Collector,
+        request: network.Request,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      script.GetNetworkBodyResult = {
+        bytes: network.BytesValue,
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.getNetworkBody">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |body type| be |command parameters|["<code>bodyType</code>"].
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. Let |collector id| be null.
+
+1. If |command parameters| [=map/contains=] "<code>collector</code>":
+
+   1. Let |collectors| be |session|'s [=network collectors=].
+
+   1. If |collectors| does not [=map/contain=] |collector id|, return
+      [=error=] with [=error code=] [=no such collector=].
+
+   1. Set |collector id| to |command parameters|["<code>collector</code>"].
+
+1. Let |collected body| be [=get collected body=] given |request id| and |body type|.
+
+1. If |collected body| is null:
+
+   1. Return [=error=] with [=error code=] [=no such network body=].
+
+1. If |collected body|'s <code>pending</code> is true:
+
+   1. [=Await=] with "network body collected" and (|request id|, |body type|).
+
+1. If |collector id| is not null and if |collected body|'s <code>collectors</code>
+   does not [=list/contain=] |collector id|:
+
+   1. Return [=error=] with [=error code=] [=no such network body=].
+
+1. Let |bytes| be |collected body|'s <code>bytes</code>.
+
+1. If |bytes| is null,
+
+   1. Return [=error=] with [=error code=] [=unavailable network body=].
+
+1. If |collected body|'s <code>decode body steps</code> is not null, set |bytes| to
+   the the result of running |collected body|'s <code>decode body steps</code>.
+
+1. Let |body| be a [=/map=] matching the <code>script.GetNetworkBodyResult</code> production,
+   with the <code>bytes</code> field set to |bytes|.
+
+1. Return [=success=] with data |body|.
+
+</div>
+
 
 #### The network.provideResponse Command ####  {#command-network-provideResponse}
 
@@ -7617,6 +8143,61 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
+#### The network.removeBodyCollector Command ####  {#command-network-removeBodyCollector}
+
+The <dfn export for=commands>network.removeBodyCollector</dfn> command removes a
+[=network/collector=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      network.RemoveBodyCollector = (
+        method: "network.removeBodyCollector",
+        params: network.RemoveBodyCollectorParameters
+      )
+
+      network.RemoveBodyCollectorParameters = {
+        collector: network.Collector
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <code>
+      EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.removeBodyCollector">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |collector id| be the value of the "<code>collector</code>" field in |command
+   parameters|.
+
+1. Let |collectors| be |session|'s [=network collectors=].
+
+1. If |collectors| does not [=map/contain=] |collector id|, return
+   [=error=] with [=error code=] [=no such collector=].
+
+1. [=map/Remove=] |collector id| from |session|'s [=network collectors=].
+
+1. For |collected body| in [=collected network bodies=]:
+
+   1. If |collected body|'s <code>collectors</code> [=list/contains=] |collector id|:
+
+      1. [=list/Remove=] |collector id| from |collected body|'s <code>collectors</code>.
+
+      1. If |collected body|'s <code>collectors</code> is [=list/empty=]:
+
+         1. Set |collected body|'s <code>bytes</code> field to null.
+
+         1. Set |collected body|'s <code>size</code> field to null.
+
+1. Return [=success=] with data [=null=].
+
+</div>
 
 #### The network.removeIntercept Command ####  {#command-network-removeIntercept}
 
@@ -8061,12 +8642,13 @@ error</dfn> steps given |request|:
    [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
+1. [=Maybe abort network response body collection=] with |request|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>network.fetchError</code>" and |related navigables|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.fetchError</code>", and |request|.
-
 
   1. TODO: Set the <code>errorText</code> field of |params|.
 
@@ -8117,8 +8699,12 @@ completed</dfn> steps given |request| and |response|:
    [=request/client=]. Otherwise let |related navigables| be an empty
    set.
 
-1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>network.responseCompleted</code>" and |related navigables|:
+1. Let |sessions| be the [=set of sessions for which an event is enabled=]
+   given "<code>network.responseCompleted</code>" and |related navigables|.
+
+1. [=Maybe collect network response body=] with |sessions|, |request| and |response|.
+
+1. For each |session| in |sessions|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.responseCompleted</code>", and |request|.
@@ -8179,8 +8765,12 @@ started</dfn> steps given |request| and |response|:
 
 1. Let |response status| be "<code>incomplete</code>".
 
-1. For each |session| in the [=set of sessions for which an event is enabled=]
-   given "<code>network.responseStarted</code>" and |related navigables|:
+1. Let |sessions| be the [=set of sessions for which an event is enabled=]
+   given "<code>network.responseStarted</code>" and |related navigables|.
+
+1. [=Clone network response body=] with |sessions|, |request| and |response|.
+
+1. For each |session| in |sessions|:
 
   1. Let |params| be the result of [=process a network event=] with |session|
      "<code>network.responseStarted</code>", and |request|.
@@ -10294,7 +10884,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |preload script map| be |session|'s [=preload script map=].
 
 1. Set |preload script map|[|script|] to a struct with
-   <code>function  declaration</code> |function declaration|,
+   <code>function declaration</code> |function declaration|,
    <code>arguments</code> |arguments|,
    <code>contexts</code> |navigables|,
    <code>sandbox</code> |sandbox|, and
