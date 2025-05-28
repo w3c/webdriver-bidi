@@ -5909,11 +5909,11 @@ emulates [=screen orientation=] of the given top-level traversables or user cont
 
       emulation.ScreenOrientationAngle = 0 / 90 / 180 / 270
 
-      emulation.ScreenOrientationType = "portrait-primary" / "portrait-secondary" / "landscape-primary" / "landscape-secondary"
+      emulation.ScreenOrientationScreenType = "natural-portrait" / "natural-landscape"
 
       emulation.ScreenOrientation = {
         angle: emulation.ScreenOrientationAngle,
-        type: emulation.ScreenOrientationType
+        screenType: emulation.ScreenOrientationScreenType
       }
 
       emulation.SetScreenOrientationOverrideParameters = {
@@ -5947,11 +5947,41 @@ Issue: Move this algorithm to screen orientation specification.
 
 1. Otherwise:
 
-   1. Set [=current orientation angle=] to
+   1. Let |emulated orientation angle| be
       |emulated screen orientation|["<code>angle</code>"].
 
-   1. Set [=current orientation type=] to
-      |emulated screen orientation|["<code>type</code>"].
+   1. If |emulated screen orientation|["<code>screenType</code>"] equals
+      "<code>natural-portrait</code>":
+
+      1. Switch on the value of |emulated orientation angle|:
+         <dl>
+            <dt>0
+            <dd>Let |emulated orientation type| be <code>"portrait-primary"</code>
+            <dt>90
+            <dd>Let |emulated orientation type| be <code>"landscape-primary"</code>
+            <dt>180
+            <dd>Let |emulated orientation type| be <code>"portrait-secondary"</code>
+            <dt>270
+            <dd>Let |emulated orientation type| be <code>"landscape-secondary"</code>
+        </dl>
+
+   1. Else:
+
+      1. Switch on the value of |emulated orientation angle|:
+         <dl>
+            <dt>0
+            <dd>Let |emulated orientation type| be <code>"landscape-primary"</code>
+            <dt>90
+            <dd>Let |emulated orientation type| be <code>"portrait-primary"</code>
+            <dt>180
+            <dd>Let |emulated orientation type| be <code>"landscape-secondary"</code>
+            <dt>270
+            <dd>Let |emulated orientation type| be <code>"portrait-secondary"</code>
+        </dl>
+
+   1. Set [=current orientation angle=] to |emulated orientation angle|.
+
+   1. Set [=current orientation type=] to |emulated orientation type|.
 
 1. Run the [=screen orientation change steps=] with the |top-level navigable|'s
    [=active document=].
