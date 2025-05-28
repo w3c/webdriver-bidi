@@ -16,20 +16,21 @@ function getCDDLNodes(nodes) {
   nodes.forEach((node) => {
     if (node.nodeName === "pre") {
       const nodeClass = node.attrs.find((attr) => attr.name === "class");
+      const nodeModules = node.attrs.find((attr) => attr.name === "data-cddl-module");
       if (nodeClass && nodeClass.value.includes("cddl")) {
         const content = node.childNodes.map((child) => child.value).join("");
 
-        if (nodeClass.value.includes("local-cddl")) {
+        if (nodeModules.value.includes("local-cddl")) {
           entries.local.push(content);
         }
 
-        if (nodeClass.value.includes("remote-cddl")) {
+        if (nodeModules.value.includes("remote-cddl")) {
           entries.remote.push(content);
         }
 
         if (
-          nodeClass.value.includes("local-cddl") ||
-          nodeClass.value.includes("remote-cddl")
+          nodeModules.value.includes("local-cddl") ||
+          nodeModules.value.includes("remote-cddl")
         ) {
           entries.all.push(content);
         }
