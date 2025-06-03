@@ -3012,6 +3012,10 @@ The progress of navigation is communicated using an immutable
 
   <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-suggested-filename">suggestedFilename</dfn></dt>
   <dd>If the navigation is a download, suggested filename, otherwise null.</dd>
+
+  <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-downloaded-filepath">downloadedFilepath</dfn></dt>
+  <dd>If the navigation is a download which is finished and the downloaded file is
+  available, absolute filepath of the downloaded file, otherwise null.</dd>
 </dl>
 
 ### Definition ### {#module-browsingContext-definition}
@@ -3052,6 +3056,7 @@ BrowsingContextEvent = (
   browsingContext.ContextCreated //
   browsingContext.ContextDestroyed //
   browsingContext.DomContentLoaded //
+  browsingContext.DownloadEnd //
   browsingContext.DownloadWillBegin //
   browsingContext.FragmentNavigated //
   browsingContext.HistoryUpdated //
@@ -5405,6 +5410,83 @@ started</dfn> steps given |navigable| and |navigation status|:
 
  1. For each |session| in the [=set of sessions for which an event is enabled=]
     given "<code>browsingContext.downloadWillBegin</code>" and |related navigables|:
+
+   1. [=Emit an event=] with |session| and |body|.
+
+</div>
+
+#### The browsingContext.downloadEnd Event #### {#event-browsingContext-downloadEnd}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl local-cddl">
+        browsingContext.DownloadEnd = (
+          method: "browsingContext.downloadEnd",
+          params: browsingContext.DownloadEndParams
+        )
+
+        browsingContext.DownloadEndParams = {
+          (
+            browsingContext.DownloadCanceledParams //
+            browsingContext.DownloadCompleteParams
+          )
+        }
+
+        browsingContext.DownloadCanceledParams = (
+          status: "canceled",
+          browsingContext.BaseNavigationInfo
+        )
+
+        browsingContext.DownloadCompleteParams = (
+          status: "complete",
+          filepath: text / null,
+          browsingContext.BaseNavigationInfo
+        )
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download end</dfn>
+steps given |navigable| and |navigation status|:
+
+1. Let |navigation info| be the result of [=get the navigation info=] given
+   |navigable| and |navigation status|.
+
+1. Assert |navigation info|["<code>status</code>"] is equal to either
+   "<code>complete</code>" or "<code>canceled</code>".
+
+1. If |navigation info|["<code>status</code>"] is "<code>complete</code>", let
+   |params| be a [=/map=] matching the
+   <code>browsingContext.DownloadCompleteParams</code> production, with the
+   <code>filepath</code> field set to
+   |navigation info|["<code>downloadedFilepath</code>"], the <code>context</code>
+   field set to |navigation info|["<code>context</code>"], the
+   <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
+   the <code>timestamp</code> field set to
+   |navigation info|["<code>timestamp</code>"], and the <code>url</code> field set to
+   |navigation info|["<code>url</code>"].
+
+   Note: <code>filepath</code> can be null for completed downloads if the filepath is
+   not available for whatever reason.
+
+1. Otherwise, let |params| be a [=/map=] matching the
+   <code>browsingContext.DownloadCanceledParams</code> production, with the
+   <code>context</code> field set to |navigation info|["<code>context</code>"], the
+   <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
+   the <code>timestamp</code> field set to
+   |navigation info|["<code>timestamp</code>"], and the <code>url</code> field set to
+   |navigation info|["<code>url</code>"].
+
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.DownloadEnd</code> production, with the
+   <code>params</code> field set to |params|.
+
+1. Let |related navigables| be a [=/set=] containing |navigable|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.downloadEnd</code>" and |related navigables|:
 
    1. [=Emit an event=] with |session| and |body|.
 
