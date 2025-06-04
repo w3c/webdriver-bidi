@@ -8121,7 +8121,8 @@ network data if it is available.
 
       network.GetNetworkDataParameters = {
         dataType: network.DataType,
-        ?collector: network.Collector,
+        ? collector: network.Collector,
+        ? disown: bool,
         request: network.Request,
       }
       </pre>
@@ -8154,6 +8155,14 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Set |collector id| to |command parameters|["<code>collector</code>"].
 
+1. Let |disown| be false.
+
+1. If |command parameters| [=map/contains=] "<code>disown</code>",
+   set |disown| to |command parameters|["<code>disown</code>"].
+
+1. If |disown| is true and |collector id| is null, , return [=error=]
+   with [=error code=] [=invalid argument=].
+
 1. Let |collected data| be [=get collected data=] given |request id| and |data type|.
 
 1. If |collected data| is null:
@@ -8180,6 +8189,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |body| be a [=/map=] matching the <code>script.GetNetworkDataResult</code> production,
    with the <code>bytes</code> field set to |bytes|.
+
+1. If |disown| is true, [=remove collector from data=] with |collected data| and |collector id|.
 
 1. Return [=success=] with data |body|.
 
