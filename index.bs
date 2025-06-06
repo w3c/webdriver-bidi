@@ -5941,7 +5941,6 @@ A <dfn for="network">data</dfn> is a [=/struct=] consisting of
 an [=struct/item=] named <code>bytes</code>, which is a <code>network.BytesValue</code> or null,
 an [=struct/item=] named <code>cloned body</code>, which is a [=/body=] or null,
 an [=struct/item=] named <code>collectors</code>, which is a list of <code>network.Collector</code>,
-an [=struct/item=] named <code>decode data steps</code>, which is an algorithm,
 an [=struct/item=] named <code>pending</code>, which is a boolean,
 an [=struct/item=] named <code>request</code>, which is a <code>network.Request</code>,
 an [=struct/item=] named <code>size</code>, which is a js-uint or null,
@@ -6025,7 +6024,6 @@ clients can add the collector as late as possible?
          <code>bytes</code> field set to null,
          <code>cloned body</code> field set to [=body/clone=] with |response body|,
          <code>collectors</code> field set to an empty list,
-         <code>decode data steps</code> field set null,
          <code>pending</code> field set to true,
          <code>request</code> field set to |request|'s [=request id=],
          <code>size</code> field set to null,
@@ -6100,24 +6098,22 @@ and [=clone network response body=] does not clone the corresponding body.
 
 1. Let |bytes| be null.
 
-1. Let |decodeDataSteps| be null.
-
 1. Let |size| be null.
 
 1. Let |processBody| given |nullOrBytes| be this step:
 
    1. If |nullOrBytes| is not null:
 
-      1. Optionally, set |nullOrBytes| to the result of running implementation-defined encoding steps
-         with |nullOrBytes| and let |decodeDataSteps| be the steps to reverse those encoding steps.
-
-         Note: Implementations are allowed to store encoded network data as long as they
-         are able to decode the content later on and provide the exact same |nullOrBytes| as the ones
-         exposed by fetch.
-
       1. Set |bytes| to [=serialize protocol bytes=] with |nullOrBytes|.
 
       1. Set |size| to |response|'s [=response body info=]'s [=encoded size=].
+
+         Note: There is a discrepancy between the fact that the bytes retrieved from the
+         fetch stream correspond to the dedoded data, but the encoded (network) size is
+         used in order to calculate size limits. Implementations might decide to use a storage
+         model such that it uses less size than storing the decoded data, as long as the data
+         returned to clients in getNetworkData is identical to the decoded data. The potential
+         tradeoff between storage and performance is up to the implementation.
 
 1. Let |processBodyError| be this step: Do nothing.
 
@@ -6135,8 +6131,6 @@ and [=clone network response body=] does not clone the corresponding body.
       1. [=Allocate size to record data=] given |size|.
 
 1. Set |collected data|'s <code>bytes</code> to |bytes|.
-
-1. Set |collected data|'s <code>decode data steps</code> to |decodeDataSteps|.
 
 1. Set |collected data|'s <code>pending</code> to false.
 
@@ -8184,9 +8178,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If |bytes| is null,
 
    1. Return [=error=] with [=error code=] [=unavailable network data=].
-
-1. If |collected data|'s <code>decode data steps</code> is not null, set |bytes| to
-   the the result of running |collected data|'s <code>decode data steps</code>.
 
 1. Let |body| be a [=/map=] matching the <code>script.GetNetworkDataResult</code> production,
    with the <code>bytes</code> field set to |bytes|.
