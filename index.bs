@@ -5897,7 +5897,7 @@ NetworkCommand = (
   network.ContinueResponse //
   network.ContinueWithAuth //
   network.FailRequest //
-  network.GetNetworkData //
+  network.GetData //
   network.ProvideResponse //
   network.RemoveDataCollector //
   network.RemoveIntercept //
@@ -6112,7 +6112,7 @@ and [=clone network response body=] does not clone the corresponding body.
          fetch stream correspond to the dedoded data, but the encoded (network) size is
          used in order to calculate size limits. Implementations might decide to use a storage
          model such that it uses less size than storing the decoded data, as long as the data
-         returned to clients in getNetworkData is identical to the decoded data. The potential
+         returned to clients in getData is identical to the decoded data. The potential
          tradeoff between storage and performance is up to the implementation.
 
 1. Let |processBodyError| be this step: Do nothing.
@@ -8102,21 +8102,21 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 </div>
 
-#### The network.getNetworkData Command ####  {#command-network-getNetworkData}
+#### The network.getData Command ####  {#command-network-getData}
 
-The <dfn export for=commands>network.getNetworkData</dfn> command retrieves a
+The <dfn export for=commands>network.getData</dfn> command retrieves a
 network data if it is available.
 
 <dl>
    <dt>Command Type</dt>
    <dd>
       <pre class="cddl remote-cddl">
-      network.GetNetworkData = (
-        method: "network.getNetworkData",
-        params: network.GetNetworkDataParameters
+      network.GetData = (
+        method: "network.getData",
+        params: network.GetDataParameters
       )
 
-      network.GetNetworkDataParameters = {
+      network.GetDataParameters = {
         dataType: network.DataType,
         ? collector: network.Collector,
         ? disown: bool,
@@ -8127,14 +8127,14 @@ network data if it is available.
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl local-cddl">
-      script.GetNetworkDataResult = {
+      script.GetDataResult = {
         bytes: network.BytesValue,
       }
     </pre>
    </dd>
 </dl>
 
-<div algorithm="remote end steps for network.getNetworkData">
+<div algorithm="remote end steps for network.getData">
 The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |data type| be |command parameters|["<code>dataType</code>"].
@@ -8181,7 +8181,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Return [=error=] with [=error code=] [=unavailable network data=].
 
-1. Let |body| be a [=/map=] matching the <code>script.GetNetworkDataResult</code> production,
+1. Let |body| be a [=/map=] matching the <code>script.GetDataResult</code> production,
    with the <code>bytes</code> field set to |bytes|.
 
 1. If |disown| is true, [=remove collector from data=] with |collected data| and |collector id|.
