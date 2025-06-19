@@ -5947,7 +5947,7 @@ an [=struct/item=] named <code>size</code>, which is a js-uint or null,
 an [=struct/item=] named <code>type</code>, which is a <code>network.DataType</code>.
 
 A <dfn for="network">collector</dfn> is a [=/struct=] consisting of
-an [=struct/item=] named <code>max data encoded size</code>, which is a js-uint,
+an [=struct/item=] named <code>max encoded data size</code>, which is a js-uint,
 an [=struct/item=] named <code>contexts</code>, which is a list of <code>browsingContext.BrowsingContext</code>,
 an [=struct/item=] named <code>data types</code>, which is a list of <code>network.DataType</code>,
 an [=struct/item=] named <code>collector</code>, which is a <code>network.Collector</code>,
@@ -6123,7 +6123,7 @@ and [=clone network response body=] does not clone the corresponding body.
 
    1. For |collector| in |collectors|:
 
-      1. If |size| is less than or equal to |collector|'s <code>max data size</code>,
+      1. If |size| is less than or equal to |collector|'s <code>max encoded data size</code>,
          [=list/Append=] |collector|'s <code>collector</code> to |collected data|'s <code>collectors</code>.
 
    1. If |collected data|'s <code>collectors</code> is not [=list/empty=]:
@@ -7572,7 +7572,7 @@ The <dfn export for=commands>network.addDataCollector</dfn> adds a
 
       network.AddDataCollectorParameters = {
         dataTypes: [+network.DataType],
-        maxDataEncodedSize: js-uint,
+        maxEncodedDataSize: js-uint,
         ? collectorType: network.CollectorType .default "blob",
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
@@ -7600,8 +7600,13 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |data types| be [=set/create|create a set=] with
    |command parameters|["<code>dataTypes</code>"].
 
-1. Let |max data encoded size| be |command parameters|
-   ["<code>maxDataEncodedSize</code>"].
+1. Let |max encoded data size| be |command parameters|
+   ["<code>maxEncodedDataSize</code>"].
+
+   Note: Different implementations might support different encodings, which means the
+   encoded size might be different between browsers. Therefore, for the same data collector
+   configuration, some network data might fit the maxEncodedDataSize only in some
+   implementations.
 
 1. Let |collector type| be |command parameters|
    ["<code>collectorType</code>"].
@@ -7612,7 +7617,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If |input user context ids| is not empty and |input context ids| is not
    empty, return [=error=] with [=error code=] [=invalid argument=].
 
-1. If |max data encoded size| is greater than [=max total data size=],
+1. If |max encoded data size| is greater than [=max total data size=],
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |input context ids| is not [=set/empty=]:
@@ -7634,7 +7639,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
        1. If |user context| is null, return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |collector| be a struct with
-   <code>max data encoded size</code> field set to |max data encoded size|,
+   <code>max encoded data size</code> field set to |max encoded data size|,
    <code>data types</code> field set to |data types|,
    <code>collector</code> field set to |collector id|,
    <code>collector type</code> field set to |collector type|,
