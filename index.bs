@@ -5947,7 +5947,7 @@ an [=struct/item=] named <code>size</code>, which is a js-uint or null,
 an [=struct/item=] named <code>type</code>, which is a <code>network.DataType</code>.
 
 A <dfn for="network">collector</dfn> is a [=/struct=] consisting of
-an [=struct/item=] named <code>data max size</code>, which is a js-uint,
+an [=struct/item=] named <code>max data encoded size</code>, which is a js-uint,
 an [=struct/item=] named <code>contexts</code>, which is a list of <code>browsingContext.BrowsingContext</code>,
 an [=struct/item=] named <code>data types</code>, which is a list of <code>network.DataType</code>,
 an [=struct/item=] named <code>collector</code>, which is a <code>network.Collector</code>,
@@ -7571,8 +7571,8 @@ The <dfn export for=commands>network.addDataCollector</dfn> adds a
       )
 
       network.AddDataCollectorParameters = {
-        dataMaxSize: js-uint,
         dataTypes: [+network.DataType],
+        maxDataEncodedSize: js-uint,
         ? collectorType: network.CollectorType .default "blob",
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
@@ -7597,11 +7597,11 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |input context ids| be [=set/create|create a set=] with
    |command parameters|[<code>contexts</code>].
 
-1. Let |data max size| be |command parameters|
-   ["<code>dataMaxSize</code>"].
-
 1. Let |data types| be [=set/create|create a set=] with
    |command parameters|["<code>dataTypes</code>"].
+
+1. Let |max data encoded size| be |command parameters|
+   ["<code>maxDataEncodedSize</code>"].
 
 1. Let |collector type| be |command parameters|
    ["<code>collectorType</code>"].
@@ -7612,7 +7612,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If |input user context ids| is not empty and |input context ids| is not
    empty, return [=error=] with [=error code=] [=invalid argument=].
 
-1. If |data max size| is greater than [=max total data size=],
+1. If |max data encoded size| is greater than [=max total data size=],
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |input context ids| is not [=set/empty=]:
@@ -7634,7 +7634,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
        1. If |user context| is null, return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |collector| be a struct with
-   <code>data max size</code> field set to |data max size|,
+   <code>max data encoded size</code> field set to |max data encoded size|,
    <code>data types</code> field set to |data types|,
    <code>collector</code> field set to |collector id|,
    <code>collector type</code> field set to |collector type|,
