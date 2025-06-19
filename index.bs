@@ -127,6 +127,10 @@ spec: CONSOLE; urlPrefix: https://console.spec.whatwg.org
     text: formatter; url: formatter
     text: formatting specifier; url: formatting-specifiers
     text: printer; url: printer
+spec: ECMASCRIPT-I18N; urlPrefix: https://tc39.es/ecma402/
+  type: dfn
+    text: DefaultLocale; url: #sec-defaultlocale
+    text: IsStructurallyValidLanguageTag; url: #sec-isstructurallyvalidlanguagetag
 spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
   type: dfn
     text: Array; url: sec-array-objects
@@ -3116,6 +3120,12 @@ or null and an [=struct/item=] named <dfn attribute for="viewport-configuration"
 
 A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map between [=user contexts=] and [=viewport configuration=].
 
+A [=remote end=] has a <dfn>navigable to locale overrides map</dfn> which is a weak
+map between [=navigables=] and strings.
+
+A [=remote end=] has a <dfn>user context to locale overrides map</dfn> which is a
+weak map between [=user contexts=] and strings.
+
 ### Types ### {#module-browsingcontext-types}
 
 #### The browsingContext.BrowsingContext Type #### {#type-browsingContext-Browsingcontext}
@@ -4869,6 +4879,10 @@ TODO: Move it as a hook in the html spec instead.
       [=set emulated screen orientation=] with |navigable| and
       [=screen orientation overrides map=][|user context|].
 
+   1. If [=user context to locale overrides map=] [=map/contains=] |user context|,
+      [=set emulated locale=] with |navigable| and
+      [=user context to locale overrides map=][|user context|].
+
 1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
    1. If |navigable| is a [=/top-level traversable=] and the <code>viewport</code> field of
@@ -5768,6 +5782,7 @@ relating to emulation of browser APIs.
 <pre class="cddl" data-cddl-module="remote-cddl">
 EmulationCommand = (
   emulation.SetGeolocationOverride //
+  emulation.SetLocaleOverride //
   emulation.SetScreenOrientationOverride
 )
 </pre>
@@ -6017,6 +6032,104 @@ The [=remote end steps=] with |command parameters| are:
 
    1. [=Set emulated screen orientation=] with |navigable| and
       |emulated screen orientation|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setLocaleOverride Command ####  {#command-emulation-setLocaleOverride}
+
+The <dfn export for=commands>emulation.setLocaleOverride</dfn> command modifies
+locale on the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl remote-cddl">
+      emulation.SetLocaleOverride = (
+        method: "emulation.setLocaleOverride",
+        params: emulation.SetLocaleOverrideParameters
+      )
+
+      emulation.SetLocaleOverrideParameters = {
+        locale: text / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div>
+To <dfn>set emulated locale</dfn> given |navigable| and |locale|:
+
+1. If |locale| is null, [=map/remove=] |navigable| from
+   [=navigable to locale overrides map=].
+
+1. Otherwise, [=map/set=] [=navigable to locale overrides map=][|navigable|] to
+   |locale|.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setLocaleOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |emulated locale| be null.
+
+1. If |command parameters| [=map/contains=] "<code>locale</code>":
+
+   1. Set |emulated locale| to |command parameters|["<code>locale</code>"].
+
+   1. If [=IsStructurallyValidLanguageTag=](|emulated locale|) returns false,
+      return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |navigables| be a [=/set=].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+1. Otherwise:
+
+   1. Assert the <code>userContexts</code> field of |command parameters| is present.
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. If |emulated locale| is null, [=map/remove=] |user context| from
+         [=user context to locale overrides map=].
+
+      1. Otherwise, [=user context to locale overrides map=][|user context|] to
+         |locale|.
+
+      1. [=list/For each=] |top-level traversable| of the list of all
+         [=/top-level traversables=] whose [=associated user context=] is
+         |user context|:
+
+         1. [=list/Append=] |top-level traversable| to |navigables|.
+
+1. For each |navigable| of |navigables|:
+
+   1. [=Set emulated locale=] with |navigable| and |locale|.
 
 1. Return [=success=] with data null.
 
@@ -9086,6 +9199,33 @@ ScriptEvent = (
   script.RealmDestroyed
 )
 </pre>
+
+<div algorithm="updated DefaultLocale steps">
+Whenever the [=DefaultLocale=] algorithm is invoked, the [=remote end=] must run the
+following steps, instead of the ones defined by [=DefaultLocale=] specification:
+
+1. Let |realm| be [=current Realm Record=].
+
+1. Let |global object| be |realm|'s [=realm/global object=].
+
+1. If |global object| implements {{WindowProxy}}:
+
+    1. Let |window| be the value of |global object|'s \[[WindowProxy]]
+       [=internal slot=].
+
+    1. Let |navigable| be |window|'s [=window/navigable=].
+
+    1. Let |top-level traversable| be |navigable|’s
+       [=navigable/top-level traversable=].
+
+    1. If [=navigable to locale overrides map=] [=map/contains=]
+       |top-level traversable|:
+
+        1. Return [=navigable to locale overrides map=][|top-level traversable|].
+
+1. Proceed according to [=DefaultLocale=] specification.
+
+</div>
 
 ### Preload Scripts ### {#preload-scripts}
 
