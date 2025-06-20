@@ -6012,10 +6012,6 @@ To <dfn export>clone network response body</dfn> given |sessions|, |request| and
 
 Note: This hook is intended to be triggered by the fetch spec when the response is set.
 
-Note: Should check for collectors matching navigable + response here already?
-Otherwise we can do it only in [=maybe collect network response body=] so that
-clients can add the collector as late as possible?
-
 1. For each |session| in |sessions|:
 
    1. If |session|'s [=network collectors=] is not [=list/empty=]:
@@ -6065,13 +6061,13 @@ To <dfn>maybe collect network response body</dfn> given |sessions|, |request| an
 
 1. If |response|'s [=response/status=] is a [=redirect status=], return.
 
-   Note: For redirects, only the final response body has to be stored.
+   Note: For redirects, only the final response body is stored.
 
 1. Let |navigable| be [=get navigable for request=] with |request|.
 
 1. If |navigable| is null, return.
 
-   NOTE: This prevents from collecting data not related to a navigable.
+   ISSUE: This prevents collecting data not related to a navigable.
    We still need to retrieve the navigable to check against the collector
    configuration but we could still accept null here.
 
@@ -6109,7 +6105,7 @@ To <dfn>maybe collect network response body</dfn> given |sessions|, |request| an
       1. Set |size| to |response|'s [=response body info=]'s [=encoded size=].
 
          Note: There is a discrepancy between the fact that the bytes retrieved from the
-         fetch stream correspond to the dedoded data, but the encoded (network) size is
+         fetch stream correspond to the decoded data, but the encoded (network) size is
          used in order to calculate size limits. Implementations might decide to use a storage
          model such that it uses less size than storing the decoded data, as long as the data
          returned to clients in getData is identical to the decoded data. The potential
@@ -6147,7 +6143,7 @@ To <dfn>allocate size to record data</dfn> given |size|:
 
 1. Let |already collected data| be an empty list.
 
-1. For each |collected data| in [=collected network data=] in order:
+1. For each |collected data| in [=collected network data=]:
 
    1. If |collected data|'s <code>bytes</code> is not null:
 
@@ -6157,7 +6153,7 @@ To <dfn>allocate size to record data</dfn> given |size|:
 
 1. If |size| is greater than |available size|:
 
-   1. For each |collected data| in |already collected data| in order:
+   1. For each |collected data| in |already collected data|:
 
       1. Increase |available size| by |collected data|'s <code>size</code>.
 
