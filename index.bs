@@ -637,7 +637,7 @@ with the following additional codes:
   <dt><dfn for=errors export>no such history entry</dfn>
   <dd>Tried to havigate to an unknown [=session history entry=].
 
-  <dt><dfn for=errors export>no such collector</dfn>
+  <dt><dfn for=errors export>no such network collector</dfn>
   <dd>Tried to remove an unknown [=network/collector=].
 
   <dt><dfn for=errors export>no such intercept</dfn>
@@ -688,7 +688,7 @@ ErrorCode = "invalid argument" /
             "invalid web extension" /
             "move target out of bounds" /
             "no such alert" /
-            "no such collector" /
+            "no such network collector" /
             "no such element" /
             "no such frame" /
             "no such handle" /
@@ -5960,7 +5960,7 @@ A [=BiDi session=] has <dfn>network collectors</dfn> which is a [=/map=] between
 A [=remote end=] has <dfn>collected network data</dfn> which is a list of
 [=network/data=]. It is initially empty.
 
-A [=remote end=] has a <dfn>max total data size</dfn> which is an integer representing
+A [=remote end=] has a <dfn>max total data size</dfn> which is a js-uint representing
 the size allocated to collect network data in [=collected network data=]. Its
 value is implementation-defined.
 
@@ -6071,9 +6071,9 @@ To <dfn>maybe collect network response body</dfn> given |sessions|, |request| an
 
 1. If |navigable| is null, return.
 
-NOTE: This prevents from collecting data not related to a navigable.
-We still need to retrieve the navigable to check against the collector
-configuration but we could still accept null here.
+   NOTE: This prevents from collecting data not related to a navigable.
+   We still need to retrieve the navigable to check against the collector
+   configuration but we could still accept null here.
 
 1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
 
@@ -6093,8 +6093,8 @@ configuration but we could still accept null here.
 
 1. If |collected data| is null, return.
 
-Note: This might happen if there are no collectors setup when the response is created,
-and [=clone network response body=] does not clone the corresponding body.
+   NOTE: This might happen if there are no collectors setup when the response is created,
+   and [=clone network response body=] does not clone the corresponding body.
 
 1. Let |bytes| be null.
 
@@ -6124,7 +6124,7 @@ and [=clone network response body=] does not clone the corresponding body.
    1. For |collector| in |collectors|:
 
       1. If |size| is less than or equal to |collector|'s <code>max encoded data size</code>,
-         [=list/Append=] |collector|'s <code>collector</code> to |collected data|'s <code>collectors</code>.
+         [=list/append=] |collector|'s <code>collector</code> to |collected data|'s <code>collectors</code>.
 
    1. If |collected data|'s <code>collectors</code> is not [=list/empty=]:
 
@@ -7594,7 +7594,10 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |collector id| be the string representation of a [[!RFC9562|UUID]].
 
-1. Let |input context ids| be [=set/create|create a set=] with
+1. Let |input context ids| be an empty [=/set=].
+
+1. If the <code>contexts</code> field of |command parameters| is present,
+   set |input context ids| to [=set/create|create a set=] with
    |command parameters|[<code>contexts</code>].
 
 1. Let |data types| be [=set/create|create a set=] with
@@ -7611,7 +7614,10 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |collector type| be |command parameters|
    ["<code>collectorType</code>"].
 
-1. Let |input user context ids| be [=set/create|create a set=] with
+1. Let |input user context ids| be an empty [=/set=].
+
+1. If the <code>userContexts</code> field of |command parameters| is present,
+   set |input user context ids| to [=set/create|create a set=] with
    |command parameters|[<code>userContexts</code>].
 
 1. If |input user context ids| is not empty and |input context ids| is not
@@ -8041,7 +8047,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |collectors| be |session|'s [=network collectors=].
 
 1. If |collectors| does not [=map/contain=] |collector id|, return
-   [=error=] with [=error code=] [=no such collector=].
+   [=error=] with [=error code=] [=no such network collector=].
 
 1. Let |collected data| be [=get collected data=] with |request id| and |data type|.
 
@@ -8124,7 +8130,7 @@ network data if it is available.
       network.GetDataParameters = {
         dataType: network.DataType,
         ? collector: network.Collector,
-        ? disown: bool,
+        ? disown: bool .default false,
         request: network.Request,
       }
       </pre>
@@ -8153,16 +8159,13 @@ The [=remote end steps=] given |session| and |command parameters| are:
    1. Let |collectors| be |session|'s [=network collectors=].
 
    1. If |collectors| does not [=map/contain=] |collector id|, return
-      [=error=] with [=error code=] [=no such collector=].
+      [=error=] with [=error code=] [=no such network collector=].
 
    1. Set |collector id| to |command parameters|["<code>collector</code>"].
 
-1. Let |disown| be false.
+1. Let |disown| be |command parameters|["<code>disown</code>"].
 
-1. If |command parameters| [=map/contains=] "<code>disown</code>",
-   set |disown| to |command parameters|["<code>disown</code>"].
-
-1. If |disown| is true and |collector id| is null, , return [=error=]
+1. If |disown| is true and |collector id| is null, return [=error=]
    with [=error code=] [=invalid argument=].
 
 1. Let |collected data| be [=get collected data=] given |request id| and |data type|.
@@ -8290,7 +8293,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |collectors| be |session|'s [=network collectors=].
 
 1. If |collectors| does not [=map/contain=] |collector id|, return
-   [=error=] with [=error code=] [=no such collector=].
+   [=error=] with [=error code=] [=no such network collector=].
 
 1. [=map/Remove=] |collector id| from |session|'s [=network collectors=].
 
