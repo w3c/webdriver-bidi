@@ -3120,11 +3120,8 @@ or null and an [=struct/item=] named <dfn attribute for="viewport-configuration"
 
 A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map between [=user contexts=] and [=viewport configuration=].
 
-A [=remote end=] has a <dfn>navigable to locale overrides map</dfn> which is a weak
-map between [=navigables=] and strings.
-
-A [=remote end=] has a <dfn>user context to locale overrides map</dfn> which is a
-weak map between [=user contexts=] and strings.
+A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
+[=navigables=] or [=user contexts=] and string or null.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -4879,10 +4876,6 @@ TODO: Move it as a hook in the html spec instead.
       [=set emulated screen orientation=] with |navigable| and
       [=screen orientation overrides map=][|user context|].
 
-   1. If [=user context to locale overrides map=] [=map/contains=] |user context|,
-      [=set emulated locale=] with |navigable| and
-      [=user context to locale overrides map=][|user context|].
-
 1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
    1. If |navigable| is a [=/top-level traversable=] and the <code>viewport</code> field of
@@ -6066,14 +6059,39 @@ locale on the given top-level traversables or user contexts.
    </dd>
 </dl>
 
-<div>
-To <dfn>set emulated locale</dfn> given |navigable| and |locale|:
+<div algorithm="updated DefaultLocale steps">
+The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
+[=remote end=] must have an implementation that runs the following steps:
 
-1. If |locale| is null, [=map/remove=] |navigable| from
-   [=navigable to locale overrides map=].
+1. Let |emulated locale| be null.
 
-1. Otherwise, [=map/set=] [=navigable to locale overrides map=][|navigable|] to
-   |locale|.
+1. Let |realm| be [=current Realm Record=].
+
+1. Let |global object| be |realm|'s [=realm/global object=].
+
+1. If |global object| implements {{WindowProxy}}:
+
+    1. Let |window| be the value of |global object|'s \[[WindowProxy]]
+       [=internal slot=].
+
+    1. Let |navigable| be |window|'s [=window/navigable=].
+
+    1. Let |top-level traversable| be |navigable|’s
+       [=navigable/top-level traversable=].
+
+    1. Let |user context| be |top-level traversable|'s [=associated user context=].
+
+    1. If [=locale overrides map=] [=map/contains=] |top-level traversable|, set
+       |emulated locale| to [=locale overrides map=][|top-level traversable|].
+
+    1. Otherwise, if [=locale overrides map=] [=map/contains=]
+       |user context|, set |emulated locale| to
+       [=locale overrides map=][|user context|].
+
+1. If |emulated locale| is not null, return |emulated locale|.
+
+1. Return the result of implementation-defined steps in accordance with the
+   requirements of the [=DefaultLocale=] specification.
 
 </div>
 
@@ -6115,11 +6133,7 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. If |emulated locale| is null, [=map/remove=] |user context| from
-         [=user context to locale overrides map=].
-
-      1. Otherwise, [=user context to locale overrides map=][|user context|] to
-         |locale|.
+      1. [=map/Set=] [=locale overrides map=][|user context|] to |locale|.
 
       1. [=list/For each=] |top-level traversable| of the list of all
          [=/top-level traversables=] whose [=associated user context=] is
@@ -6129,7 +6143,7 @@ The [=remote end steps=] with |command parameters| are:
 
 1. For each |navigable| of |navigables|:
 
-   1. [=Set emulated locale=] with |navigable| and |locale|.
+   1. [=map/Set=] [=locale overrides map=][|navigable|] to |locale|.
 
 1. Return [=success=] with data null.
 
@@ -9199,34 +9213,6 @@ ScriptEvent = (
   script.RealmDestroyed
 )
 </pre>
-
-<div algorithm="updated DefaultLocale steps">
-The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
-[=remote end=] must have an implementation that runs the following steps:
-
-1. Let |realm| be [=current Realm Record=].
-
-1. Let |global object| be |realm|'s [=realm/global object=].
-
-1. If |global object| implements {{WindowProxy}}:
-
-    1. Let |window| be the value of |global object|'s \[[WindowProxy]]
-       [=internal slot=].
-
-    1. Let |navigable| be |window|'s [=window/navigable=].
-
-    1. Let |top-level traversable| be |navigable|’s
-       [=navigable/top-level traversable=].
-
-    1. If [=navigable to locale overrides map=] [=map/contains=]
-       |top-level traversable|:
-
-        1. Return [=navigable to locale overrides map=][|top-level traversable|].
-
-1. Run implementation-defined steps in accordance with the requirements of the
-   [=DefaultLocale=] specification.
-
-</div>
 
 ### Preload Scripts ### {#preload-scripts}
 
