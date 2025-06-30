@@ -47,10 +47,11 @@ spec: RFC6265
   type: dfn
     text: Cookie; url: https://httpwg.org/specs/rfc6265.html
     text: Cookie store; url: https://httpwg.org/specs/rfc6265.html#storage-model
-spec: RFC6265bis; urlPrefix: https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-05
+spec: RFC6265bis; urlPrefix: https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-rfc6265bis-20.html
   type: dfn
     text: Lax; url: section-4.1.2.7
     text: Strict; url: section-4.1.2.7
+    text: Default; url: section-5.6.7.2
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithms
@@ -322,17 +323,6 @@ spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
 spec: STREAMS; urlPrefix: https://streams.spec.whatwg.org/
   type: dfn
     text: ReadableStream; url: #readablestream
-</pre>
-
-<pre class="biblio">
-{
-    "SAME-SITE-COOKIES": {
-        "authors": ["Mike West", "Mark Goodwin"],
-        "href": "https://datatracker.ietf.org/doc/html/draft-ietf-httpbis-cookie-same-site",
-        "publisher": "IETF",
-        "title": "Same-Site Cookies"
-    }
-}
 </pre>
 
 <style>
@@ -6845,7 +6835,7 @@ that can be added.
 
 <pre class="cddl" data-cddl-module="local-cddl,remote-cddl">
 
-network.SameSite = "strict" / "lax" / "none"
+network.SameSite = "strict" / "lax" / "none" / "default"
 
 <!--
 Modifications to this definition should be reflected in
@@ -6859,8 +6849,8 @@ network.Cookie = {
     size: js-uint,
     httpOnly: bool,
     secure: bool,
-    sameSite: network.SameSite,
     ? expiry: js-uint,
+    sameSite: network.SameSite,
     Extensible,
 }
 </pre>
@@ -6869,9 +6859,6 @@ The <code>network.Cookie</code> type represents a cookie.
 
 <div algorithm>
 To <dfn>serialize cookie</dfn> given |stored cookie|:
-
-Note: The definitions of |stored cookie|'s fields are from [[COOKIES]], except
-samesite-flag, which is from [[SAME-SITE-COOKIES]].
 
 1. Let |name| be the result of [=UTF-8 decode=] with |stored cookie|'s name field.
 
@@ -6893,9 +6880,10 @@ samesite-flag, which is from [[SAME-SITE-COOKIES]].
 1. Let |secure| be true if |stored cookie|'s secure-only-flag is true, or false
    otherwise.
 
-1. Let |same site| be "<code>none</code>" if |stored cookie|'s samesite-flag is
-   "<code>None</code>", "<code>lax</code>" if it is "<code>Lax</code>", or
-   "<code>strict</code>" if it is "<code>Strict</code>".
+1. Let |same site| be "<code>none</code>" if |stored cookie|'s same-site-flag is
+   "<code>None</code>", "<code>lax</code>" if it is "<code>Lax</code>",
+   "<code>strict</code>" if it is "<code>Strict</code>", or
+   "<code>default</code>" if it is "<code>Default</code>"
 
 1. Return a map matching the <code>network.Cookie</code> production,
    with the <code>name</code> field set to |name|, the <code>value</code> field
