@@ -2713,7 +2713,8 @@ The <dfn export for=commands>browser.createUserContext</dfn> command creates a
 
       browser.CreateUserContextParameters = {
         ? acceptInsecureCerts: bool,
-        ? proxy: session.ProxyConfiguration
+        ? proxy: session.ProxyConfiguration,
+        ? unhandledPromptBehavior: session.UserPromptHandler
       }
       </pre>
    </dd>
@@ -2746,6 +2747,10 @@ The [=remote end steps=] with |session| and |command parameters| are:
    1. [=map/Set=] |session|'s
       [=user context to accept insecure certificates override map=][|user context|]
       to |acceptInsecureCerts|.
+
+1. If |command parameters| [=map/contains=] "<code>unhandledPromptBehavior</code>",
+   [=map/set=] [=unhandled prompt behavior override map=][|user context|] to
+   |command parameters|["<code>unhandledPromptBehavior</code>"].
 
 1. If |command parameters| [=map/contains=] "<code>proxy</code>":
 
@@ -3119,6 +3124,10 @@ A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map bet
 
 A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
 [=navigables=] or [=user contexts=] and string or null.
+
+A [=remote end=] has an <dfn>unhandled prompt behavior overrides map</dfn>
+which is a weak map between [=user contexts=] and [=/map=] matching the
+<code>session.UserPromptHandler</code> production.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -5722,6 +5731,26 @@ closed</dfn> steps given |window|, |type|, |accepted| and optional |user text|
 </dl>
 
 <div algorithm>
+To <dfn>get navigable's user prompt handler</dfn> given |type| and |navigable|:
+
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If [=unhandled prompt behavior overrides map=] contains |user context|:
+
+  1. Let |behavior map| be [=unhandled prompt behavior overrides map=][|user context|].
+
+  1. If |behavior map| contains |type|, return |behavior map|[|type|].
+
+  1. If |behavior map| contains <code>"default"</code>, return
+     |behavior map|[<code>"default"</code>].
+
+1. Let |handler configuration| be [=get the prompt handler=] with |type|.
+
+1. Return |handler configuration|'s [=prompt handler configuration/handler=].
+
+</div>
+
+<div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
 opened</dfn> steps given |window|, |type|, |message|, and optional |default value|
 (default: null).
@@ -5730,10 +5759,8 @@ opened</dfn> steps given |window|, |type|, |message|, and optional |default valu
 
 1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
-1. Let |handler configuration| be [=get the prompt handler=] with |type|.
-
-1. Let |handler| be |handler configuration|'s [=prompt handler
-   configuration/handler=].
+1. Let |handler| be [=get navigable's user prompt handler=] with |type| and
+   |navigable|.
 
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpenedParameters</code> production with the
