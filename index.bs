@@ -203,6 +203,9 @@ spec: SCREEN-ORIENTATION; urlPrefix: https://www.w3.org/TR/screen-orientation
     text: screen orientation; url: #dom-screenorientation
     text: screen orientation change steps; url: #dfn-screen-orientation-change-steps
     text: screen orientation values lists; url: #dfn-screen-orientation-values-lists
+spec: FETCH; urlPrefix: https://fetch.spec.whatwg.org/
+  type: dfn
+    text: default User-Agent value; url: #default-user-agent-value
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
     text: 2D context creation algorithm; url: canvas.html#2d-context-creation-algorithm
@@ -3120,6 +3123,9 @@ A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map bet
 A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
 [=navigables=] or [=user contexts=] and string or null.
 
+A [=remote end=] has a <dfn>user agent overrides map</dfn> which is a weak map
+between [=navigables=] or [=user contexts=] and string or null.
+
 ### Types ### {#module-browsingcontext-types}
 
 #### The browsingContext.BrowsingContext Type #### {#type-browsingContext-Browsingcontext}
@@ -5773,7 +5779,8 @@ relating to emulation of browser APIs.
 EmulationCommand = (
   emulation.SetGeolocationOverride //
   emulation.SetLocaleOverride //
-  emulation.SetScreenOrientationOverride
+  emulation.SetScreenOrientationOverride //
+  emulation.SetUserAgentOverride
 )
 </pre>
 
@@ -6141,6 +6148,126 @@ The [=remote end steps=] with |command parameters| are:
 
    1. [=Set emulated screen orientation=] with |navigable| and
       |emulated screen orientation|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setUserAgentOverride Command ####  {#command-emulation-setUserAgentOverride}
+
+The <dfn export for=commands>emulation.setUserAgentOverride</dfn> command modifies
+User-Agent on the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetUserAgentOverride = (
+        method: "emulation.setUserAgentOverride",
+        params: emulation.SetUserAgentOverrideParameters
+      )
+
+      emulation.SetUserAgentOverrideParameters = {
+        userAgent: text / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="updated `User-Agent` getter steps">
+The [=default User-Agent value=] getter steps is implementation defined. A
+WebDriver-BiDi [=remote end=] must have an implementation that runs the following
+steps:
+
+Issue: get |related navigables|.
+
+1. Let |related navigables| be the implementation-defined list of navigables related
+   to the caller of these steps.
+
+1. Let |emulated user agent| be the result of [=get emulated user agent=] given
+   |related navigables|.
+
+1. If |emulated user agent| is not null, return |emulated user agent|.
+
+1. Return the result of implementation-defined steps in accordance with the
+   requirements of the [=default User-Agent value=] specification.
+
+</div>
+
+<div algorithm>
+To <dfn>get emulated user agent</dfn> given |navigables|:
+
+1. For each |navigable| or |navigables|:
+
+   1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
+
+   1. If [=user agent overrides map=] contains |top-level navigable|, return
+      [=user agent overrides map=][|top-level navigable|].
+
+   1. Let |user context| be |top-level navigable|'s [=associated user context=].
+
+   1. If [=user agent overrides map=] contains |user context|, return
+      [=user agent overrides map=][|user context|].
+
+   1. Return null.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setUserAgentOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |emulated user agent| be null.
+
+1. If |command parameters| [=map/contains=] "<code>userAgent</code>":
+
+   1. Set |emulated user agent| to |command parameters|["<code>userAgent</code>"].
+
+1. Let |navigables| be a [=/set=].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+1. Otherwise:
+
+   1. Assert the <code>userContexts</code> field of |command parameters| is present.
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=map/Set=] [=user agent overrides map=][|user context|] to
+         |emulated user agent|.
+
+      1. [=list/For each=] |top-level traversable| of the list of all
+         [=/top-level traversables=] whose [=associated user context=] is
+         |user context|:
+
+         1. [=list/Append=] |top-level traversable| to |navigables|.
+
+1. For each |navigable| of |navigables|:
+
+   1. [=map/Set=] [=user agent overrides map=][|navigable|] to |emulated user agent|.
 
 1. Return [=success=] with data null.
 
