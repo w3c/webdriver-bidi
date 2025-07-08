@@ -1537,6 +1537,14 @@ A [=BiDi session=] has a
 A [=BiDi session=] has a <dfn>user context to proxy configuration map</dfn>, which is
 a [=/map=] between [=user contexts=] and [=proxy configuration=].
 
+An <dfn>emulated network conditions struct</dfn> is a [=struct=] with:
+* [=struct/Item=] named <dfn attribute for="emulated-network-conditions-struct">offline</dfn>
+  which is a boolean or null.
+
+A [=BiDi session=] has an <dfn>emulated network conditions map</dfn>, which is a weak
+map between [=navigables=] or [=user contexts=] and
+[=emulated network conditions struct=] or null.
+
 When a [=user context=] is [=set/remove|removed=] from the
 [=set of user contexts=], [=remove user context subscriptions=].
 
@@ -5808,6 +5816,7 @@ relating to emulation of browser APIs.
 EmulationCommand = (
   emulation.SetGeolocationOverride //
   emulation.SetLocaleOverride //
+  emulation.SetNetworkConditions //
   emulation.SetScreenOrientationOverride
 )
 </pre>
@@ -6052,6 +6061,96 @@ The [=remote end steps=] with |command parameters| are:
 1. For each |navigable| of |navigables|:
 
    1. [=map/Set=] [=locale overrides map=][|navigable|] to |emulated locale|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setNetworkConditions Command ####  {#command-emulation-setNetworkConditions}
+
+The <dfn export for=commands>emulation.setNetworkConditions</dfn> command
+emulates specific network conditions for the given browsing context or for a user
+context.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetNetworkConditions = (
+        method: "emulation.setNetworkConditions",
+        params: emulation.setNetworkConditionsParameters
+      )
+
+      emulation.setNetworkConditionsParameters = {
+        networkConditions: emulation.NetworkConditions / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.NetworkConditions = emulation.NetworkConditionsOffline
+
+      emulation.NetworkConditionsOffline = {
+        type: "offline"
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for emulation.setNetworkConditions">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |emulated network conditions| be null.
+
+1. If |command parameters| [=map/contains=] "<code>NetworkConditions</code>":
+
+   1. If |command parameters|["<code>networkConditions</code>"]["<code>type</code>"]
+      equals offline, set |emulated network conditions| to a new
+      [=emulated network conditions struct=] with [=struct/item=]
+      "<code>offline</code>" set to true.
+
+1. Let |navigables| be a [=/set=].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+1. Otherwise:
+
+   1. Assert the <code>userContexts</code> field of |command parameters| is present.
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=map/Set=] [=emulated network conditions map=][|user context|] to |emulated network conditions|.
+
+      1. [=list/For each=] |top-level traversable| of the list of all
+         [=/top-level traversables=] whose [=associated user context=] is
+         |user context|:
+
+         1. [=list/Append=] |top-level traversable| to |navigables|.
+
+1. For each |navigable| of |navigables|:
+
+   1. [=map/Set=] [=emulated network conditions map=][|navigable|] to |emulated network conditions|.
 
 1. Return [=success=] with data null.
 
