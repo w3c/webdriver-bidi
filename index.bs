@@ -209,6 +209,8 @@ spec: SCREEN-ORIENTATION; urlPrefix: https://www.w3.org/TR/screen-orientation
 spec: FETCH; urlPrefix: https://fetch.spec.whatwg.org/
   type: dfn
     text: default User-Agent value; url: #default-user-agent-value
+    text: HTTP-network-or-cache fetch; url: #concept-http-network-or-cache-fetch
+    text: request; url: #fetch-params-request
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
   type: dfn
     text: 2D context creation algorithm; url: canvas.html#2d-context-creation-algorithm
@@ -238,6 +240,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: navigable; for:window; url: nav-history-apis.html#window-navigable
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
+    text: NavigatorID; url: system-state.html#navigatorid
     text: ongoing-navigation; url: browsing-the-web.html#ongoing-navigation
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
     text: parent; for:navigable; url: document-sequences.html#nav-parent
@@ -6230,10 +6233,26 @@ The [=default User-Agent value=] getter steps is implementation defined. A
 WebDriver-BiDi [=remote end=] must have an implementation that runs the following
 steps:
 
-Issue: get |related navigables|.
+1. Let |related navigables| be an empty list.
 
-1. Let |related navigables| be the implementation-defined list of navigables related
-   to the caller of these steps.
+1. If [=default User-Agent value=] was accessed during execution of the
+   [=HTTP-network-or-cache fetch=] algorithm with |fetchParams|:
+
+   1. Let |request| be |fetchParams|’s [=request=].
+
+   1. If |request|'s [=request/client=] is not null, let |related navigables|
+      be the result of [=get related navigables=] with |request|'s
+      [=request/client=].
+
+1. If [=default User-Agent value=] was accessed from [=NavigatorID=] interface:
+
+   1. Let |realm| be [=current Realm Record=].
+
+   1. Let |environment settings| be the [=environment settings object=] whose
+      [=realm execution context=]'s Realm component is |realm|.
+
+   1. Let |related navigables| be the result of [=get related navigables=] given
+      |environment settings|.
 
 1. Let |emulated user agent| be the result of [=get emulated user agent=] given
    |related navigables|.
