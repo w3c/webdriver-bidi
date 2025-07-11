@@ -8,13 +8,15 @@
  * - pathToSpec: a path to the specification to extract CDDL definitions from. Default: _dirname/../../index.bs.
  */
 
-const fs = require('fs')
-const path = require('path')
-const parse5 = require('parse5')
+import fs from 'fs';
+import path from 'path';
+import parse5 from 'parse5';
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
 
-const { getCDDLNodes } = require('./utils')
+import { getCDDLNodes } from './utils.js';
 
-const spec = process.argv[2] || path.resolve(__dirname, '..', '..', 'index.bs')
+const spec = process.argv[2] || path.resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'index.bs')
 const specContent = fs.readFileSync(spec, 'utf-8')
 const specParsed = parse5.parse(specContent)
 

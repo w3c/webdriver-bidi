@@ -14,8 +14,9 @@ if [[ "$(npm list parse5)" =~ "empty" ]] || [ "$1" = "--upgrade" ]; then
   npm install parse5
 fi
 
-# Extract CDDL content from spec into files
-"$ROOT"/scripts/cddl/generate.js
+cd "$SCRIPT_DIR/cddl/"
+npm run generate
+cd -
 
 cddl compile-cddl --cddl local.cddl
 cddl compile-cddl --cddl remote.cddl

@@ -10,7 +10,7 @@
  * @param {Array<string>} local Array to fill with local CDDL definitions.
  * @param {Array<string>} remote Array to fill with remote CDDL definitions.
  */
-function getCDDLNodes(nodes) {
+export function getCDDLNodes(nodes) {
   const entries = { local: [], remote: [], all: [] };
 
   nodes.forEach((node) => {
@@ -48,4 +48,3 @@ function getCDDLNodes(nodes) {
   return entries;
 }
 
-module.exports = { getCDDLNodes };
