@@ -136,6 +136,7 @@ spec: ECMASCRIPT-I18N; urlPrefix: https://tc39.es/ecma402/
 spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
   type: dfn
     text: Array; url: sec-array-objects
+    text: AvailableNamedTimeZoneIdentifiers; url: sec-availablenamedtimezoneidentifiers
     text: Await; url: await
     text: BigInt; url: sec-bigint-constructor
     text: Call; url: sec-call
@@ -158,6 +159,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: IsCallable; url: sec-iscallable
     text: IsPromise; url: sec-ispromise
     text: IsRegExp; url: sec-isregexp
+    text: IsTimeZoneOffsetString; url: sec-istimezoneoffsetstring
     text: IteratorToList; url: sec-iteratortolist
     text: LengthOfArrayLike; url: sec-lengthofarraylike
     text: Map; url: #sec-map-iterable; for: constructor
@@ -170,6 +172,7 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: String; url: sec-string-constructor
     text: StringToBigInt; url: sec-stringtobigint
     text: StringToNumber; url: sec-stringtonumber
+    text: SystemTimeZoneIdentifier; url: sec-systemtimezoneidentifier
     text: ToString; url: sec-tostring
     text: Type; url: sec-ecmascript-data-types-and-values
     text: abrupt completion; url: sec-completion-record-specification-type
@@ -3133,6 +3136,9 @@ A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map bet
 A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
 [=navigables=] or [=user contexts=] and string or null.
 
+A [=remote end=] has a <dfn>timezone overrides map</dfn> which is a weak map between
+[=navigables=] or [=user contexts=] and string or null.
+
 A [=remote end=] has an <dfn>unhandled prompt behavior overrides map</dfn> which is a
 weak map between [=user contexts=] and [=unhandled prompt behavior struct=].
 
@@ -5808,7 +5814,8 @@ relating to emulation of browser APIs.
 EmulationCommand = (
   emulation.SetGeolocationOverride //
   emulation.SetLocaleOverride //
-  emulation.SetScreenOrientationOverride
+  emulation.SetScreenOrientationOverride //
+  emulation.SetTimezoneOverride
 )
 </pre>
 
@@ -5975,14 +5982,13 @@ The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
 
 1. Let |realm| be [=current Realm Record=].
 
-1. Let |global object| be |realm|'s [=realm/global object=].
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
 
-1. If |global object| implements {{WindowProxy}}:
+1. Let |related navigables| be the result of [=get related navigables=] given
+   |environment settings|.
 
-    1. Let |window| be the value of |global object|'s \[[WindowProxy]]
-       [=internal slot=].
-
-    1. Let |navigable| be |window|'s [=window/navigable=].
+1. For each |navigable| of |related navigables|:
 
     1. Let |top-level traversable| be |navigable|’s
        [=navigable/top-level traversable=].
@@ -6176,6 +6182,127 @@ The [=remote end steps=] with |command parameters| are:
 
    1. [=Set emulated screen orientation=] with |navigable| and
       |emulated screen orientation|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setTimezoneOverride Command ####  {#command-emulation-setTimezoneOverride}
+
+The <dfn export for=commands>emulation.setTimezoneOverride</dfn> command modifies
+timezone on the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetTimezoneOverride = (
+        method: "emulation.setTimezoneOverride",
+        params: emulation.SetTimezoneOverrideParameters
+      )
+
+      emulation.SetTimezoneOverrideParameters = {
+        timezone: text / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="updated SystemTimeZoneIdentifier steps">
+The [=SystemTimeZoneIdentifier=] algorithm is implementation defined. A
+WebDriver-BiDi [=remote end=] must have an implementation that runs the following
+steps:
+
+1. Let |emulated timezone| be null.
+
+1. Let |realm| be [=current Realm Record=].
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
+
+1. Let |related navigables| be the result of [=get related navigables=] given
+   |environment settings|.
+
+1. For each |navigable| of |related navigables|:
+
+    1. Let |top-level traversable| be |navigable|’s
+       [=navigable/top-level traversable=].
+
+    1. Let |user context| be |top-level traversable|'s [=associated user context=].
+
+    1. If [=timezone overrides map=] [=map/contains=] |top-level traversable|, set
+       |emulated timezone| to [=timezone overrides map=][|top-level traversable|].
+
+    1. Otherwise, if [=timezone overrides map=] [=map/contains=]
+       |user context|, set |emulated timezone| to
+       [=timezone overrides map=][|user context|].
+
+1. If |emulated timezone| is not null, return |emulated timezone|.
+
+1. Return the result of implementation-defined steps in accordance with the
+   requirements of the [=SystemTimeZoneIdentifier=] specification.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setTimezoneOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |emulated timezone| be null.
+
+1. If |command parameters| [=map/contains=] "<code>timezone</code>":
+
+   1. Set |emulated timezone| to |command parameters|["<code>timezone</code>"].
+
+   1. If [=IsTimeZoneOffsetString=](|emulated timezone|) returns false and
+      [=AvailableNamedTimeZoneIdentifiers=] does not [=list/contain=]
+      |emulated timezone|, return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |navigables| be a [=/set=].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+1. Otherwise:
+
+   1. Assert the <code>userContexts</code> field of |command parameters| is present.
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=map/Set=] [=timezone overrides map=][|user context|] to
+         |emulated timezone|.
+
+      1. [=list/For each=] |top-level traversable| of the list of all
+         [=/top-level traversables=] whose [=associated user context=] is
+         |user context|:
+
+         1. [=list/Append=] |top-level traversable| to |navigables|.
+
+1. For each |navigable| of |navigables|:
+
+   1. [=map/Set=] [=timezone overrides map=][|navigable|] to |emulated timezone|.
 
 1. Return [=success=] with data null.
 
