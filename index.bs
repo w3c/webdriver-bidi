@@ -446,6 +446,7 @@ CommandData = (
   BrowsingContextCommand //
   EmulationCommand //
   InputCommand //
+  IoCommand //
   NetworkCommand //
   ScriptCommand //
   SessionCommand //
@@ -486,6 +487,7 @@ ErrorResponse = {
 ResultData = (
   BrowsingContextResult /
   EmptyResult /
+  IoResult /
   NetworkResult /
   ScriptResult /
   SessionResult /
@@ -506,6 +508,7 @@ Event = {
 EventData = (
   BrowsingContextEvent //
   InputEvent //
+  IoEvent //
   LogEvent //
   NetworkEvent //
   ScriptEvent
@@ -6180,6 +6183,109 @@ The [=remote end steps=] with |command parameters| are:
 1. Return [=success=] with data null.
 
 </div>
+
+## The io Module ## {#module-io}
+
+The <dfn export for=modules>io</dfn> module contains commands and events
+relating to IO operations.
+
+### Definition ### {#module-network-definition}
+
+[=remote end definition=]
+
+<pre class="cddl remote-cddl">
+
+IoCommand = (
+  io.Cancel //
+  io.Read //
+)
+
+</pre>
+
+[=local end definition=]
+
+<pre class="cddl local-cddl">
+
+IoResult = (
+   io.ReadResult
+)
+</pre>
+
+### Types ### {#module-io-types}
+
+#### The io.ReadableStream Type #### {#type-io-ReadableStream}
+
+<pre class="cddl local-cddl">
+io.ReadableStream = {
+  stream: io.Stream,
+}
+</pre>
+
+The <code>io.ReadableStream</code> type represents a [=readable stream=].
+
+#### The io.ReadResult Type #### {#type-io-ReadResult}
+
+<pre class="cddl local-cddl">
+io.ReadResult = {
+  value: network.BytesValue,
+  done: boolean
+}
+</pre>
+
+The <code>io.ReadResults</code> type represents the result of reading a value
+from a [=readable stream=].
+
+
+#### The io.Stream Type #### {#type-io-Stream}
+
+<pre class="cddl local-cddl">
+io.Stream = text
+</pre>
+
+The <code>io.Stream</code> type represents a handle to an IO [=stream=].
+
+### Commands ### {#module-io-commands}
+
+#### The io.Cancel Command ####  {#command-io-cancel}
+
+The <dfn export for=commands>network.addIntercept</dfn> command adds a
+[=network intercept=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl remote-cddl">
+      io.Cancel = (
+        method: "io.Cancel",
+        params: io.CancelParameters
+      )
+
+      io.CancelParameters = {
+        stream: io.Stream,
+        ? reason: text,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl local-cddl">
+      EmptyResult
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for io.Cancel">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |stream| be the result of trying to [=get a readable stream=] with
+   |command parameters|["<code>stream</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>reason</code>, let |reason|
+   be |command parameters|["<code>reason</code>"]. Otherwise let |reason| be
+   undefined.
+
+1. Run [$ReadableStreamCancel$]\(|stream|, |reason|).
+
 
 ## The network Module ## {#module-network}
 
