@@ -13395,6 +13395,79 @@ The [=remote end steps=] with |command parameters| are:
 
 </div>
 
+## The preload Module ## {#module-preload}
+
+The <dfn export for=modules>preload</dfn> module contains events 
+relating to resource preloading and prefetching.
+
+### Definition ### {#module-preload-definition}
+
+{^Remote end definition^}
+
+<pre class="cddl" data-cddl-module="remote-cddl">
+PreloadCommand = (
+)
+</pre>
+
+{^Local end definition^}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+PreloadResult = (
+)
+
+PreloadEvent = (
+  preload.PrefetchStatusUpdated
+)
+</pre>
+
+### Types ### {#module-preload-types}
+
+#### The preload.PrefetchStatus Type #### {#type-preload-PrefetchStatus}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+preload.PrefetchStatus = "pending" / "running" / "success" / "failure"
+</pre>
+
+The <code>preload.PrefetchStatus</code> type represents the status of a prefetch operation.
+
+### Events ### {#module-preload-events}
+
+#### The preload.prefetchStatusUpdated Event #### {#event-preload-prefetchStatusUpdated}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+        preload.PrefetchStatusUpdated = {
+         method: "preload.prefetchStatusUpdated",
+         params: preload.PrefetchStatusUpdatedParameters
+        }
+
+       preload.PrefetchStatusUpdatedParameters = {
+         initiatingFrameId: js-uint,
+         url: text,
+         status: preload.PrefetchStatus,
+       }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end event trigger for preload.prefetchStatusUpdated">
+The [=remote end event trigger=] for the preload.prefetchStatusUpdated event,
+given |session|, |initiatingFrameId|, |url|, and |status|:
+
+1. Let |params| be a new [=struct=].
+
+1. Set |params|["<code>initiatingFrameId</code>"] to |initiatingFrameId|.
+
+1. Set |params|["<code>url</code>"] to |url|.
+
+1. Set |params|["<code>status</code>"] to |status|.
+
+1. [=Emit an event=] with |session|, "<code>preload.prefetchStatusUpdated</code>", and |params|.
+
+</div>
+
 # Patches to Other Specifications # {#patches}
 
 This specification requires some changes to external specifications to provide the necessary
