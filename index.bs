@@ -6589,9 +6589,22 @@ To <dfn>maybe collect network response body</dfn> given |sessions|, |request| an
 
    Note: For redirects, only the final response body is stored.
 
+1. Let |collected data| be [=get collected data=] with |request|'s [=request id=] and "response".
+
+1. If |collected data| is null, return.
+
+   NOTE: This might happen if there are no collectors setup when the response is created,
+   and [=clone network response body=] does not clone the corresponding body.
+
+1. Set |collected data|'s <code>pending</code> to false.
+
 1. Let |navigable| be [=get navigable for request=] with |request|.
 
-1. If |navigable| is null, return.
+1. If |navigable| is null:
+
+   1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], "response").
+
+   1. Return.
 
    ISSUE: This prevents collecting data not related to a navigable.
    We still need to retrieve the navigable to check against the collector
@@ -6609,14 +6622,11 @@ To <dfn>maybe collect network response body</dfn> given |sessions|, |request| an
 
          1. [=list/Append=] |collector| to |collectors|.
 
-1. If |collectors| is [=list/empty=], return.
+1. If |collectors| is [=list/empty=]:
 
-1. Let |collected data| be [=get collected data=] with |request|'s [=request id=] and "response".
+   1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], "response").
 
-1. If |collected data| is null, return.
-
-   NOTE: This might happen if there are no collectors setup when the response is created,
-   and [=clone network response body=] does not clone the corresponding body.
+   1. Return.
 
 1. Let |bytes| be null.
 
@@ -6655,8 +6665,6 @@ To <dfn>maybe collect network response body</dfn> given |sessions|, |request| an
       1. Set |collected data|'s <code>bytes</code> to |bytes|.
 
       1. Set |collected data|'s <code>size</code> to |size|.
-
-1. Set |collected data|'s <code>pending</code> to false.
 
 1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], "response").
 
