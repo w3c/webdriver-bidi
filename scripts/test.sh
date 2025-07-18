@@ -15,7 +15,7 @@ if [[ "$(npm list parse5)" =~ "empty" ]] || [ "$1" = "--upgrade" ]; then
 fi
 
 # Extract CDDL content from spec into files
-"$ROOT"/scripts/cddl/generate.js
+node.exe "$ROOT"/scripts/cddl/generate.js
 
 cddl compile-cddl --cddl local.cddl
 cddl compile-cddl --cddl remote.cddl
