@@ -3025,8 +3025,8 @@ those after the window has reached its new state.
 #### The browser.setDownloadBehavior Command #### {#command-browser-setDownloadBehavior}
 
 A <dfn>download behavior struct</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn for="download-behavior-struct">allow</dfn> which is a boolean;
-* [=struct/item=] named <dfn for="download-behavior-struct">destinationFolder</dfn> which is a string or null.
+* [=struct/item=] named <dfn id="download-behavior-struct-allowed" for="download-behavior-struct">allowed</dfn> which is a boolean;
+* [=struct/item=] named <dfn id="download-behavior-struct-destination-folder" for="download-behavior-struct">destinationFolder</dfn> which is a string or null.
 
 A [=remote end=] has a <dfn>download behavior map</dfn> which is a weak map between
 [=user contexts=] or "<code>global</code>" and [=download behavior struct=] or null.
@@ -3049,17 +3049,17 @@ list of [=client window=]s.
       )
 
       browser.DownloadBehavior = (
-        browser.DownloadBehaviorAllow //
-        browser.DownloadBehaviorDeny
+        browser.DownloadBehaviorAllowed //
+        browser.DownloadBehaviorDenied
       )
 
-      browser.DownloadBehaviorAllow = (
-        type: "allow",
+      browser.DownloadBehaviorAllowed = (
+        type: "allowed",
         ? destinationFolder: text / null
       )
 
-      browser.DownloadBehaviorDeny = (
-        type: "deny"
+      browser.DownloadBehaviorDenied = (
+        type: "denied"
       )
       </pre>
    </dd>
@@ -3096,7 +3096,8 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Otherwise:
 
    1. If |command parameters|["<code>downloadBehavior</code>"]["<code>type</code>"]
-      is "<code>allow</code>", let |allow| be true, otherwise let |allow| be false.
+      is "<code>allowed</code>", let |allowed| be true, otherwise let |allowed| be
+      false.
 
    1. If |command parameters|["<code>downloadBehavior</code>"] [=map/contains=]
       "<code>destinationFolder</code>", let |destinationFolder| be
@@ -3104,7 +3105,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
       otherwise let |destinationFolder| be null.
 
    1. Let |download behavior| be a [=download behavior struct=] with
-      [=download-behavior-struct/allow=] set to |allow| and
+      [=download-behavior-struct/allowed=] set to |allowed| and
       [=download-behavior-struct/destinationFolder=] set to |destinationFolder|.
 
 1. If the implementation does not support required |download behavior|, then return
