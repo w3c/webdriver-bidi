@@ -2834,112 +2834,6 @@ The [=remote end steps=] are:
 
 </div>
 
-
-#### The browser.setDownloadBehavior Command #### {#command-browser-setDownloadBehavior}
-
-A <dfn>download behavior struct</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn for="download-behavior-struct">allow</dfn> which is a boolean;
-* [=struct/item=] named <dfn for="download-behavior-struct">destinationFolder</dfn> which is a string or null.
-
-A [=remote end=] has a <dfn>download behavior map</dfn> which is a weak map between
-[=user contexts=] or "<code>global</code>" and [=download behavior struct=] or null.
-
-The <dfn export for=commands>browser.setDownloadBehavior</dfn> command returns a
-list of [=client window=]s.
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-      <pre class="cddl" data-cddl-module="remote-cddl">
-      browser.SetDownloadBehavior = (
-        method: "browser.setDownloadBehavior",
-        params: browser.DownloadBehaviorParameters
-      )
-
-      browser.DownloadBehaviorParameters = (
-        downloadBehavior: browser.DownloadBehavior / null,
-        ? userContexts: [+browser.UserContext]
-      )
-
-      browser.DownloadBehavior = (
-        browser.DownloadBehaviorAllow //
-        browser.DownloadBehaviorDeny
-      )
-
-      browser.DownloadBehaviorAllow = (
-        type: "allow",
-        ? destinationFolder: text / null
-      )
-
-      browser.DownloadBehaviorDeny = (
-        type: "deny"
-      )
-      </pre>
-   </dd>
-   <dt>Return Type</dt>
-   <dd>
-      <code>
-      EmptyResult
-      </code>
-   </dd>
-</dl>
-
-<div algorithm>
-To <dfn export>get download behavior</dfn> given |navigable|:
-
-1. Let |user context| be |navigable|'s [=associated user context=].
-
-1. If [=download behavior map=] [=map/contains=] |user context|, return
-   [=download behavior map=][|user context|].
-
-1. If [=download behavior map=] [=map/contains=] "<code>global</code>", return
-   [=download behavior map=]["<code>global</code>"].
-
-1. Return null.
-
-</div>
-
-<div algorithm="remote end steps for browser.setDownloadBehavior">
-
-The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
-
-1. If |command parameters|["<code>downloadBehavior</code>"] is null, let
-   |download behavior| be null.
-
-1. Otherwise:
-
-   1. If |command parameters|["<code>downloadBehavior</code>"]["<code>type</code>"]
-      is "<code>allow</code>", let |allow| be true, otherwise let |allow| be false.
-
-   1. If |command parameters|["<code>downloadBehavior</code>"] [=map/contains=]
-      "<code>destinationFolder</code>", let |destinationFolder| be
-      |command parameters|["<code>downloadBehavior</code>"]["<code>destinationFolder</code>"],
-      otherwise let |destinationFolder| be null.
-
-   1. Let |download behavior| be a [=download behavior struct=] with
-      [=download-behavior-struct/allow=] set to |allow| and
-      [=download-behavior-struct/destinationFolder=] set to |destinationFolder|.
-
-1. If the implementation does not support required |download behavior|, then return
-   [=error=] with [=error code=] [=unsupported operation=].
-
-1. If the <code>userContexts</code> field of |command parameters| is present:
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. [=map/Set=] [=download behavior map=][|user context|] to
-         |download behavior|.
-
-1. Otherwise, [=map/set=] [=download behavior map=]["<code>global</code>"] to
-   |download behavior|.
-
-1. Return [=success=] with data null.
-
-</div>
-
 #### The browser.getUserContexts Command #### {#command-browser-getUserContexts}
 
 The <dfn export for=commands>browser.getUserContexts</dfn> command returns a
@@ -3124,6 +3018,111 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 Note: For simplicity this models all client window operations as
 synchronous. Therefore the returned client window dimensions are expected to be
 those after the window has reached its new state.
+
+</div>
+
+#### The browser.setDownloadBehavior Command #### {#command-browser-setDownloadBehavior}
+
+A <dfn>download behavior struct</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn for="download-behavior-struct">allow</dfn> which is a boolean;
+* [=struct/item=] named <dfn for="download-behavior-struct">destinationFolder</dfn> which is a string or null.
+
+A [=remote end=] has a <dfn>download behavior map</dfn> which is a weak map between
+[=user contexts=] or "<code>global</code>" and [=download behavior struct=] or null.
+
+The <dfn export for=commands>browser.setDownloadBehavior</dfn> command returns a
+list of [=client window=]s.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browser.SetDownloadBehavior = (
+        method: "browser.setDownloadBehavior",
+        params: browser.DownloadBehaviorParameters
+      )
+
+      browser.DownloadBehaviorParameters = (
+        downloadBehavior: browser.DownloadBehavior / null,
+        ? userContexts: [+browser.UserContext]
+      )
+
+      browser.DownloadBehavior = (
+        browser.DownloadBehaviorAllow //
+        browser.DownloadBehaviorDeny
+      )
+
+      browser.DownloadBehaviorAllow = (
+        type: "allow",
+        ? destinationFolder: text / null
+      )
+
+      browser.DownloadBehaviorDeny = (
+        type: "deny"
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <code>
+      EmptyResult
+      </code>
+   </dd>
+</dl>
+
+<div algorithm>
+To <dfn export>get download behavior</dfn> given |navigable|:
+
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If [=download behavior map=] [=map/contains=] |user context|, return
+   [=download behavior map=][|user context|].
+
+1. If [=download behavior map=] [=map/contains=] "<code>global</code>", return
+   [=download behavior map=]["<code>global</code>"].
+
+1. Return null.
+
+</div>
+
+<div algorithm="remote end steps for browser.setDownloadBehavior">
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. If |command parameters|["<code>downloadBehavior</code>"] is null, let
+   |download behavior| be null.
+
+1. Otherwise:
+
+   1. If |command parameters|["<code>downloadBehavior</code>"]["<code>type</code>"]
+      is "<code>allow</code>", let |allow| be true, otherwise let |allow| be false.
+
+   1. If |command parameters|["<code>downloadBehavior</code>"] [=map/contains=]
+      "<code>destinationFolder</code>", let |destinationFolder| be
+      |command parameters|["<code>downloadBehavior</code>"]["<code>destinationFolder</code>"],
+      otherwise let |destinationFolder| be null.
+
+   1. Let |download behavior| be a [=download behavior struct=] with
+      [=download-behavior-struct/allow=] set to |allow| and
+      [=download-behavior-struct/destinationFolder=] set to |destinationFolder|.
+
+1. If the implementation does not support required |download behavior|, then return
+   [=error=] with [=error code=] [=unsupported operation=].
+
+1. If the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=map/Set=] [=download behavior map=][|user context|] to
+         |download behavior|.
+
+1. Otherwise, [=map/set=] [=download behavior map=]["<code>global</code>"] to
+   |download behavior|.
+
+1. Return [=success=] with data null.
 
 </div>
 
