@@ -243,7 +243,6 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: report an error; url: webappapis.html#report-the-error
     text: run the animation frame callbacks; url: imagebitmap-and-animations.html#run-the-animation-frame-callbacks
     text: same origin domain; url: browsers.html#same-origin-domain
-    text: scripting is disabled; url: webappapis.html#concept-environment-noscript
     text: select an image source from a source set; url: images.html#select-an-image-source-from-a-source-set
     text: selected files; url: input.html#concept-input-type-file-selected
     text: session history entry; url: browsing-the-web.html#session-history-entry
@@ -6068,67 +6067,37 @@ disabling JavaScript on web pages.
 Note: only emulation of disabled Javascript is supported.
 
 <div algorithm>
+The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
+[=environment settings object=] |settings| are:
 
-To <dfn>emulate javascript enabled status</dfn> given |environment settings| and
-|emulated javascript enabled status|:
+1. Let |navigable| be |settings|'s [=relevant global object=]'s
+   <a>associated <code>Document</code></a>'s [=/node navigable=].
 
-1. Assert |emulated javascript enabled status| is null of false.
+1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
 
-1. If |emulated javascript enabled status| is false, perform implementation defined
-   steps to emulate the user disabled scripting for |environment settings|, so that
-   |environment settings|'s [=scripting is disabled=].
+1. If [=javascript enabled overrides map=] contains |top-level traversable|:
 
-1. Otherwise if |emulated javascript enabled status| is null, perform implementation
-   defined steps to restore the default scripting enabled status for
-   |environment settings|.
+   1. If [=javascript enabled overrides map=][|top-level traversable|] is false,
+      return false.
 
-</div>
+   1. Return true.
 
-<div algorithm>
+1. Let |user context| be  |top-level traversable|'s [=associated user context=].
 
-To <dfn>get emulated javascript enabled status</dfn> given |navigables|:
+1. If [=javascript enabled overrides map=] contains |user context|, return
+   [=javascript enabled overrides map=][|user context|].
 
-1. For each |navigable| or |navigables|:
+   1. If [=javascript enabled overrides map=][|user context|] is false, return false.
 
-   1. Let |top-level traversable| be |navigable|’s
-      [=navigable/top-level traversable=].
+   1. Return true.
 
-   1. If [=javascript enabled overrides map=] contains |top-level traversable|,
-      return [=javascript enabled overrides map=][|top-level traversable|].
-
-   1. Let |user context| be  |top-level traversable|'s [=associated user context=].
-
-   1. If [=javascript enabled overrides map=] contains |user context|, return
-      [=javascript enabled overrides map=][|user context|].
-
-   1. Return null.
+1. Return true.
 
 </div>
 
-<div algorithm>
-
-To <dfn>update javascript enabled status</dfn>:
-
-1. For each |environment settings| of [=environment settings objects=]:
-
-   1. Let |related navigables| be the result of [=get related navigables=] given
-      |environment settings|.
-
-   1. Let |emulated javascript enabled status| be the result of
-      [=get emulated javascript enabled status=] given |related navigables|.
-
-   1. [=Emulate javascript enabled status=] given |environment settings| and
-      |emulated javascript enabled status|.
-
-</div>
-
-<div algorithm="remote end steps for emulation.setEnableScriptingOverride">
+<div algorithm="remote end steps for emulation.setJavascriptEnabled">
 
 The [=remote end steps=] with |command parameters| are:
-
-1. If the implementation is unable to adjust the [=scripting is disabled=]
-   state for any reason, return [=error=] with [=error code=]
-   [=unsupported operation=].
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
    and |command parameters| [=map/contains=] "<code>context</code>",
@@ -6140,12 +6109,10 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |emulated javascript enabled status| be null.
 
-1. If |command parameters| [=map/contains=] "<code>enable</code>":
+1. If |command parameters| [=map/contains=] "<code>enabled</code>":
 
    1. Set |emulated javascript enabled status| to
-      |command parameters|["<code>enable</code>"].
-
-1. Let |navigables| be a [=/set=].
+      |command parameters|["<code>enabled</code>"].
 
 1. If the <code>contexts</code> field of |command parameters| is present:
 
@@ -6153,9 +6120,12 @@ The [=remote end steps=] with |command parameters| are:
       [=get valid top-level traversables by ids=] with
       |command parameters|["<code>contexts</code>"].
 
-1. Otherwise:
+   1. For each |navigable| of |navigables|:
 
-   1. Assert the <code>userContexts</code> field of |command parameters| is present.
+      1. [=map/Set=] [=javascript enabled overrides map=][|navigable|] to
+         |emulated javascript enabled status|.
+
+1. If the <code>userContexts</code> field of |command parameters| is present:
 
    1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
       with |command parameters|["<code>userContexts</code>"].
@@ -6164,19 +6134,6 @@ The [=remote end steps=] with |command parameters| are:
 
       1. [=map/Set=] [=javascript enabled overrides map=][|user context|] to
          |emulated javascript enabled status|.
-
-      1. [=list/For each=] |top-level traversable| of the list of all
-         [=/top-level traversables=] whose [=associated user context=] is
-         |user context|:
-
-         1. [=list/Append=] |top-level traversable| to |navigables|.
-
-1. For each |navigable| of |navigables|:
-
-   1. [=map/Set=] [=javascript enabled overrides map=][|navigable|] to
-      |emulated javascript enabled status|.
-
-1. [=Update javascript enabled status=].
 
 1. Return [=success=] with data null.
 
@@ -12396,12 +12353,6 @@ object:
 1. If |realm info| is null, return.
 
 1. Let |related navigables| be the result of [=get related navigables=] given |environment settings|.
-
-1. Let |emulated javascript enabled status| be the result of
-   [=get emulated javascript enabled status=] given |related navigables|.
-
-1. [=Emulate javascript enabled status=] given |environment settings| and
-   |emulated javascript enabled status|.
 
 1. Let |body| be a [=/map=] matching the <code>script.RealmCreated</code>
    production, with the <code>params</code> field set to |realm info|.
