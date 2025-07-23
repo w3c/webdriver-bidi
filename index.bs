@@ -5824,9 +5824,9 @@ relating to emulation of browser APIs.
 EmulationCommand = (
   emulation.SetForcedColorsModeThemeOverride //
   emulation.SetGeolocationOverride //
-  emulation.SetScriptingEnabled //
   emulation.SetLocaleOverride //
   emulation.SetScreenOrientationOverride //
+  emulation.SetScriptingEnabled //
   emulation.SetTimezoneOverride
 )
 </pre>
@@ -6030,110 +6030,6 @@ The [=remote end steps=] with |command parameters| are:
 1. For each |navigable| of |navigables|:
 
    1. [=Set emulated position data=] with |navigable| and |emulated position data|.
-
-1. Return [=success=] with data null.
-
-</div>
-
-#### The emulation.setScriptingEnabled Command ####  {#command-emulation-setScriptingEnabled}
-
-The <dfn export for=commands>emulation.setScriptingEnabled</dfn> command emulates
-disabling JavaScript on web pages.
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-    <pre class="cddl" data-cddl-module="remote-cddl">
-      emulation.SetScriptingEnabled = (
-        method: "emulation.setScriptingEnabled",
-        params: emulation.SetScriptingEnabledParameters
-      )
-
-      emulation.SetScriptingEnabledParameters = {
-        enabled: false / null,
-        ? contexts: [+browsingContext.BrowsingContext],
-        ? userContexts: [+browser.UserContext],
-      }
-    </pre>
-   </dd>
-   <dt>Result Type</dt>
-   <dd>
-    <code>
-     EmptyResult
-    </code>
-   </dd>
-</dl>
-
-Note: only emulation of disabled Javascript is supported.
-
-<div algorithm>
-The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
-[=environment settings object=] |settings| are:
-
-1. Let |navigable| be |settings|'s [=relevant global object=]'s
-   <a>associated <code>Document</code></a>'s [=/node navigable=].
-
-1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
-
-1. If [=scripting enabled overrides map=] contains |top-level traversable|:
-
-   1. If [=scripting enabled overrides map=][|top-level traversable|] is false,
-      return false.
-
-   1. Return true.
-
-1. Let |user context| be  |top-level traversable|'s [=associated user context=].
-
-1. If [=scripting enabled overrides map=] contains |user context|, return
-   [=scripting enabled overrides map=][|user context|].
-
-   1. If [=scripting enabled overrides map=][|user context|] is false, return false.
-
-   1. Return true.
-
-1. Return true.
-
-</div>
-
-<div algorithm="remote end steps for emulation.setScriptingEnabled">
-
-The [=remote end steps=] with |command parameters| are:
-
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>context</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
-1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
-1. Let |emulated scripting enabled status| be null.
-
-1. If |command parameters| [=map/contains=] "<code>enabled</code>":
-
-   1. Set |emulated scripting enabled status| to
-      |command parameters|["<code>enabled</code>"].
-
-1. If the <code>contexts</code> field of |command parameters| is present:
-
-   1. Let |navigables| be the result of [=trying=] to
-      [=get valid top-level traversables by ids=] with
-      |command parameters|["<code>contexts</code>"].
-
-   1. For each |navigable| of |navigables|:
-
-      1. [=map/Set=] [=scripting enabled overrides map=][|navigable|] to
-         |emulated scripting enabled status|.
-
-1. If the <code>userContexts</code> field of |command parameters| is present:
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. [=map/Set=] [=scripting enabled overrides map=][|user context|] to
-         |emulated scripting enabled status|.
 
 1. Return [=success=] with data null.
 
@@ -6376,6 +6272,110 @@ The [=remote end steps=] with |command parameters| are:
 
    1. [=Set emulated screen orientation=] with |navigable| and
       |emulated screen orientation|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setScriptingEnabled Command ####  {#command-emulation-setScriptingEnabled}
+
+The <dfn export for=commands>emulation.setScriptingEnabled</dfn> command emulates
+disabling JavaScript on web pages.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetScriptingEnabled = (
+        method: "emulation.setScriptingEnabled",
+        params: emulation.SetScriptingEnabledParameters
+      )
+
+      emulation.SetScriptingEnabledParameters = {
+        enabled: false / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+Note: only emulation of disabled Javascript is supported.
+
+<div algorithm>
+The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
+[=environment settings object=] |settings| are:
+
+1. Let |navigable| be |settings|'s [=relevant global object=]'s
+   <a>associated <code>Document</code></a>'s [=/node navigable=].
+
+1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
+
+1. If [=scripting enabled overrides map=] contains |top-level traversable|:
+
+   1. If [=scripting enabled overrides map=][|top-level traversable|] is false,
+      return false.
+
+   1. Return true.
+
+1. Let |user context| be  |top-level traversable|'s [=associated user context=].
+
+1. If [=scripting enabled overrides map=] contains |user context|, return
+   [=scripting enabled overrides map=][|user context|].
+
+   1. If [=scripting enabled overrides map=][|user context|] is false, return false.
+
+   1. Return true.
+
+1. Return true.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setScriptingEnabled">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |emulated scripting enabled status| be null.
+
+1. If |command parameters| [=map/contains=] "<code>enabled</code>":
+
+   1. Set |emulated scripting enabled status| to
+      |command parameters|["<code>enabled</code>"].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. [=map/Set=] [=scripting enabled overrides map=][|navigable|] to
+         |emulated scripting enabled status|.
+
+1. If the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=map/Set=] [=scripting enabled overrides map=][|user context|] to
+         |emulated scripting enabled status|.
 
 1. Return [=success=] with data null.
 
