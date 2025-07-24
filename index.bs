@@ -5829,11 +5829,8 @@ EmulationCommand = (
 )
 </pre>
 
-The <dfn>forced colors mode theme override</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn attribute for="forced colors mode theme override">theme</dfn> which is a string.
-
 A [=remote end=] has a <dfn>forced colors mode theme overrides map</dfn> which is a weak map
-between [=user contexts=] and [=forced colors mode theme override=].
+between [=user contexts=] and string or null.
 
 A <dfn>geolocation override</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn attribute for="geolocation override">latitude</dfn> which is a float;
@@ -5870,12 +5867,12 @@ The <dfn export for=commands>emulation.setForcedColorsModeThemeOverride</dfn> co
       )
 
       emulation.SetForcedColorsModeThemeOverrideParameters = {
-        theme: emulation.ForcedColorsModeAutomationTheme / null,
+        theme: emulation.ForcedColorsModeTheme / null,
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
       }
 
-      emulation.ForcedColorsModeAutomationTheme = "light" / "dark"
+      emulation.ForcedColorsModeTheme = "light" / "dark"
     </pre>
    </dd>
    <dt>Result Type</dt>
@@ -5885,6 +5882,8 @@ The <dfn export for=commands>emulation.setForcedColorsModeThemeOverride</dfn> co
     </code>
    </dd>
 </dl>
+
+Note: Check out the {{ForcedColorsModeAutomationTheme}} for the corresponding enum mapping in the CSS specification.
 
 <div algorithm="remote end steps for emulation.setForcedColorsModeThemeOverride">
 
@@ -5904,7 +5903,7 @@ The [=remote end steps=] with |command parameters| are:
 
    1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=] with |command parameters|["<code>contexts</code>"].
 
-1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
+1. Otherwise:
 
    1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
 
