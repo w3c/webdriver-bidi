@@ -6417,7 +6417,8 @@ NetworkCommand = (
   network.ProvideResponse //
   network.RemoveDataCollector //
   network.RemoveIntercept //
-  network.SetCacheBehavior
+  network.SetCacheBehavior //
+  network.SetExtraHeaders
 )
 
 </pre>
@@ -6450,6 +6451,15 @@ initially "<code>default</code>".
 A [=remote end=] has a <dfn>navigable cache behavior map</dfn> which is a weak
 map between [=/top-level traversables=] and strings representing cache
 behavior. It is initially empty.
+
+A [=BiDi session=] has a <dfn for=session>extra headers</dfn> which is a
+[=struct=] with an [=struct/item=] named <dfn for="extra headers">default
+headers</dfn>, which is a [=/header list=] (initially set to an empty
+[=/header list=]), an [=struct/item=] named
+<dfn for="extra headers">user context headers</dfn>, which is a weak map
+between [=user contexts=] and [=/header lists=], and  a [=struct/item=] named
+<dfn for="extra headers">navigable headers</dfn>, which is a weak map
+between [=navigables=] and [=/header lists=].
 
 ### Network Data Collection ### {#network-data-collection}
 
@@ -6800,21 +6810,8 @@ To <dfn>update the response</dfn> given |session|, |command| and |command parame
 
 1. If |command parameters| [=map/contains=] "<code>headers</code>":
 
-  1. Let |headers| be an empty [=/header list=].
-
-  1. For |header| in |command parameters|["<code>headers</code>"]:
-
-    1. Let |deserialized header| be [=deserialize header=] with |header|.
-
-    1. If |deserialized header|'s name does not match the [=field-name token=]
-       production, return [=error=] with [=error code=]
-      "<code>invalid argument</code>".
-
-    1. If |deserialized header|'s value does not match the [=header value=]
-       production, return [=error=] with [=error code=]
-      "<code>invalid argument</code>".
-
-    1. Append |deserialized header| to |headers|.
+  1. Let |headers| be the result of [=trying=] to [=create a headers list=] with
+     |command parameters|["<code>headers</code>"].
 
   1. Set |response|'s [=response/header list=] to |headers|.
 
@@ -7308,6 +7305,28 @@ To <dfn>deserialize header</dfn> given |protocol header|:
    header|["<code>value</code>"].
 
 1. Return a [=/header=] (|name|, |value|).
+
+</div>
+
+<div algorithm>
+To <dfn>create a headers list</dfn> given |protocol headers|:
+1. Let |headers| be an empty [=/header list=].
+
+1. For |header| in |protocol headers|:
+
+  1. Let |deserialized header| be [=deserialize header=] with |header|.
+
+  1. If |deserialized header|'s name does not match the [=field-name token=]
+     production, return [=error=] with [=error code=]
+    "<code>invalid argument</code>".
+
+  1. If |deserialized header|'s value does not match the [=header value=]
+     production, return [=error=] with [=error code=]
+    "<code>invalid argument</code>".
+
+  1. Append |deserialized header| to |headers|.
+
+1. Return [=success=] with data |headers|
 
 </div>
 
@@ -8991,6 +9010,138 @@ The [=remote end steps=] given <var ignore>session</var> and |command parameters
 
 </div>
 
+#### The network.setExtraHeaders Command ####  {#command-network-setExtraHeaders}
+
+The <dfn export for=commands>network.setExtraHeaders</dfn> command allows
+specifying headers that will extend, or overwrite, existing request headers.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      network.SetExtraHeaders = (
+        method: "network.setExtraHeaders",
+        params: network.SetExtraHeadersParameters
+      )
+
+      network.SetExtraHeadersParameters = {
+        headers: [+network.Header]
+        ? contexts: [+browsingContext.BrowsingContext]
+        ? userContexts: [+browser.UserContext]
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <code>
+      EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm>
+To <dfn>update headers</dfn> given |request| and |headers|:
+
+1. Let |request headers| be |request|'s [=request/header list=].
+
+1. For each |header| in |headers|:
+
+  1. [=header list/Set=] |header| in |request headers|.
+
+     Note: This always overwrites the existing value, if any. In particular it
+     doesn't append cookies to an existing `Set-Cookie` header.
+
+</div>
+
+<div algorithm>
+To <dfn>update request headers</dfn> given |session|, |request|, and |related
+navigables|:
+
+1. Assert: |related navigables|'s [=set/size=] is 0 or 1.
+
+   Note: That means this will not work for workers associated with multiple
+   navigables. In that case it's unclear in which order to override the headers.
+
+1. [=Update headers=] with |request| and |session|'s
+   [=session/extra headers=]' [=extra headers/default headers=]
+
+1. Let |user context headers| be |session|'s [=session/extra headers=]'
+   [=extra headers/user context headers=].
+
+1. For |navigable| in |related navigables|:
+
+  1. Let |user context| be |navigable|'s [=associated user context=].
+
+  1. If |user context headers| [=map/contains=] |user context|
+     then [=update headers=] with |request| and
+     |user context headers|[|user context|]
+
+1. Let |navigable headers| be |session|'s [=session/extra headers=]'
+   [=extra headers/navigable headers=].
+
+1. For |navigable| in |related navigables|:
+
+  1. Let |top-level traversable| be |navigable|'s
+     [=navigable/top-level traversable=].
+
+  1. If |navigable headers| contains |top-level traversable|
+     [=update headers=] with |request| and |navigable headers|[|top-level traversable|].
+
+</div>
+
+<div algorithm="remote end steps for network.setExtraHeaders">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |headers| be the result of [=trying=] to [=create a headers list=] with
+   |command parameters|["<code>headers</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>":
+
+  1. Let |user contexts| be an empty [=/list=].
+
+  1. For |user context id| in |command parameters|["<code>userContexts</code>"]:
+
+    1. Let |user context| be [=get user context=] with |user context id|.
+
+    1. If |user context| is null, return [=error=] with [=error code=] [=invalid argument=].
+
+    1. [=list/Append=] |user context| to |user contexts|.
+
+  1. Let |target| be |session|'s [=session/extra headers=]'
+     [=extra headers/user context headers=]
+
+  1. For |user context| in |user contexts|:
+
+    1. Set |target|[|user context|] to |headers|.
+
+  1. Return [=success=] with data null.
+
+1. If |command parameters| [=map/contains=] "<code>contexts</code>":
+
+  1. Let |navigables| be the result of [=trying=] to
+     [=get valid top-level traversables by ids=]
+     with |command parameters|["<code>contexts</code>"].
+
+  1. Let |target| be |session|'s [=session/extra headers=]'
+     [=extra headers/navigable headers=]
+
+  1. For |navigable| in |navigables|:
+
+    1. Set |target|[|navigable|] to |headers|.
+
+  1. Return [=success=] with data null.
+
+1. Set |session|'s [=session/extra headers=]'
+   [=extra headers/default headers=] to |headers|.
+
+1. Return [=success=] with data null.
+
+</div>
+
 ### Events ### {#module-network-event}
 
 #### The network.authRequired Event ####  {#event-network-authRequired}
@@ -9119,7 +9270,7 @@ request sent</dfn> steps given |request|:
    1. If the [=request originates in user context=] steps with |request| and
       |user context| return true:
 
-      1. For each |session| in [=active BiDI sessions=]
+      1. For each |session| in [=active BiDi sessions=]:
 
          Note: |user context| can be in not more then one
          [=user context to accept insecure certificates override map=].
@@ -9175,13 +9326,16 @@ request sent</dfn> steps given |request|:
 
 1. Let |response status| be "<code>incomplete</code>".
 
+1. For each |session| in [=active BiDi sessions=]:
+
+  1. [=Update request headers=] with |session|, |request| and
+     |related navigables|.
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>network.beforeRequestSent</code>" and |related navigables|:
 
   1. Let |params| be the result of [=process a network event=] with |session|,
      "<code>network.beforeRequestSent</code>", and |request|.
-
-  1. If |params| is null then continue.
 
   1. Let |initiator| be the result of [=get the initiator=] with |request|.
 
