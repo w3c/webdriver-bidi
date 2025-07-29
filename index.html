@@ -8,7 +8,7 @@
   <meta content="Bikeshed version 3f621ba99, updated Mon Jul 28 15:38:36 2025 -0700" name="generator">
   <link href="https://www.w3.org/TR/webdriver-bidi/" rel="canonical">
   <link href="https://www.w3.org/2008/site/images/favicon.ico" rel="icon">
-  <meta content="07db129e525ebb0008cbbdcbfb14f9dc963477e7" name="revision">
+  <meta content="5c647ae3e137707858fd7efc842413fc87c36031" name="revision">
   <meta content="dark light" name="color-scheme">
   <link href="https://www.w3.org/StyleSheets/TR/2021/dark.css" media="(prefers-color-scheme: dark)" rel="stylesheet" type="text/css">
 <style>
@@ -7331,9 +7331,23 @@ To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="maybe-collect-
       <p>If <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-status" id="ref-for-concept-response-status">status</a> is a <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#redirect-status" id="ref-for-redirect-status">redirect status</a>, return.</p>
       <p class="note" role="note"><span class="marker">Note:</span> For redirects, only the final response body is stored.</p>
      <li data-md>
+      <p>Let <var>collected data</var> be <a data-link-type="dfn" href="#get-collected-data" id="ref-for-get-collected-data①">get collected data</a> with <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id③">request id</a> and "response".</p>
+     <li data-md>
+      <p>If <var>collected data</var> is null, return.</p>
+      <p class="note" role="note"><span class="marker">NOTE:</span> This might happen if there are no collectors setup when the response is created,
+ and <a data-link-type="dfn" href="#clone-network-response-body" id="ref-for-clone-network-response-body">clone network response body</a> does not clone the corresponding body.</p>
+     <li data-md>
+      <p>Set <var>collected data</var>’s <code>pending</code> to false.</p>
+     <li data-md>
       <p>Let <var>navigable</var> be <a data-link-type="dfn" href="#get-navigable-for-request" id="ref-for-get-navigable-for-request">get navigable for request</a> with <var>request</var>.</p>
      <li data-md>
-      <p>If <var>navigable</var> is null, return.</p>
+      <p>If <var>navigable</var> is null:</p>
+      <ol>
+       <li data-md>
+        <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①③">Resume</a> with "<code>network data collected</code>" and (<var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id④">request id</a>, "response").</p>
+       <li data-md>
+        <p>Return.</p>
+      </ol>
       <p class="issue" id="issue-d19ddfcd"><a class="self-link" href="#issue-d19ddfcd"></a> This prevents collecting data not related to a navigable.
  We still need to retrieve the navigable to check against the collector
  configuration but we could still accept null here.</p>
@@ -7356,13 +7370,13 @@ To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="maybe-collect-
         </ol>
       </ol>
      <li data-md>
-      <p>If <var>collectors</var> is <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-empty" id="ref-for-list-empty①①">empty</a>, return.</p>
-     <li data-md>
-      <p>Let <var>collected data</var> be <a data-link-type="dfn" href="#get-collected-data" id="ref-for-get-collected-data①">get collected data</a> with <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id③">request id</a> and "response".</p>
-     <li data-md>
-      <p>If <var>collected data</var> is null, return.</p>
-      <p class="note" role="note"><span class="marker">NOTE:</span> This might happen if there are no collectors setup when the response is created,
- and <a data-link-type="dfn" href="#clone-network-response-body" id="ref-for-clone-network-response-body">clone network response body</a> does not clone the corresponding body.</p>
+      <p>If <var>collectors</var> is <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-empty" id="ref-for-list-empty①①">empty</a>:</p>
+      <ol>
+       <li data-md>
+        <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①④">Resume</a> with "<code>network data collected</code>" and (<var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑤">request id</a>, "response").</p>
+       <li data-md>
+        <p>Return.</p>
+      </ol>
      <li data-md>
       <p>Let <var>bytes</var> be null.</p>
      <li data-md>
@@ -7404,16 +7418,14 @@ To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="maybe-collect-
         <ol>
          <li data-md>
           <p><a data-link-type="dfn" href="#allocate-size-to-record-data" id="ref-for-allocate-size-to-record-data">Allocate size to record data</a> given <var>size</var>.</p>
+         <li data-md>
+          <p>Set <var>collected data</var>’s <code>bytes</code> to <var>bytes</var>.</p>
+         <li data-md>
+          <p>Set <var>collected data</var>’s <code>size</code> to <var>size</var>.</p>
         </ol>
       </ol>
      <li data-md>
-      <p>Set <var>collected data</var>’s <code>bytes</code> to <var>bytes</var>.</p>
-     <li data-md>
-      <p>Set <var>collected data</var>’s <code>pending</code> to false.</p>
-     <li data-md>
-      <p>Set <var>collected data</var>’s <code>size</code> to <var>size</var>.</p>
-     <li data-md>
-      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①③">Resume</a> with "<code>network data collected</code>" and (<var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id④">request id</a>, "response").</p>
+      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⑤">Resume</a> with "<code>network data collected</code>" and (<var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑥">request id</a>, "response").</p>
     </ol>
    </div>
    <div class="algorithm" data-algorithm="allocate size to record data">
@@ -7484,7 +7496,7 @@ intercept id and a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#
 <code>phases</code>, and <code>contexts</code> that define the properties
 of active network intercepts. It is initially empty.</p>
    <p>A <a data-link-type="dfn" href="#bidi-session" id="ref-for-bidi-session①⑧">BiDi session</a> has a <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="blocked-request-map">blocked request map</dfn>, used to track the
-requests which are actively being blocked. It is an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑤⑥">map</a> between <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑤">request id</a>
+requests which are actively being blocked. It is an <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑤⑥">map</a> between <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑦">request id</a>
 and a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#struct" id="ref-for-struct①⓪">struct</a> with fields <code>request</code>, <code>phase</code>, and
 <code>response</code>. It is initially empty.</p>
    <div class="algorithm" data-algorithm="get the network intercepts">
@@ -8191,7 +8203,7 @@ redirect matches that of the request that initiated it.</p>
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="get-the-request-data">get the request data</dfn> given <var>request</var>:</p>
     <ol>
      <li data-md>
-      <p>Let <var>request id</var> be request’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑥">request id</a>.</p>
+      <p>Let <var>request id</var> be request’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑧">request id</a>.</p>
      <li data-md>
       <p>Let <var>url</var> be the result of running the <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url-serializer" id="ref-for-concept-url-serializer⑥">URL serializer</a> with <var>request</var>’s
  <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-url" id="ref-for-concept-request-url①">URL</a>.</p>
@@ -9274,7 +9286,7 @@ The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-en
         <p>Set <var>request</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-request-body" id="ref-for-concept-request-body①">body</a> to <var>body</var>.</p>
       </ol>
      <li data-md>
-      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①④">Resume</a> with "<code>continue request</code>", <var>request id</var>, and (null,
+      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⑥">Resume</a> with "<code>continue request</code>", <var>request id</var>, and (null,
  "<code>incomplete</code>").</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⓪">success</a> with data null.</p>
@@ -9321,7 +9333,7 @@ The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-en
       <p>Let <var>response</var> be the result of <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-try" id="ref-for-dfn-try⑤⑤">trying</a> to <a data-link-type="dfn" href="#update-the-response" id="ref-for-update-the-response">update the response</a> with
  <var>session</var>, "<code>continueResponse</code>" and <var>command parameters</var>.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⑤">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
+      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⑦">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
  (<var>response</var>, "<code>incomplete</code>").</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤①">success</a> with data null.</p>
@@ -9395,7 +9407,7 @@ The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-en
   (<var>credentials</var>["<code>username</code>"], <var>credentials</var>["<code>password</code>"])</p>
       </ol>
      <li data-md>
-      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⑥">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
+      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⑧">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
  (<var>response</var>, "<code>incomplete</code>").</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤②">success</a> with data null.</p>
@@ -9500,7 +9512,7 @@ The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-en
       <p>Let <var>response</var> be a new <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-network-error" id="ref-for-concept-network-error">network error</a>.</p>
       <p class="issue" id="issue-6015124b"><a class="self-link" href="#issue-6015124b"></a> Allow setting the precise kind of error <a href="https://github.com/w3c/webdriver-bidi/issues/508">[Issue #508]</a></p>
      <li data-md>
-      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⑦">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
+      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⑨">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
  (<var>response</var>, "<code>complete</code>").</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤④">success</a> with data null.</p>
@@ -9648,7 +9660,7 @@ The <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-remote-en
         <p>Set <var>response</var>’s <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#concept-response-body" id="ref-for-concept-response-body">body</a> to <var>body</var> <a data-link-type="dfn" href="https://fetch.spec.whatwg.org/#byte-sequence-as-a-body" id="ref-for-byte-sequence-as-a-body">as a body</a>.</p>
       </ol>
      <li data-md>
-      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume①⑧">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
+      <p><a data-link-type="dfn" href="#resume" id="ref-for-resume②⓪">Resume</a> with "<code>continue request</code>", <var>request id</var>, and
  (<var>response</var>,"<code>complete</code>").</p>
      <li data-md>
       <p>Return <a data-link-type="dfn" href="https://w3c.github.io/webdriver/#dfn-success" id="ref-for-dfn-success⑤⑥">success</a> with data null.</p>
@@ -10117,7 +10129,7 @@ steps given <var>request</var> and <var>response</var>:
          <li data-md>
           <p>Let <var>blocked requests</var> be <var>session</var>’s <a data-link-type="dfn" href="#blocked-request-map" id="ref-for-blocked-request-map⑤">blocked request map</a>.</p>
          <li data-md>
-          <p>Let <var>request id</var> be <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑦">request id</a>.</p>
+          <p>Let <var>request id</var> be <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑨">request id</a>.</p>
          <li data-md>
           <p>Set <var>blocked requests</var>[<var>request id</var>] to (<var>request</var>,
  "<code>authRequired</code>", <var>response</var>).</p>
@@ -10278,13 +10290,13 @@ request sent</dfn> steps given <var>request</var>:
          <li data-md>
           <p>Let <var>blocked requests</var> be <var>session</var>’s <a data-link-type="dfn" href="#blocked-request-map" id="ref-for-blocked-request-map⑥">blocked request map</a>.</p>
          <li data-md>
-          <p>Let <var>request id</var> be <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑧">request id</a>.</p>
+          <p>Let <var>request id</var> be <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id①⓪">request id</a>.</p>
          <li data-md>
           <p>Set <var>blocked requests</var>[<var>request id</var>] to (<var>request</var>,
  "<code>beforeRequestSent</code>", null).</p>
          <li data-md>
           <p>Let (<var>response</var>, <var>status</var>) be <a data-link-type="dfn" href="#awaits" id="ref-for-awaits⑥">await</a> with «"<code>continue
- request</code>"», and <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id⑨">request id</a>.</p>
+ request</code>"», and <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id①①">request id</a>.</p>
          <li data-md>
           <p>If <var>status</var> is "<code>complete</code>" set <var>response status</var> to <var>status</var>.</p>
          <li data-md>
@@ -10480,7 +10492,7 @@ started</dfn> steps given <var>request</var> and <var>response</var>:
          <li data-md>
           <p>Let <var>blocked requests</var> be <var>session</var>’s <a data-link-type="dfn" href="#blocked-request-map" id="ref-for-blocked-request-map⑦">blocked request map</a>.</p>
          <li data-md>
-          <p>Let <var>request id</var> be <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id①⓪">request id</a>.</p>
+          <p>Let <var>request id</var> be <var>request</var>’s <a data-link-type="dfn" href="#request-id" id="ref-for-request-id①②">request id</a>.</p>
          <li data-md>
           <p>Set <var>blocked requests</var>[<var>request id</var>] to (<var>request</var>,
  "<code>beforeRequestSent</code>", <var>response</var>).</p>
@@ -25027,12 +25039,12 @@ let dfnPanelData = {
 "remove-collector-from-data": {"dfnID":"remove-collector-from-data","dfnText":"remove collector from data","external":false,"refSections":[{"refs":[{"id":"ref-for-remove-collector-from-data"}],"title":"7.1.1. Definition"},{"refs":[{"id":"ref-for-remove-collector-from-data\u2460"}],"title":"7.5.5.6. The network.disownData Command"},{"refs":[{"id":"ref-for-remove-collector-from-data\u2461"}],"title":"7.5.5.8. The network.getData Command"},{"refs":[{"id":"ref-for-remove-collector-from-data\u2462"}],"title":"7.5.5.10. The network.removeDataCollector Command"}],"url":"#remove-collector-from-data"},
 "remove-user-context-subscriptions": {"dfnID":"remove-user-context-subscriptions","dfnText":"remove user context subscriptions","external":false,"refSections":[{"refs":[{"id":"ref-for-remove-user-context-subscriptions"}],"title":"6. User Contexts"}],"url":"#remove-user-context-subscriptions"},
 "render-document-to-a-canvas": {"dfnID":"render-document-to-a-canvas","dfnText":"render document to a canvas","external":false,"refSections":[{"refs":[{"id":"ref-for-render-document-to-a-canvas"}],"title":"7.3.3.2. The browsingContext.captureScreenshot Command"}],"url":"#render-document-to-a-canvas"},
-"request-id": {"dfnID":"request-id","dfnText":"request id","external":false,"refSections":[{"refs":[{"id":"ref-for-request-id"},{"id":"ref-for-request-id\u2460"},{"id":"ref-for-request-id\u2461"},{"id":"ref-for-request-id\u2462"},{"id":"ref-for-request-id\u2463"}],"title":"7.5.2. Network Data Collection"},{"refs":[{"id":"ref-for-request-id\u2464"}],"title":"7.5.3. Network Intercepts"},{"refs":[{"id":"ref-for-request-id\u2465"}],"title":"7.5.4.15. The network.RequestData Type"},{"refs":[{"id":"ref-for-request-id\u2466"}],"title":"7.5.6.1. The network.authRequired Event"},{"refs":[{"id":"ref-for-request-id\u2467"},{"id":"ref-for-request-id\u2468"}],"title":"7.5.6.2. The network.beforeRequestSent Event"},{"refs":[{"id":"ref-for-request-id\u2460\u24ea"}],"title":"7.5.6.5. The network.responseStarted Event"}],"url":"#request-id"},
+"request-id": {"dfnID":"request-id","dfnText":"request id","external":false,"refSections":[{"refs":[{"id":"ref-for-request-id"},{"id":"ref-for-request-id\u2460"},{"id":"ref-for-request-id\u2461"},{"id":"ref-for-request-id\u2462"},{"id":"ref-for-request-id\u2463"},{"id":"ref-for-request-id\u2464"},{"id":"ref-for-request-id\u2465"}],"title":"7.5.2. Network Data Collection"},{"refs":[{"id":"ref-for-request-id\u2466"}],"title":"7.5.3. Network Intercepts"},{"refs":[{"id":"ref-for-request-id\u2467"}],"title":"7.5.4.15. The network.RequestData Type"},{"refs":[{"id":"ref-for-request-id\u2468"}],"title":"7.5.6.1. The network.authRequired Event"},{"refs":[{"id":"ref-for-request-id\u2460\u24ea"},{"id":"ref-for-request-id\u2460\u2460"}],"title":"7.5.6.2. The network.beforeRequestSent Event"},{"refs":[{"id":"ref-for-request-id\u2460\u2461"}],"title":"7.5.6.5. The network.responseStarted Event"}],"url":"#request-id"},
 "request-originates-in-user-context": {"dfnID":"request-originates-in-user-context","dfnText":"request originates in user context","external":false,"refSections":[{"refs":[{"id":"ref-for-request-originates-in-user-context"}],"title":"7.5.6.2. The network.beforeRequestSent Event"}],"url":"#request-originates-in-user-context"},
 "required-partition-key-attributes": {"dfnID":"required-partition-key-attributes","dfnText":"required partition key\nattributes","external":false,"refSections":[{"refs":[{"id":"ref-for-required-partition-key-attributes"}],"title":"7.7.2.1. The storage.PartitionKey Type"}],"url":"#required-partition-key-attributes"},
 "restore-client-window-is-supported": {"dfnID":"restore-client-window-is-supported","dfnText":"restore client\nwindow is supported","external":false,"refSections":[{"refs":[{"id":"ref-for-restore-client-window-is-supported"}],"title":"7.2.2. Windows"}],"url":"#restore-client-window-is-supported"},
 "restore-the-client-window": {"dfnID":"restore-the-client-window","dfnText":"restore the client window","external":false,"refSections":[{"refs":[{"id":"ref-for-restore-the-client-window"}],"title":"7.2.2. Windows"}],"url":"#restore-the-client-window"},
-"resume": {"dfnID":"resume","dfnText":"resume","external":false,"refSections":[{"refs":[{"id":"ref-for-resume"}],"title":"7.1.1. Definition"},{"refs":[{"id":"ref-for-resume\u2460"},{"id":"ref-for-resume\u2461"},{"id":"ref-for-resume\u2462"}],"title":"7.3.3.12. The browsingContext.traverseHistory Command"},{"refs":[{"id":"ref-for-resume\u2463"}],"title":"7.3.4.3. The browsingContext.navigationStarted Event"},{"refs":[{"id":"ref-for-resume\u2464"}],"title":"7.3.4.4. The browsingContext.fragmentNavigated Event"},{"refs":[{"id":"ref-for-resume\u2465"}],"title":"7.3.4.6. The browsingContext.domContentLoaded Event"},{"refs":[{"id":"ref-for-resume\u2466"}],"title":"7.3.4.7. The browsingContext.load Event"},{"refs":[{"id":"ref-for-resume\u2467"}],"title":"7.3.4.8. The browsingContext.downloadWillBegin Event"},{"refs":[{"id":"ref-for-resume\u2468"}],"title":"7.3.4.10. The browsingContext.navigationAborted Event"},{"refs":[{"id":"ref-for-resume\u2460\u24ea"}],"title":"7.3.4.11. The browsingContext.navigationCommitted Event"},{"refs":[{"id":"ref-for-resume\u2460\u2460"}],"title":"7.3.4.12. The browsingContext.navigationFailed Event"},{"refs":[{"id":"ref-for-resume\u2460\u2461"},{"id":"ref-for-resume\u2460\u2462"}],"title":"7.5.2. Network Data Collection"},{"refs":[{"id":"ref-for-resume\u2460\u2463"}],"title":"7.5.5.3. The network.continueRequest Command"},{"refs":[{"id":"ref-for-resume\u2460\u2464"}],"title":"7.5.5.4. The network.continueResponse Command"},{"refs":[{"id":"ref-for-resume\u2460\u2465"}],"title":"7.5.5.5. The network.continueWithAuth Command"},{"refs":[{"id":"ref-for-resume\u2460\u2466"}],"title":"7.5.5.7. The network.failRequest Command"},{"refs":[{"id":"ref-for-resume\u2460\u2467"}],"title":"7.5.5.9. The network.provideResponse Command"}],"url":"#resume"},
+"resume": {"dfnID":"resume","dfnText":"resume","external":false,"refSections":[{"refs":[{"id":"ref-for-resume"}],"title":"7.1.1. Definition"},{"refs":[{"id":"ref-for-resume\u2460"},{"id":"ref-for-resume\u2461"},{"id":"ref-for-resume\u2462"}],"title":"7.3.3.12. The browsingContext.traverseHistory Command"},{"refs":[{"id":"ref-for-resume\u2463"}],"title":"7.3.4.3. The browsingContext.navigationStarted Event"},{"refs":[{"id":"ref-for-resume\u2464"}],"title":"7.3.4.4. The browsingContext.fragmentNavigated Event"},{"refs":[{"id":"ref-for-resume\u2465"}],"title":"7.3.4.6. The browsingContext.domContentLoaded Event"},{"refs":[{"id":"ref-for-resume\u2466"}],"title":"7.3.4.7. The browsingContext.load Event"},{"refs":[{"id":"ref-for-resume\u2467"}],"title":"7.3.4.8. The browsingContext.downloadWillBegin Event"},{"refs":[{"id":"ref-for-resume\u2468"}],"title":"7.3.4.10. The browsingContext.navigationAborted Event"},{"refs":[{"id":"ref-for-resume\u2460\u24ea"}],"title":"7.3.4.11. The browsingContext.navigationCommitted Event"},{"refs":[{"id":"ref-for-resume\u2460\u2460"}],"title":"7.3.4.12. The browsingContext.navigationFailed Event"},{"refs":[{"id":"ref-for-resume\u2460\u2461"},{"id":"ref-for-resume\u2460\u2462"},{"id":"ref-for-resume\u2460\u2463"},{"id":"ref-for-resume\u2460\u2464"}],"title":"7.5.2. Network Data Collection"},{"refs":[{"id":"ref-for-resume\u2460\u2465"}],"title":"7.5.5.3. The network.continueRequest Command"},{"refs":[{"id":"ref-for-resume\u2460\u2466"}],"title":"7.5.5.4. The network.continueResponse Command"},{"refs":[{"id":"ref-for-resume\u2460\u2467"}],"title":"7.5.5.5. The network.continueWithAuth Command"},{"refs":[{"id":"ref-for-resume\u2460\u2468"}],"title":"7.5.5.7. The network.failRequest Command"},{"refs":[{"id":"ref-for-resume\u2461\u24ea"}],"title":"7.5.5.9. The network.provideResponse Command"}],"url":"#resume"},
 "run-webdriver-bidi-preload-scripts": {"dfnID":"run-webdriver-bidi-preload-scripts","dfnText":"run WebDriver BiDi preload scripts","external":false,"refSections":[{"refs":[{"id":"ref-for-run-webdriver-bidi-preload-scripts"}],"title":"7.3.3.11. The browsingContext.setViewport Command"}],"url":"#run-webdriver-bidi-preload-scripts"},
 "sandbox-map": {"dfnID":"sandbox-map","dfnText":"sandbox map","external":false,"refSections":[{"refs":[{"id":"ref-for-sandbox-map"},{"id":"ref-for-sandbox-map\u2460"},{"id":"ref-for-sandbox-map\u2461"},{"id":"ref-for-sandbox-map\u2462"}],"title":"5.1. Sandbox Realms"}],"url":"#sandbox-map"},
 "sandboxproxy": {"dfnID":"sandboxproxy","dfnText":"SandboxProxy","external":false,"refSections":[{"refs":[{"id":"ref-for-sandboxproxy"}],"title":"5.1. Sandbox Realms"},{"refs":[{"id":"ref-for-sandboxproxy\u2460"},{"id":"ref-for-sandboxproxy\u2461"},{"id":"ref-for-sandboxproxy\u2462"}],"title":"5.2. Sandbox Proxy Objects"},{"refs":[{"id":"ref-for-sandboxproxy\u2463"}],"title":"5.3. SandboxWindowProxy"},{"refs":[{"id":"ref-for-sandboxproxy\u2464"}],"title":"7.6.3.13. The script.RemoteReference Type"}],"url":"#sandboxproxy"},
