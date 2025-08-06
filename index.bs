@@ -508,7 +508,8 @@ EventData = (
   InputEvent //
   LogEvent //
   NetworkEvent //
-  ScriptEvent
+  ScriptEvent //
+  SpeculationEvent
 )
 </pre>
 
@@ -10463,7 +10464,7 @@ value is provided only for one of the remote values, while the
 unique-per-ECMAScript-object <code>internalId</code> is provided for all the
 duplicated objects for a given serialization.
 
-[=Nodes=] are also represented by <code>script.RemoteValue</code>
+Nodes are also represented by <code>script.RemoteValue</code>
 instances. These have a partial serialization of the node in the value property.
 
 Issue: reconsider mirror objects' lifecycle.
@@ -13392,6 +13393,69 @@ The [=remote end steps=] with |command parameters| are:
 1. Perform any implementation-defined steps to remove the web extension from the [=remote end=]. If this fails, return [=error=] with [=error code=] [=unknown error=].
 
 1. Return [=success=] with data null.
+
+</div>
+
+## The speculation Module ## {#module-speculation}
+
+The <dfn export for=modules>speculation</dfn> module contains events 
+relating to resource speculation including preloading and prefetching.
+
+### Definition ### {#module-speculation-definition}
+
+{^Local end definition^}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+SpeculationEvent = (
+  speculation.PrefetchStatusUpdated
+)
+</pre>
+
+### Types ### {#module-speculation-types}
+
+#### The speculation.PrefetchStatus Type #### {#type-speculation-PrefetchStatus}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+speculation.PrefetchStatus = "pending" / "running" / "success" / "failure"
+</pre>
+
+The <code>speculation.PrefetchStatus</code> type represents the status of a prefetch operation.
+
+### Events ### {#module-speculation-events}
+
+#### The speculation.prefetchStatusUpdated Event #### {#event-speculation-prefetchStatusUpdated}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+        speculation.PrefetchStatusUpdated = {
+         method: "speculation.prefetchStatusUpdated",
+         params: speculation.PrefetchStatusUpdatedParameters
+        }
+
+       speculation.PrefetchStatusUpdatedParameters = {
+         initiatingFrameId: js-uint,
+         url: text,
+         status: speculation.PrefetchStatus,
+       }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end event trigger for speculation.prefetchStatusUpdated">
+The remote end event trigger for the speculation.prefetchStatusUpdated event,
+given |session|, |initiatingFrameId|, |url|, and |status|:
+
+1. Let |params| be a new struct.
+
+1. Set |params|["<code>initiatingFrameId</code>"] to |initiatingFrameId|.
+
+1. Set |params|["<code>url</code>"] to |url|.
+
+1. Set |params|["<code>status</code>"] to |status|.
+
+1. Emit an event with |session|, "<code>speculation.prefetchStatusUpdated</code>", and |params|.
 
 </div>
 
