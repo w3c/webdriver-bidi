@@ -1547,9 +1547,15 @@ An <dfn>emulated network conditions struct</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn id="emulated-network-conditions-struct-offline"
   for="emulated-network-conditions-struct">offline</dfn> which is a boolean or null.
 
-A [=BiDi session=] has an <dfn>emulated network conditions map</dfn>, which is a weak
-map between [=navigables=] or [=user contexts=] and
-[=emulated network conditions struct=] or null.
+A [=BiDi session=] has a <dfn for=session>emulated network conditions</dfn> which is
+a [=struct=] with an [=struct/item=] named <dfn
+for="emulated network conditions">default network conditions</dfn>, which is an
+[=emulated network conditions struct=] or null, an [=struct/item=] named
+<dfn for="emulated network conditions">user context network conditions</dfn>, which
+is a weak map between [=user contexts=] and [=emulated network conditions struct=],
+and a [=struct/item=] named
+<dfn for="emulated network conditions">navigable network conditions</dfn>, which is a
+weak map between [=navigables=] and [=emulated network conditions struct=].
 
 When a [=user context=] is [=set/remove|removed=] from the
 [=set of user contexts=], [=remove user context subscriptions=].
@@ -6323,14 +6329,10 @@ context.
 
 <div algorithm="remote end steps for emulation.setNetworkConditions">
 
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |command parameters| and |session| are:
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
    and |command parameters| [=map/contains=] "<code>context</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
-1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |emulated network conditions| be null.
@@ -6349,7 +6351,8 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |navigable| of |navigables|:
 
-      1. [=map/Set=] [=emulated network conditions map=][|navigable|] to
+      1. [=map/Set=] |session|'s [=emulated network conditions=]'s
+         [=emulated network conditions/navigable network conditions=][|navigable|] to
          |emulated network conditions|.
 
 1. If the <code>userContexts</code> field of |command parameters| is present:
@@ -6359,7 +6362,15 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=emulated network conditions map=][|user context|] to |emulated network conditions|.
+      1. [=map/Set=] |session|'s [=emulated network conditions=]'s
+         [=emulated network conditions/user context network conditions=][|user context|]
+         to |emulated network conditions|.
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   [=map/set=] |session|'s [=emulated network conditions=]'s
+   [=emulated network conditions/default network conditions=][|user context|] to
+   |emulated network conditions|.
 
 1. Return [=success=] with data null.
 
@@ -9785,12 +9796,22 @@ are:
 
    1. For each |session| in [=active BiDI sessions=]:
 
-      1. If |session|'s [=emulated network conditions map=] [=map/contains=]
-         |top-level traversable|, return
-         [=emulated network conditions map=][|top-level traversable|].
+      1. If |session|'s [=emulated network conditions=]'s
+         [=emulated network conditions/navigable network conditions=]
+         [=map/contains=] |top-level traversable|, return |session|'s
+         [=emulated network conditions=]'s
+         [=emulated network conditions/navigable network conditions=][|top-level traversable|].
 
-      1. If |session|'s [=emulated network conditions map=] [=map/contains=]
-         |user context|, return [=emulated network conditions map=][|user context|].
+      1. If |session|'s [=emulated network conditions=]'s
+         [=emulated network conditions/user context network conditions=]
+         [=map/contains=] |user context|, return |session|'s
+         [=emulated network conditions=]'s
+         [=emulated network conditions/user context network conditions=][|user context|].
+
+      1. If |session|'s [=emulated network conditions=]'s
+         [=emulated network conditions/default network conditions=] is not null,
+         return |session|'s [=emulated network conditions=]'s
+         [=emulated network conditions/default network conditions=].
 
 1. Return null.
 
