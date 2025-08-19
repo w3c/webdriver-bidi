@@ -208,7 +208,7 @@ spec: SCREEN-ORIENTATION; urlPrefix: https://www.w3.org/TR/screen-orientation
     text: screen orientation values lists; url: #dfn-screen-orientation-values-lists
 spec: FETCH; urlPrefix: https://fetch.spec.whatwg.org/
   type: dfn
-    text: default User-Agent value; url: #default-user-agent-value
+    text: default `User-Agent` value; url: #default-user-agent-value
     text: HTTP-network-or-cache fetch; url: #concept-http-network-or-cache-fetch
     text: request; url: #fetch-params-request
 spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
@@ -3149,9 +3149,6 @@ A [=remote end=] has a <dfn>timezone overrides map</dfn> which is a weak map bet
 A [=remote end=] has an <dfn>unhandled prompt behavior overrides map</dfn> which is a
 weak map between [=user contexts=] and [=unhandled prompt behavior struct=].
 
-A [=remote end=] has a <dfn>user agent overrides map</dfn> which is a weak map
-between [=navigables=] or [=user contexts=] and string or null.
-
 A [=remote end=] has a <dfn>scripting enabled overrides map</dfn> which is a weak
 map between [=navigables=] or [=user contexts=] and boolean or null.
 
@@ -5836,11 +5833,19 @@ EmulationCommand = (
   emulation.SetLocaleOverride //
   emulation.SetScreenOrientationOverride //
   emulation.SetScriptingEnabled //
-  emulation.SetTimezoneOverride
-  emulation.SetScreenOrientationOverride //
+  emulation.SetTimezoneOverride //
   emulation.SetUserAgentOverride
 )
 </pre>
+
+A [=BiDi session=] has an <dfn for=session>emulated user agent</dfn> which is a
+[=struct=] with an [=struct/item=] named
+<dfn for="emulated user agent">default user agent</dfn>, which is a string or null,
+an [=struct/item=] named
+<dfn for="emulated user agent">user context user agent</dfn>, which is a weak map
+between [=user contexts=] and string, and an [=struct/item=] named
+<dfn for="emulated user agent">navigable user agent</dfn>, which is a weak map
+between [=navigables=] and string.
 
 A [=remote end=] has a <dfn>forced colors mode theme overrides map</dfn> which is a weak map
 between [=user contexts=] and string or null.
@@ -6317,58 +6322,40 @@ User-Agent on the given top-level traversables or user contexts.
    </dd>
 </dl>
 
-<div algorithm="updated `User-Agent` getter steps">
-The [=default User-Agent value=] getter steps is implementation defined. A
-WebDriver-BiDi [=remote end=] must have an implementation that runs the following
-steps:
-
-1. Let |related navigables| be an empty list.
-
-1. If [=default User-Agent value=] was accessed during execution of the
-   [=HTTP-network-or-cache fetch=] algorithm with |fetchParams|:
-
-   1. Let |request| be |fetchParams|’s [=request=].
-
-   1. If |request|'s [=request/client=] is not null, let |related navigables|
-      be the result of [=get related navigables=] with |request|'s
-      [=request/client=].
-
-1. If [=default User-Agent value=] was accessed from [=NavigatorID=] interface:
-
-   1. Let |realm| be [=current Realm Record=].
-
-   1. Let |environment settings| be the [=environment settings object=] whose
-      [=realm execution context=]'s Realm component is |realm|.
-
-   1. Let |related navigables| be the result of [=get related navigables=] given
-      |environment settings|.
-
-1. Let |emulated user agent| be the result of [=get emulated user agent=] given
-   |related navigables|.
-
-1. If |emulated user agent| is not null, return |emulated user agent|.
-
-1. Return the result of implementation-defined steps in accordance with the
-   requirements of the [=default User-Agent value=] specification.
-
-</div>
-
 <div algorithm>
-To <dfn>get emulated user agent</dfn> given |navigables|:
+The <dfn export>WebDriver BiDi emulated User-Agent</dfn> steps given
+[=environment settings object=] |environment settings| are:
 
-1. For each |navigable| or |navigables|:
+1. Let |related navigables| be the result of [=get related navigables=] with
+   |environment settings|.
+
+1. For each |navigable| or |related navigables|:
 
    1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
 
-   1. If [=user agent overrides map=] contains |top-level navigable|, return
-      [=user agent overrides map=][|top-level navigable|].
-
    1. Let |user context| be |top-level navigable|'s [=associated user context=].
 
-   1. If [=user agent overrides map=] contains |user context|, return
-      [=user agent overrides map=][|user context|].
+   1. For each |session| in [=active BiDi sessions=]:
 
-   1. Return null.
+      1. If |session|'s [=emulated user agent=]'s [=navigable user agent=] contains
+         |top-level navigable|, return |session|'s [=emulated user agent=]'s
+         [=navigable user agent=][|top-level navigable|].
+
+   1. For each |session| in [=active BiDi sessions=]:
+
+      1. If |session|'s [=emulated user agent=]'s [=user context user agent=]
+         contains |user context|, return |session|'s [=emulated user agent=]'s
+         [=user context user agent=][|user context|].
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. Let |default emulated user agent| be |session|'s [=emulated user agent=]'s
+      [=default user agent=].
+
+   1. If |default emulated user agent| is not null, return
+      |default emulated user agent|.
+
+1. Return null.
 
 </div>
 
@@ -6380,45 +6367,45 @@ The [=remote end steps=] with |command parameters| are:
    and |command parameters| [=map/contains=] "<code>context</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
-1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
 1. Let |emulated user agent| be null.
 
 1. If |command parameters| [=map/contains=] "<code>userAgent</code>":
 
    1. Set |emulated user agent| to |command parameters|["<code>userAgent</code>"].
 
-1. Let |navigables| be a [=/set=].
-
-1. If the <code>contexts</code> field of |command parameters| is present:
+1. If |command parameters| [=map/contains=] "<code>context</code>":
 
    1. Let |navigables| be the result of [=trying=] to
       [=get valid top-level traversables by ids=] with
       |command parameters|["<code>contexts</code>"].
 
-1. Otherwise:
+   1. For each |navigable| of |navigables|:
 
-   1. Assert the <code>userContexts</code> field of |command parameters| is present.
+      1. If |emulated user agent| is null, [=map/remove=] |navigable| from
+         |session|'s [=emulated user agent=]'s [=navigable user agent=].
+
+      1. Otherwise, [=map/set=] |session|'s [=emulated user agent=]'s
+         [=navigable user agent=][|navigable|] to |emulated user agent|.
+
+   1. Return [=success=] with data null.
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>":
 
    1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
       with |command parameters|["<code>userContexts</code>"].
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=user agent overrides map=][|user context|] to
-         |emulated user agent|.
+      1. If |emulated user agent| is null, [=map/remove=] |user context| from
+         |session|'s [=emulated user agent=]'s [=user context user agent=].
 
-      1. [=list/For each=] |top-level traversable| of the list of all
-         [=/top-level traversables=] whose [=associated user context=] is
-         |user context|:
+      1. Otherwise, [=map/set=] |session|'s [=emulated user agent=]'s
+         [=user context user agent=][|user context|] to |emulated user agent|.
 
-         1. [=list/Append=] |top-level traversable| to |navigables|.
+   1. Return [=success=] with data null.
 
-1. For each |navigable| of |navigables|:
-
-   1. [=map/Set=] [=user agent overrides map=][|navigable|] to |emulated user agent|.
+1. [=map/Set=] |session|'s [=emulated user agent=]'s [=default user agent=] to
+   |emulated user agent|.
 
 1. Return [=success=] with data null.
 
