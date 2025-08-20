@@ -3029,8 +3029,12 @@ A <dfn>download behavior struct</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn id="download-behavior-struct-allowed" for="download-behavior-struct">allowed</dfn> which is a boolean;
 * [=struct/item=] named <dfn id="download-behavior-struct-destination-folder" for="download-behavior-struct">destinationFolder</dfn> which is a string or null.
 
-A [=remote end=] has a <dfn>download behavior map</dfn> which is a weak map between
-[=user contexts=] or "<code>global</code>" and [=download behavior struct=] or null.
+A [=remote end=] has a <dfn>download behavior</dfn> which is a [=struct=] with an [=struct/item=]
+named <dfn for="download behavior">default download behavior</dfn>, which is a
+[=download behavior struct=] or null, and an [=struct/item=] named <dfn
+for="download behavior">user context download behavior</dfn>, which is a weak map between
+[=user contexts=] and [=download behavior struct=].
+
 
 The <dfn export for=commands>browser.setDownloadBehavior</dfn> command returns a
 list of [=client window=]s.
@@ -3079,13 +3083,11 @@ To <dfn export>get download behavior</dfn> given |navigable|:
 
 1. Let |user context| be |navigable|'s [=associated user context=].
 
-1. If [=download behavior map=] [=map/contains=] |user context|, return
-   [=download behavior map=][|user context|].
+1. If [=download behavior=]'s [=download behavior/user context download behavior=] [=map/contains=]
+   |user context|, return [=download behavior=]'s
+   [=download behavior/user context download behavior=][|user context|].
 
-1. If [=download behavior map=] [=map/contains=] "<code>global</code>", return
-   [=download behavior map=]["<code>global</code>"].
-
-1. Return null.
+1. Return [=download behavior=]'s [=download behavior/default download behavior=].
 
 </div>
 
@@ -3121,10 +3123,14 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=download behavior map=][|user context|] to
+      1. If |download behavior| is null, [=map/remove=] |user context| from [=download behavior=]'s
+         [=download behavior/user context download behavior=].
+
+      1. Otherwise, [=map/set=] [=download behavior=]'s
+         [=download behavior/user context download behavior=][|user context|] to
          |download behavior|.
 
-1. Otherwise, [=map/set=] [=download behavior map=]["<code>global</code>"] to
+1. Otherwise, set [=download behavior=]'s [=download behavior/default download behavior=] to
    |download behavior|.
 
 1. Return [=success=] with data null.
