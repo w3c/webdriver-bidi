@@ -328,6 +328,13 @@ spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
 spec: STREAMS; urlPrefix: https://streams.spec.whatwg.org/
   type: dfn
     text: ReadableStream; url: #readablestream
+spec: WebSockets; urlPrefix: https://websockets.spec.whatwg.org/
+  type: dfn
+    text: WebSocket; url: #websocket
+    text: Make disappear; url: #make-disappear
+spec: WebTransport; urlPrefix: https://w3c.github.io/webtransport/
+  type: dfn
+    text: Cleanup WebTransport; url: #webtransport-cleanup
 </pre>
 
 <style>
@@ -6327,6 +6334,34 @@ context.
    </dd>
 </dl>
 
+<div algorithm>
+
+To <dfn>apply network conditions</dfn>:
+
+1. For each [=WebSocket=] object |webSocket|:
+
+  1. Let |realm| be |webSocket|'s [=relevant Realm=].
+
+  1. Let |environment settings| be the [=environment settings object=] whose
+     [=realm execution context=]'s Realm component is |realm|.
+
+  1. If the result of [=WebDriver BiDi network is offline=] with |environment settings| is true:
+
+     1. [=Make disappear=] |webSocket|.
+
+1. For each [=WebTransport=] object |webTransport|:
+
+  1. Let |realm| be |webSocket|'s [=relevant Realm=].
+
+  1. Let |environment settings| be the [=environment settings object=] whose
+     [=realm execution context=]'s Realm component is |realm|.
+
+  1. If the result of [=WebDriver BiDi network is offline=] with |environment settings| is true:
+
+     1. [=Cleanup WebTransport=] |webTransport|.
+
+</div>
+
 <div algorithm="remote end steps for emulation.setNetworkConditions">
 
 The [=remote end steps=] with |command parameters| and |session| are:
@@ -6371,6 +6406,8 @@ The [=remote end steps=] with |command parameters| and |session| are:
    [=map/set=] |session|'s [=emulated network conditions=]'s
    [=emulated network conditions/default network conditions=][|user context|] to
    |emulated network conditions|.
+
+1. [=Apply network conditions=].
 
 1. Return [=success=] with data null.
 
