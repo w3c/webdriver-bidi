@@ -13633,7 +13633,7 @@ The <dfn export for=modules>autofill module</dfn> contains functionality for tri
 <pre class="cddl" data-cddl-module="remote-cddl">
 
 AutofillCommand = (
-  autofill.trigger
+  autofill.Trigger
 )
 </pre>
 
@@ -13648,7 +13648,7 @@ on a particular form field using the provided fields.
    <dt>Command Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="remote-cddl">
-      autofill.trigger = (
+      autofill.Trigger = (
         method: "autofill.trigger",
         params: autofill.TriggerParameters
       )
@@ -13656,8 +13656,8 @@ on a particular form field using the provided fields.
       autofill.TriggerParameters = {
         context: browsingContext.BrowsingContext,
         element: script.SharedReference,
-        card: autofill.Card,
-        address: autofill.Address
+        ? card: autofill.Card,
+        ? address: autofill.Address
       }
 
       autofill.Field = {
@@ -13687,7 +13687,7 @@ on a particular form field using the provided fields.
    </dd>
 </dl>
 
-<div algorithm="remote end steps for autofill.trigger">
+<div algorithm="remote end steps for autofill.Trigger">
 
 The [=remote end steps=] with |session| and |command parameters| are:
 
@@ -13712,17 +13712,28 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
    with the |element id|, |realm|, and |session|.
 
-1. Let |field| be the value of the <code>field</code> field of |command
-   parameters|.
-
 1. If |element| is not a [=form-associated element=] or |element|'s [=form owner=] is
    null, return an [=error=] with [=error code=] [=invalid element state=].
 
-1. If [=/user agent=] cannot autofill |field|, return an [=error=] with
+1. Let |card| be the value of the <code>card</code> field of |command parameters|.
+
+1. Let |address| be the value of the <code>address</code> field of |command parameters|.
+
+1. If, for any reason, the remote end is unable to [=autofill=], return error with
    [=error code=] [=unsupported operation=].
 
+1. If both |card| and |address| are not empty, return error with [=error code=]
+   [=invalid argument=].
+
+1. If both |card| and |address| are empty, return error with [=error code=]
+   [=invalid argument=].
+
+1. Let |parsed card| be the result of parsing |card| as an <code>autofill.Card</code>.
+
+1. Let |parsed address| be the result of parsing |card| as an <code>autofill.Address</code>.
+
 1. The [=/user agent=] should [=autofill=] |element| and |element|'s [=form
-   owner=], while taking into account the contents of |field|.
+   owner=], while taking into account the contents of |parsed card| and |parsed address|.
 
 1. Return [=success=] with data null.
 
