@@ -9,7 +9,7 @@ WebDriver BiDi is a living standard that continuously gets new features added. F
 - A [roadmap](./roadmap.md) based on real-world end-to-end user scenarios
 - Detailed [proposals](./proposals/) for the initial protocol
 - A [spec](https://w3c.github.io/webdriver-bidi/) under active development
-- [Browser-compat-data](https://github.com/mdn/browser-compat-data/tree/main/webdriver/bidi) with the current implementation status of the protocol 
+- [Browser-compat-data](https://github.com/mdn/browser-compat-data/tree/main/webdriver/bidi) with the current implementation status of the protocol
 
 ## Status
 
