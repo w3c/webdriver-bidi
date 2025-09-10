@@ -5829,9 +5829,19 @@ EmulationCommand = (
   emulation.SetLocaleOverride //
   emulation.SetScreenOrientationOverride //
   emulation.SetScriptingEnabled //
-  emulation.SetTimezoneOverride
+  emulation.SetTimezoneOverride //
+  emulation.SetUserAgentOverride
 )
 </pre>
+
+A [=BiDi session=] has an <dfn for=session>emulated user agent</dfn> which is a
+[=struct=] with an [=struct/item=] named
+<dfn for="emulated user agent">default user agent</dfn>, which is a string or null,
+an [=struct/item=] named
+<dfn for="emulated user agent">user context user agent</dfn>, which is a weak map
+between [=user contexts=] and string, and an [=struct/item=] named
+<dfn for="emulated user agent">navigable user agent</dfn>, which is a weak map
+between [=navigables=] and string.
 
 A [=remote end=] has a <dfn>forced colors mode theme overrides map</dfn> which is a weak map
 between [=user contexts=] and string or null.
@@ -6274,6 +6284,120 @@ The [=remote end steps=] with |command parameters| are:
 
    1. [=Set emulated screen orientation=] with |navigable| and
       |emulated screen orientation|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setUserAgentOverride Command ####  {#command-emulation-setUserAgentOverride}
+
+The <dfn export for=commands>emulation.setUserAgentOverride</dfn> command modifies
+User-Agent on the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetUserAgentOverride = (
+        method: "emulation.setUserAgentOverride",
+        params: emulation.SetUserAgentOverrideParameters
+      )
+
+      emulation.SetUserAgentOverrideParameters = {
+        userAgent: text / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Result Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm>
+The <dfn export>WebDriver BiDi emulated User-Agent</dfn> steps given
+[=environment settings object=] |environment settings| are:
+
+1. Let |related navigables| be the result of [=get related navigables=] with
+   |environment settings|.
+
+1. For each |navigable| or |related navigables|:
+
+   1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
+
+   1. Let |user context| be |top-level navigable|'s [=associated user context=].
+
+   1. For each |session| in [=active BiDi sessions=]:
+
+      1. If |session|'s [=emulated user agent=]'s [=navigable user agent=] contains
+         |top-level navigable|, return |session|'s [=emulated user agent=]'s
+         [=navigable user agent=][|top-level navigable|].
+
+   1. For each |session| in [=active BiDi sessions=]:
+
+      1. If |session|'s [=emulated user agent=]'s [=user context user agent=]
+         contains |user context|, return |session|'s [=emulated user agent=]'s
+         [=user context user agent=][|user context|].
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. Let |default emulated user agent| be |session|'s [=emulated user agent=]'s
+      [=default user agent=].
+
+   1. If |default emulated user agent| is not null, return
+      |default emulated user agent|.
+
+1. Return null.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setUserAgentOverride">
+
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |emulated user agent| be |command parameters|["<code>userAgent</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>contexts</code>":
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. If |emulated user agent| is null, [=map/remove=] |navigable| from
+         |session|'s [=emulated user agent=]'s [=navigable user agent=].
+
+      1. Otherwise, [=map/set=] |session|'s [=emulated user agent=]'s
+         [=navigable user agent=][|navigable|] to |emulated user agent|.
+
+   1. Return [=success=] with data null.
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>":
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. If |emulated user agent| is null, [=map/remove=] |user context| from
+         |session|'s [=emulated user agent=]'s [=user context user agent=].
+
+      1. Otherwise, [=map/set=] |session|'s [=emulated user agent=]'s
+         [=user context user agent=][|user context|] to |emulated user agent|.
+
+   1. Return [=success=] with data null.
+
+1. [=map/Set=] |session|'s [=emulated user agent=]'s [=default user agent=] to
+   |emulated user agent|.
 
 1. Return [=success=] with data null.
 
@@ -9771,7 +9895,7 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 1. For each |session| in [=active BiDi sessions=]:
 
   1. For each |preload script| in |session|'s [=preload script map=]'s
-     [=values=]:
+     [=map/values=]:
 
     1. If |preload script|'s <code>user contexts</code>'s [=set/size=] is not zero:
 
