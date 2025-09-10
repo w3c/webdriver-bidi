@@ -3137,16 +3137,16 @@ An <dfn>unhandled prompt behavior struct</dfn> is a [=struct=] with:
 A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map between [=user contexts=] and [=viewport configuration=].
 
 A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
-[=navigables=] or [=user contexts=] and string or null.
+[=navigables=] or [=user contexts=] and string.
 
 A [=remote end=] has a <dfn>timezone overrides map</dfn> which is a weak map between
-[=navigables=] or [=user contexts=] and string or null.
+[=navigables=] or [=user contexts=] and string.
 
 A [=remote end=] has an <dfn>unhandled prompt behavior overrides map</dfn> which is a
 weak map between [=user contexts=] and [=unhandled prompt behavior struct=].
 
 A [=remote end=] has a <dfn>scripting enabled overrides map</dfn> which is a weak
-map between [=navigables=] or [=user contexts=] and boolean or null.
+map between [=navigables=] or [=user contexts=] and boolean.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -6070,8 +6070,6 @@ locale on the given top-level traversables or user contexts.
 The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
 [=remote end=] must have an implementation that runs the following steps:
 
-1. Let |emulated locale| be null.
-
 1. Let |realm| be [=current Realm Record=].
 
 1. Let |environment settings| be the [=environment settings object=] whose
@@ -6087,14 +6085,11 @@ The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
 
     1. Let |user context| be |top-level traversable|'s [=associated user context=].
 
-    1. If [=locale overrides map=] [=map/contains=] |top-level traversable|, set
-       |emulated locale| to [=locale overrides map=][|top-level traversable|].
+    1. If [=locale overrides map=] [=map/contains=] |top-level traversable|, return
+       [=locale overrides map=][|top-level traversable|].
 
-    1. Otherwise, if [=locale overrides map=] [=map/contains=]
-       |user context|, set |emulated locale| to
+    1. If [=locale overrides map=] [=map/contains=] |user context|, return
        [=locale overrides map=][|user context|].
-
-1. If |emulated locale| is not null, return |emulated locale|.
 
 1. Return the result of implementation-defined steps in accordance with the
    requirements of the [=DefaultLocale=] specification.
@@ -6113,14 +6108,10 @@ The [=remote end steps=] with |command parameters| are:
    and |command parameters| doesn't [=map/contain=] "<code>context</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
-1. Let |emulated locale| be null.
+1. Let |emulated locale| be |command parameters|["<code>locale</code>"].
 
-1. If |command parameters| [=map/contains=] "<code>locale</code>":
-
-   1. Set |emulated locale| to |command parameters|["<code>locale</code>"].
-
-   1. If [=IsStructurallyValidLanguageTag=](|emulated locale|) returns false,
-      return [=error=] with [=error code=] [=invalid argument=].
+1. If |emulated locale| is not null and [=IsStructurallyValidLanguageTag=](|emulated locale|)
+   returns false, return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |navigables| be a [=/set=].
 
@@ -6139,7 +6130,9 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=locale overrides map=][|user context|] to |emulated locale|.
+      1. If |emulated locale| is null, [=map/remove=] |user context| from [=locale overrides map=].
+
+      1. Otherwise, [=map/set=] [=locale overrides map=][|user context|] to |emulated locale|.
 
       1. [=list/For each=] |top-level traversable| of the list of all
          [=/top-level traversables=] whose [=associated user context=] is
@@ -6149,7 +6142,9 @@ The [=remote end steps=] with |command parameters| are:
 
 1. For each |navigable| of |navigables|:
 
-   1. [=map/Set=] [=locale overrides map=][|navigable|] to |emulated locale|.
+   1. If |emulated locale| is null, [=map/remove=] |navigable| from [=locale overrides map=].
+
+   1. Otherwise, [=map/set=] [=locale overrides map=][|navigable|] to |emulated locale|.
 
 1. Return [=success=] with data null.
 
@@ -6319,21 +6314,13 @@ The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
 
 1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
 
-1. If [=scripting enabled overrides map=] contains |top-level traversable|:
-
-   1. If [=scripting enabled overrides map=][|top-level traversable|] is false,
-      return false.
-
-   1. Return true.
+1. If [=scripting enabled overrides map=] contains |top-level traversable|, return
+   [=scripting enabled overrides map=][|top-level traversable|]
 
 1. Let |user context| be  |top-level traversable|'s [=associated user context=].
 
 1. If [=scripting enabled overrides map=] contains |user context|, return
    [=scripting enabled overrides map=][|user context|].
-
-   1. If [=scripting enabled overrides map=][|user context|] is false, return false.
-
-   1. Return true.
 
 1. Return true.
 
@@ -6344,19 +6331,14 @@ The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
 The [=remote end steps=] with |command parameters| are:
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>context</code>",
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
-1. Let |emulated scripting enabled status| be null.
-
-1. If |command parameters| [=map/contains=] "<code>enabled</code>":
-
-   1. Set |emulated scripting enabled status| to
-      |command parameters|["<code>enabled</code>"].
+1. Let |emulated scripting enabled status| be |command parameters|["<code>enabled</code>"].
 
 1. If the <code>contexts</code> field of |command parameters| is present:
 
@@ -6366,7 +6348,10 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |navigable| of |navigables|:
 
-      1. [=map/Set=] [=scripting enabled overrides map=][|navigable|] to
+      1. If |emulated scripting enabled status| is null, [=map/remove=] |navigable| from
+         [=scripting enabled overrides map=].
+
+      1. Otherwise, [=map/set=] [=scripting enabled overrides map=][|navigable|] to
          |emulated scripting enabled status|.
 
 1. If the <code>userContexts</code> field of |command parameters| is present:
@@ -6376,7 +6361,10 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=scripting enabled overrides map=][|user context|] to
+      1. If |emulated scripting enabled status| is null, [=map/remove=] |user context| from
+         [=scripting enabled overrides map=].
+
+      1. Otherwise [=map/set=] [=scripting enabled overrides map=][|user context|] to
          |emulated scripting enabled status|.
 
 1. Return [=success=] with data null.
@@ -6453,22 +6441,19 @@ steps:
 The [=remote end steps=] with |command parameters| are:
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>context</code>",
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
-1. Let |emulated timezone| be null.
+1. Let |emulated timezone| be |command parameters|["<code>timezone</code>"].
 
-1. If |command parameters| [=map/contains=] "<code>timezone</code>":
-
-   1. Set |emulated timezone| to |command parameters|["<code>timezone</code>"].
-
-   1. If [=IsTimeZoneOffsetString=](|emulated timezone|) returns false and
-      [=AvailableNamedTimeZoneIdentifiers=] does not [=list/contain=]
-      |emulated timezone|, return [=error=] with [=error code=] [=invalid argument=].
+1. If |emulated timezone| is not null and
+   [=IsTimeZoneOffsetString=](|emulated timezone|) returns false and
+   [=AvailableNamedTimeZoneIdentifiers=] does not [=list/contain=]
+   |emulated timezone|, return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |navigables| be a [=/set=].
 
@@ -6487,8 +6472,10 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=timezone overrides map=][|user context|] to
-         |emulated timezone|.
+      1. If |emulated timezone| is null, [=map/remove=] |user context| from
+         [=timezone overrides map=].
+
+      1. Otherwise, [=map/set=] [=timezone overrides map=][|user context|] to |emulated timezone|.
 
       1. [=list/For each=] |top-level traversable| of the list of all
          [=/top-level traversables=] whose [=associated user context=] is
@@ -6498,7 +6485,9 @@ The [=remote end steps=] with |command parameters| are:
 
 1. For each |navigable| of |navigables|:
 
-   1. [=map/Set=] [=timezone overrides map=][|navigable|] to |emulated timezone|.
+   1. If |emulated timezone| is null, [=map/remove=] |navigable| from [=timezone overrides map=].
+
+   1. Otherwise, [=map/set=] [=timezone overrides map=][|navigable|] to |emulated timezone|.
 
 1. Return [=success=] with data null.
 
@@ -9771,7 +9760,7 @@ To <dfn export>run WebDriver BiDi preload scripts</dfn> given |environment setti
 1. For each |session| in [=active BiDi sessions=]:
 
   1. For each |preload script| in |session|'s [=preload script map=]'s
-     [=values=]:
+     [=map/values=]:
 
     1. If |preload script|'s <code>user contexts</code>'s [=set/size=] is not zero:
 
