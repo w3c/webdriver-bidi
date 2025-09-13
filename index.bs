@@ -488,13 +488,16 @@ ErrorResponse = {
 }
 
 ResultData = (
+  SessionResult /
+  BrowserResult /
   BrowsingContextResult /
-  EmptyResult /
+  EmulationResult /
   NetworkResult /
   ScriptResult /
-  SessionResult /
   StorageResult /
-  WebExtensionResult
+  InputResult /
+  WebExtensionResult /
+  EmptyResult
 )
 
 EmptyResult = {
@@ -1622,9 +1625,11 @@ SessionCommand = (
 
 <pre class="cddl" data-cddl-module="local-cddl">
 SessionResult = (
-   session.NewResult /
-   session.StatusResult /
-   session.SubscribeResult
+  session.EndResult /
+  session.NewResult /
+  session.StatusResult /
+  session.SubscribeResult /
+  session.UnsubscribeResult
 )
 </pre>
 
@@ -1897,7 +1902,7 @@ This is a [=static command=].
       )
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
       <pre class="cddl" data-cddl-module="local-cddl">
       session.StatusResult = {
@@ -1951,7 +1956,7 @@ This is a [=static command=].
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
       <pre class="cddl" data-cddl-module="local-cddl">
       session.NewResult = {
@@ -2022,11 +2027,11 @@ The <dfn export for=commands>session.end</dfn> command ends the current
 
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      session.EndResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2067,7 +2072,7 @@ Issue: This needs to be generalized to work with realms too.
       )
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
       <pre class="cddl" data-cddl-module="local-cddl">
         session.SubscribeResult = {
@@ -2189,11 +2194,11 @@ Issue: This needs to be generalised to work with realms too.
      session.UnsubscribeParameters = session.UnsubscribeByAttributesRequest / session.UnsubscribeByIDRequest
      </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      session.UnsubscribeResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2303,8 +2308,12 @@ BrowserCommand = (
 <!-- Nothing yet -->
 <pre class="cddl" data-cddl-module="local-cddl">
 BrowserResult = (
-   browser.CreateUserContextResult /
-   browser.GetUserContextsResult
+  browser.CloseResult /
+  browser.CreateUserContextResult /
+  browser.GetClientWindowsResult /
+  browser.GetUserContextsResult /
+  browser.RemoveUserContextResult /
+  browser.SetClientWindowStateResult
 )
 </pre>
 
@@ -2576,9 +2585,9 @@ WebDriver sessions and cleans up automation state in the remote browser instance
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.CloseResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2833,9 +2842,9 @@ user context and all navigables in it without running
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.RemoveUserContextResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2898,9 +2907,9 @@ dimensions of a [=client window=].
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-      browser.ClientWindowInfo
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.SetClientWindowStateResult = browser.ClientWindowInfo
+      </pre>
    </dd>
 </dl>
 
@@ -3121,12 +3130,17 @@ BrowsingContextCommand = (
 
 <pre class="cddl" data-cddl-module="local-cddl">
 BrowsingContextResult = (
+  browsingContext.ActivateResult /
   browsingContext.CaptureScreenshotResult /
+  browsingContext.CloseResult /
   browsingContext.CreateResult /
   browsingContext.GetTreeResult /
-  browsingContext.LocateNodesResult /
+  browsingContext.HandleUserPromptResult /
+  browsingContext.LocateNodes /
   browsingContext.NavigateResult /
   browsingContext.PrintResult /
+  browsingContext.ReloadResult /
+  browsingContext.SetViewportResult /
   browsingContext.TraverseHistoryResult
 )
 
@@ -3534,11 +3548,11 @@ The <dfn export for=commands>browsingContext.activate</dfn> command activates an
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.ActivateResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -3619,7 +3633,7 @@ Base64-encoded string.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.CaptureScreenshotResult = {
@@ -3890,12 +3904,11 @@ The <dfn export for=commands>browsingContext.close</dfn> command closes a
       }
       </pre>
    </dd>
-
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.CloseResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -3957,7 +3970,7 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.CreateResult = {
@@ -4061,7 +4074,7 @@ or all top-level contexts when no parent is provided.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.GetTreeResult = {
@@ -4123,11 +4136,11 @@ command allows closing an open prompt
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.HandleUserPromptResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -4190,7 +4203,7 @@ list of all nodes matching the specified locator.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.LocateNodesResult = {
@@ -4577,7 +4590,7 @@ navigable to the given URL.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.NavigateResult = {
@@ -4667,7 +4680,7 @@ PDF document represented as a Base64-encoded string.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.PrintResult = {
@@ -4799,9 +4812,9 @@ navigable.
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-      browsingContext.NavigateResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.ReloadResult = browsingContext.NavigateResult
+      </pre>
    </dd>
 </dl>
 
@@ -4863,11 +4876,11 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies 
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.SetViewportResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -5056,8 +5069,7 @@ traverses the history of a given navigable by a delta.
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
-        browsingContext.TraverseHistoryResult = {
-        }
+      browsingContext.TraverseHistoryResult = EmptyResult
     </pre>
    </dd>
 </dl>
@@ -5910,6 +5922,19 @@ EmulationCommand = (
   emulation.SetTimezoneOverride //
   emulation.SetUserAgentOverride
 )
+
+</pre>
+
+<pre class="cddl" data-cddl-module="local-cddl">
+EmulationResult = (
+  emulation.SetForcedColorsModeThemeOverrideResult /
+  emulation.SetGeolocationOverrideResult /
+  emulation.SetLocaleOverrideResult /
+  emulation.SetScreenOrientationOverrideResult /
+  emulation.SetScriptingEnabledResult /
+  emulation.SetTimezoneOverrideResult /
+  emulation.SetUserAgentOverrideResult
+)
 </pre>
 
 A [=BiDi session=] has an <dfn for=session>emulated user agent</dfn> which is a
@@ -5967,11 +5992,11 @@ The <dfn export for=commands>emulation.setForcedColorsModeThemeOverride</dfn> co
       emulation.ForcedColorsModeTheme = "light" / "dark"
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetForcedColorsModeThemeOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6057,11 +6082,11 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetGeolocationOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6146,11 +6171,11 @@ locale on the given top-level traversables or user contexts.
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetLocaleOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6267,11 +6292,11 @@ emulates [=screen orientation=] of the given top-level traversables or user cont
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetScreenOrientationOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6383,11 +6408,11 @@ User-Agent on the given top-level traversables or user contexts.
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetUserAgentOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6497,11 +6522,11 @@ disabling JavaScript on web pages.
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetScriptingEnabledResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6594,11 +6619,11 @@ timezone on the given top-level traversables or user contexts.
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetTimezoneOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6729,7 +6754,19 @@ NetworkCommand = (
 <pre class="cddl" data-cddl-module="local-cddl">
 
 NetworkResult = (
-   network.AddInterceptResult
+  network.AddDataCollectorResult /
+  network.AddInterceptResult /
+  network.ContinueRequestResult /
+  network.ContinueResponseResult /
+  network.ContinueWithAuthResult /
+  network.DisownDataResult /
+  network.FailRequestResult /
+  network.GetDataResult /
+  network.ProvideResponseResult /
+  network.RemoveDataCollectorResult /
+  network.RemoveInterceptResult /
+  network.SetCacheBehaviorResult /
+  network.SetExtraHeadersResult
 )
 
 NetworkEvent = (
@@ -8613,9 +8650,9 @@ that's blocked by a [=network intercept=].
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.ContinueRequestResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -8751,9 +8788,9 @@ response, but still provide the network response body.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.ContinueResponseResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -8805,9 +8842,9 @@ response that's blocked by a [=network intercept=] at the
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.ContinueWithAuthResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -8870,9 +8907,9 @@ collected network data for a given [=network/collector=].
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.DisownDataResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -8924,9 +8961,9 @@ fetch that's blocked by a [=network intercept=].
   </dd>
   <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.FailRequestResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9073,9 +9110,9 @@ lifecycle, and therefore emitting other events as it progresses.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.ProvideResponseResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9122,9 +9159,9 @@ The <dfn export for=commands>network.removeDataCollector</dfn> command removes a
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+       network.RemoveDataCollectorResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9169,9 +9206,9 @@ The <dfn export for=commands>network.removeIntercept</dfn> command removes a
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.RemoveInterceptResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9218,9 +9255,9 @@ the network cache behavior for certain requests.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.SetCacheBehaviorResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9348,9 +9385,9 @@ specifying headers that will extend, or overwrite, existing request headers.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.SetExtraHeadersResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9475,12 +9512,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
         response: network.ResponseData
       }
       </pre>
-   </dd>
-   <dt>Return Type</dt>
-   <dd>
-    <code>
-      EmptyResult
-    </code>
    </dd>
 </dl>
 
@@ -9917,9 +9948,11 @@ ScriptCommand = (
 <pre class="cddl" data-cddl-module="local-cddl">
 ScriptResult = (
   script.AddPreloadScriptResult /
+  script.CallFunctionResult /
+  script.DisownResult /
   script.EvaluateResult /
   script.GetRealmsResult /
-  script.CallFunctionResult
+  script.RemovePreloadScriptResult
 )
 
 ScriptEvent = (
@@ -12004,9 +12037,9 @@ other handles or strong ECMAScript references.
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-         EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      script.DisownResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -12059,7 +12092,7 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       script.CallFunctionResult = script.EvaluateResult
@@ -12244,10 +12277,11 @@ the promise is returned.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
+    <!--There is a duplication between command's result and type-->
     <code>
-    script.EvaluateResult
+      script.EvaluateResult
     </code>
    </dd>
 </dl>
@@ -12346,7 +12380,7 @@ realm associated with a [=/navigable=]'s [=active document=].
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       script.GetRealmsResult = {
@@ -12431,9 +12465,9 @@ The <dfn export for=commands>script.removePreloadScript</dfn> command removes a
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      script.RemovePreloadScriptResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -12937,7 +12971,7 @@ The <dfn export for=commands>storage.getCookies</dfn> command retrieves zero or 
         }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       storage.GetCookiesResult = {
@@ -13015,7 +13049,7 @@ The <dfn export for=commands>storage.setCookie</dfn> command creates a new [=coo
         }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       storage.SetCookieResult = {
@@ -13096,7 +13130,7 @@ The <dfn export for=commands>storage.deleteCookies</dfn> command removes zero or
         }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
      <pre class="cddl" data-cddl-module="local-cddl">
         storage.DeleteCookiesResult = {
@@ -13414,11 +13448,18 @@ simulated user input.
 {^remote end definition^}
 
 <pre class="cddl" data-cddl-module="remote-cddl">
-
 InputCommand = (
   input.PerformActions //
   input.ReleaseActions //
   input.SetFiles
+)
+</pre>
+
+<pre class="cddl" data-cddl-module="remote-cddl">
+InputResult = (
+  input.PerformActionsResult /
+  input.ReleaseActionsResult /
+  input.SetFilesResult
 )
 </pre>
 
@@ -13629,9 +13670,9 @@ Note: for a detailed description of the behavior of this command, see the
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      input.PerformActionsResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -13684,9 +13725,9 @@ state associated with the current session.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      input.ReleaseActionsResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -13743,9 +13784,9 @@ to a set of file paths.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      input.SetFilesResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -13913,7 +13954,8 @@ WebExtensionCommand = (
 
 <pre class="cddl" data-cddl-module="local-cddl">
 WebExtensionResult = (
-  webExtension.InstallResult
+  webExtension.InstallResult /
+  webExtension.UninstallResult
 )
 </pre>
 
@@ -13968,7 +14010,7 @@ The <dfn export for=commands>webExtension.install</dfn> command installs a web e
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
       <pre class="cddl" data-cddl-module="local-cddl">
       webExtension.InstallResult = {
@@ -14066,6 +14108,12 @@ The <dfn export for=commands>webExtension.uninstall</dfn> command uninstalls a w
       webExtension.UninstallParameters = {
          extension: webExtension.Extension,
       }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      webExtension.UninstallResult = EmptyResult
       </pre>
    </dd>
 </dl>
