@@ -2293,7 +2293,8 @@ BrowserCommand = (
   browser.GetClientWindows //
   browser.GetUserContexts //
   browser.RemoveUserContext //
-  browser.SetClientWindowState
+  browser.SetClientWindowState //
+  browser.SetDownloadBehavior
 )
 </pre>
 
@@ -2946,6 +2947,116 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 Note: For simplicity this models all client window operations as
 synchronous. Therefore the returned client window dimensions are expected to be
 those after the window has reached its new state.
+
+</div>
+
+#### The browser.setDownloadBehavior Command #### {#command-browser-setDownloadBehavior}
+
+A <dfn>download behavior struct</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn id="download-behavior-struct-allowed" for="download-behavior-struct">allowed</dfn> which is a boolean;
+* [=struct/item=] named <dfn id="download-behavior-struct-destination-folder" for="download-behavior-struct">destinationFolder</dfn> which is a string or null.
+
+A [=remote end=] has a <dfn>download behavior</dfn> which is a [=struct=] with an [=struct/item=]
+named <dfn for="download behavior">default download behavior</dfn>, which is a
+[=download behavior struct=] or null, and an [=struct/item=] named <dfn
+for="download behavior">user context download behavior</dfn>, which is a weak map between
+[=user contexts=] and [=download behavior struct=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browser.SetDownloadBehavior = (
+        method: "browser.setDownloadBehavior",
+        params: browser.SetDownloadBehaviorParameters
+      )
+
+      browser.SetDownloadBehaviorParameters = {
+        downloadBehavior: browser.DownloadBehavior / null,
+        ? userContexts: [+browser.UserContext]
+      }
+
+      browser.DownloadBehavior = {
+        (
+          browser.DownloadBehaviorAllowed //
+          browser.DownloadBehaviorDenied
+        )
+      }
+
+      browser.DownloadBehaviorAllowed = (
+        type: "allowed",
+        ? destinationFolder: text
+      )
+
+      browser.DownloadBehaviorDenied = (
+        type: "denied"
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <code>
+      EmptyResult
+      </code>
+   </dd>
+</dl>
+
+<div algorithm>
+To <dfn export>get download behavior</dfn> given |navigable|:
+
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If [=download behavior=]'s [=download behavior/user context download behavior=] [=map/contains=]
+   |user context|, return [=download behavior=]'s
+   [=download behavior/user context download behavior=][|user context|].
+
+1. Return [=download behavior=]'s [=download behavior/default download behavior=].
+
+</div>
+
+<div algorithm="remote end steps for browser.setDownloadBehavior">
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. If |command parameters|["<code>downloadBehavior</code>"] is null, let
+   |download behavior| be null.
+
+1. Otherwise:
+
+   1. If |command parameters|["<code>downloadBehavior</code>"]["<code>type</code>"]
+      is "<code>allowed</code>", let |allowed| be true, otherwise let |allowed| be
+      false.
+
+   1. If |command parameters|["<code>downloadBehavior</code>"] [=map/contains=]
+      "<code>destinationFolder</code>", let |destinationFolder| be
+      |command parameters|["<code>downloadBehavior</code>"]["<code>destinationFolder</code>"],
+      otherwise let |destinationFolder| be null.
+
+   1. Let |download behavior| be a [=download behavior struct=] with
+      [=download-behavior-struct/allowed=] set to |allowed| and
+      [=download-behavior-struct/destinationFolder=] set to |destinationFolder|.
+
+1. If the implementation does not support required |download behavior|, then return
+   [=error=] with [=error code=] [=unsupported operation=].
+
+1. If the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. If |download behavior| is null, [=map/remove=] |user context| from [=download behavior=]'s
+         [=download behavior/user context download behavior=].
+
+      1. Otherwise, [=map/set=] [=download behavior=]'s
+         [=download behavior/user context download behavior=][|user context|] to
+         |download behavior|.
+
+1. Otherwise, set [=download behavior=]'s [=download behavior/default download behavior=] to
+   |download behavior|.
+
+1. Return [=success=] with data null.
 
 </div>
 
@@ -5385,10 +5496,52 @@ complete</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi download will begin</dfn> steps given |navigable| and
+|navigation status|:
+
+1. Let |navigation info| be the result of [=get the navigation info=] given
+   |navigable| and |navigation status|.
+
+1. Let |params| be a [=/map=] matching the
+   <code>browsingContext.DownloadWillBeginParams</code> production, with the
+   <code>context</code> field set to |navigation info|["<code>context</code>"], the
+   <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
+   the <code>timestamp</code> field set to
+   |navigation info|["<code>timestamp</code>"], the <code>url</code> field set to
+   |navigation info|["<code>url</code>"] and <code>suggestedFilename</code> field set
+   to |navigation status|'s <code>suggestedFilename</code>.
+
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.DownloadWillBegin</code> production, with the
+   <code>params</code> field set to |params|.
+
+1. Let |navigation id| be |navigation status|'s id.
+
+1. Let |related navigables| be a [=/set=] containing |navigable|.
+
+1. [=Resume=] with "<code>download started</code>", |navigation id|, and
+   |navigation status|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.downloadWillBegin</code>" and |related navigables|:
+
+   1. [=Emit an event=] with |session| and |body|.
+
+1. Let |download behavior| be [=get download behavior=] with |navigable|.
+
+1. Return |download behavior|.
+
+</div>
+
+<div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download
 started</dfn> steps given |navigable| and |navigation status|:
 
- 1. Let |navigation info| be the result of [=get the navigation info=] given |navigable| and
+Issue: Remove after HTML spec switched to [=WebDriver BiDi download will begin=]
+(https://github.com/whatwg/html/pull/11474).
+
+1. Let |navigation info| be the result of [=get the navigation info=] given |navigable| and
     |navigation status|.
 
 1. Let |params| be a [=/map=] matching the <code>browsingContext.DownloadWillBeginParams</code>
@@ -5399,20 +5552,20 @@ started</dfn> steps given |navigable| and |navigation status|:
    <code>suggestedFilename</code> field set to |navigation status|'s
    <code>suggestedFilename</code>.
 
- 1. Let |body| be a [=/map=] matching the
-     <code>browsingContext.DownloadWillBegin</code> production, with the
-     <code>params</code> field set to |params|.
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.DownloadWillBegin</code> production, with the
+   <code>params</code> field set to |params|.
 
- 1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s id.
 
- 1. Let |related navigables| be a [=/set=] containing |navigable|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
- 1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
+1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
 
- 1. For each |session| in the [=set of sessions for which an event is enabled=]
-    given "<code>browsingContext.downloadWillBegin</code>" and |related navigables|:
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.downloadWillBegin</code>" and |related navigables|:
 
-   1. [=Emit an event=] with |session| and |body|.
+  1. [=Emit an event=] with |session| and |body|.
 
 </div>
 
