@@ -6890,9 +6890,38 @@ To <dfn>match collector for navigable</dfn> given |collector| and |navigable|:
 </div>
 
 <div algorithm>
+To <dfn export>clone network request body</dfn> given |request|:
+
+Note: This hook is intended to be triggered by the fetch spec when the request body has been safely extracted.
+See step 9 of https://fetch.spec.whatwg.org/#concept-fetch
+
+1. If |request|'s [=request/body=] is null, return.
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. If |session|'s [=network collectors=] is not [=list/empty=]:
+
+      1. Let |collected data| be a [=network data=] with
+         [=network-data/bytes=] set to null,
+         [=network-data/cloned body=] set to [=body/clone=] of |request|'s [=request/body=],
+         [=network-data/collectors=] set to an empty list,
+         [=network-data/pending=] set to true,
+         [=network-data/request=] set to |request|'s [=request id=],
+         [=network-data/size=] set to null,
+         [=network-data/type=] set to "response".
+
+      1. [=list/Append=] |collected data| to [=collected network data=].
+
+      1. Return.
+
+</div>
+
+<div algorithm>
 To <dfn export>clone network response body</dfn> given |request| and |response body|:
 
 Note: This hook is intended to be triggered by the fetch spec when the response is set.
+
+1. If |response body| is null, return.
 
 1. For each |session| in [=active BiDi sessions=]:
 
@@ -6939,11 +6968,26 @@ To <dfn>maybe abort network response body collection</dfn> given |request|:
 </div>
 
 <div algorithm>
+To <dfn>maybe collect network request body</dfn> given |request|:
+
+1. Let |collected data| be [=get collected data=] with |request|'s [=request id=] and "request".
+
+1. If |collected data| is null, return.
+
+   NOTE: This might happen if there are no collectors setup when the request is created,
+   and [=clone network request body=] does not clone the corresponding body.
+   Or if the body was null in the first place.
+
+1. [=Maybe collect network data=] with |request|, |collected data|, null and "request".
+
+</div>
+
+<div algorithm>
 To <dfn>maybe collect network response body</dfn> given |request| and |response|:
 
 1. If |response|'s [=response/status=] is a [=redirect status=], return.
 
-   Note: For redirects, only the final response body is stored.
+   NOTE: For redirects, only the final response body is stored.
 
 1. Let |collected data| be [=get collected data=] with |request|'s [=request id=] and "response".
 
@@ -6951,6 +6995,23 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
    NOTE: This might happen if there are no collectors setup when the response is created,
    and [=clone network response body=] does not clone the corresponding body.
+   Or if the body was null in the first place.
+
+1. Let |size| be |response|'s [=response body info=]'s [=encoded size=].
+
+   NOTE: There is a discrepancy between the fact that the bytes retrieved from the
+   fetch stream correspond to the decoded data, but the encoded (network) size is
+   used in order to calculate size limits. Implementations might decide to use a storage
+   model such that it uses less size than storing the decoded data, as long as the data
+   returned to clients in getData is identical to the decoded data. The potential
+   tradeoff between storage and performance is up to the implementation.
+
+1. [=Maybe collect network data=] with |request|, |collected data|, |size| and "response".
+
+</div>
+
+<div algorithm>
+To <dfn>maybe collect network data</dfn> given |request|, |collected data|, |size| and |data type|:
 
 1. Set |collected data|'s [=network-data/pending=] to false.
 
@@ -6960,7 +7021,7 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
    1. [=list/Remove=] |collected data| from [=collected network data=].
 
-   1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], "response").
+   1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], |data type|).
 
    1. Return.
 
@@ -6976,7 +7037,7 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
    1. For each |collector| in |session|'s [=network collectors=]:
 
-      1. If |collector|'s [=network-collector/data types=] [=list/contains=] "response" and if
+      1. If |collector|'s [=network-collector/data types=] [=list/contains=] |data type| and if
          [=match collector for navigable=] with |collector| and |top-level navigable|:
 
          1. [=list/Append=] |collector| to |collectors|.
@@ -6985,13 +7046,11 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
    1. [=list/Remove=] |collected data| from [=collected network data=].
 
-   1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], "response").
+   1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], |data type|).
 
    1. Return.
 
 1. Let |bytes| be null.
-
-1. Let |size| be null.
 
 1. Let |processBody| given |nullOrBytes| be this step:
 
@@ -6999,14 +7058,7 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
       1. Set |bytes| to [=serialize protocol bytes=] with |nullOrBytes|.
 
-      1. Set |size| to |response|'s [=response body info=]'s [=encoded size=].
-
-         Note: There is a discrepancy between the fact that the bytes retrieved from the
-         fetch stream correspond to the decoded data, but the encoded (network) size is
-         used in order to calculate size limits. Implementations might decide to use a storage
-         model such that it uses less size than storing the decoded data, as long as the data
-         returned to clients in getData is identical to the decoded data. The potential
-         tradeoff between storage and performance is up to the implementation.
+      1. If |size| is null, set |size| to |bytes|' [=byte sequence/length=].
 
 1. Let |processBodyError| be this step: Do nothing.
 
@@ -7030,7 +7082,7 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
    1. Otherwise, [=list/remove=] |collected data| from [=collected network data=].
 
-1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], "response").
+1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], |data type|).
 
 </div>
 
@@ -7538,7 +7590,7 @@ To <dfn>serialize cookie header</dfn> given |protocol cookie|:
 {^Remote end definition^} and {^local end definition^}
 
 <pre class="cddl" data-cddl-module="local-cddl,remote-cddl">
-network.DataType = "response"
+network.DataType = "request" / "response"
 </pre>
 
 The <code><dfn>network.DataType</dfn></code> type represents the different types of network data
@@ -9679,6 +9731,8 @@ given [=/request=] |request|:
                Note: the settings are validated when the user context is created and so
                are assumed to be valid at this stage; any error accessing the proxy will
                be reported as a network error when handling the request.
+
+1. [=Maybe collect network request body=] with |request|.
 
 1. If [=before request sent map=] does not contain |request|, set [=before
    request sent map=][|request|] to a new set.
