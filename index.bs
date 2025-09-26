@@ -652,7 +652,7 @@ with the following additional codes:
   <dd>Tried to remove an unknown [=network intercept=].
 
   <dt><dfn for=errors export>no such network data</dfn>
-  <dd>Tried to reference an unknown [=network/data=].
+  <dd>Tried to reference an unknown [=network data=].
 
   <dt><dfn for=errors export>no such node</dfn>
   <dd>Tried to deserialize an unknown <code>SharedReference</code>.
@@ -1664,7 +1664,7 @@ To <dfn>cleanup the session</dfn> given |session|:
 
 1. For each |collector| in |session|'s [=network collectors=]:
 
-   1. Let |collector id| be |collector|'s <code>collector</code>.
+   1. Let |collector id| be |collector|'s [=network-collector/collector=].
 
    1. For each |collected data| in [=collected network data=], [=remove collector from data=]
       with |collected data| and |collector id|.
@@ -2553,7 +2553,7 @@ To <dfn>get the client window info</dfn> given |client window|:
 browser.UserContext = text;
 </pre>
 
-The <code>browser.UserContext</code> unique identifies a [=user context=].
+The <code><dfn>browser.UserContext</dfn></code> unique identifies a [=user context=].
 
 #### The browser.UserContextInfo Type #### {#type-browser-UserContextInfo}
 
@@ -6801,30 +6801,34 @@ between [=navigables=] and [=/header lists=].
 
 ### Network Data Collection ### {#network-data-collection}
 
-A <dfn for="network">data</dfn> is a [=/struct=] consisting of
-an [=struct/item=] named <code>bytes</code>, which is a <code>network.BytesValue</code> or null,
-an [=struct/item=] named <code>cloned body</code>, which is a [=/body=] or null,
-an [=struct/item=] named <code>collectors</code>, which is a list of <code>network.Collector</code>,
-an [=struct/item=] named <code>pending</code>, which is a boolean,
-an [=struct/item=] named <code>request</code>, which is a <code>network.Request</code>,
-an [=struct/item=] named <code>size</code>, which is a js-uint or null,
-an [=struct/item=] named <code>type</code>, which is a <code>network.DataType</code>.
+A <dfn>network data</dfn> is a [=/struct=] with:
+* [=struct/Item=] named <dfn for="network-data">bytes</dfn>, which is a <code>[=network.BytesValue=]</code> or null,
+* [=struct/Item=] named <dfn for="network-data">cloned body</dfn>, which is a [=/body=] or null,
+* [=struct/Item=] named <dfn for="network-data">collectors</dfn>, which is a list of <code>[=network.Collector=]</code>,
+* [=struct/Item=] named <dfn for="network-data">pending</dfn>, which is a boolean,
+* [=struct/Item=] named <dfn for="network-data">request</dfn>, which is a [=request id=],
+* [=struct/Item=] named <dfn for="network-data">size</dfn>, which is a js-uint or null,
+* [=struct/Item=] named <dfn for="network-data">type</dfn>, which is a <code>[=network.DataType=]</code>.
 
-A <dfn for="network">collector</dfn> is a [=/struct=] consisting of
-an [=struct/item=] named <code>max encoded data size</code>, which is a js-uint,
-an [=struct/item=] named <code>contexts</code>, which is a list of <code>browsingContext.BrowsingContext</code>,
-an [=struct/item=] named <code>data types</code>, which is a list of <code>network.DataType</code>,
-an [=struct/item=] named <code>collector</code>, which is a <code>network.Collector</code>,
-an [=struct/item=] named <code>collector type</code>, which is a <code>network.CollectorType</code>,
-an [=struct/item=] named <code>user contexts</code>, which is a list of <code>browser.UserContext</code>.
+A <dfn for="network">collector</dfn> is a [=/struct=] with:
+* [=struct/Item=] named <dfn for="network-collector">max encoded item size</dfn>, which is a js-uint;
+* [=struct/item=] named <dfn for="network-collector">contexts</dfn>, which is a [=/list=] of [=navigable id=];
+* [=struct/item=] named <dfn for="network-collector">data types</dfn>, which is a [=/list=] of  <code>[=network.DataType=]</code>;
+* [=struct/item=] named <dfn for="network-collector">collector</dfn>, which is a <code>[=network.Collector=]</code>;
+* [=struct/item=] named <dfn for="network-collector">collector type</dfn>, which is a <code>[=network.CollectorType=]</code>;
+* [=struct/item=] named <dfn for="network-collector">user contexts</dfn>, which is a [=/list=] of <code>[=browser.UserContext=]</code>.
+
+Note: [=network-collector/Max encoded item size=] defines the limit per item (response or request),
+and does not limit the size collected by the specific collector. The total size of all collected resources is
+limited by [=max total collected size=].
 
 A [=BiDi session=] has <dfn>network collectors</dfn> which is a [=/map=] between
-<code>network.Collector</code> and a [=network/collector=]. It is initially empty.
+<code>[=network.Collector=]</code> and a [=network/collector=]. It is initially empty.
 
 A [=remote end=] has <dfn>collected network data</dfn> which is a list of
-[=network/data=]. It is initially empty.
+[=network data=]. It is initially empty.
 
-A [=remote end=] has a <dfn>max total data size</dfn> which is a js-uint representing
+A [=remote end=] has a <dfn>max total collected size</dfn> which is a js-uint representing
 the size allocated to collect network data in [=collected network data=]. Its
 value is implementation-defined.
 
@@ -6853,17 +6857,18 @@ To <dfn>get navigable for request</dfn> given request:
 <div algorithm>
 To <dfn>match collector for navigable</dfn> given |collector| and |navigable|:
 
-1. If |collector|'s <code>contexts</code> is not [=list/empty=]:
+1. If |collector|'s [=network-collector/contexts=] is not [=list/empty=]:
 
-  1. If |collector|'s <code>contexts</code> [=list/contains=] |navigable|'s [=navigable id=], return true.
+  1. If |collector|'s [=network-collector/contexts=] [=list/contains=] |navigable|'s [=navigable id=], return true.
 
   1. Otherwise, return false.
 
-1. If |collector|'s <code>user contexts</code> is not [=list/empty=]:
+1. If |collector|'s [=network-collector/user contexts=] is not [=list/empty=]:
 
   1. Let |user context| be |navigable|'s [=associated user context=].
 
-  1. If |collector|'s <code>user contexts</code> [=list/contains=] |user context|'s [=user context id=], return true.
+  1. If |collector|'s [=network-collector/user contexts=] [=list/contains=] |user context|'s
+     [=user context id=], return true.
 
   1. Otherwise, return false.
 
@@ -6880,14 +6885,14 @@ Note: This hook is intended to be triggered by the fetch spec when the response 
 
    1. If |session|'s [=network collectors=] is not [=list/empty=]:
 
-      1. Let |collected data| be a struct with
-         <code>bytes</code> field set to null,
-         <code>cloned body</code> field set to [=body/clone=] with |response body|,
-         <code>collectors</code> field set to an empty list,
-         <code>pending</code> field set to true,
-         <code>request</code> field set to |request|'s [=request id=],
-         <code>size</code> field set to null,
-         <code>type</code> field set to "response".
+      1. Let |collected data| be a [=network data=] with
+         [=network-data/bytes=] set to null,
+         [=network-data/cloned body=] set to [=body/clone=] of |response body|,
+         [=network-data/collectors=] set to an empty list,
+         [=network-data/pending=] set to true,
+         [=network-data/request=] set to |request|'s [=request id=],
+         [=network-data/size=] set to null,
+         [=network-data/type=] set to "response".
 
       1. [=list/Append=] |collected data| to [=collected network data=].
 
@@ -6958,7 +6963,8 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
    1. For each |collector| in |session|'s [=network collectors=]:
 
-      1. If |collector|'s <code>data types</code> [=list/contains=] "response" and if [=match collector for navigable=] with |collector| and |top-level navigable|:
+      1. If |collector|'s [=network-collector/data types=] [=list/contains=] "response" and if
+         [=match collector for navigable=] with |collector| and |top-level navigable|:
 
          1. [=list/Append=] |collector| to |collectors|.
 
@@ -6997,8 +7003,8 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
    1. For |collector| in |collectors|:
 
-      1. If |size| is less than or equal to |collector|'s <code>max encoded data size</code>,
-         [=list/append=] |collector|'s <code>collector</code> to |collected data|'s <code>collectors</code>.
+      1. If |size| is less than or equal to |collector|'s [=network-collector/max encoded item size=],
+         [=list/append=] |collector|'s [=network-collector/collector=] to |collected data|'s <code>collectors</code>.
 
    1. If |collected data|'s <code>collectors</code> is not [=list/empty=]:
 
@@ -7017,7 +7023,7 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 <div algorithm>
 To <dfn>allocate size to record data</dfn> given |size|:
 
-1. Let |available size| be [=max total data size=].
+1. Let |available size| be [=max total collected size=].
 
 1. Let |already collected data| be an empty list.
 
@@ -7355,7 +7361,7 @@ network.Base64Value = {
 }
 </pre>
 
-The <code>network.BytesValue</code> type represents binary data sent over the
+The <code><dfn>network.BytesValue</dfn></code> type represents binary data sent over the
 network. Valid UTF-8 is represented with the <code>network.StringValue</code>
 type, any other data is represented in Base64-encoded form as
 <code>network.Base64Value</code>.
@@ -7363,7 +7369,7 @@ type, any other data is represented in Base64-encoded form as
 <div algorithm>
 To <dfn>deserialize protocol bytes</dfn> given |protocol bytes|:
 
-Note: this takes bytes encoded as a <code>network.BytesValue</code> and returns
+Note: this takes bytes encoded as a <code>[=network.BytesValue=]</code> and returns
 a [=byte sequence=].
 
 1. If |protocol bytes| matches the <code>network.StringValue</code> production,
@@ -7380,7 +7386,7 @@ a [=byte sequence=].
 <div algorithm>
 To <dfn>serialize protocol bytes</dfn> given |bytes|:
 
-Note: this takes a [=byte sequence=] and returns a <code>network.BytesValue</code>.
+Note: this takes a [=byte sequence=] and returns a <code>[=network.BytesValue=]</code>.
 
 1. Let |text| be [=UTF-8 decode without BOM or fail=] |bytes|.
 
@@ -7401,7 +7407,7 @@ Note: this takes a [=byte sequence=] and returns a <code>network.BytesValue</cod
 network.Collector = text
 </pre>
 
-The <code>network.Collector</code> type represents the id of a [=network/collector=].
+The <code><dfn>network.Collector</dfn></code> type represents the id of a [=network/collector=].
 
 #### The network.CollectorType Type #### {#type-network-CollectorType}
 
@@ -7414,7 +7420,7 @@ network.CollectorType = "blob"
 Note: In the future we might also support the "stream" collector type for clients
 which want to read the data gathered by a given collector via a stream.
 
-The <code>network.CollectorType</code> type represents the different types of data collectors
+The <code><dfn>network.CollectorType</dfn></code> type represents the different types of data collectors
 that can be added.
 
 #### The network.Cookie Type #### {#type-network-Cookie}
@@ -7521,7 +7527,7 @@ To <dfn>serialize cookie header</dfn> given |protocol cookie|:
 network.DataType = "response"
 </pre>
 
-The <code>network.DataType</code> type represents the different types of network data
+The <code><dfn>network.DataType</dfn></code> type represents the different types of network data
 that can be collected.
 
 #### The network.FetchTimingInfo Type #### {#type-network-FetchTimingInfo}
@@ -8484,13 +8490,17 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |data types| be [=set/create|create a set=] with
    |command parameters|["<code>dataTypes</code>"].
 
-1. Let |max encoded data size| be |command parameters|
+1. Let |max encoded item size| be |command parameters|
    ["<code>maxEncodedDataSize</code>"].
+
+   Note: The <code>maxEncodedDataSize</code> parameter represents
+   [=network-collector/max encoded item size=] and limits the size of each request collected by the
+   given collector, not the total collector's collected size.
 
    Note: Different implementations might support different encodings, which means the
    encoded size might be different between browsers. Therefore, for the same data collector
-   configuration, some network data might fit the maxEncodedDataSize only in some
-   implementations.
+   configuration, some network data might fit the [=network-collector/max encoded item size=] only
+   in some implementations.
 
 1. Let |collector type| be |command parameters|
    ["<code>collectorType</code>"].
@@ -8504,8 +8514,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If |input user context ids| is not empty and |input context ids| is not
    empty, return [=error=] with [=error code=] [=invalid argument=].
 
-1. If |max encoded data size| is greater than [=max total data size=],
-   return [=error=] with [=error code=] [=invalid argument=].
+1. If |max encoded item size| is 0 or |max encoded item size| is greater than
+   [=max total collected size=], return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |input context ids| is not [=set/empty=]:
 
@@ -8525,13 +8535,13 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
        1. If |user context| is null, return [=error=] with [=error code=] [=invalid argument=].
 
-1. Let |collector| be a struct with
-   <code>max encoded data size</code> field set to |max encoded data size|,
-   <code>data types</code> field set to |data types|,
-   <code>collector</code> field set to |collector id|,
-   <code>collector type</code> field set to |collector type|,
-   <code>contexts</code> field set to |input context ids|,
-   <code>user contexts</code> field set to |input user context ids|.
+1. Let |collector| be a [=network/collector=] with
+   [=network-collector/max encoded item size=] field set to |max encoded item size|,
+   [=network-collector/data types=] field set to |data types|,
+   [=network-collector/collector=] field set to |collector id|,
+   [=network-collector/collector type=] field set to |collector type|,
+   [=network-collector/contexts=] field set to |input context ids|,
+   [=network-collector/user contexts=] field set to |input user context ids|.
 
 1. Set |session|'s [=network collectors=][|collector id|] to |collector|.
 
@@ -10529,22 +10539,22 @@ To <dfn>serialize primitive protocol value</dfn> given a |value|:
    of steps for which the associated condition is true, if any:
 
   <dl>
-    <dt>[=Type=](|value|) is undefined
+    <dt>[=/Type=](|value|) is undefined
     <dd>Let |remote value| be a [=/map=] matching the <code>script.UndefinedValue</code>
     production in the {^local end definition^}.
 
-    <dt>[=Type=](|value|) is Null
+    <dt>[=/Type=](|value|) is Null
     <dd>Let |remote value| be a [=/map=] matching the <code>script.NullValue</code>
     production in the {^local end definition^}.
 
-    <dt>[=Type=](|value|) is String
+    <dt>[=/Type=](|value|) is String
     <dd>Let |remote value| be a [=/map=] matching the <code>script.StringValue</code>
     production in the {^local end definition^}, with the <code>value</code>
     property set to |value|.
 
     Issue: This doesn't handle lone surrogates
 
-    <dt>[=Type=](|value|) is Number
+    <dt>[=/Type=](|value|) is Number
     <dd>
     1. Switch on the value of |value|:
       <dl>
@@ -10564,12 +10574,12 @@ To <dfn>serialize primitive protocol value</dfn> given a |value|:
        production in the {^local end definition^}, with the <code>value</code>
        property set to |serialized|.
 
-    <dt>[=Type=](|value|) is Boolean
+    <dt>[=/Type=](|value|) is Boolean
     <dd>Let |remote value| be a [=/map=] matching the <code>script.BooleanValue</code>
         production in the {^local end definition^}, with the <code>value</code>
         property set to |value|.
 
-    <dt>[=Type=](|value|) is BigInt
+    <dt>[=/Type=](|value|) is BigInt
     <dd>Let |remote value| be a [=/map=] matching the <code>script.BigIntValue</code>
         production in the {^local end definition^}, with the <code>value</code>
         property set to the result of running the [=ToString=] operation on
@@ -10609,9 +10619,9 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
 
     <dt>|type| is the string "<code>number</code>"
     <dd>
-      1. If [=Type=](|value|) is Number, return [=success=] with data |value|.
+      1. If [=/Type=](|value|) is Number, return [=success=] with data |value|.
 
-      1. Assert: [=Type=](|value|) is String.
+      1. Assert: [=/Type=](|value|) is String.
 
       1. If |value| is the string "<code>NaN</code>", return [=success=] with
          data NaN.
@@ -11268,7 +11278,7 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
    of steps for which the associated condition is true:
 
   <dl>
-    <dt>[=Type=](|value|) is Symbol
+    <dt>[=/Type=](|value|) is Symbol
     <dd>Let |remote value| be a [=/map=] matching the <code>script.SymbolRemoteValue</code>
         production in the {^local end definition^}, with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
@@ -11530,7 +11540,7 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
     <dt>Otherwise:
     <dd>
-    1. [=Assert=]: [=type=](|value|) is Object
+    1. [=Assert=]: [=/Type=](|value|) is Object
 
     1. Let |remote value| be a [=/map=] matching the <code>script.ObjectRemoteValue</code> production
        in the {^local end definition^}, with the <code>handle</code> property set
@@ -11647,7 +11657,7 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |serialization options|,
      options|["<code>maxObjectDepth</code>"] to |child serialization
      options|["<code>maxObjectDepth</code>"] - 1.
 
-  1. If [=Type=](|key|) is String, let |serialized key| be |child key|,
+  1. If [=/Type=](|key|) is String, let |serialized key| be |child key|,
      otherwise let |serialized key| be the result of [=serialize as a remote value=]
      with |child key|, |child serialization options|, |ownership type|,
      |serialization internal map|, |realm|, and |session|.
@@ -13310,7 +13320,7 @@ Define the following [=console steps=] with |method|, |args|, and
 
   1. Let |text| be an empty string.
 
-  1. If [=Type=](|args|[0]) is String, and |args|[0] contains a
+  1. If [=/Type=](|args|[0]) is String, and |args|[0] contains a
      [=formatting specifier=], let |formatted args| be [=Formatter=](|args|). Otherwise
      let |formatted args| be |args|.
 
