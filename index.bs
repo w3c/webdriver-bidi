@@ -6905,8 +6905,8 @@ To <dfn>get collected data</dfn> given |request id| and |data type|.
 
 1. For |collected data| of [=collected network data=]:
 
-   1. If |collected data|'s <code>request</code> is |request id| and
-      |collected data|'s <code>type</code> is |data type|, return |collected data|.
+   1. If |collected data|'s [=network-data/request=] is |request id| and
+      |collected data|'s [=network-data/type=] is |data type|, return |collected data|.
 
 1. Return null.
 
@@ -6919,7 +6919,7 @@ To <dfn>maybe abort network response body collection</dfn> given |request|:
 
 1. If |collected data| is null, return.
 
-1. Set |collected data|'s <code>pending</code> to false.
+1. Set |collected data|'s [=network-data/pending=] to false.
 
 1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], "response").
 
@@ -6939,7 +6939,7 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
    NOTE: This might happen if there are no collectors setup when the response is created,
    and [=clone network response body=] does not clone the corresponding body.
 
-1. Set |collected data|'s <code>pending</code> to false.
+1. Set |collected data|'s [=network-data/pending=] to false.
 
 1. Let |navigable| be [=get navigable for request=] with |request|.
 
@@ -6997,22 +6997,23 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
 1. Let |processBodyError| be this step: Do nothing.
 
-1. [=Fully read=] |collected data|’s <code>cloned body</code> given |processBody| and |processBodyError|.
+1. [=Fully read=] |collected data|’s [=network-data/cloned body=] given |processBody| and |processBodyError|.
 
 1. If |bytes| is not null:
 
    1. For |collector| in |collectors|:
 
       1. If |size| is less than or equal to |collector|'s [=network-collector/max encoded item size=],
-         [=list/append=] |collector|'s [=network-collector/collector=] to |collected data|'s <code>collectors</code>.
+         [=list/append=] |collector|'s [=network-collector/collector=] to |collected data|'s
+         [=network-data/collectors=].
 
-   1. If |collected data|'s <code>collectors</code> is not [=list/empty=]:
+   1. If |collected data|'s [=network-data/collectors=] is not [=list/empty=]:
 
       1. [=Allocate size to record data=] given |size|.
 
-      1. Set |collected data|'s <code>bytes</code> to |bytes|.
+      1. Set |collected data|'s [=network-data/bytes=] to |bytes|.
 
-      1. Set |collected data|'s <code>size</code> to |size|.
+      1. Set |collected data|'s [=network-data/size=] to |size|.
 
    1. Otherwise, [=list/remove=] |collected data| from [=collected network data=].
 
@@ -7029,9 +7030,9 @@ To <dfn>allocate size to record data</dfn> given |size|:
 
 1. For each |collected data| in [=collected network data=]:
 
-   1. If |collected data|'s <code>bytes</code> is not null:
+   1. If |collected data|'s [=network-data/bytes=] is not null:
 
-      1. Decrease |available size| by |collected data|'s <code>size</code>.
+      1. Decrease |available size| by |collected data|'s [=network-data/size=].
 
       1. [=list/Append=] |collected data| to |already collected data|
 
@@ -7039,11 +7040,11 @@ To <dfn>allocate size to record data</dfn> given |size|:
 
    1. For each |collected data| in |already collected data|:
 
-      1. Increase |available size| by |collected data|'s <code>size</code>.
+      1. Increase |available size| by |collected data|'s [=network-data/size=].
 
-      1. Set |collected data|'s <code>bytes</code> field to null.
+      1. Set |collected data|'s [=network-data/bytes=] field to null.
 
-      1. Set |collected data|'s <code>size</code> field to null.
+      1. Set |collected data|'s [=network-data/size=] field to null.
 
       1. If |available size| is greater than or equal to |size|, return.
 
@@ -7052,11 +7053,11 @@ To <dfn>allocate size to record data</dfn> given |size|:
 <div algorithm>
 To <dfn>remove collector from data</dfn> given |collected data| and |collector id|:
 
-1. If |collected data|'s <code>collectors</code> [=list/contains=] |collector id|:
+1. If |collected data|'s [=network-data/collectors=] [=list/contains=] |collector id|:
 
-   1. [=list/Remove=] |collector id| from |collected data|'s <code>collectors</code>.
+   1. [=list/Remove=] |collector id| from |collected data|'s [=network-data/collectors=].
 
-   1. If |collected data|'s <code>collectors</code> is [=list/empty=]:
+   1. If |collected data|'s [=network-data/collectors=] is [=list/empty=]:
 
       1. [=list/Remove=] |collected data| from [=collected network data=].
 
@@ -9065,16 +9066,16 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Return [=error=] with [=error code=] [=no such network data=].
 
-1. If |collected data|'s <code>pending</code> is true:
+1. If |collected data|'s [=network-data/pending=] is true:
 
    1. [=Await=] with "network data collected" and (|request id|, |data type|).
 
-1. If |collector id| is not null and if |collected data|'s <code>collectors</code>
+1. If |collector id| is not null and if |collected data|'s [=network-data/collectors=]
    does not [=list/contain=] |collector id|:
 
    1. Return [=error=] with [=error code=] [=no such network data=].
 
-1. Let |bytes| be |collected data|'s <code>bytes</code>.
+1. Let |bytes| be |collected data|'s [=network-data/bytes=].
 
 1. If |bytes| is null,
 
