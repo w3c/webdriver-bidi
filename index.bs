@@ -6811,16 +6811,16 @@ A <dfn>network data</dfn> is a [=/struct=] with:
 * [=struct/Item=] named <dfn for="network-data">type</dfn>, which is a <code>[=network.DataType=]</code>.
 
 A <dfn for="network">collector</dfn> is a [=/struct=] with:
-* [=struct/Item=] named <dfn for="network-collector">max encoded item size</dfn>, which is a js-uint;
+* [=struct/Item=] named <dfn for="network-collector">max encoded data size</dfn>, which is a js-uint;
 * [=struct/item=] named <dfn for="network-collector">contexts</dfn>, which is a [=/list=] of [=navigable id=];
 * [=struct/item=] named <dfn for="network-collector">data types</dfn>, which is a [=/list=] of  <code>[=network.DataType=]</code>;
 * [=struct/item=] named <dfn for="network-collector">collector</dfn>, which is a <code>[=network.Collector=]</code>;
 * [=struct/item=] named <dfn for="network-collector">collector type</dfn>, which is a <code>[=network.CollectorType=]</code>;
 * [=struct/item=] named <dfn for="network-collector">user contexts</dfn>, which is a [=/list=] of <code>[=browser.UserContext=]</code>.
 
-Note: [=network-collector/Max encoded item size=] defines the limit per item (response or request),
+Note: [=network-collector/Max encoded data size=] defines the limit per item (response or request),
 and does not limit the size collected by the specific collector. The total size of all collected resources is
-limited by [=max total collected size=].
+limited by [=max total data size=].
 
 A [=BiDi session=] has <dfn>network collectors</dfn> which is a [=/map=] between
 <code>[=network.Collector=]</code> and a [=network/collector=]. It is initially empty.
@@ -6828,7 +6828,7 @@ A [=BiDi session=] has <dfn>network collectors</dfn> which is a [=/map=] between
 A [=remote end=] has <dfn>collected network data</dfn> which is a list of
 [=network data=]. It is initially empty.
 
-A [=remote end=] has a <dfn>max total collected size</dfn> which is a js-uint representing
+A [=remote end=] has a <dfn>max total data size</dfn> which is a js-uint representing
 the size allocated to collect network data in [=collected network data=]. Its
 value is implementation-defined.
 
@@ -6905,8 +6905,8 @@ To <dfn>get collected data</dfn> given |request id| and |data type|.
 
 1. For |collected data| of [=collected network data=]:
 
-   1. If |collected data|'s <code>request</code> is |request id| and
-      |collected data|'s <code>type</code> is |data type|, return |collected data|.
+   1. If |collected data|'s [=network-data/request=] is |request id| and
+      |collected data|'s [=network-data/type=] is |data type|, return |collected data|.
 
 1. Return null.
 
@@ -6919,7 +6919,7 @@ To <dfn>maybe abort network response body collection</dfn> given |request|:
 
 1. If |collected data| is null, return.
 
-1. Set |collected data|'s <code>pending</code> to false.
+1. Set |collected data|'s [=network-data/pending=] to false.
 
 1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], "response").
 
@@ -6939,7 +6939,7 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
    NOTE: This might happen if there are no collectors setup when the response is created,
    and [=clone network response body=] does not clone the corresponding body.
 
-1. Set |collected data|'s <code>pending</code> to false.
+1. Set |collected data|'s [=network-data/pending=] to false.
 
 1. Let |navigable| be [=get navigable for request=] with |request|.
 
@@ -6997,22 +6997,23 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
 1. Let |processBodyError| be this step: Do nothing.
 
-1. [=Fully read=] |collected data|’s <code>cloned body</code> given |processBody| and |processBodyError|.
+1. [=Fully read=] |collected data|’s [=network-data/cloned body=] given |processBody| and |processBodyError|.
 
 1. If |bytes| is not null:
 
    1. For |collector| in |collectors|:
 
-      1. If |size| is less than or equal to |collector|'s [=network-collector/max encoded item size=],
-         [=list/append=] |collector|'s [=network-collector/collector=] to |collected data|'s <code>collectors</code>.
+      1. If |size| is less than or equal to |collector|'s [=network-collector/max encoded data size=],
+         [=list/append=] |collector|'s [=network-collector/collector=] to |collected data|'s
+         [=network-data/collectors=].
 
-   1. If |collected data|'s <code>collectors</code> is not [=list/empty=]:
+   1. If |collected data|'s [=network-data/collectors=] is not [=list/empty=]:
 
       1. [=Allocate size to record data=] given |size|.
 
-      1. Set |collected data|'s <code>bytes</code> to |bytes|.
+      1. Set |collected data|'s [=network-data/bytes=] to |bytes|.
 
-      1. Set |collected data|'s <code>size</code> to |size|.
+      1. Set |collected data|'s [=network-data/size=] to |size|.
 
    1. Otherwise, [=list/remove=] |collected data| from [=collected network data=].
 
@@ -7023,15 +7024,15 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 <div algorithm>
 To <dfn>allocate size to record data</dfn> given |size|:
 
-1. Let |available size| be [=max total collected size=].
+1. Let |available size| be [=max total data size=].
 
 1. Let |already collected data| be an empty list.
 
 1. For each |collected data| in [=collected network data=]:
 
-   1. If |collected data|'s <code>bytes</code> is not null:
+   1. If |collected data|'s [=network-data/bytes=] is not null:
 
-      1. Decrease |available size| by |collected data|'s <code>size</code>.
+      1. Decrease |available size| by |collected data|'s [=network-data/size=].
 
       1. [=list/Append=] |collected data| to |already collected data|
 
@@ -7039,11 +7040,11 @@ To <dfn>allocate size to record data</dfn> given |size|:
 
    1. For each |collected data| in |already collected data|:
 
-      1. Increase |available size| by |collected data|'s <code>size</code>.
+      1. Increase |available size| by |collected data|'s [=network-data/size=].
 
-      1. Set |collected data|'s <code>bytes</code> field to null.
+      1. Set |collected data|'s [=network-data/bytes=] field to null.
 
-      1. Set |collected data|'s <code>size</code> field to null.
+      1. Set |collected data|'s [=network-data/size=] field to null.
 
       1. If |available size| is greater than or equal to |size|, return.
 
@@ -7052,11 +7053,11 @@ To <dfn>allocate size to record data</dfn> given |size|:
 <div algorithm>
 To <dfn>remove collector from data</dfn> given |collected data| and |collector id|:
 
-1. If |collected data|'s <code>collectors</code> [=list/contains=] |collector id|:
+1. If |collected data|'s [=network-data/collectors=] [=list/contains=] |collector id|:
 
-   1. [=list/Remove=] |collector id| from |collected data|'s <code>collectors</code>.
+   1. [=list/Remove=] |collector id| from |collected data|'s [=network-data/collectors=].
 
-   1. If |collected data|'s <code>collectors</code> is [=list/empty=]:
+   1. If |collected data|'s [=network-data/collectors=] is [=list/empty=]:
 
       1. [=list/Remove=] |collected data| from [=collected network data=].
 
@@ -8490,16 +8491,16 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |data types| be [=set/create|create a set=] with
    |command parameters|["<code>dataTypes</code>"].
 
-1. Let |max encoded item size| be |command parameters|
+1. Let |max encoded data size| be |command parameters|
    ["<code>maxEncodedDataSize</code>"].
 
    Note: The <code>maxEncodedDataSize</code> parameter represents
-   [=network-collector/max encoded item size=] and limits the size of each request collected by the
+   [=network-collector/max encoded data size=] and limits the size of each request collected by the
    given collector, not the total collector's collected size.
 
    Note: Different implementations might support different encodings, which means the
    encoded size might be different between browsers. Therefore, for the same data collector
-   configuration, some network data might fit the [=network-collector/max encoded item size=] only
+   configuration, some network data might fit the [=network-collector/max encoded data size=] only
    in some implementations.
 
 1. Let |collector type| be |command parameters|
@@ -8514,8 +8515,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If |input user context ids| is not empty and |input context ids| is not
    empty, return [=error=] with [=error code=] [=invalid argument=].
 
-1. If |max encoded item size| is 0 or |max encoded item size| is greater than
-   [=max total collected size=], return [=error=] with [=error code=] [=invalid argument=].
+1. If |max encoded data size| is 0 or |max encoded data size| is greater than
+   [=max total data size=], return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |input context ids| is not [=set/empty=]:
 
@@ -8536,7 +8537,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
        1. If |user context| is null, return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |collector| be a [=network/collector=] with
-   [=network-collector/max encoded item size=] field set to |max encoded item size|,
+   [=network-collector/max encoded data size=] field set to |max encoded data size|,
    [=network-collector/data types=] field set to |data types|,
    [=network-collector/collector=] field set to |collector id|,
    [=network-collector/collector type=] field set to |collector type|,
@@ -9065,16 +9066,16 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Return [=error=] with [=error code=] [=no such network data=].
 
-1. If |collected data|'s <code>pending</code> is true:
+1. If |collected data|'s [=network-data/pending=] is true:
 
    1. [=Await=] with "network data collected" and (|request id|, |data type|).
 
-1. If |collector id| is not null and if |collected data|'s <code>collectors</code>
+1. If |collector id| is not null and if |collected data|'s [=network-data/collectors=]
    does not [=list/contain=] |collector id|:
 
    1. Return [=error=] with [=error code=] [=no such network data=].
 
-1. Let |bytes| be |collected data|'s <code>bytes</code>.
+1. Let |bytes| be |collected data|'s [=network-data/bytes=].
 
 1. If |bytes| is null,
 
