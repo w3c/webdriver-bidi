@@ -3079,8 +3079,8 @@ rather than <code>navigable</code>, and the protocol uses the term
 <code>context</code> to refer to navigables, particularly as a field in command
 and response parameters.
 
-The progress of navigation is communicated using an immutable
-<dfn export>WebDriver BiDi navigation status</dfn> struct, which has the following items:
+The progress of navigation is communicated using an immutable [=struct=]
+<dfn export>WebDriver BiDi navigation status</dfn>, which has the following [=struct/item|items=]:
 
 <dl>
   <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-id">id</dfn></dt>
@@ -3349,32 +3349,32 @@ To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|,
    normal), or whether resources not directly loaded by the HTML parser
    (e.g. loads initiated by scripts or stylesheets) also bypass the cache.
 
-1.  Let (|event received|, |navigate status|) be [=await=] given
+1.  Let (|event received|, |navigation status|) be [=await=] given
     «"<code>navigation started</code>", "<code>navigation failed</code>",
     "<code>fragment navigated</code>"», and |navigation id|.
 
-1. Assert: |navigate status|'s id is |navigation id|.
+1. Assert: |navigation status|'s [=WebDriver BiDi navigation status/id=] is |navigation id|.
 
-1. If |navigate status|'s status is "<code>complete</code>":
+1. If |navigation status|'s [=WebDriver BiDi navigation status/status=] is "<code>complete</code>":
 
   1. Let |body| be a [=/map=] matching the
      <code>browsingContext.NavigateResult</code> production, with the
      <code>navigation</code> field set to |navigation id|, and the
      <code>url</code> field set to the result of the [=URL serializer=] given
-     |navigate status|'s url.
+     |navigation status|'s [=WebDriver BiDi navigation status/url=].
 
   1. Return [=success=] with data |body|.
 
    Note: this is the case if the navigation only caused the fragment to
    change.
 
-1. If |navigate status|'s status is "<code>canceled</code>" return [=error=]
-   with [=error code=] [=unknown error=].
+1. If |navigation status|'s [=WebDriver BiDi navigation status/status=] is "<code>canceled</code>"
+   return [=error=] with [=error code=] [=unknown error=].
 
    TODO: is this the right way to handle errors here?
 
-1. Assert: |navigate status|'s status is "<code>pending</code>" and
-   |navigation id| is not null.
+1. Assert: |navigation status|'s [=WebDriver BiDi navigation status/status=] is
+   "<code>pending</code>" and |navigation id| is not null.
 
 1. If |wait condition| is "<code>committed</code>", let |event name| be
    "<code>committed</code>".
@@ -3490,15 +3490,16 @@ browsingContext.NavigationInfo = {
 The <code>browsingContext.NavigationInfo</code> type provides details of an ongoing navigation.
 
 <div algorithm>
-To <dfn>get the navigation info</dfn>, given |navigable| and |navigation status|:
+To <dfn>get the navigation info</dfn>, given [=/navigable=] |navigable| and
+[=WebDriver BiDi navigation status|navigation status=] |navigation status|:
 
 1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
 
-1. Let |url| be |navigation status|'s url.
+1. Let |url| be |navigation status|'s [=WebDriver BiDi navigation status/url=].
 
 1. Return a [=/map=] matching the <code>browsingContext.NavigationInfo</code>
    production, with the <code>context</code> field set to |navigable id|, the
@@ -5130,13 +5131,14 @@ The [=remote end steps=] with |command parameters| are:
 <div algorithm>
 
 The <dfn export>WebDriver BiDi page show</dfn> steps given <var
-ignore>context</var> and |navigation status| are:
+ignore>context</var> and [=WebDriver BiDi navigation status|navigation status=] |navigation status|
+are:
 
 Issue: Do we want to expose a `browsingContext.pageShow event? In that case we'd
 need to call this whenever `pageshow` is going to be emitted, not just on
 bfcache restore, and also add the persisted status to the data.
 
- 1. Let |navigation id| be |navigation status|'s id.
+ 1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
  1. [=Resume=] with "<code>page show</code>", |navigation id|, and
     |navigation status|.
@@ -5146,9 +5148,10 @@ bfcache restore, and also add the persisted status to the data.
 <div algorithm>
 
 The <dfn export>WebDriver BiDi pop state</dfn> steps given <var
-ignore>context</var> and |navigation status| are:
+ignore>context</var> and [=WebDriver BiDi navigation status|navigation status=] |navigation status|
+are:
 
- 1. Let |navigation id| be |navigation status|'s id.
+ 1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
  1. [=Resume=] with "<code>pop state</code>", |navigation id|, and
     |navigation status|.
@@ -5204,7 +5207,7 @@ To <dfn>Emit a context created event</dfn> given |session| and |navigable|:
 
 The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable created</dfn> steps given
-|navigable| and |opener navigable|:
+[=/navigable=] |navigable| and [=/navigable=] |opener navigable|:
 
 1. Set |navigable|'s [=original opener=] to |opener navigable|,
    if |opener navigable| is provided.
@@ -5251,7 +5254,7 @@ The [=remote end event trigger=] is:
 <div algorithm="remote end event trigger for browsingContext.contextDestroyed">
 
 The [=remote end event trigger=] is
-the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given |navigable|:
+the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given [=/navigable=] |navigable|:
 
 1. Let |params| be the result of [=get the navigable info=], given
    |navigable|, null, and true.
@@ -5302,8 +5305,9 @@ become inaccessible but not yet get discarded because bfcache.
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-started</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation started</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5312,7 +5316,7 @@ started</dfn> steps given |navigable| and |navigation status|:
     <code>browsingContext.NavigationStarted</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -5341,8 +5345,9 @@ started</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fragment
-navigated</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fragment navigated</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5351,7 +5356,7 @@ navigated</dfn> steps given |navigable| and |navigation status|:
     <code>browsingContext.FragmentNavigated</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigable| be a [=/set=] containing |navigable|.
 
@@ -5386,7 +5391,8 @@ navigated</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi history updated</dfn> steps given |navigable|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi history updated</dfn> steps
+given [=/navigable=] |navigable|:
 
 1. Let |url| be the result of running the [=URL serializer=],
    given |navigable|'s [=active browsing context=]'s [=active document=]'s <a spec=dom>URL</a>.
@@ -5426,8 +5432,9 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi history updat
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi DOM content
-loaded</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi DOM content loaded</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5438,7 +5445,7 @@ loaded</dfn> steps given |navigable| and |navigation status|:
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. [=Resume=] with "<code>domContentLoaded</code>", |navigation id|, and
    |navigation status|.
@@ -5465,8 +5472,9 @@ loaded</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load
-complete</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load complete</dfn> steps given
+[=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5476,7 +5484,7 @@ complete</dfn> steps given |navigable| and |navigation status|:
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. [=Resume=] with "<code>load</code>", |navigation id| and
    |navigation status|.
@@ -5509,8 +5517,8 @@ complete</dfn> steps given |navigable| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the
-<dfn export>WebDriver BiDi download will begin</dfn> steps given |navigable| and
-|navigation status|:
+<dfn export>WebDriver BiDi download will begin</dfn> steps given [=/navigable=] |navigable| and
+[=WebDriver BiDi navigation status|navigation status=] |navigation status|:
 
 1. Let |navigation info| be the result of [=get the navigation info=] given
    |navigable| and |navigation status|.
@@ -5522,13 +5530,13 @@ The [=remote end event trigger=] is the
    the <code>timestamp</code> field set to
    |navigation info|["<code>timestamp</code>"], the <code>url</code> field set to
    |navigation info|["<code>url</code>"] and <code>suggestedFilename</code> field set
-   to |navigation status|'s <code>suggestedFilename</code>.
+   to |navigation status|'s [=WebDriver BiDi navigation status/suggestedFilename=].
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.DownloadWillBegin</code> production, with the
    <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -5547,8 +5555,9 @@ The [=remote end event trigger=] is the
 </div>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download
-started</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download started</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 Issue: Remove after HTML spec switched to [=WebDriver BiDi download will begin=]
 (https://github.com/whatwg/html/pull/11474).
@@ -5562,13 +5571,13 @@ Issue: Remove after HTML spec switched to [=WebDriver BiDi download will begin=]
    <code>timestamp</code> field set to |navigation info|["<code>timestamp</code>"], the
    <code>url</code> field set to |navigation info|["<code>url</code>"] and
    <code>suggestedFilename</code> field set to |navigation status|'s
-   <code>suggestedFilename</code>.
+   [=WebDriver BiDi navigation status/suggestedFilename=].
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.DownloadWillBegin</code> production, with the
    <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -5614,8 +5623,9 @@ Issue: Remove after HTML spec switched to [=WebDriver BiDi download will begin=]
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download end</dfn>
-steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download end</dfn> steps given
+[=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |navigation info| be the result of [=get the navigation info=] given
    |navigable| and |navigation status|.
@@ -5627,8 +5637,8 @@ steps given |navigable| and |navigation status|:
    |params| be a [=/map=] matching the
    <code>browsingContext.DownloadCompleteParams</code> production, with the
    <code>filepath</code> field set to
-   |navigation info|["<code>downloadedFilepath</code>"], the <code>context</code>
-   field set to |navigation info|["<code>context</code>"], the
+   |navigation status|'s [=WebDriver BiDi navigation status/downloadedFilepath=], the
+   <code>context</code> field set to |navigation info|["<code>context</code>"], the
    <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
    the <code>timestamp</code> field set to
    |navigation info|["<code>timestamp</code>"], and the <code>url</code> field set to
@@ -5673,8 +5683,9 @@ steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-aborted</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation aborted</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5683,7 +5694,7 @@ aborted</dfn> steps given |navigable| and |navigation status|:
     <code>browsingContext.NavigationAborted</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -5712,7 +5723,8 @@ aborted</dfn> steps given |navigable| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation committed</dfn> steps
-given |navigable| and |navigation status|:
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5723,7 +5735,7 @@ given |navigable| and |navigation status|:
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. [=Resume=] with "<code>navigation committed</code>", |navigation id|, and |navigation status|.
 
@@ -5750,8 +5762,9 @@ given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-failed</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation failed</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5760,7 +5773,7 @@ failed</dfn> steps given |navigable| and |navigation status|:
     <code>browsingContext.NavigationFailed</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -5795,8 +5808,8 @@ failed</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
-closed</dfn> steps given |window|, |type|, |accepted| and optional |user text|
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt closed</dfn> steps
+given {{Window}} |window|, string |type|, boolean |accepted| and optional text |user text|
 (default: null).
 
 1. Let |navigable| be |window|'s [=window/navigable=].
@@ -5867,8 +5880,8 @@ To <dfn>get navigable's user prompt handler</dfn> given |type| and |navigable|:
 </div>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
-opened</dfn> steps given |window|, |type|, |message|, and optional |default value|
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt opened</dfn> steps
+given {{Window}} |window|, string |type|, string |message|, and optional text |default value|
 (default: null).
 
 1. Let |navigable| be |window|'s [=window/navigable=].
@@ -9273,7 +9286,7 @@ the network cache behavior for certain requests.
 </dl>
 
 <div algorithm>
-The <dfn export>WebDriver BiDi cache behavior</dfn> steps given |request| are:
+The <dfn export>WebDriver BiDi cache behavior</dfn> steps given [=/request=] |request| are:
 
 1. Let |navigable| be null.
 
@@ -9531,7 +9544,7 @@ credentials.
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi auth required</dfn>
-steps given |request| and |response|:
+steps given [=/request=] |request| and [=/response=] |response|:
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -9619,8 +9632,8 @@ and |user context| are:
 </div>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi before
-request sent</dfn> steps given |request|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi before request sent</dfn> steps
+given [=/request=] |request|:
 
 1. For each |user context| in the [=set of user contexts=]:
 
@@ -9752,7 +9765,7 @@ This event is emitted when a network request ends in an error.
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fetch
-error</dfn> steps given |request|:
+error</dfn> steps given [=/request=] |request|:
 
 1. If [=before request sent map=][|request|] does not contain |request|'s
    [=redirect count=], then run the [=WebDriver BiDi before request sent=] steps
@@ -9811,8 +9824,8 @@ error</dfn> steps given |request|:
 This event is emitted after the full response body is received.
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response
-completed</dfn> steps given |request| and |response|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response completed</dfn> steps
+given [=/request=] |request| and [=/response=] |response|:
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -9875,8 +9888,8 @@ This event is emitted after the response headers are received but before the
 body is complete.
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response
-started</dfn> steps given |request| and |response|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response started</dfn> steps
+given [=/request=] |request| and [=/response=] |response|:
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -13882,10 +13895,13 @@ The [=remote end steps=] given |session| and |command parameters| are:
    </dd>
 </dl>
 
+A <dfn>WebDriver BiDi file picker options</dfn> is a [=struct=] with an [=struct/item=] named
+<dfn for="WebDriver BiDi file picker options">multiple</dfn> which is a boolean.
+
 <div algorithm>
 The [=remote end event trigger=] is the
-<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given |element| and optionally
-|file picker options| (default: null):
+<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given [=/element=] |element| and
+optionally [=WebDriver BiDi file picker options=] |file picker options| (default: null):
 
 1. Let |navigable| be the |element|'s [=node document=]'s [=/navigable=].
 
@@ -13896,9 +13912,7 @@ The [=remote end event trigger=] is the
 1. If |element| is not null and |element|'s <{input/multiple}> attribute is set,
     set |multiple| to <code>true</code>.
 
-1. If |file picker options| is not null:
-
-   1. If |file picker options|["<code>multiple</code>"] is true, set |multiple| to
+1. If |file picker options| is not null and |file picker options|'s [=WebDriver BiDi file picker options/multiple=] is true, set |multiple| to
       <code>true</code>.
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
