@@ -494,8 +494,10 @@ ErrorResponse = {
 }
 
 ResultData = (
+  BrowserResult /
   BrowsingContextResult /
-  EmptyResult /
+  EmulationResult /
+  InputResult /
   NetworkResult /
   ScriptResult /
   SessionResult /
@@ -656,7 +658,7 @@ with the following additional codes:
   <dd>Tried to remove an unknown [=network intercept=].
 
   <dt><dfn for=errors export>no such network data</dfn>
-  <dd>Tried to reference an unknown [=network/data=].
+  <dd>Tried to reference an unknown [=network data=].
 
   <dt><dfn for=errors export>no such node</dfn>
   <dd>Tried to deserialize an unknown <code>SharedReference</code>.
@@ -770,7 +772,7 @@ The <dfn export>set of sessions for which an event is enabled</dfn> given |event
 
 1. Let |sessions| be a new [=/set=].
 
-1. For each |session| in [=active BiDI sessions=]:
+1. For each |session| in [=active BiDi sessions=]:
 
   1. If [=event is enabled=] with |session|, |event name| and |navigables|,
     append |session| to |sessions|.
@@ -1642,9 +1644,11 @@ SessionCommand = (
 
 <pre class="cddl" data-cddl-module="local-cddl">
 SessionResult = (
-   session.NewResult /
-   session.StatusResult /
-   session.SubscribeResult
+  session.EndResult /
+  session.NewResult /
+  session.StatusResult /
+  session.SubscribeResult /
+  session.UnsubscribeResult
 )
 </pre>
 
@@ -1680,7 +1684,7 @@ To <dfn>cleanup the session</dfn> given |session|:
 
 1. For each |collector| in |session|'s [=network collectors=]:
 
-   1. Let |collector id| be |collector|'s <code>collector</code>.
+   1. Let |collector id| be |collector|'s [=network-collector/collector=].
 
    1. For each |collected data| in [=collected network data=], [=remove collector from data=]
       with |collected data| and |collector id|.
@@ -1887,12 +1891,9 @@ remove event subscriptions identified by subscription IDs.
 
 #### The session.UnsubscribeByAttributesRequest Type #### {#type-session-UnsubscribeByAttributesRequest}
 
-Note: contexts param is deprecated and will be removed in the future versions.
-
 <pre class="cddl" data-cddl-module="remote-cddl">
 session.UnsubscribeByAttributesRequest = {
   events: [+text],
-  ? contexts: [+browsingContext.BrowsingContext],
 }
 </pre>
 
@@ -1920,7 +1921,7 @@ This is a [=static command=].
       )
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
       <pre class="cddl" data-cddl-module="local-cddl">
       session.StatusResult = {
@@ -1974,7 +1975,7 @@ This is a [=static command=].
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
       <pre class="cddl" data-cddl-module="local-cddl">
       session.NewResult = {
@@ -2045,11 +2046,11 @@ The <dfn export for=commands>session.end</dfn> command ends the current
 
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      session.EndResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2090,7 +2091,7 @@ Issue: This needs to be generalized to work with realms too.
       )
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
       <pre class="cddl" data-cddl-module="local-cddl">
         session.SubscribeResult = {
@@ -2200,9 +2201,6 @@ either globally or for a set of navigables.
 
 Issue: This needs to be generalised to work with realms too.
 
-Note: contexts parameter in UnsubscribeByAttributesRequest is deprecated
-and will be removed in the future versions.
-
 <dl>
    <dt>Command Type</dt>
    <dd>
@@ -2215,11 +2213,11 @@ and will be removed in the future versions.
      session.UnsubscribeParameters = session.UnsubscribeByAttributesRequest / session.UnsubscribeByIDRequest
      </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      session.UnsubscribeResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2236,25 +2234,9 @@ The [=remote end steps=] with |session| and |command parameters| are:
       let |event names| be the [=set/union=] of |event names| and the result of
       [=trying=] to [=obtain a set of event names=] with |name|.
 
-   1. Let |top-level traversable context ids| be a [=/set=].
-
-   1. Let |input context ids| be [=set/create|create a set=] with |command parameters|[<code>contexts</code>].
-
-   1. If |input context ids| is not empty:
-
-      1. Let |navigables| be the result of [=trying=] to [=get valid navigables by ids=] with |input context ids|.
-
-      1. Set |top-level traversables| be [=get top-level traversables=] with |navigables|.
-
-      1. For each |navigable| in |top-level traversables|:
-
-         1. [=set/Append=] |navigable|'s [=navigable id=] to |top-level traversable context ids|.
-
    1. Let |new subscriptions| to be a [=/list=].
 
    1. Let |matched events| to be a [=/set=].
-
-   1. Let |matched contexts| to be a [=/set=].
 
    1. For each |subscription| of |session|'s [=subscriptions=]:
 
@@ -2264,82 +2246,31 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
          1. [=Continue=].
 
-      1. If |top-level traversable context ids| is an empty [=/set=]:
+      1. If |subscription| is not [=subscription/global=]:
 
-         1. If |subscription| is not [=subscription/global=]:
+         1. [=list/append=] |subscription| to |new subscriptions|.
 
-            1. [=list/append=] |subscription| to |new subscriptions|.
+         1. [=Continue=].
 
-            1. [=Continue=].
+      1. Let |subscription event names| be [=set/clone=] of |subscription|'s [=subscription/event names=].
 
-         1. Let |subscription event names| be [=set/clone=] of |subscription|'s [=subscription/event names=].
+      1. For each |event name| of |event names|:
 
-         1. For each |event name| of |event names|:
+         1. If |subscription event names| [=set/contains=] |event name|:
 
-            1. If |subscription event names| [=set/contains=] |event name|:
+            1. [=list/Append=] |event name| to |matched events|.
 
-               1. [=list/Append=] |event name| to |matched events|.
+            1. [=list/Remove=] |event name| from |subscription event names|.
 
-               1. [=list/Remove=] |event name| from |subscription event names|.
+      1. If |subscription event names| is not empty:
 
-         1. If |subscription event names| is not empty:
+         1. Let |cloned subscription| be a [=subscription=] with
+            [=subscription/subscription id=] set to |subscription|'s [=subscription/subscription id=],
+            [=subscription/event names=] set to a new [=/set=] containing |subscription event names|.
 
-            1. Let |cloned subscription| be a [=subscription=] with
-               [=subscription/subscription id=] set to |subscription|'s [=subscription/subscription id=],
-               [=subscription/event names=] set to a new [=/set=] containing |subscription event names|.
-
-            1. [=list/append=] |cloned subscription| to |new subscriptions|.
-
-      1. Otherwise:
-
-        1. If |subscription| is [=subscription/global=]:
-
-          1. [=list/append=] |subscription| to |new subscriptions|.
-
-        1. Otherwise, if |subscription|'s [=subscription/user context ids=] is not empty, [=continue=].
-
-        1. Otherwise:
-
-          Note: unsubscribe by contexts is deprecated and will be removed in the future versions.
-
-          1. Let |event map| be an empty [=/map=].
-
-          1. For each |event name| in |subscription|'s [=subscription/event names=]:
-
-              1. Set |event map|[|event name|] to [=set/clone=] of |subscription|'s [=subscription/top-level traversable ids=].
-
-          1. For each |event name| in |event names|:
-
-              1. If |event map|[|event name|] does not exist,
-                 [=continue=].
-
-              1. For each |top-level traversable id| of |top-level traversable context ids|:
-
-                 1. If |event map|[|event name|] [=set/contains=] |top-level traversable id|:
-
-                    1. [=list/Append=] |top-level traversable id| to |matched contexts|.
-
-                    1. [=list/Append=] |event name| to |matched events|.
-
-                    1. [=list/Remove=] |top-level traversable id| from |event map|[|event name|].
-
-              1. If |event map|[|event name|] is an empty [=/set=],
-
-                1. [=map/Remove=] |event map|[|event name|].
-
-          1. For each |event name| → |remaining top-level traversable ids| in |event map|:
-
-            1. Let |partial subscription| be a [=subscription=] with
-               [=subscription/subscription id=] set to |subscription|'s [=subscription/subscription id=],
-               [=subscription/event names=] set to a new [=/set=] containing |event name|,
-               [=subscription/top-level traversable ids=] set to |remaining top-level traversable ids|.
-
-            1. [=list/append=] |partial subscription| to |new subscriptions|.
+         1. [=list/append=] |cloned subscription| to |new subscriptions|.
 
    1. If |matched events| is not [=set/equal=] to |event names|, return [=error=] with [=error code=] [=invalid argument=].
-
-   1. If |top-level traversable context ids| is not empty and |matched contexts| is not [=set/equal=] to
-      |top-level traversable context ids|, return [=error=] with [=error code=] [=invalid argument=].
 
    1. Set |session|'s [=subscriptions=] to |new subscriptions|.
 
@@ -2386,7 +2317,8 @@ BrowserCommand = (
   browser.GetClientWindows //
   browser.GetUserContexts //
   browser.RemoveUserContext //
-  browser.SetClientWindowState
+  browser.SetClientWindowState //
+  browser.SetDownloadBehavior
 )
 </pre>
 
@@ -2395,8 +2327,13 @@ BrowserCommand = (
 <!-- Nothing yet -->
 <pre class="cddl" data-cddl-module="local-cddl">
 BrowserResult = (
-   browser.CreateUserContextResult /
-   browser.GetUserContextsResult
+  browser.CloseResult /
+  browser.CreateUserContextResult /
+  browser.GetClientWindowsResult /
+  browser.GetUserContextsResult /
+  browser.RemoveUserContextResult /
+  browser.SetClientWindowStateResult /
+  browser.SetDownloadBehaviorResult
 )
 </pre>
 
@@ -2636,7 +2573,7 @@ To <dfn>get the client window info</dfn> given |client window|:
 browser.UserContext = text;
 </pre>
 
-The <code>browser.UserContext</code> unique identifies a [=user context=].
+The <code><dfn>browser.UserContext</dfn></code> unique identifies a [=user context=].
 
 #### The browser.UserContextInfo Type #### {#type-browser-UserContextInfo}
 
@@ -2668,9 +2605,9 @@ WebDriver sessions and cleans up automation state in the remote browser instance
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.CloseResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2925,9 +2862,9 @@ user context and all navigables in it without running
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.RemoveUserContextResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -2990,9 +2927,9 @@ dimensions of a [=client window=].
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-      browser.ClientWindowInfo
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.SetClientWindowStateResult = browser.ClientWindowInfo
+      </pre>
    </dd>
 </dl>
 
@@ -3042,6 +2979,116 @@ those after the window has reached its new state.
 
 </div>
 
+#### The browser.setDownloadBehavior Command #### {#command-browser-setDownloadBehavior}
+
+A <dfn>download behavior struct</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn id="download-behavior-struct-allowed" for="download-behavior-struct">allowed</dfn> which is a boolean;
+* [=struct/item=] named <dfn id="download-behavior-struct-destination-folder" for="download-behavior-struct">destinationFolder</dfn> which is a string or null.
+
+A [=remote end=] has a <dfn>download behavior</dfn> which is a [=struct=] with an [=struct/item=]
+named <dfn for="download behavior">default download behavior</dfn>, which is a
+[=download behavior struct=] or null, and an [=struct/item=] named <dfn
+for="download behavior">user context download behavior</dfn>, which is a weak map between
+[=user contexts=] and [=download behavior struct=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browser.SetDownloadBehavior = (
+        method: "browser.setDownloadBehavior",
+        params: browser.SetDownloadBehaviorParameters
+      )
+
+      browser.SetDownloadBehaviorParameters = {
+        downloadBehavior: browser.DownloadBehavior / null,
+        ? userContexts: [+browser.UserContext]
+      }
+
+      browser.DownloadBehavior = {
+        (
+          browser.DownloadBehaviorAllowed //
+          browser.DownloadBehaviorDenied
+        )
+      }
+
+      browser.DownloadBehaviorAllowed = (
+        type: "allowed",
+        destinationFolder: text
+      )
+
+      browser.DownloadBehaviorDenied = (
+        type: "denied"
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.SetDownloadBehaviorResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+To <dfn export>get download behavior</dfn> given |navigable|:
+
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If [=download behavior=]'s [=download behavior/user context download behavior=] [=map/contains=]
+   |user context|, return [=download behavior=]'s
+   [=download behavior/user context download behavior=][|user context|].
+
+1. Return [=download behavior=]'s [=download behavior/default download behavior=].
+
+</div>
+
+<div algorithm="remote end steps for browser.setDownloadBehavior">
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. If |command parameters|["<code>downloadBehavior</code>"] is null, let
+   |download behavior| be null.
+
+1. Otherwise:
+
+   1. If |command parameters|["<code>downloadBehavior</code>"]["<code>type</code>"]
+      is "<code>allowed</code>", let |allowed| be true, otherwise let |allowed| be
+      false.
+
+   1. If |command parameters|["<code>downloadBehavior</code>"] [=map/contains=]
+      "<code>destinationFolder</code>", let |destinationFolder| be
+      |command parameters|["<code>downloadBehavior</code>"]["<code>destinationFolder</code>"],
+      otherwise let |destinationFolder| be null.
+
+   1. Let |download behavior| be a [=download behavior struct=] with
+      [=download-behavior-struct/allowed=] set to |allowed| and
+      [=download-behavior-struct/destinationFolder=] set to |destinationFolder|.
+
+1. If the implementation does not support required |download behavior|, then return
+   [=error=] with [=error code=] [=unsupported operation=].
+
+1. If the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. If |download behavior| is null, [=map/remove=] |user context| from [=download behavior=]'s
+         [=download behavior/user context download behavior=].
+
+      1. Otherwise, [=map/set=] [=download behavior=]'s
+         [=download behavior/user context download behavior=][|user context|] to
+         |download behavior|.
+
+1. Otherwise, set [=download behavior=]'s [=download behavior/default download behavior=] to
+   |download behavior|.
+
+1. Return [=success=] with data null.
+
+</div>
+
 ## The browsingContext Module ## {#module-browsingContext}
 
 The <dfn export for=modules>browsingContext</dfn> module contains commands and
@@ -3052,8 +3099,8 @@ rather than <code>navigable</code>, and the protocol uses the term
 <code>context</code> to refer to navigables, particularly as a field in command
 and response parameters.
 
-The progress of navigation is communicated using an immutable
-<dfn export>WebDriver BiDi navigation status</dfn> struct, which has the following items:
+The progress of navigation is communicated using an immutable [=struct=]
+<dfn export>WebDriver BiDi navigation status</dfn>, which has the following [=struct/item|items=]:
 
 <dl>
   <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-id">id</dfn></dt>
@@ -3103,12 +3150,17 @@ BrowsingContextCommand = (
 
 <pre class="cddl" data-cddl-module="local-cddl">
 BrowsingContextResult = (
+  browsingContext.ActivateResult /
   browsingContext.CaptureScreenshotResult /
+  browsingContext.CloseResult /
   browsingContext.CreateResult /
   browsingContext.GetTreeResult /
+  browsingContext.HandleUserPromptResult /
   browsingContext.LocateNodesResult /
   browsingContext.NavigateResult /
   browsingContext.PrintResult /
+  browsingContext.ReloadResult /
+  browsingContext.SetViewportResult /
   browsingContext.TraverseHistoryResult
 )
 
@@ -3155,16 +3207,16 @@ An <dfn>unhandled prompt behavior struct</dfn> is a [=struct=] with:
 A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map between [=user contexts=] and [=viewport configuration=].
 
 A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
-[=navigables=] or [=user contexts=] and string or null.
+[=navigables=] or [=user contexts=] and string.
 
 A [=remote end=] has a <dfn>timezone overrides map</dfn> which is a weak map between
-[=navigables=] or [=user contexts=] and string or null.
+[=navigables=] or [=user contexts=] and string.
 
 A [=remote end=] has an <dfn>unhandled prompt behavior overrides map</dfn> which is a
 weak map between [=user contexts=] and [=unhandled prompt behavior struct=].
 
 A [=remote end=] has a <dfn>scripting enabled overrides map</dfn> which is a weak
-map between [=navigables=] or [=user contexts=] and boolean or null.
+map between [=navigables=] or [=user contexts=] and boolean.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -3317,32 +3369,32 @@ To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|,
    normal), or whether resources not directly loaded by the HTML parser
    (e.g. loads initiated by scripts or stylesheets) also bypass the cache.
 
-1.  Let (|event received|, |navigate status|) be [=await=] given
+1.  Let (|event received|, |navigation status|) be [=await=] given
     «"<code>navigation started</code>", "<code>navigation failed</code>",
     "<code>fragment navigated</code>"», and |navigation id|.
 
-1. Assert: |navigate status|'s id is |navigation id|.
+1. Assert: |navigation status|'s [=WebDriver BiDi navigation status/id=] is |navigation id|.
 
-1. If |navigate status|'s status is "<code>complete</code>":
+1. If |navigation status|'s [=WebDriver BiDi navigation status/status=] is "<code>complete</code>":
 
   1. Let |body| be a [=/map=] matching the
      <code>browsingContext.NavigateResult</code> production, with the
      <code>navigation</code> field set to |navigation id|, and the
      <code>url</code> field set to the result of the [=URL serializer=] given
-     |navigate status|'s url.
+     |navigation status|'s [=WebDriver BiDi navigation status/url=].
 
   1. Return [=success=] with data |body|.
 
    Note: this is the case if the navigation only caused the fragment to
    change.
 
-1. If |navigate status|'s status is "<code>canceled</code>" return [=error=]
-   with [=error code=] [=unknown error=].
+1. If |navigation status|'s [=WebDriver BiDi navigation status/status=] is "<code>canceled</code>"
+   return [=error=] with [=error code=] [=unknown error=].
 
    TODO: is this the right way to handle errors here?
 
-1. Assert: |navigate status|'s status is "<code>pending</code>" and
-   |navigation id| is not null.
+1. Assert: |navigation status|'s [=WebDriver BiDi navigation status/status=] is
+   "<code>pending</code>" and |navigation id| is not null.
 
 1. If |wait condition| is "<code>committed</code>", let |event name| be
    "<code>committed</code>".
@@ -3458,15 +3510,16 @@ browsingContext.NavigationInfo = {
 The <code>browsingContext.NavigationInfo</code> type provides details of an ongoing navigation.
 
 <div algorithm>
-To <dfn>get the navigation info</dfn>, given |navigable| and |navigation status|:
+To <dfn>get the navigation info</dfn>, given [=/navigable=] |navigable| and
+[=WebDriver BiDi navigation status|navigation status=] |navigation status|:
 
 1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
 
-1. Let |url| be |navigation status|'s url.
+1. Let |url| be |navigation status|'s [=WebDriver BiDi navigation status/url=].
 
 1. Return a [=/map=] matching the <code>browsingContext.NavigationInfo</code>
    production, with the <code>context</code> field set to |navigable id|, the
@@ -3516,11 +3569,11 @@ The <dfn export for=commands>browsingContext.activate</dfn> command activates an
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.ActivateResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -3601,7 +3654,7 @@ Base64-encoded string.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.CaptureScreenshotResult = {
@@ -3872,12 +3925,11 @@ The <dfn export for=commands>browsingContext.close</dfn> command closes a
       }
       </pre>
    </dd>
-
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.CloseResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -3939,7 +3991,7 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.CreateResult = {
@@ -4043,7 +4095,7 @@ or all top-level contexts when no parent is provided.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.GetTreeResult = {
@@ -4105,11 +4157,11 @@ command allows closing an open prompt
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-      <code>
-      EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.HandleUserPromptResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -4172,7 +4224,7 @@ list of all nodes matching the specified locator.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.LocateNodesResult = {
@@ -4559,7 +4611,7 @@ navigable to the given URL.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.NavigateResult = {
@@ -4649,7 +4701,7 @@ PDF document represented as a Base64-encoded string.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.PrintResult = {
@@ -4781,9 +4833,9 @@ navigable.
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-      browsingContext.NavigateResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.ReloadResult = browsingContext.NavigateResult
+      </pre>
    </dd>
 </dl>
 
@@ -4845,11 +4897,11 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies 
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.SetViewportResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -5038,8 +5090,7 @@ traverses the history of a given navigable by a delta.
    <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
-        browsingContext.TraverseHistoryResult = {
-        }
+      browsingContext.TraverseHistoryResult = EmptyResult
     </pre>
    </dd>
 </dl>
@@ -5100,13 +5151,14 @@ The [=remote end steps=] with |command parameters| are:
 <div algorithm>
 
 The <dfn export>WebDriver BiDi page show</dfn> steps given <var
-ignore>context</var> and |navigation status| are:
+ignore>context</var> and [=WebDriver BiDi navigation status|navigation status=] |navigation status|
+are:
 
 Issue: Do we want to expose a `browsingContext.pageShow event? In that case we'd
 need to call this whenever `pageshow` is going to be emitted, not just on
 bfcache restore, and also add the persisted status to the data.
 
- 1. Let |navigation id| be |navigation status|'s id.
+ 1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
  1. [=Resume=] with "<code>page show</code>", |navigation id|, and
     |navigation status|.
@@ -5116,9 +5168,10 @@ bfcache restore, and also add the persisted status to the data.
 <div algorithm>
 
 The <dfn export>WebDriver BiDi pop state</dfn> steps given <var
-ignore>context</var> and |navigation status| are:
+ignore>context</var> and [=WebDriver BiDi navigation status|navigation status=] |navigation status|
+are:
 
- 1. Let |navigation id| be |navigation status|'s id.
+ 1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
  1. [=Resume=] with "<code>pop state</code>", |navigation id|, and
     |navigation status|.
@@ -5174,7 +5227,7 @@ To <dfn>Emit a context created event</dfn> given |session| and |navigable|:
 
 The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable created</dfn> steps given
-|navigable| and |opener navigable|:
+[=/navigable=] |navigable| and [=/navigable=] |opener navigable|:
 
 1. Set |navigable|'s [=original opener=] to |opener navigable|,
    if |opener navigable| is provided.
@@ -5221,7 +5274,7 @@ The [=remote end event trigger=] is:
 <div algorithm="remote end event trigger for browsingContext.contextDestroyed">
 
 The [=remote end event trigger=] is
-the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given |navigable|:
+the <dfn export>WebDriver BiDi navigable destroyed</dfn> steps given [=/navigable=] |navigable|:
 
 1. Let |params| be the result of [=get the navigable info=], given
    |navigable|, null, and true.
@@ -5272,8 +5325,9 @@ become inaccessible but not yet get discarded because bfcache.
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-started</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation started</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5282,7 +5336,7 @@ started</dfn> steps given |navigable| and |navigation status|:
     <code>browsingContext.NavigationStarted</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -5311,8 +5365,9 @@ started</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fragment
-navigated</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fragment navigated</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5321,7 +5376,7 @@ navigated</dfn> steps given |navigable| and |navigation status|:
     <code>browsingContext.FragmentNavigated</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigable| be a [=/set=] containing |navigable|.
 
@@ -5356,7 +5411,8 @@ navigated</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi history updated</dfn> steps given |navigable|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi history updated</dfn> steps
+given [=/navigable=] |navigable|:
 
 1. Let |url| be the result of running the [=URL serializer=],
    given |navigable|'s [=active browsing context=]'s [=active document=]'s <a spec=dom>URL</a>.
@@ -5396,8 +5452,9 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi history updat
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi DOM content
-loaded</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi DOM content loaded</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5408,7 +5465,7 @@ loaded</dfn> steps given |navigable| and |navigation status|:
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. [=Resume=] with "<code>domContentLoaded</code>", |navigation id|, and
    |navigation status|.
@@ -5435,8 +5492,9 @@ loaded</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load
-complete</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load complete</dfn> steps given
+[=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5446,7 +5504,7 @@ complete</dfn> steps given |navigable| and |navigation status|:
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. [=Resume=] with "<code>load</code>", |navigation id| and
    |navigation status|.
@@ -5478,10 +5536,53 @@ complete</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download
-started</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the
+<dfn export>WebDriver BiDi download will begin</dfn> steps given [=/navigable=] |navigable| and
+[=WebDriver BiDi navigation status|navigation status=] |navigation status|:
 
- 1. Let |navigation info| be the result of [=get the navigation info=] given |navigable| and
+1. Let |navigation info| be the result of [=get the navigation info=] given
+   |navigable| and |navigation status|.
+
+1. Let |params| be a [=/map=] matching the
+   <code>browsingContext.DownloadWillBeginParams</code> production, with the
+   <code>context</code> field set to |navigation info|["<code>context</code>"], the
+   <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
+   the <code>timestamp</code> field set to
+   |navigation info|["<code>timestamp</code>"], the <code>url</code> field set to
+   |navigation info|["<code>url</code>"] and <code>suggestedFilename</code> field set
+   to |navigation status|'s [=WebDriver BiDi navigation status/suggestedFilename=].
+
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.DownloadWillBegin</code> production, with the
+   <code>params</code> field set to |params|.
+
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
+
+1. Let |related navigables| be a [=/set=] containing |navigable|.
+
+1. [=Resume=] with "<code>download started</code>", |navigation id|, and
+   |navigation status|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.downloadWillBegin</code>" and |related navigables|:
+
+   1. [=Emit an event=] with |session| and |body|.
+
+1. Let |download behavior| be [=get download behavior=] with |navigable|.
+
+1. Return |download behavior|.
+
+</div>
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download started</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
+
+Issue: Remove after HTML spec switched to [=WebDriver BiDi download will begin=]
+(https://github.com/whatwg/html/pull/11474).
+
+1. Let |navigation info| be the result of [=get the navigation info=] given |navigable| and
     |navigation status|.
 
 1. Let |params| be a [=/map=] matching the <code>browsingContext.DownloadWillBeginParams</code>
@@ -5490,22 +5591,22 @@ started</dfn> steps given |navigable| and |navigation status|:
    <code>timestamp</code> field set to |navigation info|["<code>timestamp</code>"], the
    <code>url</code> field set to |navigation info|["<code>url</code>"] and
    <code>suggestedFilename</code> field set to |navigation status|'s
-   <code>suggestedFilename</code>.
+   [=WebDriver BiDi navigation status/suggestedFilename=].
 
- 1. Let |body| be a [=/map=] matching the
-     <code>browsingContext.DownloadWillBegin</code> production, with the
-     <code>params</code> field set to |params|.
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.DownloadWillBegin</code> production, with the
+   <code>params</code> field set to |params|.
 
- 1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
- 1. Let |related navigables| be a [=/set=] containing |navigable|.
+1. Let |related navigables| be a [=/set=] containing |navigable|.
 
- 1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
+1. [=Resume=] with "<code>download started</code>", |navigation id|, and |navigation status|.
 
- 1. For each |session| in the [=set of sessions for which an event is enabled=]
-    given "<code>browsingContext.downloadWillBegin</code>" and |related navigables|:
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.downloadWillBegin</code>" and |related navigables|:
 
-   1. [=Emit an event=] with |session| and |body|.
+  1. [=Emit an event=] with |session| and |body|.
 
 </div>
 
@@ -5542,8 +5643,9 @@ started</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download end</dfn>
-steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download end</dfn> steps given
+[=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |navigation info| be the result of [=get the navigation info=] given
    |navigable| and |navigation status|.
@@ -5555,8 +5657,8 @@ steps given |navigable| and |navigation status|:
    |params| be a [=/map=] matching the
    <code>browsingContext.DownloadCompleteParams</code> production, with the
    <code>filepath</code> field set to
-   |navigation info|["<code>downloadedFilepath</code>"], the <code>context</code>
-   field set to |navigation info|["<code>context</code>"], the
+   |navigation status|'s [=WebDriver BiDi navigation status/downloadedFilepath=], the
+   <code>context</code> field set to |navigation info|["<code>context</code>"], the
    <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
    the <code>timestamp</code> field set to
    |navigation info|["<code>timestamp</code>"], and the <code>url</code> field set to
@@ -5601,8 +5703,9 @@ steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-aborted</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation aborted</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5611,7 +5714,7 @@ aborted</dfn> steps given |navigable| and |navigation status|:
     <code>browsingContext.NavigationAborted</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -5640,7 +5743,8 @@ aborted</dfn> steps given |navigable| and |navigation status|:
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation committed</dfn> steps
-given |navigable| and |navigation status|:
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5651,7 +5755,7 @@ given |navigable| and |navigation status|:
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. [=Resume=] with "<code>navigation committed</code>", |navigation id|, and |navigation status|.
 
@@ -5678,8 +5782,9 @@ given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation
-failed</dfn> steps given |navigable| and |navigation status|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi navigation failed</dfn> steps
+given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigation status=]
+|navigation status|:
 
 1. Let |params| be the result of [=get the navigation info=] given |navigable|
    and |navigation status|.
@@ -5688,7 +5793,7 @@ failed</dfn> steps given |navigable| and |navigation status|:
     <code>browsingContext.NavigationFailed</code> production, with the
     <code>params</code> field set to |params|.
 
-1. Let |navigation id| be |navigation status|'s id.
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -5723,8 +5828,8 @@ failed</dfn> steps given |navigable| and |navigation status|:
 </dl>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
-closed</dfn> steps given |window|, |type|, |accepted| and optional |user text|
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt closed</dfn> steps
+given {{Window}} |window|, string |type|, boolean |accepted| and optional text |user text|
 (default: null).
 
 1. Let |navigable| be |window|'s [=window/navigable=].
@@ -5795,8 +5900,8 @@ To <dfn>get navigable's user prompt handler</dfn> given |type| and |navigable|:
 </div>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt
-opened</dfn> steps given |window|, |type|, |message|, and optional |default value|
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi user prompt opened</dfn> steps
+given {{Window}} |window|, string |type|, string |message|, and optional text |default value|
 (default: null).
 
 1. Let |navigable| be |window|'s [=window/navigable=].
@@ -5850,6 +5955,19 @@ EmulationCommand = (
   emulation.SetScriptingEnabled //
   emulation.SetTimezoneOverride //
   emulation.SetUserAgentOverride
+)
+
+</pre>
+
+<pre class="cddl" data-cddl-module="local-cddl">
+EmulationResult = (
+  emulation.SetForcedColorsModeThemeOverrideResult /
+  emulation.SetGeolocationOverrideResult /
+  emulation.SetLocaleOverrideResult /
+  emulation.SetScreenOrientationOverrideResult /
+  emulation.SetScriptingEnabledResult /
+  emulation.SetTimezoneOverrideResult /
+  emulation.SetUserAgentOverrideResult
 )
 </pre>
 
@@ -5908,11 +6026,11 @@ The <dfn export for=commands>emulation.setForcedColorsModeThemeOverride</dfn> co
       emulation.ForcedColorsModeTheme = "light" / "dark"
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetForcedColorsModeThemeOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -5998,11 +6116,11 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetGeolocationOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6032,11 +6150,11 @@ The [=remote end steps=] with |command parameters| are:
    |command parameters|["<code>coordinates</code>"].
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>context</code>",
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |navigables| be a [=/set=].
@@ -6087,19 +6205,17 @@ locale on the given top-level traversables or user contexts.
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetLocaleOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
 <div algorithm="updated DefaultLocale steps">
 The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
 [=remote end=] must have an implementation that runs the following steps:
-
-1. Let |emulated locale| be null.
 
 1. Let |realm| be [=current Realm Record=].
 
@@ -6116,14 +6232,11 @@ The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
 
     1. Let |user context| be |top-level traversable|'s [=associated user context=].
 
-    1. If [=locale overrides map=] [=map/contains=] |top-level traversable|, set
-       |emulated locale| to [=locale overrides map=][|top-level traversable|].
+    1. If [=locale overrides map=] [=map/contains=] |top-level traversable|, return
+       [=locale overrides map=][|top-level traversable|].
 
-    1. Otherwise, if [=locale overrides map=] [=map/contains=]
-       |user context|, set |emulated locale| to
+    1. If [=locale overrides map=] [=map/contains=] |user context|, return
        [=locale overrides map=][|user context|].
-
-1. If |emulated locale| is not null, return |emulated locale|.
 
 1. Return the result of implementation-defined steps in accordance with the
    requirements of the [=DefaultLocale=] specification.
@@ -6135,21 +6248,17 @@ The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
 The [=remote end steps=] with |command parameters| are:
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>context</code>",
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
-1. Let |emulated locale| be null.
+1. Let |emulated locale| be |command parameters|["<code>locale</code>"].
 
-1. If |command parameters| [=map/contains=] "<code>locale</code>":
-
-   1. Set |emulated locale| to |command parameters|["<code>locale</code>"].
-
-   1. If [=IsStructurallyValidLanguageTag=](|emulated locale|) returns false,
-      return [=error=] with [=error code=] [=invalid argument=].
+1. If |emulated locale| is not null and [=IsStructurallyValidLanguageTag=](|emulated locale|)
+   returns false, return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |navigables| be a [=/set=].
 
@@ -6168,7 +6277,9 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=locale overrides map=][|user context|] to |emulated locale|.
+      1. If |emulated locale| is null, [=map/remove=] |user context| from [=locale overrides map=].
+
+      1. Otherwise, [=map/set=] [=locale overrides map=][|user context|] to |emulated locale|.
 
       1. [=list/For each=] |top-level traversable| of the list of all
          [=/top-level traversables=] whose [=associated user context=] is
@@ -6178,7 +6289,9 @@ The [=remote end steps=] with |command parameters| are:
 
 1. For each |navigable| of |navigables|:
 
-   1. [=map/Set=] [=locale overrides map=][|navigable|] to |emulated locale|.
+   1. If |emulated locale| is null, [=map/remove=] |navigable| from [=locale overrides map=].
+
+   1. Otherwise, [=map/set=] [=locale overrides map=][|navigable|] to |emulated locale|.
 
 1. Return [=success=] with data null.
 
@@ -6328,11 +6441,11 @@ emulates [=screen orientation=] of the given top-level traversables or user cont
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetScreenOrientationOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6444,11 +6557,11 @@ User-Agent on the given top-level traversables or user contexts.
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetUserAgentOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6558,11 +6671,11 @@ disabling JavaScript on web pages.
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetScriptingEnabledResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6577,21 +6690,13 @@ The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
 
 1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
 
-1. If [=scripting enabled overrides map=] contains |top-level traversable|:
-
-   1. If [=scripting enabled overrides map=][|top-level traversable|] is false,
-      return false.
-
-   1. Return true.
+1. If [=scripting enabled overrides map=] contains |top-level traversable|, return
+   [=scripting enabled overrides map=][|top-level traversable|]
 
 1. Let |user context| be  |top-level traversable|'s [=associated user context=].
 
 1. If [=scripting enabled overrides map=] contains |user context|, return
    [=scripting enabled overrides map=][|user context|].
-
-   1. If [=scripting enabled overrides map=][|user context|] is false, return false.
-
-   1. Return true.
 
 1. Return true.
 
@@ -6602,19 +6707,14 @@ The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
 The [=remote end steps=] with |command parameters| are:
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>context</code>",
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
-1. Let |emulated scripting enabled status| be null.
-
-1. If |command parameters| [=map/contains=] "<code>enabled</code>":
-
-   1. Set |emulated scripting enabled status| to
-      |command parameters|["<code>enabled</code>"].
+1. Let |emulated scripting enabled status| be |command parameters|["<code>enabled</code>"].
 
 1. If the <code>contexts</code> field of |command parameters| is present:
 
@@ -6624,7 +6724,10 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |navigable| of |navigables|:
 
-      1. [=map/Set=] [=scripting enabled overrides map=][|navigable|] to
+      1. If |emulated scripting enabled status| is null, [=map/remove=] |navigable| from
+         [=scripting enabled overrides map=].
+
+      1. Otherwise, [=map/set=] [=scripting enabled overrides map=][|navigable|] to
          |emulated scripting enabled status|.
 
 1. If the <code>userContexts</code> field of |command parameters| is present:
@@ -6634,7 +6737,10 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=scripting enabled overrides map=][|user context|] to
+      1. If |emulated scripting enabled status| is null, [=map/remove=] |user context| from
+         [=scripting enabled overrides map=].
+
+      1. Otherwise [=map/set=] [=scripting enabled overrides map=][|user context|] to
          |emulated scripting enabled status|.
 
 1. Return [=success=] with data null.
@@ -6662,11 +6768,11 @@ timezone on the given top-level traversables or user contexts.
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetTimezoneOverrideResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -6711,22 +6817,19 @@ steps:
 The [=remote end steps=] with |command parameters| are:
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>context</code>",
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>context</code>",
+   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
-1. Let |emulated timezone| be null.
+1. Let |emulated timezone| be |command parameters|["<code>timezone</code>"].
 
-1. If |command parameters| [=map/contains=] "<code>timezone</code>":
-
-   1. Set |emulated timezone| to |command parameters|["<code>timezone</code>"].
-
-   1. If [=IsTimeZoneOffsetString=](|emulated timezone|) returns false and
-      [=AvailableNamedTimeZoneIdentifiers=] does not [=list/contain=]
-      |emulated timezone|, return [=error=] with [=error code=] [=invalid argument=].
+1. If |emulated timezone| is not null and
+   [=IsTimeZoneOffsetString=](|emulated timezone|) returns false and
+   [=AvailableNamedTimeZoneIdentifiers=] does not [=list/contain=]
+   |emulated timezone|, return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |navigables| be a [=/set=].
 
@@ -6745,8 +6848,10 @@ The [=remote end steps=] with |command parameters| are:
 
    1. For each |user context| of |user contexts|:
 
-      1. [=map/Set=] [=timezone overrides map=][|user context|] to
-         |emulated timezone|.
+      1. If |emulated timezone| is null, [=map/remove=] |user context| from
+         [=timezone overrides map=].
+
+      1. Otherwise, [=map/set=] [=timezone overrides map=][|user context|] to |emulated timezone|.
 
       1. [=list/For each=] |top-level traversable| of the list of all
          [=/top-level traversables=] whose [=associated user context=] is
@@ -6756,7 +6861,9 @@ The [=remote end steps=] with |command parameters| are:
 
 1. For each |navigable| of |navigables|:
 
-   1. [=map/Set=] [=timezone overrides map=][|navigable|] to |emulated timezone|.
+   1. If |emulated timezone| is null, [=map/remove=] |navigable| from [=timezone overrides map=].
+
+   1. Otherwise, [=map/set=] [=timezone overrides map=][|navigable|] to |emulated timezone|.
 
 1. Return [=success=] with data null.
 
@@ -6796,7 +6903,19 @@ NetworkCommand = (
 <pre class="cddl" data-cddl-module="local-cddl">
 
 NetworkResult = (
-   network.AddInterceptResult
+  network.AddDataCollectorResult /
+  network.AddInterceptResult /
+  network.ContinueRequestResult /
+  network.ContinueResponseResult /
+  network.ContinueWithAuthResult /
+  network.DisownDataResult /
+  network.FailRequestResult /
+  network.GetDataResult /
+  network.ProvideResponseResult /
+  network.RemoveDataCollectorResult /
+  network.RemoveInterceptResult /
+  network.SetCacheBehaviorResult /
+  network.SetExtraHeadersResult
 )
 
 NetworkEvent = (
@@ -6831,30 +6950,34 @@ between [=navigables=] and [=/header lists=].
 
 ### Network Data Collection ### {#network-data-collection}
 
-A <dfn for="network">data</dfn> is a [=/struct=] consisting of
-an [=struct/item=] named <code>bytes</code>, which is a <code>network.BytesValue</code> or null,
-an [=struct/item=] named <code>cloned body</code>, which is a [=/body=] or null,
-an [=struct/item=] named <code>collectors</code>, which is a list of <code>network.Collector</code>,
-an [=struct/item=] named <code>pending</code>, which is a boolean,
-an [=struct/item=] named <code>request</code>, which is a <code>network.Request</code>,
-an [=struct/item=] named <code>size</code>, which is a js-uint or null,
-an [=struct/item=] named <code>type</code>, which is a <code>network.DataType</code>.
+A <dfn>network data</dfn> is a [=/struct=] with:
+* [=struct/Item=] named <dfn for="network-data">bytes</dfn>, which is a <code>[=network.BytesValue=]</code> or null,
+* [=struct/Item=] named <dfn for="network-data">cloned body</dfn>, which is a [=/body=] or null,
+* [=struct/Item=] named <dfn for="network-data">collectors</dfn>, which is a list of <code>[=network.Collector=]</code>,
+* [=struct/Item=] named <dfn for="network-data">pending</dfn>, which is a boolean,
+* [=struct/Item=] named <dfn for="network-data">request</dfn>, which is a [=request id=],
+* [=struct/Item=] named <dfn for="network-data">size</dfn>, which is a js-uint or null,
+* [=struct/Item=] named <dfn for="network-data">type</dfn>, which is a <code>[=network.DataType=]</code>.
 
-A <dfn for="network">collector</dfn> is a [=/struct=] consisting of
-an [=struct/item=] named <code>max encoded data size</code>, which is a js-uint,
-an [=struct/item=] named <code>contexts</code>, which is a list of <code>browsingContext.BrowsingContext</code>,
-an [=struct/item=] named <code>data types</code>, which is a list of <code>network.DataType</code>,
-an [=struct/item=] named <code>collector</code>, which is a <code>network.Collector</code>,
-an [=struct/item=] named <code>collector type</code>, which is a <code>network.CollectorType</code>,
-an [=struct/item=] named <code>user contexts</code>, which is a list of <code>browser.UserContext</code>.
+A <dfn for="network">collector</dfn> is a [=/struct=] with:
+* [=struct/Item=] named <dfn for="network-collector">max encoded item size</dfn>, which is a js-uint;
+* [=struct/item=] named <dfn for="network-collector">contexts</dfn>, which is a [=/list=] of [=navigable id=];
+* [=struct/item=] named <dfn for="network-collector">data types</dfn>, which is a [=/list=] of  <code>[=network.DataType=]</code>;
+* [=struct/item=] named <dfn for="network-collector">collector</dfn>, which is a <code>[=network.Collector=]</code>;
+* [=struct/item=] named <dfn for="network-collector">collector type</dfn>, which is a <code>[=network.CollectorType=]</code>;
+* [=struct/item=] named <dfn for="network-collector">user contexts</dfn>, which is a [=/list=] of <code>[=browser.UserContext=]</code>.
+
+Note: [=network-collector/max encoded item size=] defines the limit per item (response or request),
+and does not limit the size collected by the specific collector. The total size of all collected resources is
+limited by [=max total collected size=].
 
 A [=BiDi session=] has <dfn>network collectors</dfn> which is a [=/map=] between
-<code>network.Collector</code> and a [=network/collector=]. It is initially empty.
+<code>[=network.Collector=]</code> and a [=network/collector=]. It is initially empty.
 
 A [=remote end=] has <dfn>collected network data</dfn> which is a list of
-[=network/data=]. It is initially empty.
+[=network data=]. It is initially empty.
 
-A [=remote end=] has a <dfn>max total data size</dfn> which is a js-uint representing
+A [=remote end=] has a <dfn>max total collected size</dfn> which is a js-uint representing
 the size allocated to collect network data in [=collected network data=]. Its
 value is implementation-defined.
 
@@ -6883,17 +7006,18 @@ To <dfn>get navigable for request</dfn> given request:
 <div algorithm>
 To <dfn>match collector for navigable</dfn> given |collector| and |navigable|:
 
-1. If |collector|'s <code>contexts</code> is not [=list/empty=]:
+1. If |collector|'s [=network-collector/contexts=] is not [=list/empty=]:
 
-  1. If |collector|'s <code>contexts</code> [=list/contains=] |navigable|'s [=navigable id=], return true.
+  1. If |collector|'s [=network-collector/contexts=] [=list/contains=] |navigable|'s [=navigable id=], return true.
 
   1. Otherwise, return false.
 
-1. If |collector|'s <code>user contexts</code> is not [=list/empty=]:
+1. If |collector|'s [=network-collector/user contexts=] is not [=list/empty=]:
 
   1. Let |user context| be |navigable|'s [=associated user context=].
 
-  1. If |collector|'s <code>user contexts</code> [=list/contains=] |user context|'s [=user context id=], return true.
+  1. If |collector|'s [=network-collector/user contexts=] [=list/contains=] |user context|'s
+     [=user context id=], return true.
 
   1. Otherwise, return false.
 
@@ -6910,14 +7034,14 @@ Note: This hook is intended to be triggered by the fetch spec when the response 
 
    1. If |session|'s [=network collectors=] is not [=list/empty=]:
 
-      1. Let |collected data| be a struct with
-         <code>bytes</code> field set to null,
-         <code>cloned body</code> field set to [=body/clone=] with |response body|,
-         <code>collectors</code> field set to an empty list,
-         <code>pending</code> field set to true,
-         <code>request</code> field set to |request|'s [=request id=],
-         <code>size</code> field set to null,
-         <code>type</code> field set to "response".
+      1. Let |collected data| be a [=network data=] with
+         [=network-data/bytes=] set to null,
+         [=network-data/cloned body=] set to [=body/clone=] of |response body|,
+         [=network-data/collectors=] set to an empty list,
+         [=network-data/pending=] set to true,
+         [=network-data/request=] set to |request|'s [=request id=],
+         [=network-data/size=] set to null,
+         [=network-data/type=] set to "response".
 
       1. [=list/Append=] |collected data| to [=collected network data=].
 
@@ -6930,8 +7054,8 @@ To <dfn>get collected data</dfn> given |request id| and |data type|.
 
 1. For |collected data| of [=collected network data=]:
 
-   1. If |collected data|'s <code>request</code> is |request id| and
-      |collected data|'s <code>type</code> is |data type|, return |collected data|.
+   1. If |collected data|'s [=network-data/request=] is |request id| and
+      |collected data|'s [=network-data/type=] is |data type|, return |collected data|.
 
 1. Return null.
 
@@ -6944,7 +7068,7 @@ To <dfn>maybe abort network response body collection</dfn> given |request|:
 
 1. If |collected data| is null, return.
 
-1. Set |collected data|'s <code>pending</code> to false.
+1. Set |collected data|'s [=network-data/pending=] to false.
 
 1. [=Resume=] with "<code>network data collected</code>" and (|request|'s [=request id=], "response").
 
@@ -6964,7 +7088,7 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
    NOTE: This might happen if there are no collectors setup when the response is created,
    and [=clone network response body=] does not clone the corresponding body.
 
-1. Set |collected data|'s <code>pending</code> to false.
+1. Set |collected data|'s [=network-data/pending=] to false.
 
 1. Let |navigable| be [=get navigable for request=] with |request|.
 
@@ -6988,7 +7112,8 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
    1. For each |collector| in |session|'s [=network collectors=]:
 
-      1. If |collector|'s <code>data types</code> [=list/contains=] "response" and if [=match collector for navigable=] with |collector| and |top-level navigable|:
+      1. If |collector|'s [=network-collector/data types=] [=list/contains=] "response" and if
+         [=match collector for navigable=] with |collector| and |top-level navigable|:
 
          1. [=list/Append=] |collector| to |collectors|.
 
@@ -7021,22 +7146,23 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 
 1. Let |processBodyError| be this step: Do nothing.
 
-1. [=Fully read=] |collected data|’s <code>cloned body</code> given |processBody| and |processBodyError|.
+1. [=Fully read=] |collected data|’s [=network-data/cloned body=] given |processBody| and |processBodyError|.
 
 1. If |bytes| is not null:
 
    1. For |collector| in |collectors|:
 
-      1. If |size| is less than or equal to |collector|'s <code>max encoded data size</code>,
-         [=list/append=] |collector|'s <code>collector</code> to |collected data|'s <code>collectors</code>.
+      1. If |size| is less than or equal to |collector|'s [=network-collector/max encoded item size=],
+         [=list/append=] |collector|'s [=network-collector/collector=] to |collected data|'s
+         [=network-data/collectors=].
 
-   1. If |collected data|'s <code>collectors</code> is not [=list/empty=]:
+   1. If |collected data|'s [=network-data/collectors=] is not [=list/empty=]:
 
       1. [=Allocate size to record data=] given |size|.
 
-      1. Set |collected data|'s <code>bytes</code> to |bytes|.
+      1. Set |collected data|'s [=network-data/bytes=] to |bytes|.
 
-      1. Set |collected data|'s <code>size</code> to |size|.
+      1. Set |collected data|'s [=network-data/size=] to |size|.
 
    1. Otherwise, [=list/remove=] |collected data| from [=collected network data=].
 
@@ -7047,15 +7173,15 @@ To <dfn>maybe collect network response body</dfn> given |request| and |response|
 <div algorithm>
 To <dfn>allocate size to record data</dfn> given |size|:
 
-1. Let |available size| be [=max total data size=].
+1. Let |available size| be [=max total collected size=].
 
 1. Let |already collected data| be an empty list.
 
 1. For each |collected data| in [=collected network data=]:
 
-   1. If |collected data|'s <code>bytes</code> is not null:
+   1. If |collected data|'s [=network-data/bytes=] is not null:
 
-      1. Decrease |available size| by |collected data|'s <code>size</code>.
+      1. Decrease |available size| by |collected data|'s [=network-data/size=].
 
       1. [=list/Append=] |collected data| to |already collected data|
 
@@ -7063,11 +7189,11 @@ To <dfn>allocate size to record data</dfn> given |size|:
 
    1. For each |collected data| in |already collected data|:
 
-      1. Increase |available size| by |collected data|'s <code>size</code>.
+      1. Increase |available size| by |collected data|'s [=network-data/size=].
 
-      1. Set |collected data|'s <code>bytes</code> field to null.
+      1. Set |collected data|'s [=network-data/bytes=] field to null.
 
-      1. Set |collected data|'s <code>size</code> field to null.
+      1. Set |collected data|'s [=network-data/size=] field to null.
 
       1. If |available size| is greater than or equal to |size|, return.
 
@@ -7076,11 +7202,11 @@ To <dfn>allocate size to record data</dfn> given |size|:
 <div algorithm>
 To <dfn>remove collector from data</dfn> given |collected data| and |collector id|:
 
-1. If |collected data|'s <code>collectors</code> [=list/contains=] |collector id|:
+1. If |collected data|'s [=network-data/collectors=] [=list/contains=] |collector id|:
 
-   1. [=list/Remove=] |collector id| from |collected data|'s <code>collectors</code>.
+   1. [=list/Remove=] |collector id| from |collected data|'s [=network-data/collectors=].
 
-   1. If |collected data|'s <code>collectors</code> is [=list/empty=]:
+   1. If |collected data|'s [=network-data/collectors=] is [=list/empty=]:
 
       1. [=list/Remove=] |collected data| from [=collected network data=].
 
@@ -7385,7 +7511,7 @@ network.Base64Value = {
 }
 </pre>
 
-The <code>network.BytesValue</code> type represents binary data sent over the
+The <code><dfn>network.BytesValue</dfn></code> type represents binary data sent over the
 network. Valid UTF-8 is represented with the <code>network.StringValue</code>
 type, any other data is represented in Base64-encoded form as
 <code>network.Base64Value</code>.
@@ -7393,7 +7519,7 @@ type, any other data is represented in Base64-encoded form as
 <div algorithm>
 To <dfn>deserialize protocol bytes</dfn> given |protocol bytes|:
 
-Note: this takes bytes encoded as a <code>network.BytesValue</code> and returns
+Note: this takes bytes encoded as a <code>[=network.BytesValue=]</code> and returns
 a [=byte sequence=].
 
 1. If |protocol bytes| matches the <code>network.StringValue</code> production,
@@ -7410,7 +7536,7 @@ a [=byte sequence=].
 <div algorithm>
 To <dfn>serialize protocol bytes</dfn> given |bytes|:
 
-Note: this takes a [=byte sequence=] and returns a <code>network.BytesValue</code>.
+Note: this takes a [=byte sequence=] and returns a <code>[=network.BytesValue=]</code>.
 
 1. Let |text| be [=UTF-8 decode without BOM or fail=] |bytes|.
 
@@ -7431,7 +7557,7 @@ Note: this takes a [=byte sequence=] and returns a <code>network.BytesValue</cod
 network.Collector = text
 </pre>
 
-The <code>network.Collector</code> type represents the id of a [=network/collector=].
+The <code><dfn>network.Collector</dfn></code> type represents the id of a [=network/collector=].
 
 #### The network.CollectorType Type #### {#type-network-CollectorType}
 
@@ -7444,7 +7570,7 @@ network.CollectorType = "blob"
 Note: In the future we might also support the "stream" collector type for clients
 which want to read the data gathered by a given collector via a stream.
 
-The <code>network.CollectorType</code> type represents the different types of data collectors
+The <code><dfn>network.CollectorType</dfn></code> type represents the different types of data collectors
 that can be added.
 
 #### The network.Cookie Type #### {#type-network-Cookie}
@@ -7551,7 +7677,7 @@ To <dfn>serialize cookie header</dfn> given |protocol cookie|:
 network.DataType = "response"
 </pre>
 
-The <code>network.DataType</code> type represents the different types of network data
+The <code><dfn>network.DataType</dfn></code> type represents the different types of network data
 that can be collected.
 
 #### The network.FetchTimingInfo Type #### {#type-network-FetchTimingInfo}
@@ -8514,13 +8640,17 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |data types| be [=set/create|create a set=] with
    |command parameters|["<code>dataTypes</code>"].
 
-1. Let |max encoded data size| be |command parameters|
+1. Let |max encoded item size| be |command parameters|
    ["<code>maxEncodedDataSize</code>"].
+
+   Note: The <code>maxEncodedDataSize</code> parameter represents
+   [=network-collector/max encoded item size=] and limits the size of each request collected by the
+   given collector, not the total collector's collected size.
 
    Note: Different implementations might support different encodings, which means the
    encoded size might be different between browsers. Therefore, for the same data collector
-   configuration, some network data might fit the maxEncodedDataSize only in some
-   implementations.
+   configuration, some network data might fit the [=network-collector/max encoded item size=] only
+   in some implementations.
 
 1. Let |collector type| be |command parameters|
    ["<code>collectorType</code>"].
@@ -8534,8 +8664,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If |input user context ids| is not empty and |input context ids| is not
    empty, return [=error=] with [=error code=] [=invalid argument=].
 
-1. If |max encoded data size| is greater than [=max total data size=],
-   return [=error=] with [=error code=] [=invalid argument=].
+1. If |max encoded item size| is 0 or |max encoded item size| is greater than
+   [=max total collected size=], return [=error=] with [=error code=] [=invalid argument=].
 
 1. If |input context ids| is not [=set/empty=]:
 
@@ -8555,13 +8685,13 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
        1. If |user context| is null, return [=error=] with [=error code=] [=invalid argument=].
 
-1. Let |collector| be a struct with
-   <code>max encoded data size</code> field set to |max encoded data size|,
-   <code>data types</code> field set to |data types|,
-   <code>collector</code> field set to |collector id|,
-   <code>collector type</code> field set to |collector type|,
-   <code>contexts</code> field set to |input context ids|,
-   <code>user contexts</code> field set to |input user context ids|.
+1. Let |collector| be a [=network/collector=] with
+   [=network-collector/max encoded item size=] field set to |max encoded item size|,
+   [=network-collector/data types=] field set to |data types|,
+   [=network-collector/collector=] field set to |collector id|,
+   [=network-collector/collector type=] field set to |collector type|,
+   [=network-collector/contexts=] field set to |input context ids|,
+   [=network-collector/user contexts=] field set to |input user context ids|.
 
 1. Set |session|'s [=network collectors=][|collector id|] to |collector|.
 
@@ -8680,9 +8810,9 @@ that's blocked by a [=network intercept=].
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.ContinueRequestResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -8818,9 +8948,9 @@ response, but still provide the network response body.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.ContinueResponseResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -8872,9 +9002,9 @@ response that's blocked by a [=network intercept=] at the
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.ContinueWithAuthResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -8937,9 +9067,9 @@ collected network data for a given [=network/collector=].
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.DisownDataResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -8991,9 +9121,9 @@ fetch that's blocked by a [=network intercept=].
   </dd>
   <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.FailRequestResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9085,16 +9215,16 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Return [=error=] with [=error code=] [=no such network data=].
 
-1. If |collected data|'s <code>pending</code> is true:
+1. If |collected data|'s [=network-data/pending=] is true:
 
    1. [=Await=] with "network data collected" and (|request id|, |data type|).
 
-1. If |collector id| is not null and if |collected data|'s <code>collectors</code>
+1. If |collector id| is not null and if |collected data|'s [=network-data/collectors=]
    does not [=list/contain=] |collector id|:
 
    1. Return [=error=] with [=error code=] [=no such network data=].
 
-1. Let |bytes| be |collected data|'s <code>bytes</code>.
+1. Let |bytes| be |collected data|'s [=network-data/bytes=].
 
 1. If |bytes| is null,
 
@@ -9140,9 +9270,9 @@ lifecycle, and therefore emitting other events as it progresses.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.ProvideResponseResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9189,9 +9319,9 @@ The <dfn export for=commands>network.removeDataCollector</dfn> command removes a
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+       network.RemoveDataCollectorResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9236,9 +9366,9 @@ The <dfn export for=commands>network.removeIntercept</dfn> command removes a
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.RemoveInterceptResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9285,14 +9415,14 @@ the network cache behavior for certain requests.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.SetCacheBehaviorResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
 <div algorithm>
-The <dfn export>WebDriver BiDi cache behavior</dfn> steps given |request| are:
+The <dfn export>WebDriver BiDi cache behavior</dfn> steps given [=/request=] |request| are:
 
 1. Let |navigable| be null.
 
@@ -9415,9 +9545,9 @@ specifying headers that will extend, or overwrite, existing request headers.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      network.SetExtraHeadersResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -9543,12 +9673,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
       }
       </pre>
    </dd>
-   <dt>Return Type</dt>
-   <dd>
-    <code>
-      EmptyResult
-    </code>
-   </dd>
 </dl>
 
 This event is emitted when the user agent is going to prompt for authorization
@@ -9556,7 +9680,7 @@ credentials.
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi auth required</dfn>
-steps given |request| and |response|:
+steps given [=/request=] |request| and [=/response=] |response|:
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -9653,7 +9777,7 @@ are:
 
    1. Let |user context| be |top-level traversable|'s [=associated user context=].
 
-   1. For each |session| in [=active BiDI sessions=]:
+   1. For each |session| in [=active BiDi sessions=]:
 
       1. If |session|'s [=emulated network conditions=]'s
          [=emulated network conditions/navigable network conditions=]
@@ -9694,8 +9818,8 @@ The <dfn export>WebDriver BiDi network is offline</dfn> steps given
 </div>
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi before
-request sent</dfn> steps given |request|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi before request sent</dfn> steps
+given [=/request=] |request|:
 
 1. For each |user context| in the [=set of user contexts=]:
 
@@ -9836,7 +9960,7 @@ This event is emitted when a network request ends in an error.
 
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fetch
-error</dfn> steps given |request|:
+error</dfn> steps given [=/request=] |request|:
 
 1. If [=before request sent map=][|request|] does not contain |request|'s
    [=redirect count=], then run the [=WebDriver BiDi before request sent=] steps
@@ -9895,8 +10019,8 @@ error</dfn> steps given |request|:
 This event is emitted after the full response body is received.
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response
-completed</dfn> steps given |request| and |response|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response completed</dfn> steps
+given [=/request=] |request| and [=/response=] |response|:
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -9959,8 +10083,8 @@ This event is emitted after the response headers are received but before the
 body is complete.
 
 <div algorithm>
-The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response
-started</dfn> steps given |request| and |response|:
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi response started</dfn> steps
+given [=/request=] |request| and [=/response=] |response|:
 
 1. Let |redirect count| be |request|'s [=redirect count=].
 
@@ -10043,8 +10167,11 @@ ScriptCommand = (
 <pre class="cddl" data-cddl-module="local-cddl">
 ScriptResult = (
   script.AddPreloadScriptResult /
+  script.CallFunctionResult /
+  script.DisownResult /
   script.EvaluateResult /
-  script.GetRealmsResult
+  script.GetRealmsResult /
+  script.RemovePreloadScriptResult
 )
 
 ScriptEvent = (
@@ -10621,22 +10748,22 @@ To <dfn>serialize primitive protocol value</dfn> given a |value|:
    of steps for which the associated condition is true, if any:
 
   <dl>
-    <dt>[=Type=](|value|) is undefined
+    <dt>[=/Type=](|value|) is undefined
     <dd>Let |remote value| be a [=/map=] matching the <code>script.UndefinedValue</code>
     production in the {^local end definition^}.
 
-    <dt>[=Type=](|value|) is Null
+    <dt>[=/Type=](|value|) is Null
     <dd>Let |remote value| be a [=/map=] matching the <code>script.NullValue</code>
     production in the {^local end definition^}.
 
-    <dt>[=Type=](|value|) is String
+    <dt>[=/Type=](|value|) is String
     <dd>Let |remote value| be a [=/map=] matching the <code>script.StringValue</code>
     production in the {^local end definition^}, with the <code>value</code>
     property set to |value|.
 
     Issue: This doesn't handle lone surrogates
 
-    <dt>[=Type=](|value|) is Number
+    <dt>[=/Type=](|value|) is Number
     <dd>
     1. Switch on the value of |value|:
       <dl>
@@ -10656,12 +10783,12 @@ To <dfn>serialize primitive protocol value</dfn> given a |value|:
        production in the {^local end definition^}, with the <code>value</code>
        property set to |serialized|.
 
-    <dt>[=Type=](|value|) is Boolean
+    <dt>[=/Type=](|value|) is Boolean
     <dd>Let |remote value| be a [=/map=] matching the <code>script.BooleanValue</code>
         production in the {^local end definition^}, with the <code>value</code>
         property set to |value|.
 
-    <dt>[=Type=](|value|) is BigInt
+    <dt>[=/Type=](|value|) is BigInt
     <dd>Let |remote value| be a [=/map=] matching the <code>script.BigIntValue</code>
         production in the {^local end definition^}, with the <code>value</code>
         property set to the result of running the [=ToString=] operation on
@@ -10701,9 +10828,9 @@ To <dfn>deserialize primitive protocol value</dfn> given a |primitive protocol v
 
     <dt>|type| is the string "<code>number</code>"
     <dd>
-      1. If [=Type=](|value|) is Number, return [=success=] with data |value|.
+      1. If [=/Type=](|value|) is Number, return [=success=] with data |value|.
 
-      1. Assert: [=Type=](|value|) is String.
+      1. Assert: [=/Type=](|value|) is String.
 
       1. If |value| is the string "<code>NaN</code>", return [=success=] with
          data NaN.
@@ -11360,7 +11487,7 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
    of steps for which the associated condition is true:
 
   <dl>
-    <dt>[=Type=](|value|) is Symbol
+    <dt>[=/Type=](|value|) is Symbol
     <dd>Let |remote value| be a [=/map=] matching the <code>script.SymbolRemoteValue</code>
         production in the {^local end definition^}, with the <code>handle</code>
         property set to |handle id| if it's not null, or omitted otherwise.
@@ -11622,7 +11749,7 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
     <dt>Otherwise:
     <dd>
-    1. [=Assert=]: [=type=](|value|) is Object
+    1. [=Assert=]: [=/Type=](|value|) is Object
 
     1. Let |remote value| be a [=/map=] matching the <code>script.ObjectRemoteValue</code> production
        in the {^local end definition^}, with the <code>handle</code> property set
@@ -11739,7 +11866,7 @@ To <dfn>serialize as a mapping</dfn> given |iterable|, |serialization options|,
      options|["<code>maxObjectDepth</code>"] to |child serialization
      options|["<code>maxObjectDepth</code>"] - 1.
 
-  1. If [=Type=](|key|) is String, let |serialized key| be |child key|,
+  1. If [=/Type=](|key|) is String, let |serialized key| be |child key|,
      otherwise let |serialized key| be the result of [=serialize as a remote value=]
      with |child key|, |child serialization options|, |ownership type|,
      |serialization internal map|, |realm|, and |session|.
@@ -12129,9 +12256,9 @@ other handles or strong ECMAScript references.
    </dd>
    <dt>Return Type</dt>
    <dd>
-      <code>
-         EmptyResult
-      </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      script.DisownResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -12184,11 +12311,11 @@ Note: In case of an arrow function in <code>functionDeclaration</code>, the
       }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
-    <code>
-      script.EvaluateResult
-    </code>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      script.CallFunctionResult = script.EvaluateResult
+    </pre>
    </dd>
 </dl>
 
@@ -12369,10 +12496,11 @@ the promise is returned.
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
+    <!--There is a duplication between command's result and type-->
     <code>
-    script.EvaluateResult
+      script.EvaluateResult
     </code>
    </dd>
 </dl>
@@ -12471,7 +12599,7 @@ realm associated with a [=/navigable=]'s [=active document=].
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       script.GetRealmsResult = {
@@ -12556,9 +12684,9 @@ The <dfn export for=commands>script.removePreloadScript</dfn> command removes a
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-      EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      script.RemovePreloadScriptResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -13062,7 +13190,7 @@ The <dfn export for=commands>storage.getCookies</dfn> command retrieves zero or 
         }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       storage.GetCookiesResult = {
@@ -13140,7 +13268,7 @@ The <dfn export for=commands>storage.setCookie</dfn> command creates a new [=coo
         }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       storage.SetCookieResult = {
@@ -13221,7 +13349,7 @@ The <dfn export for=commands>storage.deleteCookies</dfn> command removes zero or
         }
     </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
      <pre class="cddl" data-cddl-module="local-cddl">
         storage.DeleteCookiesResult = {
@@ -13390,7 +13518,7 @@ The [=remote end event trigger=] is:
 Define the following [=console steps=] with |method|, |args|, and
 <var ignore>options</var>:
 
-1. For each |session| in [=active BiDI sessions=]:
+1. For each |session| in [=active BiDi sessions=]:
 
   1. If |method| is "<code>error</code>" or "<code>assert</code>", let |level| be
      "<code>error</code>". If |method| is "<code>debug</code>" or "<code>trace</code>"
@@ -13401,7 +13529,7 @@ Define the following [=console steps=] with |method|, |args|, and
 
   1. Let |text| be an empty string.
 
-  1. If [=Type=](|args|[0]) is String, and |args|[0] contains a
+  1. If [=/Type=](|args|[0]) is String, and |args|[0] contains a
      [=formatting specifier=], let |formatted args| be [=Formatter=](|args|). Otherwise
      let |formatted args| be |args|.
 
@@ -13539,11 +13667,18 @@ simulated user input.
 {^remote end definition^}
 
 <pre class="cddl" data-cddl-module="remote-cddl">
-
 InputCommand = (
   input.PerformActions //
   input.ReleaseActions //
   input.SetFiles
+)
+</pre>
+
+<pre class="cddl" data-cddl-module="remote-cddl">
+InputResult = (
+  input.PerformActionsResult /
+  input.ReleaseActionsResult /
+  input.SetFilesResult
 )
 </pre>
 
@@ -13754,9 +13889,9 @@ Note: for a detailed description of the behavior of this command, see the
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      input.PerformActionsResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -13809,9 +13944,9 @@ state associated with the current session.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      input.ReleaseActionsResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -13868,9 +14003,9 @@ to a set of file paths.
    </dd>
    <dt>Return Type</dt>
    <dd>
-    <code>
-     EmptyResult
-    </code>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      input.SetFilesResult = EmptyResult
+      </pre>
    </dd>
 </dl>
 
@@ -13955,10 +14090,13 @@ The [=remote end steps=] given |session| and |command parameters| are:
    </dd>
 </dl>
 
+A <dfn>WebDriver BiDi file picker options</dfn> is a [=struct=] with an [=struct/item=] named
+<dfn for="WebDriver BiDi file picker options">multiple</dfn> which is a boolean.
+
 <div algorithm>
 The [=remote end event trigger=] is the
-<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given |element| and optionally
-|file picker options| (default: null):
+<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given [=/element=] |element| and
+optionally [=WebDriver BiDi file picker options=] |file picker options| (default: null):
 
 1. Let |navigable| be the |element|'s [=node document=]'s [=/navigable=].
 
@@ -13969,9 +14107,7 @@ The [=remote end event trigger=] is the
 1. If |element| is not null and |element|'s <{input/multiple}> attribute is set,
     set |multiple| to <code>true</code>.
 
-1. If |file picker options| is not null:
-
-   1. If |file picker options|["<code>multiple</code>"] is true, set |multiple| to
+1. If |file picker options| is not null and |file picker options|'s [=WebDriver BiDi file picker options/multiple=] is true, set |multiple| to
       <code>true</code>.
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
@@ -14038,7 +14174,8 @@ WebExtensionCommand = (
 
 <pre class="cddl" data-cddl-module="local-cddl">
 WebExtensionResult = (
-  webExtension.InstallResult
+  webExtension.InstallResult /
+  webExtension.UninstallResult
 )
 </pre>
 
@@ -14093,7 +14230,7 @@ The <dfn export for=commands>webExtension.install</dfn> command installs a web e
       }
       </pre>
    </dd>
-   <dt>Result Type</dt>
+   <dt>Return Type</dt>
    <dd>
       <pre class="cddl" data-cddl-module="local-cddl">
       webExtension.InstallResult = {
@@ -14193,6 +14330,12 @@ The <dfn export for=commands>webExtension.uninstall</dfn> command uninstalls a w
       }
       </pre>
    </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      webExtension.UninstallResult = EmptyResult
+      </pre>
+   </dd>
 </dl>
 
 <div algorithm="remote end steps for webExtension.uninstall">
@@ -14256,5 +14399,7 @@ Note: the list is not exhaustive and might not be up to date.
 The following external specifications define additional WebDriver BiDi modules:
 
 1. <a href="https://www.w3.org/TR/permissions/">Permissions</a>
+
+1. <a href="https://wicg.github.io/nav-speculation/prefetch.html">nav-speculation</a>
 
 1. <a href="https://webbluetoothcg.github.io/web-bluetooth/">Web Bluetooth</a>
