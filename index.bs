@@ -9635,10 +9635,12 @@ navigables|:
    navigables. In that case it's unclear in which order to override the headers.
 
 1. [=Update headers=] with |request| and |session|'s
-   [=session/extra headers=]' [=extra headers/default headers=]
+   [=session/extra headers=]' [=extra headers/default headers=].
 
 1. Let |user context headers| be |session|'s [=session/extra headers=]'
    [=extra headers/user context headers=].
+
+1. Let |accept language override| be a null.
 
 1. For |navigable| in |related navigables|:
 
@@ -9646,7 +9648,10 @@ navigables|:
 
   1. If |user context headers| [=map/contains=] |user context|
      then [=update headers=] with |request| and
-     |user context headers|[|user context|]
+     |user context headers|[|user context|].
+
+   1. If [=locale overrides map=] [=map/contains=] |user context|,
+      set |accept language override| to [=locale overrides map=][|user context|].
 
 1. Let |navigable headers| be |session|'s [=session/extra headers=]'
    [=extra headers/navigable headers=].
@@ -9658,6 +9663,17 @@ navigables|:
 
   1. If |navigable headers| contains |top-level traversable|
      [=update headers=] with |request| and |navigable headers|[|top-level traversable|].
+
+  1. If [=locale overrides map=] [=map/contains=] |top-level traversable|,
+     set |accept language override| to  [=locale overrides map=][|top-level traversable|].
+
+1. If |accept language override| is not null:
+
+   1. Let |accept language headers| be an empty [=/header list=].
+
+   1. Append [=/header=] ("Accept-Language", |accept language override|) to |accept language headers|.
+
+   1. [=Update headers=] with |request| and |accept language headers|.
 
 </div>
 
