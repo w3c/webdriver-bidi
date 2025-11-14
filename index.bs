@@ -3211,14 +3211,17 @@ A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map bet
 A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
 [=navigables=] or [=user contexts=] and string.
 
-A <dfn>screen area</dfn> is a [=struct=] with an [=struct/item=] named
-<dfn attribute for="screen area">height</dfn> which is an integer,
-a [=struct/item=] named <dfn attribute for="screen area">width</dfn> which is an integer,
-a [=struct/item=] named <dfn attribute for="screen area">x</dfn> which is an integer,
-a [=struct/item=] named <dfn attribute for="screen area">y</dfn> which is an integer.
+A <dfn>screen settings</dfn> is a [=struct=] with an [=struct/item=] named
+<dfn attribute for="screen settings">height</dfn> which is an integer,
+a [=struct/item=] named <dfn attribute for="screen settings">width</dfn> which is an integer,
+a [=struct/item=] named <dfn attribute for="screen settings">x</dfn> which is an integer,
+a [=struct/item=] named <dfn attribute for="screen settings">y</dfn> which is an integer.
 
-A [=remote end=] has a <dfn>screen area overrides map</dfn> which is a weak map between
-[=navigables=] or [=user contexts=] and [=screen area=].
+A [=remote end=] has a <dfn>screen settings overrides</dfn> which is [=struct=]
+an [=struct/item=] named<dfn for="screen settings overrides">user context screen settings</dfn>,
+which is a weak map between [=user contexts=] and [=screen settings=], and  a [=struct/item=] named
+<dfn for="screen settings">navigable screen settings</dfn>, which is a weak map
+between [=navigables=] and [=screen settings=].
 
 A [=remote end=] has a <dfn>timezone overrides map</dfn> which is a weak map between
 [=navigables=] or [=user contexts=] and string.
@@ -6497,11 +6500,11 @@ The <dfn export>WebDriver BiDi emulated screen area</dfn> steps given [=/navigab
 
 1. Let |user context| be |top-level traversable|'s [=associated user context=].
 
-1. If [=screen area overrides map=] [=map/contains=] |top-level traversable|, return
-   [=screen area overrides map=][|top-level traversable|].
+1. If [=screen settings overrides=] [=map/contains=] |top-level traversable|, return
+   [=screen settings overrides=][|top-level traversable|].
 
-1. If [=screen area overrides map=] [=map/contains=] |user context|, return
-   [=screen area overrides map=][|user context|].
+1. If [=screen settings overrides=] [=map/contains=] |user context|, return
+   [=screen settings overrides=][|user context|].
 
 1. Return null
 
@@ -6535,12 +6538,14 @@ The [=remote end steps=] with |command parameters| are:
       [=get valid top-level traversables by ids=] with
       |command parameters|["<code>contexts</code>"].
 
+   1. Let |target| be [=screen settings overrides/navigable screen settings=].
+
    1. For each |navigable| of |navigables|:
 
       1. If |emulated screen area| is null, [=map/remove=] |navigable|
-         from [=screen area overrides map=].
+         from |target|.
 
-      1. Otherwise, [=map/set=] [=screen area overrides map=][|navigable|]
+      1. Otherwise, [=map/set=] |target|[|navigable|]
          to |emulated screen area|.
 
    1. Return [=success=] with data null.
@@ -6552,12 +6557,14 @@ The [=remote end steps=] with |command parameters| are:
    1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
       with |command parameters|["<code>userContexts</code>"].
 
+   1. Let |target| be [=screen settings overrides/user context screen settings=].
+
    1. For each |user context| of |user contexts|:
 
       1. If |emulated screen area| is null, [=map/remove=] |user context| from
-         [=screen area overrides map=].
+         |target|.
 
-      1. Otherwise, [=map/set=] [=screen area overrides map=][|user context|] to |emulated screen area|.
+      1. Otherwise, [=map/set=] |target|[|user context|] to |emulated screen area|.
 
       1. [=list/For each=] |top-level traversable| of the list of all
          [=/top-level traversables=] whose [=associated user context=] is
