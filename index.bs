@@ -285,6 +285,7 @@ spec: CSSOM-VIEW; urlPrefix: https://drafts.csswg.org/cssom-view/
     text: visual viewport page left; url: #dom-visualviewport-pageleft
     text: visual viewport page top; url: #dom-visualviewport-pagetop
     text: visual viewport; url: #visual-viewport
+    text: web-exposed available screen area; url: #web-exposed-available-screen-area
     text: web-exposed screen area; url: #web-exposed-screen-area
 spec: DOM; urlPrefix: https://dom.spec.whatwg.org/
   type: dfn
@@ -3209,6 +3210,18 @@ A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map bet
 
 A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
 [=navigables=] or [=user contexts=] and string.
+
+A <dfn>screen settings</dfn> is a [=struct=] with an [=struct/item=] named
+<dfn attribute for="screen settings">height</dfn> which is an integer,
+an [=struct/item=] named <dfn attribute for="screen settings">width</dfn> which is an integer,
+an [=struct/item=] named <dfn attribute for="screen settings">x</dfn> which is an integer,
+an [=struct/item=] named <dfn attribute for="screen settings">y</dfn> which is an integer.
+
+A [=remote end=] has a <dfn>screen settings overrides</dfn> which is a [=struct=] with
+an [=struct/item=] named <dfn for="screen settings overrides">user context screen settings</dfn>,
+which is a weak map between [=user contexts=] and [=screen settings=],
+and an [=struct/item=] named <dfn for="screen settings overrides">navigable screen settings</dfn>,
+which is a weak map between [=navigables=] and [=screen settings=].
 
 A [=remote end=] has a <dfn>timezone overrides map</dfn> which is a weak map between
 [=navigables=] or [=user contexts=] and string.
@@ -6442,6 +6455,136 @@ The [=remote end steps=] with |command parameters| and |session| are:
 1. [=Apply network conditions=].
 
 1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setScreenSettingsOverride Command ####  {#command-emulation-setScreenSettingsOverride}
+
+The <dfn export for=commands>emulation.setScreenSettingsOverride</dfn> command
+emulates [=web-exposed screen area=] and [=web-exposed available screen area=] of the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetScreenSettingsOverride = (
+        method: "emulation.setScreenSettingsOverride",
+        params: emulation.SetScreenSettingsOverrideParameters
+      )
+
+      emulation.ScreenArea = {
+        width: js-uint,
+        height: js-uint
+      }
+
+      emulation.SetScreenSettingsOverrideParameters = {
+        screenArea: emulation.ScreenArea / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetScreenSettingsOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+
+The <dfn export>WebDriver BiDi emulated available screen area</dfn> steps given [=/navigable=] |navigable|:
+
+1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
+
+1. Let |user context| be |top-level traversable|'s [=associated user context=].
+
+1. If [=screen settings overrides=] [=map/contains=] |top-level traversable|, return
+   [=screen settings overrides=][|top-level traversable|].
+
+1. If [=screen settings overrides=] [=map/contains=] |user context|, return
+   [=screen settings overrides=][|user context|].
+
+1. Return null
+
+</div>
+
+<div algorithm>
+
+The <dfn export>WebDriver BiDi emulated total screen area</dfn> steps given [=/navigable=] |navigable|:
+
+1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
+
+1. Let |user context| be |top-level traversable|'s [=associated user context=].
+
+1. If [=screen settings overrides=] [=map/contains=] |top-level traversable|, return
+   [=screen settings overrides=][|top-level traversable|].
+
+1. If [=screen settings overrides=] [=map/contains=] |user context|, return
+   [=screen settings overrides=][|user context|].
+
+1. Return null
+
+</div>
+
+<div algorithm="remote end steps for emulation.setScreenSettingsOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |emulated screen area| be |command parameters|["<code>screenArea</code>"].
+
+1. If |emulated screen area| is not null:
+
+   1. [=map/Set=] |emulated screen area|["<code>x</code>"] to 0.
+
+   1. [=map/Set=] |emulated screen area|["<code>y</code>"] to 0.
+
+1. Let |navigables| be a [=/set=].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+   1. Let |target| be [=screen settings overrides/navigable screen settings=].
+
+   1. For each |navigable| of |navigables|:
+
+      1. If |emulated screen area| is null, [=map/remove=] |navigable|
+         from |target|.
+
+      1. Otherwise, [=map/set=] |target|[|navigable|]
+         to |emulated screen area|.
+
+   1. Return [=success=] with data null.
+
+1. Otherwise:
+
+   1. Assert the <code>userContexts</code> field of |command parameters| is present.
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. Let |target| be [=screen settings overrides/user context screen settings=].
+
+   1. For each |user context| of |user contexts|:
+
+      1. If |emulated screen area| is null, [=map/remove=] |user context| from
+         |target|.
+
+      1. Otherwise, [=map/set=] |target|[|user context|] to |emulated screen area|.
+
+   1. Return [=success=] with data null.
 
 </div>
 
