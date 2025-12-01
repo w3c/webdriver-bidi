@@ -330,6 +330,9 @@ spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
 spec: STREAMS; urlPrefix: https://streams.spec.whatwg.org/
   type: dfn
     text: ReadableStream; url: #readablestream
+spec: TOUCH-EVENTS; urlPrefix: https://www.w3.org/community/reports/touchevents/CG-FINAL-touch-events-20240704/
+  type: dfn
+    text: expose legacy touch event APIs; url: #conditionally-exposing-legacy-touch-event-apis
 spec: WebSockets; urlPrefix: https://websockets.spec.whatwg.org/
   type: dfn
     text: WebSocket; url: #websocket
@@ -7094,8 +7097,35 @@ enabled touch events on web pages.
    </dd>
 </dl>
 
+Note: [=Expose legacy touch event APIs=] is a part of "Touch Events - Level 2"
+specification, which is legacy API is not maintained anymore, so the
+[=WebDriver BiDi emulated touch events enabled=] hooks invocation
+have to be defined in this specification.
+
+ISSUE: [=Expose legacy touch event APIs=] is defined per user agent, but WebDriver
+BiDi requires it to be defined per [=environment settings object=].
+
+<div algorithm="update expose legacy touch event APIs">
+The [=expose legacy touch event APIs=] value is implementation defined. A
+WebDriver-BiDi [=remote end=] must have an implementation that runs the following
+steps:
+
+1. Let |realm| be [=current Realm Record=].
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
+
+1. Let |emulated touch events enabled| be the result of
+   [=WebDriver BiDi emulated touch events enabled=] with |environment settings|.
+
+1. If |emulated touch events enabled| is not null, return
+   |emulated touch events enabled|. Otherwise, return the default
+   implementation-defined value of [=expose legacy touch event APIs=].
+
+</div>
+
 <div algorithm>
-The <dfn export>WebDriver BiDi touch events enabled</dfn> steps given
+The <dfn export>WebDriver BiDi emulated touch events enabled</dfn> steps given
 [=environment settings object=] |environment settings| are:
 
 1. Let |related navigables| be the result of [=get related navigables=] with
