@@ -5966,12 +5966,12 @@ EmulationCommand = (
   emulation.SetForcedColorsModeThemeOverride //
   emulation.SetGeolocationOverride //
   emulation.SetLocaleOverride //
+  emulation.SetMaxTouchPoints //
   emulation.SetNetworkConditions //
   emulation.SetScreenOrientationOverride //
   emulation.SetScreenSettingsOverride //
   emulation.SetScriptingEnabled //
   emulation.SetTimezoneOverride //
-  emulation.SetTouchEventsEnabled //
   emulation.SetUserAgentOverride
 )
 
@@ -5982,10 +5982,10 @@ EmulationResult = (
   emulation.SetForcedColorsModeThemeOverrideResult /
   emulation.SetGeolocationOverrideResult /
   emulation.SetLocaleOverrideResult /
+  emulation.SetMaxTouchPointsResult /
   emulation.SetScreenOrientationOverrideResult /
   emulation.SetScriptingEnabledResult /
   emulation.SetTimezoneOverrideResult /
-  emulation.SetTouchEventsEnabledResult /
   emulation.SetUserAgentOverrideResult
 )
 </pre>
@@ -5999,14 +5999,10 @@ between [=user context|user contexts=] and string, and an [=struct/item=] named
 <dfn for="emulated user agent">navigable user agent</dfn>, which is a weak map
 between [=/navigables=] and string.
 
-A [=BiDi session=] has <dfn for=session>emulated touch events state</dfn> which is a
-[=struct=] with
-an [=struct/item=] named <dfn for="emulated touch events state">default state</dfn>
-which is a boolean or null, initially null;
-an [=struct/item=] named <dfn for="emulated touch events state">user context state</dfn>,
-which is a weak map between [=user contexts=] and boolean, initially empty;
-and an [=struct/item=] named <dfn for="emulated touch events state">navigable state</dfn>,
-which is a weak map between [=navigables=] and boolean, initially empty.
+A [=BiDi session=] has <dfn for=session>emulated maxTouchPoints state</dfn>, which is a [=struct=] with
+an [=struct/item=] named <dfn for="emulated maxTouchPoints state">default</dfn>, which is an integer or null, initially null;
+an [=struct/item=] named <dfn for="emulated maxTouchPoints state">user contexts</dfn>, which is a weak map between [=user contexts=] and integer, initially empty;
+and an [=struct/item=] named <dfn for="emulated maxTouchPoints state">navigables</dfn>, which is a weak map between [=navigables=] and integer, initially empty.
 
 A [=remote end=] has a <dfn>forced colors mode theme overrides map</dfn> which is a weak map
 between [=user context|user contexts=] and string or null.
@@ -6345,6 +6341,119 @@ The [=remote end steps=] with |command parameters| are:
    1. If |emulated locale| is null, [=map/remove=] |navigable| from [=locale overrides map=].
 
    1. Otherwise, [=map/set=] [=locale overrides map=][|navigable|] to |emulated locale|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setMaxTouchPoints Command ####  {#command-emulation-setMaxTouchPoints}
+
+The <dfn export for=commands>emulation.setMaxTouchPoints</dfn> command emulates
+enabled touch input on web pages.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetMaxTouchPoints = (
+        method: "emulation.setMaxTouchPoints",
+        params: emulation.SetMaxTouchPointsParameters
+      )
+
+      emulation.SetMaxTouchPointsParameters = {
+        maxTouchPoints: (js-uint .ge 1) / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetMaxTouchPointsResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The <dfn export>WebDriver BiDi emulated maxTouchPoints</dfn> steps given
+[=environment settings object=] |environment settings| are:
+
+1. Let |related navigables| be the result of [=get related navigables=] with |environment settings|.
+
+1. For each |navigable| of |related navigables|:
+
+   1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
+
+   1. Let |user context| be |top-level navigable|'s [=associated user context=].
+
+   1. For each |session| in [=active BiDi sessions=]:
+
+      1. If |session|'s [=session/emulated maxTouchPoints state=]'s
+         [=emulated maxTouchPoints state/navigables=] contains |top-level navigable|, return
+         |session|'s [=session/emulated maxTouchPoints state=]'s
+         [=emulated maxTouchPoints state/navigables=][|top-level navigable|].
+
+   1. For each |session| in [=active BiDi sessions=]:
+
+      1. If |session|'s [=session/emulated maxTouchPoints state=]'s
+         [=emulated maxTouchPoints state/user contexts=] contains |user context|, return |session|'s
+         [=session/emulated maxTouchPoints state=]'s
+         [=emulated maxTouchPoints state/user contexts=][|user context|].
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. Let |emulated maxTouchPoints| be |session|'s [=session/emulated maxTouchPoints state=]'s
+      [=emulated maxTouchPoints state/default=].
+
+   1. If |emulated maxTouchPoints| is not null, return |emulated maxTouchPoints|.
+
+1. Return null.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setMaxTouchPoints">
+
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and |command parameters|
+   [=map/contains=] "<code>contexts</code>", return [=error=] with [=error code=]
+   [=invalid argument=].
+
+1. Let |maxTouchPoints| be |command parameters|["<code>maxTouchPoints</code>"].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=]
+      with |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. If |maxTouchPoints| is null, [=map/remove=] |navigable| from |session|'s
+         [=session/emulated maxTouchPoints state=]'s [=emulated maxTouchPoints state/navigables=].
+
+      1. Otherwise, [=map/set=] |session|'s [=session/emulated maxTouchPoints state=]'s
+         [=emulated maxTouchPoints state/navigables=][|navigable|] to |maxTouchPoints|.
+
+   1. Return [=success=] with data null.
+
+1. If the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with
+      |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. If |maxTouchPoints| is null, [=map/remove=] |user context| from |session|'s
+         [=session/emulated maxTouchPoints state=]'s [=emulated maxTouchPoints state/user contexts=].
+
+      1. Otherwise [=map/set=] |session|'s [=session/emulated maxTouchPoints state=]'s
+         [=emulated maxTouchPoints state/user contexts=][|user context|] to |maxTouchPoints|.
+
+   1. Return [=success=] with data null.
+
+1. Set |session|'s [=session/emulated maxTouchPoints state=]'s [=emulated maxTouchPoints state/default=]
+   to |maxTouchPoints|.
 
 1. Return [=success=] with data null.
 
@@ -7063,127 +7172,6 @@ The [=remote end steps=] with |command parameters| are:
    1. If |emulated timezone| is null, [=map/remove=] |navigable| from [=timezone overrides map=].
 
    1. Otherwise, [=map/set=] [=timezone overrides map=][|navigable|] to |emulated timezone|.
-
-1. Return [=success=] with data null.
-
-</div>
-
-#### The emulation.setTouchEventsEnabled Command ####  {#command-emulation-setTouchEventsEnabled}
-
-The <dfn export for=commands>emulation.setTouchEventsEnabled</dfn> command emulates
-enabled touch events on web pages.
-
-<dl>
-   <dt>Command Type</dt>
-   <dd>
-    <pre class="cddl" data-cddl-module="remote-cddl">
-      emulation.SetTouchEventsEnabled = (
-        method: "emulation.setTouchEventsEnabled",
-        params: emulation.SetTouchEventsEnabledParameters
-      )
-
-      emulation.SetTouchEventsEnabledParameters = {
-        enabled: true / null,
-        ? contexts: [+browsingContext.BrowsingContext],
-        ? userContexts: [+browser.UserContext],
-      }
-    </pre>
-   </dd>
-   <dt>Return Type</dt>
-   <dd>
-      <pre class="cddl" data-cddl-module="local-cddl">
-      emulation.SetTouchEventsEnabledResult = EmptyResult
-      </pre>
-   </dd>
-</dl>
-
-<div algorithm>
-The <dfn export>WebDriver BiDi emulated touch events enabled</dfn> steps given
-[=environment settings object=] |environment settings| are:
-
-1. Let |related navigables| be the result of [=get related navigables=] with
-   |environment settings|.
-
-1. For each |navigable| of |related navigables|:
-
-   1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
-
-   1. Let |user context| be |top-level navigable|'s [=associated user context=].
-
-   1. For each |session| in [=active BiDi sessions=]:
-
-      1. If |session|'s [=session/emulated touch events state=]'s
-         [=emulated touch events state/navigable state=] contains
-         |top-level navigable|, return |session|'s
-         [=session/emulated touch events state=]'s
-         [=emulated touch events state/navigable state=][|top-level navigable|].
-
-   1. For each |session| in [=active BiDi sessions=]:
-
-      1. If |session|'s [=session/emulated touch events state=]'s
-         [=emulated touch events state/user context state=] contains |user context|,
-         return |session|'s [=session/emulated touch events state=]'s
-         [=emulated touch events state/user context state=][|user context|].
-
-1. For each |session| in [=active BiDi sessions=]:
-
-   1. Let |emulated touch events state| be |session|'s
-      [=session/emulated touch events state=]'s
-      [=emulated touch events state/default state=].
-
-   1. If |emulated touch events state| is not null, return
-      |emulated touch events state|.
-
-1. Return null.
-
-</div>
-
-<div algorithm="remote end steps for emulation.setTouchEventsEnabled">
-
-The [=remote end steps=] with |session| and |command parameters| are:
-
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and
-   |command parameters| [=map/contains=] "<code>contexts</code>", return [=error=]
-   with [=error code=] [=invalid argument=].
-
-1. Let |enabled| be |command parameters|["<code>enabled</code>"].
-
-1. If the <code>contexts</code> field of |command parameters| is present:
-
-   1. Let |navigables| be the result of [=trying=] to
-      [=get valid top-level traversables by ids=] with
-      |command parameters|["<code>contexts</code>"].
-
-   1. For each |navigable| of |navigables|:
-
-      1. If |enabled| is null, [=map/remove=] |navigable| from |session|'s
-         [=session/emulated touch events state=]'s
-         [=emulated touch events state/navigable state=].
-
-      1. Otherwise, [=map/set=] |session|'s [=session/emulated touch events state=]'s
-         [=emulated touch events state/navigable state=][|navigable|] to |enabled|.
-
-   1. Return [=success=] with data null.
-
-1. If the <code>userContexts</code> field of |command parameters| is present:
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. If |enabled| is null, [=map/remove=] |user context| from |session|'s
-         [=session/emulated touch events state=]'s
-         [=emulated touch events state/user context state=].
-
-      1. Otherwise [=map/set=] |session|'s [=session/emulated touch events state=]'s
-         [=emulated touch events state/user context state=][|user context|] to
-         |enabled|.
-
-   1. Return [=success=] with data null.
-
-1. Set |session|'s [=session/emulated touch events state=]'s
-   [=emulated touch events state/default state=] to |enabled|.
 
 1. Return [=success=] with data null.
 
@@ -14768,10 +14756,9 @@ Insert the following steps at the start of the [=determine the device pixel rati
 
 ## Touch Events - Level 2 ## {#patchs-touch-events-level-2}
 
-Note: [=Expose legacy touch event APIs=] is a part of "Touch Events - Level 2"
-specification, which is legacy API is not maintained anymore, so the
-[=WebDriver BiDi emulated touch events enabled=] hooks invocation
-have to be defined in this specification.
+Note: [=Expose legacy touch event APIs=] is a part of "Touch Events - Level 2" specification, which
+is legacy API is not maintained anymore, so the [=WebDriver BiDi emulated maxTouchPoints=] hooks
+invocation have to be defined in this specification.
 
 ISSUE: [=Expose legacy touch event APIs=] is defined per user agent, but WebDriver
 BiDi requires it to be defined per [=environment settings object=].
@@ -14786,12 +14773,9 @@ steps:
 1. Let |environment settings| be the [=environment settings object=] whose
    [=realm execution context=]'s Realm component is |realm|.
 
-1. Let |emulated touch events enabled| be the result of
-   [=WebDriver BiDi emulated touch events enabled=] with |environment settings|.
-
-1. If |emulated touch events enabled| is not null, return
-   |emulated touch events enabled|. Otherwise, return the default
-   implementation-defined value of [=expose legacy touch event APIs=].
+1. If the result of [=WebDriver BiDi emulated maxTouchPoints=] with |environment settings| is not
+   null, return true. Otherwise, return the default implementation-defined value of
+   [=expose legacy touch event APIs=].
 
 </div>
 
