@@ -330,6 +330,9 @@ spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
 spec: STREAMS; urlPrefix: https://streams.spec.whatwg.org/
   type: dfn
     text: ReadableStream; url: #readablestream
+spec: TOUCH-EVENTS; urlPrefix: https://www.w3.org/community/reports/touchevents/CG-FINAL-touch-events-20240704/
+  type: dfn
+    text: expose legacy touch event APIs; url: #conditionally-exposing-legacy-touch-event-apis
 spec: WebSockets; urlPrefix: https://websockets.spec.whatwg.org/
   type: dfn
     text: WebSocket; url: #websocket
@@ -5968,6 +5971,7 @@ EmulationCommand = (
   emulation.SetScreenSettingsOverride //
   emulation.SetScriptingEnabled //
   emulation.SetTimezoneOverride //
+  emulation.SetTouchOverride //
   emulation.SetUserAgentOverride
 )
 
@@ -5981,6 +5985,7 @@ EmulationResult = (
   emulation.SetScreenOrientationOverrideResult /
   emulation.SetScriptingEnabledResult /
   emulation.SetTimezoneOverrideResult /
+  emulation.SetTouchOverrideResult /
   emulation.SetUserAgentOverrideResult
 )
 </pre>
@@ -5993,6 +5998,11 @@ an [=struct/item=] named
 between [=user context|user contexts=] and string, and an [=struct/item=] named
 <dfn for="emulated user agent">navigable user agent</dfn>, which is a weak map
 between [=/navigables=] and string.
+
+A [=BiDi session=] has <dfn for=session>emulated maxTouchPoints</dfn>, which is a [=struct=] with
+an [=struct/item=] named <dfn for="emulated maxTouchPoints">default</dfn>, which is an integer or null, initially null;
+an [=struct/item=] named <dfn for="emulated maxTouchPoints">user contexts</dfn>, which is a weak map between [=user context|user contexts=] and integer, initially empty;
+and an [=struct/item=] named <dfn for="emulated maxTouchPoints">navigables</dfn>, which is a weak map between [=/navigables=] and integer, initially empty.
 
 A [=remote end=] has a <dfn>forced colors mode theme overrides map</dfn> which is a weak map
 between [=user context|user contexts=] and string or null.
@@ -7049,6 +7059,124 @@ The [=remote end steps=] with |command parameters| are:
    1. If |emulated timezone| is null, [=map/remove=] |navigable| from [=timezone overrides map=].
 
    1. Otherwise, [=map/set=] [=timezone overrides map=][|navigable|] to |emulated timezone|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setTouchOverride Command ####  {#command-emulation-setTouchOverride}
+
+The <dfn export for=commands>emulation.setTouchOverride</dfn> command emulates
+enabled touch input on web pages.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetTouchOverride = (
+        method: "emulation.setTouchOverride",
+        params: emulation.SetTouchOverrideParameters
+      )
+
+      emulation.SetTouchOverrideParameters = {
+        maxTouchPoints: (js-uint .ge 1) / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetTouchOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+The <dfn export>WebDriver BiDi emulated max touch points</dfn> steps given
+[=environment settings object=] |environment settings| are:
+
+1. Let |related navigables| be the result of [=get related navigables=] with |environment settings|.
+
+1. For each |navigable| of |related navigables|:
+
+   1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
+
+   1. Let |user context| be |top-level navigable|'s [=associated user context=].
+
+   1. For each |session| in [=active BiDi sessions=]:
+
+      1. If |session|'s [=session/emulated maxTouchPoints=]'s
+         [=emulated maxTouchPoints/navigables=] contains |top-level navigable|, return
+         |session|'s [=session/emulated maxTouchPoints=]'s
+         [=emulated maxTouchPoints/navigables=][|top-level navigable|].
+
+   1. For each |session| in [=active BiDi sessions=]:
+
+      1. If |session|'s [=session/emulated maxTouchPoints=]'s
+         [=emulated maxTouchPoints/user contexts=] contains |user context|, return |session|'s
+         [=session/emulated maxTouchPoints=]'s
+         [=emulated maxTouchPoints/user contexts=][|user context|].
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. Let |emulated maxTouchPoints| be |session|'s [=session/emulated maxTouchPoints=]'s
+      [=emulated maxTouchPoints/default=].
+
+   1. If |emulated maxTouchPoints| is not null, return |emulated maxTouchPoints|.
+
+1. Return null.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setTouchOverride">
+
+The [=remote end steps=] with |session| and |command parameters| are:
+
+Note: There is a legacy [=expose legacy touch event APIs=], which can still be used by some existing
+web contents as a signal that the user agent is a touch-enabled "mobile" device. Even though the API
+is legacy, user agent might run [=implementation-defined=] steps to respect the
+[=session/emulated maxTouchPoints=] state in the [=expose legacy touch event APIs=].
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and |command parameters|
+   [=map/contains=] "<code>contexts</code>", return [=error=] with [=error code=]
+   [=invalid argument=].
+
+1. Let |maxTouchPoints| be |command parameters|["<code>maxTouchPoints</code>"].
+
+1. If the <code>contexts</code> field of |command parameters| is present:
+
+   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=]
+      with |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. If |maxTouchPoints| is null, [=map/remove=] |navigable| from |session|'s
+         [=session/emulated maxTouchPoints=]'s [=emulated maxTouchPoints/navigables=].
+
+      1. Otherwise, [=map/set=] |session|'s [=session/emulated maxTouchPoints=]'s
+         [=emulated maxTouchPoints/navigables=][|navigable|] to |maxTouchPoints|.
+
+   1. Return [=success=] with data null.
+
+1. If the <code>userContexts</code> field of |command parameters| is present:
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with
+      |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. If |maxTouchPoints| is null, [=map/remove=] |user context| from |session|'s
+         [=session/emulated maxTouchPoints=]'s [=emulated maxTouchPoints/user contexts=].
+
+      1. Otherwise [=map/set=] |session|'s [=session/emulated maxTouchPoints=]'s
+         [=emulated maxTouchPoints/user contexts=][|user context|] to |maxTouchPoints|.
+
+   1. Return [=success=] with data null.
+
+1. Set |session|'s [=session/emulated maxTouchPoints=]'s [=emulated maxTouchPoints/default=]
+   to |maxTouchPoints|.
 
 1. Return [=success=] with data null.
 
@@ -14630,7 +14758,6 @@ Other specifications can define <dfn>console steps</dfn>.
 Insert the following steps at the start of the [=determine the device pixel ratio=] algorithm:
 
 1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
-
 
 # Appendices # {#appendices}
 
