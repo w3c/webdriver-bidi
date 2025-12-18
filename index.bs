@@ -3192,13 +3192,13 @@ between [=/navigables=] and device pixel ratio overrides. It is initially empty.
 Note: this map is not cleared when the final session ends i.e. device pixel
 ratio overrides outlive any WebDriver session.
 
-A <dfn for="viewport-configuration">viewport dimensions</dfn> is a [=struct=] with an [=struct/item=] named
-<dfn attribute for="viewport-dimensions">height</dfn> which is an integer and
-a [=struct/item=] named <dfn attribute for="viewport-dimensions">width</dfn> which is an integer.
+A <dfn>viewport dimensions</dfn> is a [=struct=] with:
+* [=struct/Item=] named <dfn for="viewport-dimensions">height</dfn> which is an integer;
+* [=struct/Item=] named <dfn for="viewport-dimensions">width</dfn> which is an integer.
 
-A <dfn>viewport configuration</dfn> is a [=struct=] with an [=struct/item=] named
-<dfn attribute for="viewport-configuration">viewport</dfn> which is a [=viewport-configuration/viewport dimensions=]
-or null and an [=struct/item=] named <dfn attribute for="viewport-configuration">devicePixelRatio</dfn> which is a float or null.
+A <dfn>viewport configuration</dfn> is a [=struct=] with:
+* [=struct/Item=] named <dfn for="viewport-configuration">viewport</dfn> which is a [=viewport dimensions=] or null;
+* [=struct/Item=] named <dfn for="viewport-configuration">devicePixelRatio</dfn> which is a float or null.
 
 An <dfn>unhandled prompt behavior struct</dfn> is a [=struct=] with:
 * [=struct/Item=] named <dfn attribute for="unhandled-prompt-behavior-alert">alert</dfn> which is a string or null;
@@ -4957,12 +4957,13 @@ To <dfn>set device pixel ratio override</dfn> given |navigable| and |device pixe
 
 
 <div algorithm>
-To <dfn>set viewport</dfn> given |navigable| and |viewport|:
+To <dfn>set viewport</dfn> given given [=/navigable=] |navigable| and
+[=viewport-configuration/viewport=] |viewport|:
 
-1. If |viewport| is not null, set the width of |navigable|'s [=layout
-   viewport=] to be the <code>width</code> of |viewport| in CSS pixels and
+1. If |viewport| is not null, set the width of |navigable|'s [=layout viewport=]
+   to be the |viewport|'s [=viewport-dimensions/width=] in CSS pixels and
    set the height of the |navigable|'s [=layout viewport=] to be the
-   <code>height</code> of |viewport| in CSS pixels.
+   |viewport|'s [=viewport-dimensions/height=] in CSS pixels.
 
 1. Otherwise, set the |navigable|'s [=layout viewport=] to the
    implementation-defined default.
@@ -4995,14 +4996,16 @@ TODO: Move it as a hook in the html spec instead.
 
 1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
-   1. If |navigable| is a [=/top-level traversable=] and the <code>viewport</code> field of
-      [=viewport overrides map=][|user context|] is not null:
+   1. If |navigable| is a [=/top-level traversable=] and [=viewport overrides map=][|user context|]'s
+      [=viewport-configuration/viewport=] is not null:
 
-      1. [=Set viewport=] with |navigable| and [=viewport overrides map=][|user context|]["<code>viewport</code>"].
+      1. [=Set viewport=] with |navigable| and [=viewport overrides map=][|user context|]'s
+         [=viewport-configuration/viewport=].
 
-   1. If the <code>devicePixelRatio</code> field of [=viewport overrides map=][|user context|] is not null:
+   1. If [=viewport overrides map=][|user context|]'s [=viewport-configuration/devicePixelRatio=] is not null:
 
-      1. [=Set device pixel ratio override=] with |navigable| and [=viewport overrides map=][|user context|]["<code>devicePixelRatio</code>""].
+      1. [=Set device pixel ratio override=] with |navigable| and [=viewport overrides map=][|user context|]'s
+         [=viewport-configuration/devicePixelRatio=].
 
 </div>
 
@@ -5043,12 +5046,12 @@ The [=remote end steps=] with |command parameters| are:
 
       1. If |command parameters| [=map/contains=] "<code>viewport</code>":
 
-         1. Set [=viewport overrides map=][|user context|]["<code>viewport</code>"]
+         1. Set [=viewport overrides map=][|user context|]'s [=viewport-configuration/viewport=]
             to |command parameters|["<code>viewport</code>"].
 
       1. If |command parameters| [=map/contains=] "<code>devicePixelRatio</code>":
 
-         1. Set [=viewport overrides map=][|user context|]["<code>devicePixelRatio</code>"]
+         1. Set [=viewport overrides map=][|user context|]'s [=viewport-configuration/devicePixelRatio=]
             to |command parameters|["<code>devicePixelRatio</code>"].
 
       1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]
