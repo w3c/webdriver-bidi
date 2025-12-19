@@ -272,6 +272,9 @@ spec: HR-TIME; urlPrefix: https://w3c.github.io/hr-time/
 spec: RFC4648; urlPrefix: https://datatracker.ietf.org/doc/html/rfc4648
   type: dfn
     text: Base64 Encode; url: section-4
+spec: CSS-OVERFLOW-3; urlPrefix: https://drafts.csswg.org/css-overflow-3/
+  type: dfn
+    text: set scrollbar type; url: #set-scrollbar-type
 spec: CSS-VALUES-3; urlPrefix: https://drafts.csswg.org/css-values-3/
   type: dfn
     text: absolute lengths; url: #absolute-lengths
@@ -3197,14 +3200,11 @@ A <dfn>viewport dimensions</dfn> is a [=struct=] with:
 * [=struct/Item=] named <dfn for="viewport-dimensions">width</dfn> which is an integer.
 
 A <dfn>viewport configuration</dfn> is a [=struct=] with:
-* [=struct/Item=] named <dfn for="viewport-configuration">viewport</dfn> which is a [=viewport dimensions=] or null;
-* [=struct/Item=] named <dfn for="viewport-configuration">devicePixelRatio</dfn> which is a float or null.
+* [=struct/Item=] named <dfn for="viewport configuration">viewport</dfn> which is a [=viewport dimensions=] or null;
+* [=struct/Item=] named <dfn for="viewport configuration">devicePixelRatio</dfn> which is a float or null;
+* [=struct/Item=] named <dfn for="viewport configuration">scrollbar type</dfn> which is a string or null.
 
 A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map between [=user context|user contexts=] and [=viewport configuration=].
-
-A [=remote end=] has a <dfn>scrollbar mode overrides</dfn> which is a [=struct=] with:
-* [=struct/Item=] named <dfn for="scrollbar mode overrides">user context scrollbar modes</dfn> which is a weak map between [=user context|user contexts=] and strings;
-* [=struct/Item=] named <dfn for="scrollbar mode overrides">navigable scrollbar modes</dfn> which is a weak map between [=/navigables=] and strings;
 
 An <dfn>unhandled prompt behavior struct</dfn> is a [=struct=] with:
 * [=struct/Item=] named <dfn attribute for="unhandled-prompt-behavior-alert">alert</dfn> which is a string or null;
@@ -4908,7 +4908,7 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies 
         ? context: browsingContext.BrowsingContext,
         ? viewport: browsingContext.Viewport / null,
         ? devicePixelRatio: (float .gt 0.0) / null,
-        ? scrollbarMode: browsingContext.ScrollbarMode / null,
+        ? scrollbarType: browsingContext.ScrollbarType / null,
         ? userContexts: [+browser.UserContext],
       }
 
@@ -4917,7 +4917,7 @@ The <dfn export for=commands>browsingContext.setViewport</dfn> command modifies 
         height: js-uint,
       }
 
-      browsingContext.ScrollbarMode = "classic" / "overlay"
+      browsingContext.ScrollbarType = "classic" / "overlay"
     </pre>
    </dd>
    <dt>Return Type</dt>
@@ -4963,32 +4963,8 @@ To <dfn>set device pixel ratio override</dfn> given |navigable| and |device pixe
 </div>
 
 <div algorithm>
-
-The <dfn export>WebDriver BiDi emulated scrollbar type</dfn> steps given [=/document=] |document| are:
-
-1. Let |navigable| be |document|'s [=/navigable=]'s [=navigable/top-level traversable=].
-
-1. If [=scrollbar mode overrides=]'s [=scrollbar mode overrides/navigable scrollbar modes=]
-   [=map/contains=] |navigable|:
-
-   1. Return [=scrollbar mode overrides=]'s
-      [=scrollbar mode overrides/navigable scrollbar modes=][|navigable|].
-
-1. Let |user context| to be |navigable|'s [=associated user context=].
-
-1. If [=scrollbar mode overrides=]'s [=scrollbar mode overrides/user context scrollbar modes=]
-   [=map/contains=] |user context|:
-
-   1. Return [=scrollbar mode overrides=]'s
-      [=scrollbar mode overrides/user context scrollbar modes=][|user context|].
-
-1. Return null.
-
-</div>
-
-<div algorithm>
 To <dfn>set viewport</dfn> given given [=/navigable=] |navigable| and
-[=viewport-configuration/viewport=] |viewport|:
+[=viewport configuration/viewport=] |viewport|:
 
 1. If |viewport| is not null, set the width of |navigable|'s [=layout viewport=]
    to be the |viewport|'s [=viewport-dimensions/width=] in CSS pixels and
@@ -5027,15 +5003,20 @@ TODO: Move it as a hook in the html spec instead.
 1. If [=viewport overrides map=] [=map/contains=] |user context|:
 
    1. If |navigable| is a [=/top-level traversable=] and [=viewport overrides map=][|user context|]'s
-      [=viewport-configuration/viewport=] is not null:
+      [=viewport configuration/viewport=] is not null:
 
       1. [=Set viewport=] with |navigable| and [=viewport overrides map=][|user context|]'s
-         [=viewport-configuration/viewport=].
+         [=viewport configuration/viewport=].
 
-   1. If [=viewport overrides map=][|user context|]'s [=viewport-configuration/devicePixelRatio=] is not null:
+   1. If [=viewport overrides map=][|user context|]'s [=viewport configuration/devicePixelRatio=] is not null:
 
       1. [=Set device pixel ratio override=] with |navigable| and [=viewport overrides map=][|user context|]'s
-         [=viewport-configuration/devicePixelRatio=].
+         [=viewport configuration/devicePixelRatio=].
+
+   1. If [=viewport overrides map=][|user context|]'s [=viewport configuration/scrollbar type=] is not null:
+
+      1. [=Set scrollbar type=] of |navigable|'s [=active document=] to
+         [=viewport overrides map=][|user context|]'s [=viewport configuration/scrollbar type=].
 
 </div>
 
@@ -5066,17 +5047,6 @@ The [=remote end steps=] with |command parameters| are:
 
    1. [=set/Append=] |navigable| to |navigables|.
 
-   1. If |command parameters| [=map/contains=] "<code>scrollbarMode</code>":
-
-      1. Let |scrollbarMode| be the value of the <code>scrollbarMode</code> field of
-         |command parameters|.
-
-      1. If |scrollbarMode| is null, remove |navigable| from [=scrollbar mode overrides=]'s
-         [=scrollbar mode overrides/navigable scrollbar modes=].
-
-      1. Otherwise, [=map/set=] [=scrollbar mode overrides=]'s
-         [=scrollbar mode overrides/navigable scrollbar modes=][|navigable|] to |scrollbarMode|.
-
 1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
 
    1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
@@ -5087,29 +5057,23 @@ The [=remote end steps=] with |command parameters| are:
 
       1. If |command parameters| [=map/contains=] "<code>viewport</code>":
 
-         1. Set [=viewport overrides map=][|user context|]'s [=viewport-configuration/viewport=]
+         1. Set [=viewport overrides map=][|user context|]'s [=viewport configuration/viewport=]
             to |command parameters|["<code>viewport</code>"].
 
       1. If |command parameters| [=map/contains=] "<code>devicePixelRatio</code>":
 
-         1. Set [=viewport overrides map=][|user context|]'s [=viewport-configuration/devicePixelRatio=]
+         1. Set [=viewport overrides map=][|user context|]'s [=viewport configuration/devicePixelRatio=]
             to |command parameters|["<code>devicePixelRatio</code>"].
+
+      1. If |command parameters| [=map/contains=] "<code>scrollbarType</code>":
+
+         1. Set [=viewport overrides map=][|user context|]'s [=viewport configuration/scrollbar type=]
+            to |command parameters|["<code>scrollbarType</code>"].
 
       1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]
          whose [=associated user context=] is |user context|:
 
          1. [=list/Append=] |top-level traversable| to |navigables|.
-
-      1. If |command parameters| [=map/contains=] "<code>scrollbarMode</code>":
-
-         1. Let |scrollbarMode| be the value of the <code>scrollbarMode</code> field of
-            |command parameters|.
-
-         1. If |scrollbarMode| is null, remove |user context| from [=scrollbar mode overrides=]'s
-            [=scrollbar mode overrides/user context scrollbar modes=].
-
-         1. Otherwise, [=map/set=] [=scrollbar mode overrides=]'s
-            [=scrollbar mode overrides/user context scrollbar modes=][|user context|] to |scrollbarMode|.
 
 1. Otherwise, return [=error=] with [=error code=] [=invalid argument=].
 
@@ -5133,6 +5097,16 @@ The [=remote end steps=] with |command parameters| are:
       1. For the |navigable| and all [=descendant navigables=]:
 
          1. [=Set device pixel ratio override=] with |navigable| and |device pixel ratio|.
+
+1. If |command parameters| [=map/contains=] the <code>scrollbarType</code> field:
+
+   1. Let |scrollbar type| be the |command parameters|["<code>scrollbarType</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. For the |navigable| and all [=descendant navigables=]:
+
+        1. [=Set scrollbar type=] of |navigable|'s [=active document=] to |scrollbar type|.
 
 1. Return [=success=] with data null.
 
