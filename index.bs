@@ -5993,6 +5993,118 @@ EmulationResult = (
 )
 </pre>
 
+A <dfn export>stored config</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn for="stored config">scrollbar type</dfn> which is a string or null initially null.
+
+A [=BiDi session=] has an <dfn for=session>session stored configuration</dfn> which is a [=struct=] with:
+* [=struct/item=] named <dfn for="session stored configuration">default</dfn> which is a [=stored config=], initially an empty [=stored config=];
+* [=struct/item=] named <dfn for="session stored configuration">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=stored config=], initially empty;
+* [=struct/item=] named <dfn for="session stored configuration">navigables</dfn> which is a weak map between [=/navigables=] and [=stored config=], initially empty.
+
+<div algorithm>
+
+Note: this algorithm allows for accessing the stored configuration for a given navigable by checking the stored
+configuration for the navigable, then the user context, then the default for all the active sessions.
+
+To <dfn export>get stored config</dfn> of [=stored config=]'s [=struct/item=] |config item| for
+[=/navigables|navigable=] |navigable|:
+
+1. Assert |config item| is a [=struct/item=] of [=stored config=].
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. If |session|'s [=session stored configuration=]'s [=session stored configuration/navigables=] [=map/contains=]
+      |navigable|, and |session|'s [=session stored configuration=]'s
+      [=session stored configuration/navigables=][|navigable|]'s |config item| is not null,  return |session|'s
+      [=session stored configuration=]'s [=session stored configuration/navigables=][|navigable|]'s |config item|.
+
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. If |session|'s [=session stored configuration=]'s [=session stored configuration/user contexts=] [=map/contains=]
+      |user context|, and |session|'s [=session stored configuration=]'s
+      [=session stored configuration/user contexts=][|user context|]'s |config item| is not null, return |session|'s
+      [=session stored configuration=]'s [=session stored configuration/user contexts=][|user context|]'s |config item|.
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. If |session|'s |session|'s [=session stored configuration=]'s [=session stored configuration/default=]
+      |config item| is not null, return |session|'s [=session stored configuration=]'s
+      [=session stored configuration/default=]'s |config item|.
+
+1. Return null.
+
+</div>
+
+<div algorithm>
+
+To <dfn export>store global config</dfn> [=stored config=]'s [=struct/item=] |config item| |config| in [=BiDi session=]
+|session|:
+
+1. Set |session|'s [=session stored configuration=]'s [=session stored configuration/default=]'s |config item| to
+   |config|.
+
+</div>
+
+<div algorithm>
+
+To <dfn export>store user context config</dfn> [=stored config=]'s [=struct/item=] |config item| |config| for
+|user context| in [=BiDi session=] |session|:
+
+1. If |config| is null:
+
+   1. If |session|'s [=session stored configuration=]'s [=session stored configuration/user contexts=] [=map/contains=]
+      |user context|:
+      
+      1. Set |session|'s [=session stored configuration=]'s
+         [=session stored configuration/user contexts=][|user context|]'s |config item| to null.
+   
+      1. If |session|'s [=session stored configuration=]'s
+         [=session stored configuration/user contexts=][|user context|] contains only nulls, remove
+         |user context| from |session|'s [=session stored configuration=]'s
+         [=session stored configuration/user contexts=].
+      
+      1. Return.
+
+1. If |session|'s [=session stored configuration=]'s [=session stored configuration/user contexts=] does not
+   [=map/contain=] |user context|, set |session|'s [=session stored configuration=]'s
+   [=session stored configuration/user contexts=][|user context|] to an empty [=stored config=].
+
+1. Set |session|'s [=session stored configuration=]'s [=session stored configuration/user contexts=][|user context|]'s
+   [=struct/item=] |config item| to |config|.
+
+</div>
+
+<div algorithm>
+
+To <dfn export>store navigable config</dfn> [=stored config=]'s [=struct/item=] |config item| |config| for
+|navigable| in [=BiDi session=] |session|:
+
+1. If |config| is null:
+
+   1. If |session|'s [=session stored configuration=]'s [=session stored configuration/navigables=] [=map/contains=]
+      |navigable|:
+      
+      1. Set |session|'s [=session stored configuration=]'s
+         [=session stored configuration/navigables=][|navigable|]'s |config item| to null.
+   
+      1. If |session|'s [=session stored configuration=]'s
+         [=session stored configuration/navigables=][|navigable|] contains only nulls, remove
+         |navigable| from |session|'s [=session stored configuration=]'s
+         [=session stored configuration/navigables=].
+      
+      1. Return.
+
+1. If |session|'s [=session stored configuration=]'s [=session stored configuration/navigables=] does not
+   [=map/contain=] |navigable|, set |session|'s [=session stored configuration=]'s
+   [=session stored configuration/navigables=][|navigable|] to an empty [=stored config=].
+
+1. Set |session|'s [=session stored configuration=]'s [=session stored configuration/navigables=][|navigable|]'s
+   [=struct/item=] |config item| to |config|.
+
+</div>
+
 A [=BiDi session=] has an <dfn for=session>emulated user agent</dfn> which is a
 [=struct=] with an [=struct/item=] named
 <dfn for="emulated user agent">default user agent</dfn>, which is a string or null,
