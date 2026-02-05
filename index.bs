@@ -272,6 +272,10 @@ spec: HR-TIME; urlPrefix: https://w3c.github.io/hr-time/
 spec: RFC4648; urlPrefix: https://datatracker.ietf.org/doc/html/rfc4648
   type: dfn
     text: Base64 Encode; url: section-4
+spec: CSS-OVERFLOW-3; urlPrefix: https://drafts.csswg.org/css-overflow-3/
+  type: dfn
+    text: classic scrollbars; url: #classic-scrollbars
+    text: overlay scrollbars; url: #overlay-scrollbars
 spec: CSS-VALUES-3; urlPrefix: https://drafts.csswg.org/css-values-3/
   type: dfn
     text: absolute lengths; url: #absolute-lengths
@@ -5007,6 +5011,8 @@ TODO: Move it as a hook in the html spec instead.
       1. [=Set device pixel ratio override=] with |navigable| and [=viewport overrides map=][|user context|]'s
          [=viewport-configuration/devicePixelRatio=].
 
+1. [=Update scrollbar type override=].
+
 </div>
 
 <div algorithm="remote end steps for browsingContext.setViewport">
@@ -5973,6 +5979,7 @@ EmulationCommand = (
   emulation.SetScreenOrientationOverride //
   emulation.SetScreenSettingsOverride //
   emulation.SetScriptingEnabled //
+  emulation.SetScrollbarTypeOverride //
   emulation.SetTimezoneOverride //
   emulation.SetTouchOverride //
   emulation.SetUserAgentOverride
@@ -5987,11 +5994,126 @@ EmulationResult = (
   emulation.SetLocaleOverrideResult /
   emulation.SetScreenOrientationOverrideResult /
   emulation.SetScriptingEnabledResult /
+  emulation.SetScrollbarTypeOverrideResult /
   emulation.SetTimezoneOverrideResult /
   emulation.SetTouchOverrideResult /
   emulation.SetUserAgentOverrideResult
 )
 </pre>
+
+A <dfn export>stored remote end config</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn for="stored remote end config">scrollbar type</dfn> which is a string or null initially null.
+
+A [=remote end=] has an <dfn for="remote end">remote end stored configuration</dfn> which is a [=struct=] with:
+* [=struct/item=] named <dfn for="remote end stored configuration">global</dfn> which is a [=stored remote end config=], initially an empty [=stored remote end config=];
+* [=struct/item=] named <dfn for="remote end stored configuration">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=stored remote end config=], initially empty;
+* [=struct/item=] named <dfn for="remote end stored configuration">navigables</dfn> which is a weak map between [=/navigables=] and [=stored remote end config=], initially empty.
+
+<div algorithm>
+
+Note: this algorithm allows for accessing the stored configuration for a given navigable by checking the remote-end's
+stored configuration for the navigable, then the user context, then the global. Returns null if configuration is not
+set.
+
+To <dfn export>get stored remote end config</dfn> of [=stored remote end config=]'s [=struct/item=] |item| for
+[=/navigables|navigable=] |navigable|:
+
+1. Assert |item| is a [=struct/item=] of [=stored remote end config=].
+
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/navigables=]
+   [=map/contains=] |navigable|, and [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/navigables=][|navigable|]'s |item| is not null,  return [=remote end=]'s
+   [=remote end stored configuration=]'s [=remote end stored configuration/navigables=][|navigable|]'s |item|.
+
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=] [=map/contains=]
+   |user context|, and [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/user contexts=][|user context|]'s |item| is not null, return [=remote end=]'s
+   [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=][|user context|]'s |item|.
+
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/global=]
+   |item| is not null, return [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/global=]'s |item|.
+
+1. Return null.
+
+</div>
+
+<div algorithm>
+
+Note: this is a generic algorithm for storing configuration [=stored remote end config=] in [=remote end=]'s
+[=remote end stored configuration/global=]'s [=remote end stored configuration=].
+
+To <dfn>store global remote end config</dfn> |config| in [=stored remote end config=]'s [=struct/item=] |item|:
+
+1. Set [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/global=]'s |item| to
+   |config|.
+
+</div>
+
+<div algorithm>
+
+Note: this is a generic algorithm for storing configuration [=stored remote end config=] in [=remote end=]'s
+[=remote end stored configuration/user contexts=]'s [=remote end stored configuration=].
+
+To <dfn>store user context's remote end config</dfn> |config| in [=stored remote end config=]'s [=struct/item=] |item|
+for |user context|:
+
+1. If |config| is null:
+
+   1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=] [=map/contains=]
+      |user context|:
+
+      1. Set [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/user contexts=][|user context|]'s |item| to null.
+
+      1. If [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/user contexts=][|user context|] contains only nulls, remove
+         |user context| from [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/user contexts=].
+
+      1. Return.
+
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=] does not
+   [=map/contain=] |user context|, set [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/user contexts=][|user context|] to an empty [=stored remote end config=].
+
+1. Set [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=][|user context|]'s
+   [=struct/item=] |item| to |config|.
+
+</div>
+
+<div algorithm>
+
+Note: this is a generic algorithm for storing configuration [=stored remote end config=] in [=remote end=]'s
+[=remote end stored configuration/navigables=]'s [=remote end stored configuration=].
+
+To <dfn>store navigable's remote end config</dfn> |config| in [=stored remote end config=]'s [=struct/item=] |item| for |navigable|:
+
+1. If |config| is null:
+
+   1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/navigables=] [=map/contains=]
+      |navigable|:
+
+      1. Set [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/navigables=][|navigable|]'s |item| to null.
+
+      1. If [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/navigables=][|navigable|] contains only nulls, remove
+         |navigable| from [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/navigables=].
+
+      1. Return.
+
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/navigables=] does not
+   [=map/contain=] |navigable|, set [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/navigables=][|navigable|] to an empty [=stored remote end config=].
+
+1. Set [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/navigables=][|navigable|]'s
+   [=struct/item=] |item| to |config|.
+
+</div>
 
 A [=BiDi session=] has an <dfn for=session>emulated user agent</dfn> which is a
 [=struct=] with an [=struct/item=] named
@@ -6272,26 +6394,6 @@ The <dfn export>WebDriver BiDi emulated language</dfn> steps given an [=environm
        [=locale overrides map=][|user context|].
 
 1. Return null
-
-</div>
-
-TODO: Remove the following algorithm once the update for navigator.language/s in the html spec is merged. https://github.com/whatwg/html/pull/11793
-
-<div algorithm="updated DefaultLocale steps">
-The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
-[=remote end=] must have an implementation that runs the following steps:
-
-1. Let |realm| be [=current Realm Record=].
-
-1. Let |environment settings| be the [=environment settings object=] whose
-   [=realm execution context=]'s Realm component is |realm|.
-
-1. Let |locale override| be the result of [=WebDriver BiDi emulated language=] with
-   |environment settings|.
-
-1. If |locale override| is not null, return |locale override|.
-   Otherwise, return the result of implementation-defined steps in accordance
-   with the requirements of the [=DefaultLocale=] specification.
 
 </div>
 
@@ -6944,6 +7046,109 @@ The [=remote end steps=] with |command parameters| are:
 1. Return [=success=] with data null.
 
 </div>
+
+#### The emulation.SetScrollbarTypeOverride Command #### {#command-emulation-setScrollbarTypeOverride}
+
+The <dfn export for=commands>emulation.setScrollbarTypeOverride</dfn> command modifies
+scrollbar type on the given top-level traversables, user contexts or globally.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetScrollbarTypeOverride = (
+        method: "emulation.setScrollbarTypeOverride",
+        params: emulation.SetScrollbarTypeOverrideParameters
+      )
+
+      emulation.SetScrollbarTypeOverrideParameters = {
+        scrollbarType: "classic" / "overlay" / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetScrollbarTypeOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
+
+1. Let |scrollbar type override| be the result of [=get stored remote end config=] of
+   [=stored remote end config/scrollbar type=] for |navigable|.
+
+1. Assert that |scrollbar type override| is "<code>classic</code>", "<code>overlay</code>" or null.
+
+1. If |scrollbar type override| is "<code>classic</code>", run [=implementation-defined=] steps to make the
+   |navigable|'s [=active document=] to use <a>classic scrollbars</a>.
+
+1. Otherwise, if |scrollbar type override| is "<code>overlay</code>", run [=implementation-defined=] steps to
+   make the |navigable|'s [=active document=] to use <a>overlay scrollbars</a>.
+
+1. Otherwise, run [=implementation-defined=] steps to make the |navigable|'s [=active document=] to
+   use an [=implementation-defined=] default scrollbar type.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setScrollbarTypeOverride">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |emulated scrollbar type| be |command parameters|["<code>scrollbarType</code>"].
+
+1. If the implementation does not support setting |emulated scrollbar type|, then return [=error=] with [=error code=]
+   [=unsupported operation=].
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |affected navigables| be an empty [=/set=].
+
+1. If |command parameters| [=map/contains=] "<code>contexts</code>":
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. [=set/Append=] |navigable| to |affected navigables|.
+
+      1. [=Store navigable's remote end config=] |emulated scrollbar type| in
+         [=stored remote end config/scrollbar type=] for |navigable|.
+
+1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=list/For each=] |top-level traversable| in the list of all [=/top-level traversables=]
+         whose [=associated user context=] is |user context|:
+
+         1. [=set/Append=] |top-level traversable| to |affected navigables|.
+
+      1. [=Store user context's remote end config=] |emulated scrollbar type| in
+         [=stored remote end config/scrollbar type=] for |user context|.
+
+1. Otherwise, [=store global remote end config=] |emulated scrollbar type| in
+   [=stored remote end config/scrollbar type=] .
+
+1. For each |navigable| of |affected navigables|:
+
+   1. [=Update scrollbar type override=] for |navigable|.
+
+1. Return [=success=] with data null.
+
+</div>
+
 
 #### The emulation.setTimezoneOverride Command ####  {#command-emulation-setTimezoneOverride}
 
