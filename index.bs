@@ -5999,45 +5999,40 @@ EmulationResult = (
 )
 </pre>
 
-A <dfn export>stored config</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn for="stored config">scrollbar type</dfn> which is a string or null initially null.
+A <dfn export>stored remote end config</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn for="stored remote end config">scrollbar type</dfn> which is a string or null initially null.
 
-A [=BiDi session=] has an <dfn for=session>session stored configuration</dfn> which is a [=struct=] with:
-* [=struct/item=] named <dfn for="session stored configuration">global</dfn> which is a [=stored config=], initially an empty [=stored config=];
-* [=struct/item=] named <dfn for="session stored configuration">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=stored config=], initially empty;
-* [=struct/item=] named <dfn for="session stored configuration">navigables</dfn> which is a weak map between [=/navigables=] and [=stored config=], initially empty.
+A [=remote end=] has an <dfn for="remote end">remote end stored configuration</dfn> which is a [=struct=] with:
+* [=struct/item=] named <dfn for="remote end stored configuration">global</dfn> which is a [=stored remote end config=], initially an empty [=stored remote end config=];
+* [=struct/item=] named <dfn for="remote end stored configuration">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=stored remote end config=], initially empty;
+* [=struct/item=] named <dfn for="remote end stored configuration">navigables</dfn> which is a weak map between [=/navigables=] and [=stored remote end config=], initially empty.
 
 <div algorithm>
 
-Note: this algorithm allows for accessing the stored configuration for a given navigable by checking the stored
-configuration for the navigable, then the user context, then the global for all the active sessions.
+Note: this algorithm allows for accessing the stored configuration for a given navigable by checking the remote-end's
+stored configuration for the navigable, then the user context, then the global. Returns null if configuration is not
+set.
 
-To <dfn export>get stored config</dfn> of [=stored config=]'s [=struct/item=] |item| for
+To <dfn export>get stored remote end config</dfn> of [=stored remote end config=]'s [=struct/item=] |item| for
 [=/navigables|navigable=] |navigable|:
 
-1. Assert |item| is a [=struct/item=] of [=stored config=].
+1. Assert |item| is a [=struct/item=] of [=stored remote end config=].
 
-1. For each |session| in [=active BiDi sessions=]:
-
-   1. If |session|'s [=session stored configuration=]'s [=session stored configuration/navigables=] [=map/contains=]
-      |navigable|, and |session|'s [=session stored configuration=]'s
-      [=session stored configuration/navigables=][|navigable|]'s |item| is not null,  return |session|'s
-      [=session stored configuration=]'s [=session stored configuration/navigables=][|navigable|]'s |item|.
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/navigables=]
+   [=map/contains=] |navigable|, and [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/navigables=][|navigable|]'s |item| is not null,  return [=remote end=]'s
+   [=remote end stored configuration=]'s [=remote end stored configuration/navigables=][|navigable|]'s |item|.
 
 1. Let |user context| be |navigable|'s [=associated user context=].
 
-1. For each |session| in [=active BiDi sessions=]:
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=] [=map/contains=]
+   |user context|, and [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/user contexts=][|user context|]'s |item| is not null, return [=remote end=]'s
+   [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=][|user context|]'s |item|.
 
-   1. If |session|'s [=session stored configuration=]'s [=session stored configuration/user contexts=] [=map/contains=]
-      |user context|, and |session|'s [=session stored configuration=]'s
-      [=session stored configuration/user contexts=][|user context|]'s |item| is not null, return |session|'s
-      [=session stored configuration=]'s [=session stored configuration/user contexts=][|user context|]'s |item|.
-
-1. For each |session| in [=active BiDi sessions=]:
-
-   1. If |session|'s |session|'s [=session stored configuration=]'s [=session stored configuration/global=]
-      |item| is not null, return |session|'s [=session stored configuration=]'s
-      [=session stored configuration/global=]'s |item|.
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/global=]
+   |item| is not null, return [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/global=]'s |item|.
 
 1. Return null.
 
@@ -6045,68 +6040,75 @@ To <dfn export>get stored config</dfn> of [=stored config=]'s [=struct/item=] |i
 
 <div algorithm>
 
-To <dfn>store global config</dfn> [=stored config=]'s [=struct/item=] |item| |config| in [=BiDi session=]
-|session|:
+Note: this is a generic algorithm for storing configuration [=stored remote end config=] in [=remote end=]'s
+[=remote end stored configuration/global=]'s [=remote end stored configuration=].
 
-1. Set |session|'s [=session stored configuration=]'s [=session stored configuration/global=]'s |item| to
+To <dfn>store global remote end config</dfn> |config| in [=stored remote end config=]'s [=struct/item=] |item|:
+
+1. Set [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/global=]'s |item| to
    |config|.
 
 </div>
 
 <div algorithm>
 
-To <dfn>store user context config</dfn> [=stored config=]'s [=struct/item=] |item| |config| for
-|user context| in [=BiDi session=] |session|:
+Note: this is a generic algorithm for storing configuration [=stored remote end config=] in [=remote end=]'s
+[=remote end stored configuration/user contexts=]'s [=remote end stored configuration=].
+
+To <dfn>store user context's remote end config</dfn> |config| in [=stored remote end config=]'s [=struct/item=] |item|
+for |user context|:
 
 1. If |config| is null:
 
-   1. If |session|'s [=session stored configuration=]'s [=session stored configuration/user contexts=] [=map/contains=]
+   1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=] [=map/contains=]
       |user context|:
 
-      1. Set |session|'s [=session stored configuration=]'s
-         [=session stored configuration/user contexts=][|user context|]'s |item| to null.
+      1. Set [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/user contexts=][|user context|]'s |item| to null.
 
-      1. If |session|'s [=session stored configuration=]'s
-         [=session stored configuration/user contexts=][|user context|] contains only nulls, remove
-         |user context| from |session|'s [=session stored configuration=]'s
-         [=session stored configuration/user contexts=].
+      1. If [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/user contexts=][|user context|] contains only nulls, remove
+         |user context| from [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/user contexts=].
 
       1. Return.
 
-1. If |session|'s [=session stored configuration=]'s [=session stored configuration/user contexts=] does not
-   [=map/contain=] |user context|, set |session|'s [=session stored configuration=]'s
-   [=session stored configuration/user contexts=][|user context|] to an empty [=stored config=].
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=] does not
+   [=map/contain=] |user context|, set [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/user contexts=][|user context|] to an empty [=stored remote end config=].
 
-1. Set |session|'s [=session stored configuration=]'s [=session stored configuration/user contexts=][|user context|]'s
+1. Set [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/user contexts=][|user context|]'s
    [=struct/item=] |item| to |config|.
 
 </div>
 
 <div algorithm>
 
-To <dfn>store navigable config</dfn> [=stored config=]'s [=struct/item=] |item| |config| for
-|navigable| in [=BiDi session=] |session|:
+Note: this is a generic algorithm for storing configuration [=stored remote end config=] in [=remote end=]'s
+[=remote end stored configuration/navigables=]'s [=remote end stored configuration=].
+
+To <dfn>store navigable's remote end config</dfn> |config| in [=stored remote end config=]'s [=struct/item=] |item| for |navigable|:
 
 1. If |config| is null:
 
-   1. If |session|'s [=session stored configuration=]'s [=session stored configuration/navigables=] [=map/contains=]
+   1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/navigables=] [=map/contains=]
       |navigable|:
 
-      1. Set |session|'s [=session stored configuration=]'s
-         [=session stored configuration/navigables=][|navigable|]'s |item| to null.
+      1. Set [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/navigables=][|navigable|]'s |item| to null.
 
-      1. If |session|'s [=session stored configuration=]'s
-         [=session stored configuration/navigables=][|navigable|] contains only nulls, remove
-         |navigable| from |session|'s [=session stored configuration=]'s
-         [=session stored configuration/navigables=].
+      1. If [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/navigables=][|navigable|] contains only nulls, remove
+         |navigable| from [=remote end=]'s [=remote end stored configuration=]'s
+         [=remote end stored configuration/navigables=].
 
       1. Return.
 
-1. If |session|'s [=session stored configuration=]'s [=session stored configuration/navigables=] does not
-   [=map/contain=] |navigable|, set |session|'s [=session stored configuration=]'s
-   [=session stored configuration/navigables=][|navigable|] to an empty [=stored config=].
+1. If [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/navigables=] does not
+   [=map/contain=] |navigable|, set [=remote end=]'s [=remote end stored configuration=]'s
+   [=remote end stored configuration/navigables=][|navigable|] to an empty [=stored remote end config=].
 
-1. Set |session|'s [=session stored configuration=]'s [=session stored configuration/navigables=][|navigable|]'s
+1. Set [=remote end=]'s [=remote end stored configuration=]'s [=remote end stored configuration/navigables=][|navigable|]'s
    [=struct/item=] |item| to |config|.
 
 </div>
@@ -7095,8 +7097,8 @@ scrollbar type on the given top-level traversables, user contexts or globally.
 <div algorithm>
 To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
 
-1. Let |scrollbar type override| be the result of [=get stored config=] of [=stored config/scrollbar type=] for
-   |navigable|.
+1. Let |scrollbar type override| be the result of [=get stored remote end config=] of
+   [=stored remote end config/scrollbar type=] for |navigable|.
 
 1. Assert that |scrollbar type override| is "<code>classic</code>", "<code>overlay</code>" or null.
 
@@ -7113,7 +7115,7 @@ To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
 
 <div algorithm="remote end steps for emulation.setScrollbarTypeOverride">
 
-The [=remote end steps=] given |session| and |command parameters| are:
+The [=remote end steps=] given |command parameters| are:
 
 1. Let |emulated scrollbar type| be |command parameters|["<code>scrollbarType</code>"].
 
@@ -7136,7 +7138,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
       1. [=set/Append=] |navigable| to |affected navigables|.
 
-      1. [=Store navigable config=] [=stored config/scrollbar type=] |emulated scrollbar type| for |navigable|.
+      1. [=Store navigable's remote end config=] |emulated scrollbar type| in
+         [=stored remote end config/scrollbar type=] for |navigable|.
 
 1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
 
@@ -7150,9 +7153,11 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
          1. [=set/Append=] |top-level traversable| to |affected navigables|.
 
-      1. [=Store user context config=] [=stored config/scrollbar type=] |emulated scrollbar type| for |user context|.
+      1. [=Store user context's remote end config=] |emulated scrollbar type| in
+         [=stored remote end config/scrollbar type=] for |user context|.
 
-1. Otherwise, [=store global config=] [=stored config/scrollbar type=] |emulated scrollbar type| for |session|.
+1. Otherwise, [=store global remote end config=] |emulated scrollbar type| in
+   [=stored remote end config/scrollbar type=] .
 
 1. For each |navigable| of |affected navigables|:
 
