@@ -3270,6 +3270,7 @@ BrowsingContextCommand = (
   browsingContext.Navigate //
   browsingContext.Print //
   browsingContext.Reload //
+  browsingContext.SetCSPBypass //
   browsingContext.SetViewport //
   browsingContext.TraverseHistory
 )
@@ -3289,6 +3290,7 @@ BrowsingContextResult = (
   browsingContext.NavigateResult /
   browsingContext.PrintResult /
   browsingContext.ReloadResult /
+  browsingContext.SetCSPBypassResult /
   browsingContext.SetViewportResult /
   browsingContext.TraverseHistoryResult
 )
@@ -3357,6 +3359,9 @@ A [=remote end=] has an <dfn>unhandled prompt behavior overrides map</dfn> which
 weak map between [=user context|user contexts=] and [=unhandled prompt behavior struct=].
 
 A [=remote end=] has a <dfn>scripting enabled overrides map</dfn> which is a weak
+map between [=/navigables=] or [=user context|user contexts=] and boolean.
+
+A [=remote end=] has a <dfn>CSP bypass overrides map</dfn> which is a weak
 map between [=/navigables=] or [=user context|user contexts=] and boolean.
 
 ### Types ### {#module-browsingcontext-types}
@@ -5016,6 +5021,92 @@ The [=remote end steps=] with |command parameters| are:
 1. Return the result of [=await a navigation=] with |navigable|, |request|, |wait
    condition|, history handling "<code>reload</code>", and ignore
    cache |ignore cache|.
+
+</div>
+
+#### The browsingContext.setCSPBypass Command ####  {#command-browsingContext-setCSPBypass}
+
+The <dfn export for=commands>browsingContext.setCSPBypass</dfn> command allows bypassing Content Security Policy enforcement.
+
+Note: When CSP bypass is enabled, all CSP directives are bypassed, including those that would normally block eval(), new Function(), inline scripts, and resource loading.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      browsingContext.SetCSPBypass = (
+        method: "browsingContext.setCSPBypass",
+        params: browsingContext.SetCSPBypassParameters
+      )
+
+      browsingContext.SetCSPBypassParameters = {
+        bypass: bool,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.SetCSPBypassResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+
+The <dfn export>WebDriver BiDi CSP bypass is enabled</dfn> steps given
+[=/navigable=] |navigable| are:
+
+1. Let |top-level traversable| be |navigable|'s [=navigable/top-level traversable=].
+
+1. If [=CSP bypass overrides map=] contains |top-level traversable|, return
+   [=CSP bypass overrides map=][|top-level traversable|].
+
+1. Let |user context| be |top-level traversable|'s [=associated user context=].
+
+1. If [=CSP bypass overrides map=] contains |user context|, return
+   [=CSP bypass overrides map=][|user context|].
+
+1. Return false.
+
+</div>
+
+<div algorithm="remote end steps for browsingContext.setCSPBypass">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
+   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |bypass| be |command parameters|["<code>bypass</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>contexts</code>":
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. [=map/Set=] [=CSP bypass overrides map=][|navigable|] to |bypass|.
+
+1. Otherwise:
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=map/Set=] [=CSP bypass overrides map=][|user context|] to |bypass|.
+
+1. Return [=success=] with data null.
 
 </div>
 
