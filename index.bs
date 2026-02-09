@@ -5174,8 +5174,10 @@ starts the screencast of a given navigable according to provided options.
 <div algorithm="remote end steps for browsingContext.startScreencast">
 The [=remote end steps=] with |command parameters| are:
 
+1. Let |navigable id| be |command parameters|["<code>context</code>"].
+
 1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
-   with |command parameters|["<code>context</code>"].
+   with |navigable id|.
 
 1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
    [=error code=] [=invalid argument=].
@@ -5188,6 +5190,9 @@ The [=remote end steps=] with |command parameters| are:
 1. If the implementation is unable to record a screencast of |navigable| for any
    reason then return [=error=] with [=error code=] [=unsupported operation=].
 
+1. Let <var>realm</var> be the result of [=trying=] to [=get a realm from a navigable=]
+   with |navigable id| and null.
+
 1. Let |promise| be the result of [=trying=] to [=capture a browser tab=] with
    |navigable| and |command parameters|["<code>streamOptions</code>"].
 
@@ -5197,7 +5202,8 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |media recorder options| be a struct with <code>mimeType</code> |mime type|.
 
-1. Let |media recorder| be a new {{MediaRecorder}} with {{MediaRecorder/stream}} |media stream| and
+1. Let |media recorder| be a new {{MediaRecorder}} in |realm|
+   with {{MediaRecorder/stream}} |media stream| and
    {{MediaRecorderOptions}} |media recorder options|.
 
 1. [=Add an event listener=] to |media recorder| with type {{MediaRecorder/dataavailable}}
@@ -5266,13 +5272,18 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |recorded chunks| be |screencast recording|["<code>recordedChunks</code>"].
 
+1. Let |navigable id| be the [=navigable id=] for |screencast recording|["<code>navigable</code>"].
+
+1. Let <var>realm</var> be the result of [=trying=] to [=get a realm from a navigable=]
+   with |navigable id| and null.
+
 1. Call {{MediaRecorder/stop()}} on |media recorder|.
 
 1. Wait until |media recorder|'s {{MediaRecorder/stop}} [=fire an event|event fires=].
 
 1. Let |blob options| be a struct with <code>type</code> |screencast recording|["<code>mimeType</code>"].
 
-1. Let |blob| to be a new {{Blob}} with {{blobParts}} |recorded chunks| and
+1. Let |blob| to be a new {{Blob}} in |realm| with {{blobParts}} |recorded chunks| and
    {{BlobPropertyBag}} |blob options|.
 
 1. Let |path| be an implementation-defined file path where the recording will be stored.
