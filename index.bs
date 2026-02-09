@@ -6001,16 +6001,17 @@ EmulationResult = (
 )
 </pre>
 
-Note: [=stored remote end configuration=] is an umbrella structure that holds all global configurations. Unlike
-session configurations, these configurations are not reset after the session is closed, and are shared between sessions.
+Note: [=stored remote end configuration=] is an umbrella structure that holds all configurations associated with the
+[=remote end=]. Unlike session configurations, these configurations are not reset after the session is closed, and are
+shared between sessions.
 
-A <dfn export>stored remote end configuration</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn for="stored remote end configuration">scrollbar type</dfn> which is a string or null initially null.
+A <dfn export>remote end configuration</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn for="remote end configuration">scrollbar type</dfn> which is a string or null initially null.
 
-A [=remote end=] has a <dfn for="remote end">remote end configuration</dfn> which is a [=struct=] with:
-* [=struct/item=] named <dfn for="stored remote end configuration">global</dfn> which is a [=stored remote end configuration=], initially an empty [=stored remote end configuration=];
-* [=struct/item=] named <dfn for="stored remote end configuration">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=stored remote end configuration=], initially empty;
-* [=struct/item=] named <dfn for="stored remote end configuration">navigables</dfn> which is a weak map between [=/navigables=] and [=stored remote end configuration=], initially empty.
+A [=remote end=] has a <dfn for="remote end">stored remote end configuration</dfn> which is a [=struct=] with:
+* [=struct/item=] named <dfn for="stored remote end configuration">global</dfn> which is a [=remote end configuration=], initially an empty [=remote end configuration=];
+* [=struct/item=] named <dfn for="stored remote end configuration">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=remote end configuration=], initially empty;
+* [=struct/item=] named <dfn for="stored remote end configuration">navigables</dfn> which is a weak map between [=/navigables=] and [=remote end configuration=], initially empty.
 
 <div algorithm>
 
@@ -6018,10 +6019,10 @@ Note: this algorithm allows for accessing the stored configuration for a given n
 stored configuration for the navigable, then the user context, then the global. Returns null if configuration is not
 set.
 
-To <dfn export>get stored remote end configuration</dfn> of [=stored remote end configuration=]'s [=struct/item=] |item| for
-[=/navigables|navigable=] |navigable|:
+To <dfn export>get remote end configuration</dfn> of [=remote end configuration=]'s [=struct/item=] |item|
+for [=/navigables|navigable=] |navigable|:
 
-1. Assert |item| is a [=struct/item=] of [=stored remote end configuration=].
+1. Assert |item| is a [=struct/item=] of [=remote end configuration=].
 
 1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/navigables=]
    [=map/contains=] |navigable|, and [=remote end=]'s [=stored remote end configuration=]'s
@@ -6045,10 +6046,10 @@ To <dfn export>get stored remote end configuration</dfn> of [=stored remote end 
 
 <div algorithm>
 
-Note: this is a generic algorithm for storing configuration [=stored remote end configuration=] in [=remote end=]'s
-[=stored remote end configuration/global=]'s [=stored remote end configuration=].
+Note: this is a generic algorithm for storing configuration [=remote end configuration=] in [=remote end=]'s
+[=stored remote end configuration/global=]'s [=remote end configuration=].
 
-To <dfn>store global remote end config</dfn> |config| in [=stored remote end configuration=]'s [=struct/item=] |item|:
+To <dfn>store global remote end config</dfn> |config| in [=remote end configuration=]'s [=struct/item=] |item|:
 
 1. Set [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/global=]'s |item| to
    |config|.
@@ -6057,16 +6058,16 @@ To <dfn>store global remote end config</dfn> |config| in [=stored remote end con
 
 <div algorithm>
 
-Note: this is a generic algorithm for storing configuration [=stored remote end configuration=] in [=remote end=]'s
-[=stored remote end configuration/user contexts=]'s [=stored remote end configuration=].
+Note: this is a generic algorithm for storing configuration [=remote end configuration=] in [=remote end=]'s
+[=stored remote end configuration/user contexts=]'s [=remote end configuration=].
 
-To <dfn>store user context's remote end config</dfn> |config| in [=stored remote end configuration=]'s [=struct/item=]
+To <dfn>store user context's remote end config</dfn> |config| in [=remote end configuration=]'s [=struct/item=]
 |item| for |user context|:
 
 1. If |config| is null:
 
-   1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/user contexts=] [=map/contains=]
-      |user context|:
+   1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/user contexts=]
+      [=map/contains=] |user context|:
 
       1. Set [=remote end=]'s [=stored remote end configuration=]'s
          [=stored remote end configuration/user contexts=][|user context|]'s |item| to null.
@@ -6080,7 +6081,7 @@ To <dfn>store user context's remote end config</dfn> |config| in [=stored remote
 
 1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/user contexts=] does not
    [=map/contain=] |user context|, set [=remote end=]'s [=stored remote end configuration=]'s
-   [=stored remote end configuration/user contexts=][|user context|] to an empty [=stored remote end configuration=].
+   [=stored remote end configuration/user contexts=][|user context|] to an empty [=remote end configuration=].
 
 1. Set [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/user contexts=][|user context|]'s
    [=struct/item=] |item| to |config|.
@@ -6089,10 +6090,10 @@ To <dfn>store user context's remote end config</dfn> |config| in [=stored remote
 
 <div algorithm>
 
-Note: this is a generic algorithm for storing configuration [=stored remote end configuration=] in [=remote end=]'s
-[=stored remote end configuration/navigables=]'s [=stored remote end configuration=].
+Note: this is a generic algorithm for storing configuration [=remote end configuration=] in [=remote end=]'s
+[=stored remote end configuration/navigables=]'s [=remote end configuration=].
 
-To <dfn>store navigable's remote end config</dfn> |config| in [=stored remote end configuration=]'s [=struct/item=] |item| for |navigable|:
+To <dfn>store navigable's remote end config</dfn> |config| in [=remote end configuration=]'s [=struct/item=] |item| for |navigable|:
 
 1. If |config| is null:
 
@@ -6111,7 +6112,7 @@ To <dfn>store navigable's remote end config</dfn> |config| in [=stored remote en
 
 1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/navigables=] does not
    [=map/contain=] |navigable|, set [=remote end=]'s [=stored remote end configuration=]'s
-   [=stored remote end configuration/navigables=][|navigable|] to an empty [=stored remote end configuration=].
+   [=stored remote end configuration/navigables=][|navigable|] to an empty [=remote end configuration=].
 
 1. Set [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/navigables=][|navigable|]'s
    [=struct/item=] |item| to |config|.
@@ -7082,8 +7083,8 @@ scrollbar type on the given top-level traversables, user contexts or globally.
 <div algorithm>
 To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
 
-1. Let |scrollbar type override| be the result of [=get stored remote end configuration=] of
-   [=stored remote end configuration/scrollbar type=] for |navigable|.
+1. Let |scrollbar type override| be the result of [=get remote end configuration=] of
+   [=remote end configuration/scrollbar type=] for |navigable|.
 
 1. Assert that |scrollbar type override| is "<code>classic</code>", "<code>overlay</code>" or null.
 
@@ -7124,7 +7125,7 @@ The [=remote end steps=] given |command parameters| are:
       1. [=set/Append=] |navigable| to |affected navigables|.
 
       1. [=Store navigable's remote end config=] |emulated scrollbar type| in
-         [=stored remote end configuration/scrollbar type=] for |navigable|.
+         [=remote end configuration/scrollbar type=] for |navigable|.
 
 1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
 
@@ -7139,10 +7140,10 @@ The [=remote end steps=] given |command parameters| are:
          1. [=set/Append=] |top-level traversable| to |affected navigables|.
 
       1. [=Store user context's remote end config=] |emulated scrollbar type| in
-         [=stored remote end configuration/scrollbar type=] for |user context|.
+         [=remote end configuration/scrollbar type=] for |user context|.
 
 1. Otherwise, [=store global remote end config=] |emulated scrollbar type| in
-   [=stored remote end configuration/scrollbar type=] .
+   [=remote end configuration/scrollbar type=] .
 
 1. For each |navigable| of |affected navigables|:
 
