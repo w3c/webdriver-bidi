@@ -6119,6 +6119,56 @@ To <dfn>store navigable's remote end config</dfn> |config| in [=remote end confi
 
 </div>
 
+<div algorithm>
+
+Note: this is a generic algorithm for storing configuration [=remote end configuration=] in [=remote end=]
+[=remote end configuration=] based on the params.
+
+To <dfn>store remote end config</dfn> |config| in [=remote end configuration=]'s [=struct/item=] |item| for
+|command parameters|:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and |command parameters| [=map/contains=]
+   "<code>contexts</code>", return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |affected navigables| be an empty [=/set=].
+
+1. If |command parameters| [=map/contains=] "<code>contexts</code>":
+
+   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. [=set/Append=] |navigable| to |affected navigables|.
+
+      1. [=Store navigable's remote end config=] |config| in |item| for |navigable|.
+
+1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with
+      |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=list/For each=] |top-level traversable| in the list of all [=/top-level traversables=] whose
+         [=associated user context=] is |user context|:
+
+         1. [=set/Append=] |top-level traversable| to |affected navigables|.
+
+      1. [=Store user context's remote end config=] |config| in |item| for |user context|.
+
+1. Otherwise:
+  
+   1. [=Store global remote end config=] |config| in |item|.
+
+   1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]:
+
+      1. [=list/Append=] |top-level traversable| to |affected navigables|.
+
+1. Return |affected navigables|.
+
+</div>
+
 A [=BiDi session=] has an <dfn for=session>emulated user agent</dfn> which is a
 [=struct=] with an [=struct/item=] named
 <dfn for="emulated user agent">default user agent</dfn>, which is a string or null,
@@ -7108,42 +7158,8 @@ The [=remote end steps=] given |command parameters| are:
 1. If the implementation does not support setting |emulated scrollbar type|, then return [=error=] with [=error code=]
    [=unsupported operation=].
 
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
-1. Let |affected navigables| be an empty [=/set=].
-
-1. If |command parameters| [=map/contains=] "<code>contexts</code>":
-
-   1. Let |navigables| be the result of [=trying=] to
-      [=get valid top-level traversables by ids=] with
-      |command parameters|["<code>contexts</code>"].
-
-   1. For each |navigable| of |navigables|:
-
-      1. [=set/Append=] |navigable| to |affected navigables|.
-
-      1. [=Store navigable's remote end config=] |emulated scrollbar type| in
-         [=remote end configuration/scrollbar type=] for |navigable|.
-
-1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. [=list/For each=] |top-level traversable| in the list of all [=/top-level traversables=]
-         whose [=associated user context=] is |user context|:
-
-         1. [=set/Append=] |top-level traversable| to |affected navigables|.
-
-      1. [=Store user context's remote end config=] |emulated scrollbar type| in
-         [=remote end configuration/scrollbar type=] for |user context|.
-
-1. Otherwise, [=store global remote end config=] |emulated scrollbar type| in
-   [=remote end configuration/scrollbar type=] .
+1. Let |affected navigables| be the result of [=store remote end config=] for |emulated scrollbar type|,
+   [=remote end configuration/scrollbar type=] and |command parameters|.
 
 1. For each |navigable| of |affected navigables|:
 
