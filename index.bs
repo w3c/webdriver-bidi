@@ -5013,6 +5013,8 @@ TODO: Move it as a hook in the html spec instead.
 
 1. [=Update scrollbar type override=].
 
+1. [=Update text layout mode override=] for |navigable|.
+
 </div>
 
 <div algorithm="remote end steps for browsingContext.setViewport">
@@ -5980,6 +5982,7 @@ EmulationCommand = (
   emulation.SetScreenSettingsOverride //
   emulation.SetScriptingEnabled //
   emulation.SetScrollbarTypeOverride //
+  emulation.SetTextLayoutModeOverride //
   emulation.SetTimezoneOverride //
   emulation.SetTouchOverride //
   emulation.SetUserAgentOverride
@@ -5995,6 +5998,7 @@ EmulationResult = (
   emulation.SetScreenOrientationOverrideResult /
   emulation.SetScriptingEnabledResult /
   emulation.SetScrollbarTypeOverrideResult /
+  emulation.SetTextLayoutModeOverrideResult /
   emulation.SetTimezoneOverrideResult /
   emulation.SetTouchOverrideResult /
   emulation.SetUserAgentOverrideResult
@@ -6006,7 +6010,8 @@ Note: [=stored remote end configuration=] is an umbrella structure that holds al
 shared between sessions.
 
 A <dfn export>remote end configuration</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn for="remote end configuration">scrollbar type</dfn> which is a string or null initially null.
+* [=struct/item=] named <dfn for="remote end configuration">scrollbar type</dfn> which is a string or null initially null;
+* [=struct/item=] named <dfn for="remote end configuration">text layout mode</dfn> which is a string or null initially null.
 
 A [=remote end=] has a <dfn for="remote end">stored remote end configuration</dfn> which is a [=struct=] with:
 * [=struct/item=] named <dfn for="stored remote end configuration">global</dfn> which is a [=remote end configuration=], initially an empty [=remote end configuration=];
@@ -7148,6 +7153,115 @@ The [=remote end steps=] given |command parameters| are:
 1. For each |navigable| of |affected navigables|:
 
    1. [=Update scrollbar type override=] for |navigable|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+
+#### The emulation.setTextLayoutModeOverride Command #### {#command-emulation-setTextLayoutModeOverride}
+
+The <dfn export for=commands>emulation.setTextLayoutModeOverride</dfn> command modifies
+the text layout mode on the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetTextLayoutModeOverride = (
+        method: "emulation.setTextLayoutModeOverride",
+        params: emulation.SetTextLayoutModeOverrideParameters
+      )
+
+      emulation.SetTextLayoutModeOverrideParameters = {
+        textLayoutMode: emulation.TextLayoutMode / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.TextLayoutMode = "mobile"
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetTextLayoutModeOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+To <dfn>update text layout mode override</dfn> for [=/navigable=] |navigable|:
+
+Note: Text layout mode "<code>mobile</code>" enables text autosizing (font
+inflation), which is an algorithm used primarily on mobile devices to boost the
+legibility of text blocks when fitting them into a small viewport. This ensures
+that content remains readable without requiring the user to zoom in. This
+behavior is often controlled via the 'text-size-adjust' CSS property.
+See [[!CSS-SIZE-ADJUST-1]].
+
+1. Let |text layout mode override| be the result of [=get remote end configuration=] of
+   [=remote end configuration/text layout mode=] for |navigable|.
+
+1. Assert that |text layout mode override| is "<code>mobile</code>" or null.
+
+1. If |text layout mode override| is "<code>mobile</code>", run [=implementation-defined=] steps to make the
+   |navigable|'s [=active document=] to use the "<code>mobile</code>" text layout mode.
+
+1. Otherwise, run [=implementation-defined=] steps to make the |navigable|'s [=active document=] to
+   use an [=implementation-defined=] default text layout mode.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setTextLayoutModeOverride">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |emulated text layout mode| be |command parameters|["<code>textLayoutMode</code>"].
+
+1. If |emulated text layout mode| is not null and is not "<code>mobile</code>", then return [=error=] with [=error code=]
+   [=invalid argument=].
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
+   and |command parameters| [=map/contains=] "<code>contexts</code>",
+   return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |affected navigables| be an empty [=/set=].
+
+1. If |command parameters| [=map/contains=] "<code>contexts</code>":
+
+   1. Let |navigables| be the result of [=trying=] to
+      [=get valid top-level traversables by ids=] with
+      |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. [=set/Append=] |navigable| to |affected navigables|.
+
+      1. [=Store navigable's remote end config=] |emulated text layout mode| in
+         [=remote end configuration/text layout mode=] for |navigable|.
+
+1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
+      with |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=list/For each=] |top-level traversable| in the list of all [=/top-level traversables=]
+         whose [=associated user context=] is |user context|:
+
+         1. [=set/Append=] |top-level traversable| to |affected navigables|.
+
+      1. [=Store user context's remote end config=] |emulated text layout mode| in
+         [=remote end configuration/text layout mode=] for |user context|.
+
+1. Otherwise, [=store global remote end config=] |emulated text layout mode| in
+   [=remote end configuration/text layout mode=] .
+
+1. For each |navigable| of |affected navigables|:
+
+   1. [=Update text layout mode override=] for |navigable|.
 
 1. Return [=success=] with data null.
 
