@@ -5975,6 +5975,7 @@ EmulationCommand = (
   emulation.SetForcedColorsModeThemeOverride //
   emulation.SetGeolocationOverride //
   emulation.SetLocaleOverride //
+  emulation.SetMediaFeaturesOverride //
   emulation.SetNetworkConditions //
   emulation.SetScreenOrientationOverride //
   emulation.SetScreenSettingsOverride //
@@ -5992,6 +5993,7 @@ EmulationResult = (
   emulation.SetForcedColorsModeThemeOverrideResult /
   emulation.SetGeolocationOverrideResult /
   emulation.SetLocaleOverrideResult /
+  emulation.SetMediaFeaturesOverrideResult /
   emulation.SetScreenOrientationOverrideResult /
   emulation.SetScriptingEnabledResult /
   emulation.SetScrollbarTypeOverrideResult /
@@ -6006,7 +6008,8 @@ Note: [=stored remote end configuration=] is an umbrella structure that holds al
 shared between sessions.
 
 A <dfn export>remote end configuration</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn for="remote end configuration">scrollbar type</dfn> which is a string or null initially null.
+* [=struct/item=] named <dfn for="remote end configuration">scrollbar type</dfn> which is a string or null initially null;
+* [=struct/item=] named <dfn for="remote end configuration">media features</dfn> which is a [=map=] or null initially null.
 
 A [=remote end=] has a <dfn for="remote end">stored remote end configuration</dfn> which is a [=struct=] with:
 * [=struct/item=] named <dfn for="stored remote end configuration">global</dfn> which is a [=remote end configuration=], initially an empty [=remote end configuration=];
@@ -6505,7 +6508,103 @@ The [=remote end steps=] with |command parameters| are:
 
 </div>
 
-#### The emulation.setNetworkConditions Command ####  {#command-emulation-setNetworkConditions}
+#### The emulation.setMediaFeaturesOverride Command ####  {#command-emulation-setMediaFeaturesOverride}
+
+The <dfn export for=commands>emulation.setMediaFeaturesOverride</dfn> command
+allows overriding the values of various media features.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetMediaFeaturesOverride = (
+        method: "emulation.setMediaFeaturesOverride",
+        params: emulation.SetMediaFeaturesOverrideParameters
+      )
+
+      emulation.SetMediaFeaturesOverrideParameters = {
+        features: emulation.MediaFeatures / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.MediaFeatures = {
+        ? "width": text,
+        ? "height": text,
+        ? "device-width": text,
+        ? "device-height": text,
+        ? "orientation": "portrait" / "landscape",
+        ? "aspect-ratio": text,
+        ? "device-aspect-ratio": text,
+        ? "color": text,
+        ? "color-index": text,
+        ? "monochrome": text,
+        ? "resolution": text,
+        ? "scan": "interlace" / "progressive",
+        ? "grid": "0" / "1",
+        ? "update": "none" / "slow" / "fast",
+        ? "overflow-block": "none" / "scroll" / "optional-paged" / "paged",
+        ? "overflow-inline": "none" / "scroll",
+        ? "color-gamut": "srgb" / "p3" / "rec2020",
+        ? "pointer": "none" / "coarse" / "fine",
+        ? "hover": "none" / "hover",
+        ? "any-pointer": "none" / "coarse" / "fine",
+        ? "any-hover": "none" / "hover",
+        ? "prefers-color-scheme": "light" / "dark",
+        ? "prefers-contrast": "no-preference" / "more" / "less" / "custom",
+        ? "prefers-reduced-motion": "no-preference" / "reduce",
+        ? "prefers-reduced-transparency": "no-preference" / "reduce",
+        ? "prefers-reduced-data": "no-preference" / "reduce",
+        ? "forced-colors": "none" / "active",
+        ? "scripting": "none" / "initial-only" / "enabled",
+        ? "display-mode": "fullscreen" / "standalone" / "minimal-ui" / "browser" / "picture-in-picture",
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetMediaFeaturesOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm>
+To get <dfn export>WebDriver BiDi media feature value</dfn> for [=Document=] |document| and media feature name |name|:
+
+1. Let |navigable| be |document|'s [=/node navigable=].
+
+1. Let |media features override| be the result of [=get remote end configuration=] of
+   [=remote end configuration/media features=] for |navigable|.
+
+1. If |media features override| is not null and [=media features override=] [=map/contains=] |name|,
+   return |media features override|[|name|].
+
+1. Return null.
+</div>
+
+<div algorithm="remote end steps for emulation.setMediaFeaturesOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |media features override| be |command parameters|["<code>features</code>"].
+
+1. If the implementation does not support overriding any of the media features in
+   |media features override|, return [=error=] with [=error code=] [=unsupported operation=].
+
+1. Let |affected navigables| be the result of [=store remote end config=] for |media features override|,
+   [=remote end configuration/media features=] and |command parameters|.
+
+1. For each |navigable| of |affected navigables|:
+   1. [=list/For each=] |document| currently loaded in |navigable| or its [=descendant navigables=]:
+      1. Run [=evaluate media queries and report changes=] for |document|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setNetworkConditions Command ####
+  {#command-emulation-setNetworkConditions}
 
 The <dfn export for=commands>emulation.setNetworkConditions</dfn> command
 emulates specific network conditions for the given browsing context or for a user
