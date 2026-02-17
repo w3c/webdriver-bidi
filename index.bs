@@ -430,6 +430,155 @@ To <dfn export>resume</dfn> given |name|, |id| and |parameters|:
 
 </div>
 
+The <dfn>WebDriver configuration</dfn> is a structure providing a generic way to store
+configurations per user context, per navigable or globally.
+
+The <dfn>WebDriver unset configuration value</dfn> is a specific value indicating the value for the
+specific configuration is unset.
+
+Each [=WebDriver configuration=] has an associated <dfn for="WebDriver configuration">type</dfn>,
+which defines the possible values for the configuration.
+
+Each [=WebDriver configuration=] has a <dfn for="WebDriver configuration">value</dfn>, which is
+either the [=WebDriver unset configuration value=] or a value of the [=WebDriver configuration/type=].
+
+The <dfn>WebDriver configuration struct</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn for="WebDriver configuration struct">global</dfn> which is a [=WebDriver configuration/value=], initially [=WebDriver unset configuration value=];
+* [=struct/item=] named <dfn for="WebDriver configuration struct">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=WebDriver configuration/value=], initially empty;
+* [=struct/item=] named <dfn for="WebDriver configuration struct">navigables</dfn> which is a weak map between [=/navigables=] and [=WebDriver configuration/value=], initially empty.
+
+Each [=WebDriver configuration=] has an associated <dfn for="WebDriver configuration">values</dfn>
+which is a [=WebDriver configuration struct=].
+
+<div algorithm>
+
+Note: this algorithm allows for accessing the [=WebDriver configuration=] for a given navigable by
+checking the [=WebDriver configuration=]'s [=WebDriver configuration/values=] for the navigable,
+then the user context, then the global. Returns null if configuration is not set.
+
+To <dfn export>get WebDriver configuration value</dfn> of [=WebDriver configuration=]
+|configuration| for [=/navigables|navigable=] |navigable|:
+
+1. Let |configuration values| be |configuration|'s [=WebDriver configuration/values=].
+
+1. If |configuration values|' [=WebDriver configuration struct/navigables=] [=map/contains=]
+   |navigable|:
+   
+   1. Let |navigable configuration value| be |configuration values|'
+      [=WebDriver configuration struct/navigables=][|navigable|].
+
+   1. If |navigable configuration value| is not [=WebDriver unset configuration value=], return
+      |navigable configuration value|.
+
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If |configuration values|' [=WebDriver configuration struct/user contexts=] [=map/contains=]
+   |user context|:
+   
+   1. Let |user context configuration value| be |configuration values|'
+      [=WebDriver configuration struct/user contexts=][|user context|].
+
+   1. If |user context configuration value| is not [=WebDriver unset configuration value=], return
+      |user context configuration value|.
+
+1. Return |configuration values|' [=WebDriver configuration struct/global=].
+
+</div>
+
+<div algorithm>
+
+Note: this is a generic algorithm for storing [=WebDriver configuration struct/global=]
+[=WebDriver configuration=].
+
+To <dfn>store global WebDriver configuration</dfn> [=WebDriver configuration=] |configuration|'s
+[=WebDriver configuration/value=] |value|:
+
+1. Set |configuration|'s [=WebDriver configuration/values=]'s
+   [=WebDriver configuration struct/global=] to |value|.
+
+</div>
+
+<div algorithm>
+
+Note: this is a generic algorithm for storing [=WebDriver configuration struct/user contexts=]
+[=WebDriver configuration=].
+
+To <dfn>store user context's WebDriver configuration</dfn> [=WebDriver configuration=]
+|configuration|'s [=WebDriver configuration/value=] |value| in [=user context=] |user context|:
+
+1. Set |configuration|'s [=WebDriver configuration/values=]'s
+   [=WebDriver configuration struct/user contexts=][|user context|] to |value|.
+
+</div>
+
+<div algorithm>
+
+Note: this is a generic algorithm for storing [=WebDriver configuration struct/navigables=]
+[=WebDriver configuration=].
+
+To <dfn>store navigable's WebDriver configuration</dfn> [=WebDriver configuration=]
+|configuration|'s [=WebDriver configuration/value=] |value| in [=/navigable=] |navigable|:
+
+1. Set |configuration|'s [=WebDriver configuration/values=]'s
+   [=WebDriver configuration struct/navigables=][|navigable|] to |value|.
+
+</div>
+
+<div algorithm>
+
+Note: this is a generic algorithm for storing [=WebDriver configuration=] in
+[=WebDriver configuration struct/global=], [=WebDriver configuration struct/user contexts=] or
+[=WebDriver configuration struct/navigables=] based on |command parameters|'s
+"<code>userContexts</code>" and "<code>contexts</code>". At most one of the parameters
+"<code>userContexts</code>" and "<code>contexts</code>" is allowed. If none of them are provided,
+the configuration is stored globally.
+
+To <dfn>store WebDriver configuration</dfn> [=WebDriver configuration=] |configuration|'s
+[=WebDriver configuration/value=] |value| for given |command parameters|:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and |command parameters|
+   [=map/contains=] "<code>contexts</code>", return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |affected navigables| be an empty [=/set=].
+
+1. If |command parameters| [=map/contains=] "<code>contexts</code>":
+
+   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=]
+      with |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. [=set/Append=] |navigable| to |affected navigables|.
+
+      1. [=Store navigable's WebDriver configuration=] |configuration|'s |value| in |navigable|.
+
+1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with
+      |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=list/For each=] |top-level traversable| in the list of all [=/top-level traversables=] whose
+         [=associated user context=] is |user context|:
+
+         1. [=set/Append=] |top-level traversable| to |affected navigables|.
+
+      1. [=Store user context's WebDriver configuration=] |configuration|'s |value| in
+         |user context|.
+
+1. Otherwise:
+
+   1. [=Store global WebDriver configuration=] |configuration|'s |value|.
+
+   1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]:
+
+      1. [=list/Append=] |top-level traversable| to |affected navigables|.
+
+1. Return |affected navigables|.
+
+</div>
+
 # Protocol # {#protocol}
 
 This section defines the basic concepts of the WebDriver BiDi
@@ -6001,174 +6150,6 @@ EmulationResult = (
 )
 </pre>
 
-Note: [=stored remote end configuration=] is an umbrella structure that holds all configurations associated with the
-[=remote end=]. Unlike session configurations, these configurations are not reset after the session is closed, and are
-shared between sessions.
-
-A <dfn export>remote end configuration</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn for="remote end configuration">scrollbar type</dfn> which is a string or null initially null.
-
-A [=remote end=] has a <dfn for="remote end">stored remote end configuration</dfn> which is a [=struct=] with:
-* [=struct/item=] named <dfn for="stored remote end configuration">global</dfn> which is a [=remote end configuration=], initially an empty [=remote end configuration=];
-* [=struct/item=] named <dfn for="stored remote end configuration">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=remote end configuration=], initially empty;
-* [=struct/item=] named <dfn for="stored remote end configuration">navigables</dfn> which is a weak map between [=/navigables=] and [=remote end configuration=], initially empty.
-
-<div algorithm>
-
-Note: this algorithm allows for accessing the stored configuration for a given navigable by checking the remote-end's
-stored configuration for the navigable, then the user context, then the global. Returns null if configuration is not
-set.
-
-To <dfn export>get remote end configuration</dfn> of [=remote end configuration=]'s [=struct/item=] |item|
-for [=/navigables|navigable=] |navigable|:
-
-1. Assert |item| is a [=struct/item=] of [=remote end configuration=].
-
-1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/navigables=]
-   [=map/contains=] |navigable|, and [=remote end=]'s [=stored remote end configuration=]'s
-   [=stored remote end configuration/navigables=][|navigable|]'s |item| is not null,  return [=remote end=]'s
-   [=stored remote end configuration=]'s [=stored remote end configuration/navigables=][|navigable|]'s |item|.
-
-1. Let |user context| be |navigable|'s [=associated user context=].
-
-1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/user contexts=] [=map/contains=]
-   |user context|, and [=remote end=]'s [=stored remote end configuration=]'s
-   [=stored remote end configuration/user contexts=][|user context|]'s |item| is not null, return [=remote end=]'s
-   [=stored remote end configuration=]'s [=stored remote end configuration/user contexts=][|user context|]'s |item|.
-
-1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/global=]
-   |item| is not null, return [=remote end=]'s [=stored remote end configuration=]'s
-   [=stored remote end configuration/global=]'s |item|.
-
-1. Return null.
-
-</div>
-
-<div algorithm>
-
-Note: this is a generic algorithm for storing configuration [=remote end configuration=] in [=remote end=]'s
-[=stored remote end configuration/global=]'s [=remote end configuration=].
-
-To <dfn>store global remote end config</dfn> |config| in [=remote end configuration=]'s [=struct/item=] |item|:
-
-1. Set [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/global=]'s |item| to
-   |config|.
-
-</div>
-
-<div algorithm>
-
-Note: this is a generic algorithm for storing configuration [=remote end configuration=] in [=remote end=]'s
-[=stored remote end configuration/user contexts=]'s [=remote end configuration=].
-
-To <dfn>store user context's remote end config</dfn> |config| in [=remote end configuration=]'s [=struct/item=]
-|item| for |user context|:
-
-1. If |config| is null:
-
-   1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/user contexts=]
-      [=map/contains=] |user context|:
-
-      1. Set [=remote end=]'s [=stored remote end configuration=]'s
-         [=stored remote end configuration/user contexts=][|user context|]'s |item| to null.
-
-      1. If [=remote end=]'s [=stored remote end configuration=]'s
-         [=stored remote end configuration/user contexts=][|user context|] contains only nulls, remove
-         |user context| from [=remote end=]'s [=stored remote end configuration=]'s
-         [=stored remote end configuration/user contexts=].
-
-      1. Return.
-
-1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/user contexts=] does not
-   [=map/contain=] |user context|, set [=remote end=]'s [=stored remote end configuration=]'s
-   [=stored remote end configuration/user contexts=][|user context|] to an empty [=remote end configuration=].
-
-1. Set [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/user contexts=][|user context|]'s
-   [=struct/item=] |item| to |config|.
-
-</div>
-
-<div algorithm>
-
-Note: this is a generic algorithm for storing configuration [=remote end configuration=] in [=remote end=]'s
-[=stored remote end configuration/navigables=]'s [=remote end configuration=].
-
-To <dfn>store navigable's remote end config</dfn> |config| in [=remote end configuration=]'s [=struct/item=] |item| for |navigable|:
-
-1. If |config| is null:
-
-   1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/navigables=] [=map/contains=]
-      |navigable|:
-
-      1. Set [=remote end=]'s [=stored remote end configuration=]'s
-         [=stored remote end configuration/navigables=][|navigable|]'s |item| to null.
-
-      1. If [=remote end=]'s [=stored remote end configuration=]'s
-         [=stored remote end configuration/navigables=][|navigable|] contains only nulls, remove
-         |navigable| from [=remote end=]'s [=stored remote end configuration=]'s
-         [=stored remote end configuration/navigables=].
-
-      1. Return.
-
-1. If [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/navigables=] does not
-   [=map/contain=] |navigable|, set [=remote end=]'s [=stored remote end configuration=]'s
-   [=stored remote end configuration/navigables=][|navigable|] to an empty [=remote end configuration=].
-
-1. Set [=remote end=]'s [=stored remote end configuration=]'s [=stored remote end configuration/navigables=][|navigable|]'s
-   [=struct/item=] |item| to |config|.
-
-</div>
-
-<div algorithm>
-
-Note: this is a generic algorithm for storing configuration [=remote end configuration=] in [=remote end=]
-[=remote end configuration=] based on the params.
-
-To <dfn>store remote end config</dfn> |config| in [=remote end configuration=]'s [=struct/item=] |item| for
-|command parameters|:
-
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and |command parameters| [=map/contains=]
-   "<code>contexts</code>", return [=error=] with [=error code=] [=invalid argument=].
-
-1. Let |affected navigables| be an empty [=/set=].
-
-1. If |command parameters| [=map/contains=] "<code>contexts</code>":
-
-   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=] with
-      |command parameters|["<code>contexts</code>"].
-
-   1. For each |navigable| of |navigables|:
-
-      1. [=set/Append=] |navigable| to |affected navigables|.
-
-      1. [=Store navigable's remote end config=] |config| in |item| for |navigable|.
-
-1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with
-      |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. [=list/For each=] |top-level traversable| in the list of all [=/top-level traversables=] whose
-         [=associated user context=] is |user context|:
-
-         1. [=set/Append=] |top-level traversable| to |affected navigables|.
-
-      1. [=Store user context's remote end config=] |config| in |item| for |user context|.
-
-1. Otherwise:
-
-   1. [=Store global remote end config=] |config| in |item|.
-
-   1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]:
-
-      1. [=list/Append=] |top-level traversable| to |affected navigables|.
-
-1. Return |affected navigables|.
-
-</div>
-
 A [=BiDi session=] has an <dfn for=session>emulated user agent</dfn> which is a
 [=struct=] with an [=struct/item=] named
 <dfn for="emulated user agent">default user agent</dfn>, which is a string or null,
@@ -7130,19 +7111,23 @@ scrollbar type on the given top-level traversables, user contexts or globally.
    </dd>
 </dl>
 
+The <dfn>scrollbar type override configuration</dfn> is [=WebDriver configuration=] with
+[=WebDriver configuration/type=] string.
+
 <div algorithm>
 To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
 
-1. Let |scrollbar type override| be the result of [=get remote end configuration=] of
-   [=remote end configuration/scrollbar type=] for |navigable|.
+1. Let |scrollbar type override| be the result of [=get WebDriver configuration value=] of
+   [=scrollbar type override configuration=] for |navigable|.
 
-1. Assert that |scrollbar type override| is "<code>classic</code>", "<code>overlay</code>" or null.
+1. Assert that |scrollbar type override| is "<code>classic</code>", "<code>overlay</code>" or
+   [=WebDriver unset configuration value=].
 
-1. If |scrollbar type override| is "<code>classic</code>", run [=implementation-defined=] steps to make the
-   |navigable|'s [=active document=] to use <a>classic scrollbars</a>.
+1. If |scrollbar type override| is "<code>classic</code>", run [=implementation-defined=] steps to
+   make the |navigable|'s [=active document=] to use <a>classic scrollbars</a>.
 
-1. Otherwise, if |scrollbar type override| is "<code>overlay</code>", run [=implementation-defined=] steps to
-   make the |navigable|'s [=active document=] to use <a>overlay scrollbars</a>.
+1. Otherwise, if |scrollbar type override| is "<code>overlay</code>", run [=implementation-defined=]
+   steps to make the |navigable|'s [=active document=] to use <a>overlay scrollbars</a>.
 
 1. Otherwise, run [=implementation-defined=] steps to make the |navigable|'s [=active document=] to
    use an [=implementation-defined=] default scrollbar type.
@@ -7153,13 +7138,16 @@ To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
 
 The [=remote end steps=] given |command parameters| are:
 
-1. Let |emulated scrollbar type| be |command parameters|["<code>scrollbarType</code>"].
+1. Let |scrollbar type override| be |command parameters|["<code>scrollbarType</code>"].
 
-1. If the implementation does not support setting |emulated scrollbar type|, then return [=error=] with [=error code=]
-   [=unsupported operation=].
+1. If |scrollbar type override| is null, set |scrollbar type override| to
+   [=WebDriver unset configuration value=].
 
-1. Let |affected navigables| be the result of [=store remote end config=] for |emulated scrollbar type|,
-   [=remote end configuration/scrollbar type=] and |command parameters|.
+1. If the implementation does not support setting |scrollbar type override|, then return [=error=]
+   with [=error code=] [=unsupported operation=].
+
+1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+   [=scrollbar type override configuration=] |scrollbar type override| for |command parameters|.
 
 1. For each |navigable| of |affected navigables|:
 
