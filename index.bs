@@ -5142,6 +5142,8 @@ TODO: Move it as a hook in the html spec instead.
 
 1. [=Update scrollbar type override=] for |navigable|.
 
+1. [=Update safe area insets override=] for |navigable|.
+
 </div>
 
 <div algorithm="remote end steps for browsingContext.setViewport">
@@ -7134,6 +7136,98 @@ The [=remote end steps=] given |command parameters| are:
 1. For each |navigable| of |affected navigables|:
 
    1. [=Update scrollbar type override=] for |navigable|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+
+#### The emulation.SetSafeAreaInsetsOverride Command #### {#command-emulation-setSafeAreaInsetsOverride}
+
+The <dfn export for=commands>emulation.setSafeAreaInsetsOverride</dfn> command modifies
+safe area insets on the given top-level traversables, user contexts or globally.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetSafeAreaInsetsOverride = (
+        method: "emulation.setSafeAreaInsetsOverride",
+        params: emulation.SetSafeAreaInsetsOverrideParameters
+      )
+
+      emulation.SetSafeAreaInsetsOverrideParameters = {
+        safeAreaInsets: emulation.SafeAreaInsets / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.SafeAreaInsets = {
+        top: js-uint,
+        right: js-uint,
+        bottom: js-uint,
+        left: js-uint,
+        ? maxTop: js-uint,
+        ? maxRight: js-uint,
+        ? maxBottom: js-uint,
+        ? maxLeft: js-uint,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetSafeAreaInsetsOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+The <dfn>safe area insets override configuration</dfn> is [=WebDriver configuration=] with
+[=WebDriver configuration/type=] <code>emulation.SafeAreaInsets</code>.
+
+The <dfn>safe area insets</dfn> correspond to the environment variables <code>safe-area-inset-top</code>, <code>safe-area-inset-right</code>, <code>safe-area-inset-bottom</code>, and <code>safe-area-inset-left</code> defined in [[!CSS-ENV-1]].
+
+<div algorithm>
+The <dfn export>WebDriver BiDi safe area insets override</dfn> steps given [=/navigable=] |navigable| are:
+
+1. Let |safe area insets override| be the result of [=get WebDriver configuration value=] of
+   [=safe area insets override configuration=] for |navigable|.
+
+1. If |safe area insets override| is [=WebDriver configuration/unset=], return null.
+
+1. Return |safe area insets override|.
+
+</div>
+
+<div algorithm>
+To <dfn>update safe area insets override</dfn> for [=/navigable=] |navigable|:
+
+1. Let |safe area insets override| be the result of running the [=WebDriver BiDi safe area insets override=] steps given |navigable|.
+
+1. If |safe area insets override| is not null, set the [=safe area insets=] of |navigable|'s [=active document=] to |safe area insets override|.
+
+1. Otherwise, set the [=safe area insets=] of |navigable|'s [=active document=] to the [=implementation-defined=] default.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setSafeAreaInsetsOverride">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |safe area insets override| be |command parameters|["<code>safeAreaInsets</code>"].
+
+1. If |safe area insets override| is null, set |safe area insets override| to
+   [=WebDriver configuration/unset=].
+
+1. If the implementation does not support setting |safe area insets override|, then return [=error=]
+   with [=error code=] [=unsupported operation=].
+
+1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+   [=safe area insets override configuration=] |safe area insets override| for |command parameters|.
+
+1. For each |navigable| of |affected navigables|:
+
+   1. [=Update safe area insets override=] for |navigable|.
 
 1. Return [=success=] with data null.
 
