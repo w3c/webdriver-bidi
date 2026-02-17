@@ -447,8 +447,8 @@ The <dfn>WebDriver configuration struct</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn for="WebDriver configuration struct">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=WebDriver configuration/value=], initially empty;
 * [=struct/item=] named <dfn for="WebDriver configuration struct">navigables</dfn> which is a weak map between [=/navigables=] and [=WebDriver configuration/value=], initially empty.
 
-Each [=WebDriver configuration=] has an associated <dfn for="WebDriver configuration">values</dfn>
-which is a [=WebDriver configuration struct=].
+For each [=WebDriver configuration=], [=remote end=] has an associated
+<dfn for="WebDriver configuration">values</dfn> which is a [=WebDriver configuration struct=].
 
 <div algorithm>
 
@@ -458,8 +458,8 @@ by checking the [=WebDriver configuration=]'s [=WebDriver configuration/values=]
 [=WebDriver configuration struct/global=]. Returns [=WebDriver configuration/unset=] if
 configuration is not set.
 
-To <dfn export>get WebDriver configuration value</dfn> of [=WebDriver configuration=]
-|configuration| for [=/navigable=] |navigable|:
+To <dfn>get WebDriver configuration value</dfn> of [=WebDriver configuration=] |configuration| for
+[=/navigable=] |navigable|:
 
 1. Let |configuration values| be |configuration|'s [=WebDriver configuration/values=].
 
@@ -490,7 +490,7 @@ To <dfn export>get WebDriver configuration value</dfn> of [=WebDriver configurat
 <div algorithm>
 
 Note: this is a generic algorithm for storing [=WebDriver configuration=] per |target|, which can be
-either [=/navigable=], [=user context=], or store it globally if the |target| is null or emitted.
+either [=/navigable=], [=user context=], or store it globally if the |target| is null or omitted.
 
 To <dfn for="WebDriver configuration">store</dfn> [=WebDriver configuration=] |configuration|'s
 [=WebDriver configuration/value=] |value| in optional |target| which is a [=/navigable=],
@@ -3649,6 +3649,7 @@ browsingContext.BaseNavigationInfo = (
   navigation: browsingContext.Navigation / null,
   timestamp: js-uint,
   url: text,
+  ? userContext: browser.UserContext,
 )
 
 browsingContext.NavigationInfo = {
@@ -3670,11 +3671,14 @@ To <dfn>get the navigation info</dfn>, given [=/navigable=] |navigable| and
 
 1. Let |url| be |navigation status|'s [=WebDriver BiDi navigation status/url=].
 
+1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=].
+
 1. Return a [=/map=] matching the <code>browsingContext.NavigationInfo</code>
    production, with the <code>context</code> field set to |navigable id|, the
    <code>navigation</code> field set to |navigation id|, the
-   <code>timestamp</code> field set to |timestamp|, and the <code>url</code>
-   field set to the result of the [=URL serializer=] given |url|.
+   <code>timestamp</code> field set to |timestamp|, the <code>url</code>
+   field set to the result of the [=URL serializer=] given |url|, and the
+   <code>userContext</code> field set to |user context id|.
 
 </div>
 
@@ -4144,7 +4148,8 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.CreateResult = {
-          context: browsingContext.BrowsingContext
+          context: browsingContext.BrowsingContext,
+          ? userContext: browser.UserContext
         }
     </pre>
    </dd>
@@ -4217,7 +4222,9 @@ The [=remote end steps=] with |command parameters| are:
     Note: Do not invoke the [=/focusing steps=] for the created navigable if <code>background</code> is true.
 
   1. Let |body| be a [=/map=] matching the <code>browsingContext.CreateResult</code>
-     production, with the <code>context</code> field set to |traversable|'s [=navigable id=].
+     production, with the <code>context</code> field set to |traversable|'s [=navigable id=] and
+     the <code>userContext</code> property set to the [=user context id=] of |traversable|'s
+     [=associated user context=].
 
   1. Return [=success=] with data |body|.
 
@@ -5558,7 +5565,8 @@ given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigati
         browsingContext.HistoryUpdatedParameters = {
           context: browsingContext.BrowsingContext,
           timestamp: js-uint,
-          url: text
+          url: text,
+          ? userContext: browser.UserContext
         }
       </pre>
    </dd>
@@ -5571,12 +5579,15 @@ given [=/navigable=] |navigable|:
 1. Let |url| be the result of running the [=URL serializer=],
    given |navigable|'s [=active browsing context=]'s [=active document=]'s <a spec=dom>URL</a>.
 
+1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=].
+
 1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
 
 1. Let |params| be a [=/map=] matching the <code>browsingContext.HistoryUpdatedParameters</code> production,
    with the <code>url</code> field set to |url|,
-   the <code>timestamp</code> field set to |timestamp| and
-   the <code>context</code> field set to |navigable|'s [=navigable id=].
+   the <code>timestamp</code> field set to |timestamp|,
+   the <code>context</code> field set to |navigable|'s [=navigable id=] and
+   the <code>userContext</code> field set to |user context id|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.HistoryUpdated</code> production, with the
@@ -5975,6 +5986,7 @@ given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigati
           context: browsingContext.BrowsingContext,
           accepted: bool,
           type: browsingContext.UserPromptType,
+          ? userContext: browser.UserContext,
           ? userText: text
         }
       </pre>
@@ -5990,12 +6002,14 @@ given {{Window}} |window|, string |type|, boolean |accepted| and optional text |
 
 1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
+1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=].
+
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptClosedParameters</code> production with the
-   <code>context</code> field set to |navigable id|, the <code>accepted</code>
-   field set to |accepted|, the <code>type</code> field set to |type|, and the
-   <code>userText</code> field set to |user text| if |user text| is not null or
-   omitted otherwise.
+   <code>context</code> field set to |navigable id|, the <code>userContext</code>
+   field set to |user context id|, the <code>accepted</code> field set to |accepted|,
+   the <code>type</code> field set to |type|, and the <code>userText</code> field
+   set to |user text| if |user text| is not null or omitted otherwise.
 
 1. Let |body| be a [=/map=] matching the
    <code>BrowsingContextUserPromptClosedEvent</code> production, with the
@@ -6026,6 +6040,7 @@ given {{Window}} |window|, string |type|, boolean |accepted| and optional text |
           handler: session.UserPromptHandlerType,
           message: text,
           type: browsingContext.UserPromptType,
+          ? userContext: browser.UserContext,
           ? defaultValue: text
         }
       </pre>
@@ -6062,16 +6077,18 @@ given {{Window}} |window|, string |type|, string |message|, and optional text |d
 
 1. Let |navigable id| be the [=navigable id=] for |navigable|.
 
+1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=].
+
 1. Let |handler| be [=get navigable's user prompt handler=] with |type| and
    |navigable|.
 
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpenedParameters</code> production with the
-   <code>context</code> field set to |navigable id|, the <code>type</code> field
-   set to |type|, the <code>message</code> field set to |message|, the
-   <code>defaultValue</code> field set to |default value| if |default value| is
-   not null or omitted otherwise, and the <code>handler</code> field set to
-   |handler|.
+   <code>context</code> field set to |navigable id|, the <code>userContext</code>
+   field set to |user context id|, the <code>type</code> field set to |type|,
+   the <code>message</code> field set to |message|, the <code>defaultValue</code>
+   field set to |default value| if |default value| is not null or omitted otherwise,
+   and the <code>handler</code> field set to |handler|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.UserPromptOpened</code> production, with the
@@ -6573,10 +6590,10 @@ context.
     <pre class="cddl" data-cddl-module="remote-cddl">
       emulation.SetNetworkConditions = (
         method: "emulation.setNetworkConditions",
-        params: emulation.setNetworkConditionsParameters
+        params: emulation.SetNetworkConditionsParameters
       )
 
-      emulation.setNetworkConditionsParameters = {
+      emulation.SetNetworkConditionsParameters = {
         networkConditions: emulation.NetworkConditions / null,
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
@@ -8101,6 +8118,7 @@ network.BaseParameters = (
     redirectCount: js-uint,
     request: network.RequestData,
     timestamp: js-uint,
+    ? userContext: browser.UserContext / null,
     ? intercepts: [+network.Intercept]
 )
 </pre>
@@ -8123,14 +8141,18 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
 
 1. Let |top-level navigable id| be null.
 
+1. Let |user context id| be null.
+
 1. If |request|'s [=request/client=] is an [=environment settings object=]:
 
   1. Let |environment settings| be |request|'s [=request/client=].
 
   1. If there is a [=/navigable=] whose [=active window=] is |environment
      settings|' [=environment settings object/global object=], set |navigable id|
-     to that navigable's [=navigable id=], and set |top-level navigable id| to
-     that navigable's [=navigable/top-level traversable=]'s [=navigable id=].
+     to that navigable's [=navigable id=], set |top-level navigable id| to
+     that navigable's [=navigable/top-level traversable=]'s [=navigable id=], and
+     set |user context id| to the [=user context id=] of that navigable's
+     [=associated user context=].
 
 1. Let |intercepts| be the result of [=get the network intercepts=] with
    |session|, |event|, |request|, and |top-level navigable id|.
@@ -8145,8 +8167,9 @@ To <dfn>process a network event</dfn> given |session|, |event|, and |request|:
 1. Let |params| be [=/map=] matching the <code>network.BaseParameters</code>
    production, with the <code>request</code> field set to |request data|, the
    |navigation| field set to <code>navigation</code>, the <code>context</code>
-   field set to |navigable id|, the <code>timestamp</code> field set to
-   |timestamp|, the <code>redirectCount</code> field set to |redirect count|, the
+   field set to |navigable id|, the <code>userContext</code> field set to
+   |user context id|, the <code>timestamp</code> field set to |timestamp|,
+   the <code>redirectCount</code> field set to |redirect count|, the
    <code>isBlocked</code> field set to |is blocked|, and <code>intercepts</code>
    field set to |intercepts| if |is blocked| is true, or omitted otherwise.
 
@@ -9714,10 +9737,10 @@ collected network data for a given [=network/collector=].
     <pre class="cddl" data-cddl-module="remote-cddl">
       network.DisownData = (
         method: "network.disownData",
-        params: network.disownDataParameters
+        params: network.DisownDataParameters
       )
 
-      network.disownDataParameters = {
+      network.DisownDataParameters = {
         dataType: network.DataType,
         collector: network.Collector,
         request: network.Request,
@@ -11548,6 +11571,7 @@ script.WindowRealmInfo = {
   script.BaseRealmInfo,
   type: "window",
   context: browsingContext.BrowsingContext,
+  ? userContext: browser.UserContext,
   ? sandbox: text
 }
 
@@ -11651,9 +11675,11 @@ To <dfn>get the realm info</dfn> given |environment settings|:
       1. Let |navigable| be |document|'s [=/node navigable=].
       1. If |navigable| is null, return null.
       1. Let |navigable id| be the [=navigable id=] for |navigable|.
+      1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=]
       1. Let |realm info| be a [=/map=] matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
-         field set to |origin|, and the <code>context</code> field set to |navigable id|.
+         field set to |origin|, the <code>context</code> field set to |navigable id| and the
+         <code>userContext</code> field set to |user context id|.
 
     <dt>|global object| is {{SandboxWindowProxy}} object
     <dd>
@@ -11664,13 +11690,15 @@ To <dfn>get the realm info</dfn> given |environment settings|:
       1. Let |navigable| be |document|'s [=/node navigable=].
       1. If |navigable| is null, return null.
       1. Let |navigable id| be the [=navigable id=] for |navigable|.
+      1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=]
       1. Let |sandbox name| be the result of [=get a sandbox name=] given
          |realm|.
       1. Assert: |sandbox name| is not null.
       1. Let |realm info| be a [=/map=] matching the <code>script.WindowRealmInfo</code> production,
          with the <code>realm</code> field set to |realm id|, the <code>origin</code>
          field set to |origin|, the <code>context</code> field set to |navigable id|,
-         and the <code>sandbox</code> field set to |sandbox name|.
+         the <code>userContext</code> field set to |user context id|, and the
+         <code>sandbox</code> field set to |sandbox name|.
 
 
     <dt>|global object| is a {{DedicatedWorkerGlobalScope}} object
@@ -12693,13 +12721,14 @@ Record=] of type <code>throw</code>, |exception|, is given by:
 <pre class="cddl" data-cddl-module="local-cddl">
 script.Source = {
   realm: script.Realm,
-  ? context: browsingContext.BrowsingContext
+  ? context: browsingContext.BrowsingContext,
+  ? userContext: browser.UserContext
 }
 </pre>
 
 The <code>script.Source</code> type represents a <code>script.Realm</code> with
-an optional <code>browsingContext.BrowsingContext</code> in which a
-script related event occurred.
+an optional <code>browsingContext.BrowsingContext</code> and related
+<code>browser.UserContext</code> in which a script related event occurred.
 
 <div algorithm>
 To <dfn>get the source</dfn> given |source realm|:
@@ -12717,12 +12746,16 @@ To <dfn>get the source</dfn> given |source realm|:
 
   1. Let |navigable id| be the [=navigable id=] for |navigable| if |navigable| is not null.
 
+  1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=].
+
   Otherwise let |navigable| be null.
 
 1. Let |source| be a [=/map=] matching the
    <code>script.Source</code> production with the <code>realm</code>
-   field set to |realm|, and the <code>context</code> field set
-   to |navigable id| if |navigable| is not null, or unset otherwise.
+   field set to |realm|, the <code>context</code> field set
+   to |navigable id| if |navigable| is not null, or unset otherwise,
+   and the <code>userContext</code> field set to |user context id| if
+   |navigable is not null, or unset otherwise.
 
 1. Return |source|.
 
@@ -14748,6 +14781,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
          input.FileDialogInfo = {
             context: browsingContext.BrowsingContext,
+            ? userContext: browser.UserContext,
             ? element: script.SharedReference,
             multiple: bool,
          }
@@ -14770,6 +14804,8 @@ opened.
 
 1. Let |navigable id| be |navigable|'s [=navigable id=].
 
+1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=].
+
 1. Let |multiple| be <code>false</code>.
 
 1. If |element| is not null and |element|'s <{input/multiple}> attribute is set,
@@ -14784,7 +14820,8 @@ opened.
    "<code>input.fileDialogOpened</code>" and |related navigables|:
 
   1. Let |params| be a [=/map=] matching the <code>input.FileDialogInfo</code>
-     production with the <code>context</code> field set to |navigable id| and
+     production with the <code>context</code> field set to |navigable id|, the
+     <code>userContext</code> field set to |user context id| and
      <code>multiple</code> field set to |multiple|.
 
   1. If |element| is not null:
