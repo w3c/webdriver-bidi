@@ -272,6 +272,10 @@ spec: HR-TIME; urlPrefix: https://w3c.github.io/hr-time/
 spec: RFC4648; urlPrefix: https://datatracker.ietf.org/doc/html/rfc4648
   type: dfn
     text: Base64 Encode; url: section-4
+spec: CSS-OVERFLOW-3; urlPrefix: https://drafts.csswg.org/css-overflow-3/
+  type: dfn
+    text: classic scrollbars; url: #classic-scrollbars
+    text: overlay scrollbars; url: #overlay-scrollbars
 spec: CSS-VALUES-3; urlPrefix: https://drafts.csswg.org/css-values-3/
   type: dfn
     text: absolute lengths; url: #absolute-lengths
@@ -423,6 +427,135 @@ To <dfn export>resume</dfn> given |name|, |id| and |parameters|:
 
        Issue: Should we have something like microtasks to ensure this runs
        before any other tasks on the event loop?
+
+</div>
+
+The <dfn>WebDriver configuration</dfn> is a structure providing a generic way to store
+configurations per user context, per navigable or globally.
+
+<dfn for="WebDriver configuration">Unset</dfn> is a value indicating that a specific configuration
+[=WebDriver configuration/value=] has not be set.
+
+Each [=WebDriver configuration=] has an associated <dfn for="WebDriver configuration">type</dfn>,
+which defines the possible values for the configuration.
+
+Each [=WebDriver configuration=] has a <dfn for="WebDriver configuration">value</dfn>, which is
+either [=WebDriver configuration/unset=] or a value of the [=WebDriver configuration/type=].
+
+The <dfn>WebDriver configuration struct</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn for="WebDriver configuration struct">global</dfn> which is a [=WebDriver configuration/value=], initially [=WebDriver configuration/unset=];
+* [=struct/item=] named <dfn for="WebDriver configuration struct">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=WebDriver configuration/value=], initially empty;
+* [=struct/item=] named <dfn for="WebDriver configuration struct">navigables</dfn> which is a weak map between [=/navigables=] and [=WebDriver configuration/value=], initially empty.
+
+For each [=WebDriver configuration=], [=remote end=] has an associated
+<dfn for="WebDriver configuration">values</dfn> which is a [=WebDriver configuration struct=].
+
+<div algorithm>
+
+Note: this algorithm allows accessing the [=WebDriver configuration=] for a given [=/navigable=]
+by checking the [=WebDriver configuration=]'s [=WebDriver configuration/values=] for the
+|navigable|, then for the |navigable|'s [=associated user context=], then
+[=WebDriver configuration struct/global=]. Returns [=WebDriver configuration/unset=] if
+configuration is not set.
+
+To <dfn>get WebDriver configuration value</dfn> of [=WebDriver configuration=] |configuration| for
+[=/navigable=] |navigable|:
+
+1. Let |configuration values| be |configuration|'s [=WebDriver configuration/values=].
+
+1. If |configuration values|' [=WebDriver configuration struct/navigables=] [=map/contains=]
+   |navigable|:
+
+   1. Let |navigable configuration value| be |configuration values|'
+      [=WebDriver configuration struct/navigables=][|navigable|].
+
+   1. If |navigable configuration value| is not [=WebDriver configuration/unset=], return
+      |navigable configuration value|.
+
+1. Let |user context| be |navigable|'s [=associated user context=].
+
+1. If |configuration values|' [=WebDriver configuration struct/user contexts=] [=map/contains=]
+   |user context|:
+
+   1. Let |user context configuration value| be |configuration values|'
+      [=WebDriver configuration struct/user contexts=][|user context|].
+
+   1. If |user context configuration value| is not [=WebDriver configuration/unset=], return
+      |user context configuration value|.
+
+1. Return |configuration values|' [=WebDriver configuration struct/global=].
+
+</div>
+
+<div algorithm>
+
+Note: this is a generic algorithm for storing [=WebDriver configuration=] per |target|, which can be
+either [=/navigable=], [=user context=], or store it globally if the |target| is null or omitted.
+
+To <dfn for="WebDriver configuration">store</dfn> [=WebDriver configuration=] |configuration|'s
+[=WebDriver configuration/value=] |value| in optional |target| which is a [=/navigable=],
+a [=user context=] or null if not provided:
+
+1. If |target| is null, set |configuration|'s [=WebDriver configuration/values=]'s
+   [=WebDriver configuration struct/global=] to |value|.
+
+1. If |target| is a [=user context=], set |configuration|'s [=WebDriver configuration/values=]'s
+   [=WebDriver configuration struct/user contexts=][|target|] to |value|.
+
+1. If |target| is a [=/navigable=], set |configuration|'s [=WebDriver configuration/values=]'s
+   [=WebDriver configuration struct/navigables=][|target|] to |value|.
+
+</div>
+
+<div algorithm>
+
+Note: This generic algorithm stores [=WebDriver configuration=]'s [=WebDriver configuration/value=]
+in [=WebDriver configuration struct/global=], [=WebDriver configuration struct/user contexts=], or
+[=WebDriver configuration struct/navigables=], depending on the presence of
+"<code>userContexts</code>" and "<code>contexts</code>" in |command parameters|. These parameters
+are mutually exclusive. If neither is provided, the configuration is stored globally.
+
+To <dfn>store WebDriver configuration</dfn> [=WebDriver configuration=] |configuration|'s
+[=WebDriver configuration/value=] |value| for given |command parameters|:
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and |command parameters|
+   [=map/contains=] "<code>contexts</code>", return [=error=] with [=error code=] [=invalid argument=].
+
+1. Let |affected navigables| be an empty [=/set=].
+
+1. If |command parameters| [=map/contains=] "<code>contexts</code>":
+
+   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=]
+      with |command parameters|["<code>contexts</code>"].
+
+   1. For each |navigable| of |navigables|:
+
+      1. [=set/Append=] |navigable| to |affected navigables|.
+
+      1. [=WebDriver configuration/Store=] |configuration|'s |value| in |navigable|.
+
+1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
+
+   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with
+      |command parameters|["<code>userContexts</code>"].
+
+   1. For each |user context| of |user contexts|:
+
+      1. [=list/For each=] |top-level traversable| in the list of all [=/top-level traversables=] whose
+         [=associated user context=] is |user context|:
+
+         1. [=set/Append=] |top-level traversable| to |affected navigables|.
+
+      1. [=WebDriver configuration/Store=] |configuration|'s |value| in |user context|.
+
+1. Otherwise:
+
+   1. [=list/For each=] |top-level traversable| of all [=/top-level traversables=], [=list/append=]
+      |top-level traversable| to |affected navigables|.
+
+   1. [=WebDriver configuration/Store=] |configuration|'s |value|.
+
+1. Return |affected navigables|.
 
 </div>
 
@@ -5014,6 +5147,10 @@ TODO: Move it as a hook in the html spec instead.
       1. [=Set device pixel ratio override=] with |navigable| and [=viewport overrides map=][|user context|]'s
          [=viewport-configuration/devicePixelRatio=].
 
+1. [=Update scrollbar type override=] for |navigable|.
+
+1. [=Update safe area insets override=] for |navigable|.
+
 </div>
 
 <div algorithm="remote end steps for browsingContext.setViewport">
@@ -5987,9 +6124,11 @@ EmulationCommand = (
   emulation.SetGeolocationOverride //
   emulation.SetLocaleOverride //
   emulation.SetNetworkConditions //
+  emulation.SetSafeAreaInsetsOverride //
   emulation.SetScreenOrientationOverride //
   emulation.SetScreenSettingsOverride //
   emulation.SetScriptingEnabled //
+  emulation.SetScrollbarTypeOverride //
   emulation.SetTimezoneOverride //
   emulation.SetTouchOverride //
   emulation.SetUserAgentOverride
@@ -6002,8 +6141,10 @@ EmulationResult = (
   emulation.SetForcedColorsModeThemeOverrideResult /
   emulation.SetGeolocationOverrideResult /
   emulation.SetLocaleOverrideResult /
+  emulation.SetSafeAreaInsetsOverrideResult /
   emulation.SetScreenOrientationOverrideResult /
   emulation.SetScriptingEnabledResult /
+  emulation.SetScrollbarTypeOverrideResult /
   emulation.SetTimezoneOverrideResult /
   emulation.SetTouchOverrideResult /
   emulation.SetUserAgentOverrideResult
@@ -6289,26 +6430,6 @@ The <dfn export>WebDriver BiDi emulated language</dfn> steps given an [=environm
        [=locale overrides map=][|user context|].
 
 1. Return null
-
-</div>
-
-TODO: Remove the following algorithm once the update for navigator.language/s in the html spec is merged. https://github.com/whatwg/html/pull/11793
-
-<div algorithm="updated DefaultLocale steps">
-The [=DefaultLocale=] algorithm is implementation defined. A WebDriver-BiDi
-[=remote end=] must have an implementation that runs the following steps:
-
-1. Let |realm| be [=current Realm Record=].
-
-1. Let |environment settings| be the [=environment settings object=] whose
-   [=realm execution context=]'s Realm component is |realm|.
-
-1. Let |locale override| be the result of [=WebDriver BiDi emulated language=] with
-   |environment settings|.
-
-1. If |locale override| is not null, return |locale override|.
-   Otherwise, return the result of implementation-defined steps in accordance
-   with the requirements of the [=DefaultLocale=] specification.
 
 </div>
 
@@ -6961,6 +7082,183 @@ The [=remote end steps=] with |command parameters| are:
 1. Return [=success=] with data null.
 
 </div>
+
+#### The emulation.SetScrollbarTypeOverride Command #### {#command-emulation-setScrollbarTypeOverride}
+
+The <dfn export for=commands>emulation.setScrollbarTypeOverride</dfn> command modifies
+scrollbar type on the given top-level traversables, user contexts or globally.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetScrollbarTypeOverride = (
+        method: "emulation.setScrollbarTypeOverride",
+        params: emulation.SetScrollbarTypeOverrideParameters
+      )
+
+      emulation.SetScrollbarTypeOverrideParameters = {
+        scrollbarType: "classic" / "overlay" / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetScrollbarTypeOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+The <dfn>scrollbar type override configuration</dfn> is [=WebDriver configuration=] with
+[=WebDriver configuration/type=] "<code>classic</code>" / "<code>overlay</code>".
+
+<div algorithm>
+To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
+
+1. Let |scrollbar type override| be the result of [=get WebDriver configuration value=] of
+   [=scrollbar type override configuration=] for |navigable|.
+
+1. Assert: |scrollbar type override| is "<code>classic</code>", "<code>overlay</code>" or
+   [=WebDriver configuration/unset=].
+
+1. If |scrollbar type override| is "<code>classic</code>", run [=implementation-defined=] steps to
+   make the |navigable|'s [=active document=] to use <a>classic scrollbars</a> and return.
+
+1. if |scrollbar type override| is "<code>overlay</code>", run [=implementation-defined=]
+   steps to make the |navigable|'s [=active document=] to use <a>overlay scrollbars</a> and return.
+
+1. Assert: |scrollbar type override| is [=WebDriver configuration/unset=].
+
+1. Run [=implementation-defined=] steps to make the |navigable|'s [=active document=] to
+   use an [=implementation-defined=] default scrollbar type.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setScrollbarTypeOverride">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |scrollbar type override| be |command parameters|["<code>scrollbarType</code>"].
+
+1. If |scrollbar type override| is null, set |scrollbar type override| to
+   [=WebDriver configuration/unset=].
+
+1. If the implementation does not support setting |scrollbar type override|, then return [=error=]
+   with [=error code=] [=unsupported operation=].
+
+1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+   [=scrollbar type override configuration=] |scrollbar type override| for |command parameters|.
+
+1. For each |navigable| of |affected navigables|:
+
+   1. [=Update scrollbar type override=] for |navigable|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+
+#### The emulation.SetSafeAreaInsetsOverride Command #### {#command-emulation-setSafeAreaInsetsOverride}
+
+The <dfn export for=commands>emulation.setSafeAreaInsetsOverride</dfn> command modifies
+safe area insets on the given top-level traversables, user contexts or globally.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetSafeAreaInsetsOverride = (
+        method: "emulation.setSafeAreaInsetsOverride",
+        params: emulation.SetSafeAreaInsetsOverrideParameters
+      )
+
+      emulation.SetSafeAreaInsetsOverrideParameters = {
+        safeAreaInsets: emulation.SafeAreaInsets / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.SafeAreaInsets = {
+        top: js-uint,
+        right: js-uint,
+        bottom: js-uint,
+        left: js-uint,
+        ? maxTop: js-uint,
+        ? maxRight: js-uint,
+        ? maxBottom: js-uint,
+        ? maxLeft: js-uint,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetSafeAreaInsetsOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+The <dfn>safe area insets override configuration</dfn> is [=WebDriver configuration=] with
+[=WebDriver configuration/type=] [=/map=].
+
+The <dfn>safe area insets</dfn> correspond to the environment variables
+<code>safe-area-inset-top</code>, <code>safe-area-inset-right</code>,
+<code>safe-area-inset-bottom</code>, and <code>safe-area-inset-left</code> defined in
+[[!CSS-ENV-1]].
+
+<div algorithm>
+The <dfn export>WebDriver BiDi safe area insets override</dfn> steps given [=/navigable=]
+|navigable| are:
+
+1. Let |safe area insets override| be the result of [=get WebDriver configuration value=] of
+   [=safe area insets override configuration=] for |navigable|.
+
+1. If |safe area insets override| is [=WebDriver configuration/unset=], return null.
+
+1. Return |safe area insets override|.
+
+</div>
+
+<div algorithm>
+To <dfn>update safe area insets override</dfn> for [=/navigable=] |navigable|:
+
+1. Let |safe area insets override| be the result of running the
+   [=WebDriver BiDi safe area insets override=] steps given |navigable|.
+
+1. If |safe area insets override| is not null, set the [=safe area insets=] of |navigable|'s
+   [=active document=] to |safe area insets override|.
+
+1. Otherwise, set the [=safe area insets=] of |navigable|'s [=active document=] to the
+   [=implementation-defined=] default.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setSafeAreaInsetsOverride">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |safe area insets override| be |command parameters|["<code>safeAreaInsets</code>"].
+
+1. If |safe area insets override| is null, set |safe area insets override| to
+   [=WebDriver configuration/unset=].
+
+1. If the implementation does not support setting |safe area insets override|, then return [=error=]
+   with [=error code=] [=unsupported operation=].
+
+1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+   [=safe area insets override configuration=] |safe area insets override| for |command parameters|.
+
+1. For each |navigable| of |affected navigables|:
+
+   1. [=Update safe area insets override=] for |navigable|.
+
+1. Return [=success=] with data null.
+
+</div>
+
 
 #### The emulation.setTimezoneOverride Command ####  {#command-emulation-setTimezoneOverride}
 
