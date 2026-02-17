@@ -433,6 +433,11 @@ To <dfn export>resume</dfn> given |name|, |id| and |parameters|:
 The <dfn>WebDriver configuration</dfn> is a structure providing a generic way to store
 configurations per user context, per navigable or globally.
 
+The <dfn>WebDriver configuration scoped to remote end</dfn> is a [=WebDriver configuration=] which
+is scoped to [=remote end=].
+
+Issue: introduce "WebDriver configuration scoped to session".
+
 <dfn for="WebDriver configuration">Unset</dfn> is a value indicating that a specific configuration
 [=WebDriver configuration/value=] has not be set.
 
@@ -447,21 +452,29 @@ The <dfn>WebDriver configuration struct</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn for="WebDriver configuration struct">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=WebDriver configuration/value=], initially empty;
 * [=struct/item=] named <dfn for="WebDriver configuration struct">navigables</dfn> which is a weak map between [=/navigables=] and [=WebDriver configuration/value=], initially empty.
 
-Each [=WebDriver configuration=] has an associated <dfn for="WebDriver configuration">values</dfn>
-which is a [=WebDriver configuration struct=].
+For each [=WebDriver configuration scoped to remote end=] |configuration|, [=remote end=] has
+an associated |configuration|'s [=WebDriver configuration struct=]
+<dfn for="WebDriver configuration scoped to remote end">values</dfn>.
 
 <div algorithm>
 
-Note: this algorithm allows accessing the [=WebDriver configuration=] for a given [=/navigable=]
-by checking the [=WebDriver configuration=]'s [=WebDriver configuration/values=] for the
-|navigable|, then for the |navigable|'s [=associated user context=], then
-[=WebDriver configuration struct/global=]. Returns [=WebDriver configuration/unset=] if
+Note: this algorithm allows accessing the [=WebDriver configuration scoped to remote end=] for a
+given [=/navigable=] by checking the [=WebDriver configuration scoped to remote end=]'s
+[=WebDriver configuration scoped to remote end/values=] in
+[=WebDriver configuration struct/navigables=], then in
+[=WebDriver configuration struct/user contexts=] and finally in
+[=WebDriver configuration struct/global=]. Returns [=WebDriver configuration/unset=] if the
 configuration is not set.
 
 To <dfn export>get WebDriver configuration value</dfn> of [=WebDriver configuration=]
 |configuration| for [=/navigable=] |navigable|:
 
-1. Let |configuration values| be |configuration|'s [=WebDriver configuration/values=].
+   Issue: extend with "WebDriver configuration scoped to session".
+
+1. Assert: |configuration| is [=WebDriver configuration scoped to remote end=].
+
+1. Let |configuration values| be [=remote end=]'s |configuration|'s
+   [=WebDriver configuration scoped to remote end/values=].
 
 1. If |configuration values|' [=WebDriver configuration struct/navigables=] [=map/contains=]
    |navigable|:
@@ -494,15 +507,23 @@ either [=/navigable=], [=user context=], or store it globally if the |target| is
 
 To <dfn for="WebDriver configuration">store</dfn> [=WebDriver configuration=] |configuration|'s
 [=WebDriver configuration/value=] |value| in optional |target| which is a [=/navigable=],
-a [=user context=] or null if not provided:
+a [=user context=] or null if not provided, and in optional [=BiDi session=]
+<var ignore>session</var> or null if not provided:
 
-1. If |target| is null, set |configuration|'s [=WebDriver configuration/values=]'s
+   Issue: extend with "WebDriver configuration scoped to session".
+
+1. Assert: |configuration| is [=WebDriver configuration scoped to remote end=].
+
+1. If |target| is null, set [=remote end=]'s |configuration|'s
+   [=WebDriver configuration scoped to remote end/values=]'s
    [=WebDriver configuration struct/global=] to |value|.
 
-1. If |target| is a [=user context=], set |configuration|'s [=WebDriver configuration/values=]'s
+1. If |target| is a [=user context=], set [=remote end=]'s |configuration|'s
+   [=WebDriver configuration scoped to remote end/values=]'s
    [=WebDriver configuration struct/user contexts=][|target|] to |value|.
 
-1. If |target| is a [=/navigable=], set |configuration|'s [=WebDriver configuration/values=]'s
+1. If |target| is a [=/navigable=], set [=remote end=]'s |configuration|'s
+   [=WebDriver configuration scoped to remote end/values=]'s
    [=WebDriver configuration struct/navigables=][|target|] to |value|.
 
 </div>
@@ -516,7 +537,12 @@ in [=WebDriver configuration struct/global=], [=WebDriver configuration struct/u
 are mutually exclusive. If neither is provided, the configuration is stored globally.
 
 To <dfn>store WebDriver configuration</dfn> [=WebDriver configuration=] |configuration|'s
-[=WebDriver configuration/value=] |value| for given |command parameters|:
+[=WebDriver configuration/value=] |value| for given |command parameters| in optional
+[=BiDi session=] <var ignore>session</var> or null if not provided:
+
+   Issue: extend with "WebDriver configuration scoped to session".
+
+1. Assert: |configuration| is [=WebDriver configuration scoped to remote end=].
 
 1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and |command parameters|
    [=map/contains=] "<code>contexts</code>", return [=error=] with [=error code=] [=invalid argument=].
@@ -532,7 +558,7 @@ To <dfn>store WebDriver configuration</dfn> [=WebDriver configuration=] |configu
 
       1. [=set/Append=] |navigable| to |affected navigables|.
 
-      1. [=WebDriver configuration/Store=] |configuration|'s |value| in |navigable|.
+      1. [=WebDriver configuration/Store=] |configuration|'s |value| in |navigable| and |session|.
 
 1. Otherwise, if |command parameters| [=map/contains=] "<code>userContexts</code>":
 
@@ -546,14 +572,14 @@ To <dfn>store WebDriver configuration</dfn> [=WebDriver configuration=] |configu
 
          1. [=set/Append=] |top-level traversable| to |affected navigables|.
 
-      1. [=WebDriver configuration/Store=] |configuration|'s |value| in |user context|.
+      1. [=WebDriver configuration/Store=] |configuration|'s |value| in |user context| and |session|.
 
 1. Otherwise:
 
    1. [=list/For each=] |top-level traversable| of all [=/top-level traversables=], [=list/append=]
       |top-level traversable| to |affected navigables|.
 
-   1. [=WebDriver configuration/Store=] |configuration|'s |value|.
+   1. [=WebDriver configuration/Store=] |configuration|'s |value| in |session|.
 
 1. Return |affected navigables|.
 
@@ -7091,8 +7117,8 @@ scrollbar type on the given top-level traversables, user contexts or globally.
    </dd>
 </dl>
 
-The <dfn>scrollbar type override configuration</dfn> is [=WebDriver configuration=] with
-[=WebDriver configuration/type=] "<code>classic</code>" / "<code>overlay</code>".
+The <dfn>scrollbar type override configuration</dfn> is
+[=WebDriver configuration scoped to remote end=] with [=WebDriver configuration/type=] string.
 
 <div algorithm>
 To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
