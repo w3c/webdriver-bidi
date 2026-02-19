@@ -430,60 +430,53 @@ To <dfn export>resume</dfn> given |name|, |id| and |parameters|:
 
 </div>
 
-The <dfn>WebDriver configuration</dfn> is a structure providing a generic way to store
-configurations per user context, per navigable or globally.
+A <dfn>WebDriver configuration</dfn> is a [=struct=] with:
+* [=struct/item=] <dfn for="WebDriver configuration">global</dfn> which is a [=WebDriver configuration/value=], initially [=WebDriver configuration/unset=];
+* [=struct/item=] <dfn for="WebDriver configuration">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=WebDriver configuration/value=], initially empty;
+* [=struct/item=] <dfn for="WebDriver configuration">navigables</dfn> which is a weak map between [=/navigables=] and [=WebDriver configuration/value=], initially empty.
+
+A [=WebDriver configuration=] has an <dfn for="WebDriver configuration">associated type</dfn> which
+is a type.
+
+The <dfn for="WebDriver configuration">value</dfn> for a [=WebDriver configuration=] is either a
+value whose type is the [=WebDriver configuration/associated type=] for that configuration or
+[=WebDriver configuration/unset=].
 
 <dfn for="WebDriver configuration">Unset</dfn> is a value indicating that a specific configuration
-[=WebDriver configuration/value=] has not be set.
-
-Each [=WebDriver configuration=] has an associated <dfn for="WebDriver configuration">type</dfn>,
-which defines the possible values for the configuration.
-
-Each [=WebDriver configuration=] has a <dfn for="WebDriver configuration">value</dfn>, which is
-either [=WebDriver configuration/unset=] or a value of the [=WebDriver configuration/type=].
-
-The <dfn>WebDriver configuration struct</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn for="WebDriver configuration struct">global</dfn> which is a [=WebDriver configuration/value=], initially [=WebDriver configuration/unset=];
-* [=struct/item=] named <dfn for="WebDriver configuration struct">user contexts</dfn> which is a weak map between [=user context|user contexts=] and [=WebDriver configuration/value=], initially empty;
-* [=struct/item=] named <dfn for="WebDriver configuration struct">navigables</dfn> which is a weak map between [=/navigables=] and [=WebDriver configuration/value=], initially empty.
-
-For each [=WebDriver configuration=], [=remote end=] has an associated
-<dfn for="WebDriver configuration">values</dfn> which is a [=WebDriver configuration struct=].
+[=WebDriver configuration/value=] has not been set.
 
 <div algorithm>
 
 Note: this algorithm allows accessing the [=WebDriver configuration=] for a given [=/navigable=]
-by checking the [=WebDriver configuration=]'s [=WebDriver configuration/values=] for the
-|navigable|, then for the |navigable|'s [=associated user context=], then
-[=WebDriver configuration struct/global=]. Returns [=WebDriver configuration/unset=] if
-configuration is not set.
+by checking values in [=WebDriver configuration/navigables=], then in
+[=WebDriver configuration/user contexts=] and finally in [=WebDriver configuration/global=].
+Returns [=WebDriver configuration/unset=] if configuration is not set.
 
 To <dfn>get WebDriver configuration value</dfn> of [=WebDriver configuration=] |configuration| for
 [=/navigable=] |navigable|:
 
-1. Let |configuration values| be |configuration|'s [=WebDriver configuration/values=].
+1. Let |top-level traversable| be |navigable|'s [=navigable/top-level traversable=].
 
-1. If |configuration values|' [=WebDriver configuration struct/navigables=] [=map/contains=]
-   |navigable|:
+1. If |configuration|'s [=WebDriver configuration/navigables=] [=map/contains=]
+   |top-level traversable|:
 
-   1. Let |navigable configuration value| be |configuration values|'
-      [=WebDriver configuration struct/navigables=][|navigable|].
+   1. Let |navigable configuration value| be |configuration|'s
+      [=WebDriver configuration/navigables=][|top-level traversable|].
 
    1. If |navigable configuration value| is not [=WebDriver configuration/unset=], return
       |navigable configuration value|.
 
 1. Let |user context| be |navigable|'s [=associated user context=].
 
-1. If |configuration values|' [=WebDriver configuration struct/user contexts=] [=map/contains=]
-   |user context|:
+1. If |configuration|'s [=WebDriver configuration/user contexts=] [=map/contains=] |user context|:
 
-   1. Let |user context configuration value| be |configuration values|'
-      [=WebDriver configuration struct/user contexts=][|user context|].
+   1. Let |user context configuration value| be |configuration|'s
+      [=WebDriver configuration/user contexts=][|user context|].
 
    1. If |user context configuration value| is not [=WebDriver configuration/unset=], return
       |user context configuration value|.
 
-1. Return |configuration values|' [=WebDriver configuration struct/global=].
+1. Return |configuration|'s [=WebDriver configuration/global=].
 
 </div>
 
@@ -496,22 +489,21 @@ To <dfn for="WebDriver configuration">store</dfn> [=WebDriver configuration=] |c
 [=WebDriver configuration/value=] |value| in optional |target| which is a [=/navigable=],
 a [=user context=] or null if not provided:
 
-1. If |target| is null, set |configuration|'s [=WebDriver configuration/values=]'s
-   [=WebDriver configuration struct/global=] to |value|.
+1. If |target| is null, set |configuration|'s [=WebDriver configuration/global=] to |value|.
 
-1. If |target| is a [=user context=], set |configuration|'s [=WebDriver configuration/values=]'s
-   [=WebDriver configuration struct/user contexts=][|target|] to |value|.
+1. If |target| is a [=user context=], set |configuration|'s
+   [=WebDriver configuration/user contexts=][|target|] to |value|.
 
-1. If |target| is a [=/navigable=], set |configuration|'s [=WebDriver configuration/values=]'s
-   [=WebDriver configuration struct/navigables=][|target|] to |value|.
+1. If |target| is a [=/navigable=], set |configuration|'s
+   [=WebDriver configuration/navigables=][|target|] to |value|.
 
 </div>
 
 <div algorithm>
 
 Note: This generic algorithm stores [=WebDriver configuration=]'s [=WebDriver configuration/value=]
-in [=WebDriver configuration struct/global=], [=WebDriver configuration struct/user contexts=], or
-[=WebDriver configuration struct/navigables=], depending on the presence of
+in [=WebDriver configuration/global=], [=WebDriver configuration/user contexts=], or
+[=WebDriver configuration/navigables=], depending on the presence of
 "<code>userContexts</code>" and "<code>contexts</code>" in |command parameters|. These parameters
 are mutually exclusive. If neither is provided, the configuration is stored globally.
 
@@ -7083,7 +7075,7 @@ The [=remote end steps=] with |command parameters| are:
 
 </div>
 
-#### The emulation.SetScrollbarTypeOverride Command #### {#command-emulation-setScrollbarTypeOverride}
+#### The emulation.setScrollbarTypeOverride Command #### {#command-emulation-setScrollbarTypeOverride}
 
 The <dfn export for=commands>emulation.setScrollbarTypeOverride</dfn> command modifies
 scrollbar type on the given top-level traversables, user contexts or globally.
@@ -7112,8 +7104,8 @@ scrollbar type on the given top-level traversables, user contexts or globally.
    </dd>
 </dl>
 
-The <dfn>scrollbar type override configuration</dfn> is [=WebDriver configuration=] with
-[=WebDriver configuration/type=] "<code>classic</code>" / "<code>overlay</code>".
+A [=remote end=] has a <dfn>scrollbar type override configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] string.
 
 <div algorithm>
 To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
@@ -7127,7 +7119,7 @@ To <dfn>update scrollbar type override</dfn> for [=/navigable=] |navigable|:
 1. If |scrollbar type override| is "<code>classic</code>", run [=implementation-defined=] steps to
    make the |navigable|'s [=active document=] to use <a>classic scrollbars</a> and return.
 
-1. if |scrollbar type override| is "<code>overlay</code>", run [=implementation-defined=]
+1. If |scrollbar type override| is "<code>overlay</code>", run [=implementation-defined=]
    steps to make the |navigable|'s [=active document=] to use <a>overlay scrollbars</a> and return.
 
 1. Assert: |scrollbar type override| is [=WebDriver configuration/unset=].
@@ -7149,7 +7141,7 @@ The [=remote end steps=] given |command parameters| are:
 1. If the implementation does not support setting |scrollbar type override|, then return [=error=]
    with [=error code=] [=unsupported operation=].
 
-1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+1. Let |affected navigables| be the result of [=trying=] to [=store WebDriver configuration=]
    [=scrollbar type override configuration=] |scrollbar type override| for |command parameters|.
 
 1. For each |navigable| of |affected navigables|:
