@@ -3361,14 +3361,6 @@ weak map between [=user context|user contexts=] and [=unhandled prompt behavior 
 A [=remote end=] has a <dfn>scripting enabled overrides map</dfn> which is a weak
 map between [=/navigables=] or [=user context|user contexts=] and boolean.
 
-A [=remote end=] has a <dfn>bypass CSP configuration</dfn> which is a [=struct=] with
-an [=struct/item=] named <dfn for="bypass CSP configuration">default bypass CSP configuration</dfn>,
-which is initially null,
-an [=struct/item=] named <dfn for="bypass CSP configuration">user context bypass CSP configuration</dfn>,
-which is a weak map between [=user context|user contexts=] and boolean which is initially empty,
-and an [=struct/item=] named <dfn for="bypass CSP configuration">navigable bypass CSP configuration</dfn>,
-which is a weak map between [=/navigables=] and boolean which is initially empty.
-
 ### Types ### {#module-browsingcontext-types}
 
 #### The browsingContext.BrowsingContext Type #### {#type-browsingContext-Browsingcontext}
@@ -5059,6 +5051,9 @@ Note: When CSP bypass is enabled, all CSP directives are bypassed, including tho
    </dd>
 </dl>
 
+A [=remote end=] has a <dfn>bypass CSP configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] boolean.
+
 <div algorithm>
 
 The <dfn export>WebDriver BiDi CSP is bypassed</dfn> steps given
@@ -5066,18 +5061,14 @@ The <dfn export>WebDriver BiDi CSP is bypassed</dfn> steps given
 
 1. Let |top-level traversable| be |navigable|'s [=navigable/top-level traversable=].
 
-1. If [=bypass CSP configuration=]'s [=navigable bypass CSP configuration=] contains |top-level traversable|, return
-   [=bypass CSP configuration=]'s [=navigable bypass CSP configuration=][|top-level traversable|].
+1. Let |bypass CSP enabled| be the result of [=get WebDriver configuration value=] of
+   [=bypass CSP configuration=] for |top-level traversable|.
 
-1. Let |user context| be |top-level traversable|'s [=associated user context=].
+1. Assert: |bypass CSP enabled| is <code>true</code> or [=WebDriver configuration/unset=].
 
-1. If [=bypass CSP configuration=]'s [=user context bypass CSP configuration=] contains |user context|, return
-   [=bypass CSP configuration=]'s [=user context bypass CSP configuration=][|user context|].
+1. If |bypass CSP enabled| is [=WebDriver configuration/unset=], return false.
 
-1. If [=bypass CSP configuration=]'s [=default bypass CSP configuration=] is not null, return
-   [=bypass CSP configuration=]'s [=default bypass CSP configuration=].
-
-1. Return false.
+1. Return true.
 
 </div>
 
@@ -5085,36 +5076,11 @@ The <dfn export>WebDriver BiDi CSP is bypassed</dfn> steps given
 
 The [=remote end steps=] given |command parameters| are:
 
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
 1. Let |bypass| be |command parameters|["<code>bypass</code>"].
 
-1. If |command parameters| [=map/contains=] "<code>contexts</code>":
+1. If |bypass| is null, set |bypass| to [=WebDriver configuration/unset=].
 
-   1. Let |navigables| be the result of [=trying=] to
-      [=get valid top-level traversables by ids=] with
-      |command parameters|["<code>contexts</code>"].
-
-   1. For each |navigable| of |navigables|:
-
-      1. If |bypass| is null [=map/remove=] |navigable| from [=bypass CSP configuration=]'s [=navigable bypass CSP configuration=].
-
-      1. Otherwise [=map/set=] [=bypass CSP configuration=]'s [=navigable bypass CSP configuration=][|navigable|] to |bypass|.
-
-1. Otherwise if |command parameters| [=map/contains=] "<code>userContexts</code>":
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. If |bypass| is null [=map/remove=] |user context| from [=bypass CSP configuration=]'s [=user context bypass CSP configuration=].
-
-      1. Otherwise [=map/set=] [=bypass CSP configuration=]'s [=user context bypass CSP configuration=][|user context|] to |bypass|.
-
-1. Otherwise set [=bypass CSP configuration=]'s [=default bypass CSP configuration=] to |bypass|.
+1. [=Try=] to [=store WebDriver configuration=] [=bypass CSP configuration=] |bypass| for |command parameters|.
 
 1. Return [=success=] with data null.
 
