@@ -6499,27 +6499,13 @@ allows overriding the values of various media features.
         ? userContexts: [+browser.UserContext],
       }
 
-      emulation.MediaFeatures = {
-        ? "color": js-uint,
-        ? "color-index": js-uint,
-        ? "monochrome": js-uint,
-        ? "scan": "interlace" / "progressive",
-        ? "grid": 0 / 1,
-        ? "update": "none" / "slow" / "fast",
-        ? "overflow-block": "none" / "scroll" / "paged",
-        ? "overflow-inline": "none" / "scroll",
-        ? "color-gamut": "srgb" / "p3" / "rec2020",
-        ? "pointer": "none" / "coarse" / "fine",
-        ? "hover": "none" / "hover",
-        ? "any-pointer": "none" / "coarse" / "fine",
-        ? "any-hover": "none" / "hover",
-        ? "prefers-color-scheme": "light" / "dark",
-        ? "prefers-contrast": "no-preference" / "more" / "less" / "custom",
-        ? "prefers-reduced-motion": "no-preference" / "reduce",
-        ? "prefers-reduced-transparency": "no-preference" / "reduce",
-        ? "prefers-reduced-data": "no-preference" / "reduce",
-        ? "display-mode": "fullscreen" / "standalone" / "minimal-ui" / "browser" / "picture-in-picture",
+      emulation.MediaFeatures = [emulation.MediaFeature]
+
+      emulation.MediaFeature = {
+         name: text
+         value: text
       }
+
     </pre>
    </dd>
    <dt>Return Type</dt>
@@ -6531,8 +6517,7 @@ allows overriding the values of various media features.
 </dl>
 
 A [=remote end=] has a <dfn>media features override configuration</dfn>, which is
-[=WebDriver configuration=] with [=WebDriver configuration/associated type=] [=/map=] matching
-<code>emulation.MediaFeatures</code> production.
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] [=/map=].
 
 <div algorithm>
 To get <dfn export>WebDriver BiDi media feature value</dfn> for [=/Document=] |document| and media
@@ -6540,11 +6525,12 @@ feature name |name|:
 
 1. Let |navigable| be |document|'s [=/node navigable=].
 
-1. Let |media features override| be the result of [=get WebDriver configuration value=] of
+1. Let |media features override map| be the result of [=get WebDriver configuration value=] of
    [=media features override configuration=] for |navigable|.
 
-1. If |media features override| is not [=WebDriver configuration/unset=] and
-   |media features override| [=map/contains=] |name|, return |media features override|[|name|].
+1. If |media features override map| is not [=WebDriver configuration/unset=] and
+   |media features override map| [=map/contains=] |name|, return
+   |media features override map|[|name|].
 
 1. Return null.
 
@@ -6559,11 +6545,17 @@ The [=remote end steps=] with |command parameters| are:
 1. If |media features override| is null, set |media features override| to
    [=WebDriver configuration/unset=].
 
+1. Let |media features override map| be an empty [=/map=].
+
+1. For each |media feature| of |media features override|:
+   1. [=map/Set=] |media features override map|[|media feature|["<code>name</code>"]] to
+      |media feature|["<code>value</code>"].
+
 1. If the implementation does not support overriding any of the media features in
-   |media features override|, return [=error=] with [=error code=] [=unsupported operation=].
+   |media features override map|, return [=error=] with [=error code=] [=unsupported operation=].
 
 1. Let |affected navigables| be the result of [=store WebDriver configuration=]
-   [=media features override configuration=] |media features override| for |command parameters|.
+   [=media features override configuration=] |media features override map| for |command parameters|.
 
 1. For each |navigable| of |affected navigables|:
    1. [=list/For each=] |document| currently loaded in |navigable| or its [=descendant navigables=]:
