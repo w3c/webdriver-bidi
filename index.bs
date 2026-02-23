@@ -586,6 +586,7 @@ CommandData = (
   BrowsingContextCommand //
   EmulationCommand //
   InputCommand //
+  IoCommand //
   NetworkCommand //
   ScriptCommand //
   SessionCommand //
@@ -628,6 +629,7 @@ ResultData = (
   BrowsingContextResult /
   EmulationResult /
   InputResult /
+  IoResult /
   NetworkResult /
   ScriptResult /
   SessionResult /
@@ -802,11 +804,17 @@ with the following additional codes:
   <dt><dfn for=errors export>no such storage partition</dfn>
   <dd>Tried to access data in a non-existent storage partition.
 
+  <dt><dfn for=errors export>no such stream</dfn>
+  <dd>Tried to access an unknown [=Stream=].
+
   <dt><dfn for=errors export>no such user context</dfn>
   <dd>Tried to reference an unknown [=user context=].
 
   <dt><dfn for=errors export>no such web extension</dfn>
   <dd>Tried to reference an unknown web extension.
+
+  <dt><dfn for=errors export>stream read error</dfn>
+  <dd>Unable to read from a [=Stream=].
 
   <dt><dfn for=errors export>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
@@ -842,10 +850,12 @@ ErrorCode = "invalid argument" /
             "no such node" /
             "no such request" /
             "no such script" /
+            "no such stream" /
             "no such storage partition" /
             "no such user context" /
             "no such web extension" /
             "session not created" /
+            "stream read error" /
             "unable to capture screen" /
             "unable to close browser" /
             "unable to set cookie" /
@@ -7386,6 +7396,212 @@ is legacy, user agent might run [=implementation-defined=] steps to respect the
    to |maxTouchPoints|.
 
 1. Return [=success=] with data null.
+
+</div>
+
+## The io Module ## {#module-io}
+
+The <dfn export for=modules>io</dfn> module contains commands and events
+relating to IO operations.
+
+### Definition ### {#module-io-definition}
+
+{^remote end definition^}
+
+<pre class="cddl" data-cddl-module="remote-cddl">
+
+IoCommand = (
+  io.Cancel //
+  io.ReadStream //
+)
+
+</pre>
+
+{^local end definition^}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+
+IoResult = (
+   io.ReadStreamResult
+)
+</pre>
+
+A [=BiDi Session=] has a <dfn>readable stream map</dfn> which is a [=/map=] between
+a <code>io.Stream</code> and a [=readable stream=].
+
+<div class="algorithm">
+
+To <dfn>get a readable stream</dfn> given <var ignore>session</var> and |stream|:
+
+1. Let |stream map| be |session|'s [=readable stream map=].
+
+1. If |stream map| [=map/contains=] |stream|, return [=success=] with data
+   |stream map|[|stream|].
+
+1. Return [=error=] with [=error code=] [=no such stream=].
+
+</div>
+
+### Types ### {#module-io-types}
+
+#### The io.ReadableStream Type #### {#type-io-ReadableStream}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+io.ReadableStream = {
+  stream: io.Stream,
+}
+</pre>
+
+The <code>io.ReadableStream</code> type represents a [=readable stream=].
+
+#### The io.ReadData Type #### {#type-io-ReadData}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+io.ReadData = {
+  value: network.BytesValue,
+  done: bool
+}
+</pre>
+
+The <code>io.ReadData</code> type represents the result of reading a value
+from a [=readable stream=].
+
+
+#### The io.Stream Type #### {#type-io-Stream}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+io.Stream = text
+</pre>
+
+The <code>io.Stream</code> type represents a handle to an IO [=stream=].
+
+### Commands ### {#module-io-commands}
+
+#### The io.cancel Command ####  {#command-io-cancel}
+
+The <dfn export for=commands>io.Cancel</dfn> command cancels a [=readable stream=].
+
+<dl>
+  <dt>Command Type</dt>
+  <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      io.Cancel = (
+        method: "io.cancel",
+        params: io.CancelParameters
+      )
+
+      io.CancelParameters = {
+        stream: io.Stream,
+        ? reason: text,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      io.CancelResult = EmptyResult
+    </pre>
+  </dd>
+</dl>
+
+<div algorithm="remote end steps for io.Cancel">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |stream| be the result of trying to [=get a readable stream=] with
+   |session| and |command parameters|["<code>stream</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>reason</code>, let |reason|
+   be |command parameters|["<code>reason</code>"]. Otherwise let |reason| be
+   undefined.
+
+1. Run [$ReadableStreamCancel$]\(|stream|, |reason|).
+
+</div>
+
+### The io.readStream Command ### {#command-io.readStream}
+
+The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of a
+[=readable stream=].
+
+<dl>
+  <dt>Command Type</dt>
+  <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      io.ReadStream = (
+       method: "io.readStream",
+       params: io.ReadStreamParameters
+      )
+
+      io.ReadStreamParameters = {
+        stream: io.Stream,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      io.ReadStreamResult = io.ReadData
+    </pre>
+   </dd>
+</dl>
+
+
+<div algorithm="remote end steps for io.readStream">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |stream| be the result of [=trying=] to [=get a readable stream=] with
+   |session| and |command parameters|["<code>stream</code>"].
+
+1. Let |result| be null.
+
+1. Let |read request| be a new [=read request=] with the following items:
+  <dl>
+    <dt>[=read request/chunk steps=] given |chunk|:
+    <dd>
+      1. Assert: |result| is null.
+
+      1. Let |response| be a new `io.ReadResult` with the <code>value</code>
+         field set to [=serialize protocol bytes=] given |chunk| and the
+         <code>done</code> field set to false.
+
+      1. Let |result| be [=success=] with data |response|.
+    </dd>
+
+    <dt>[=read request/close steps=]:
+    <dd>
+      1. Assert: |result| is null.
+
+      1. Let |response| be a new `io.ReadResult` with the <code>value</code>
+         field set to <code>""</code> and the <code>done</code> field set to
+         true.
+
+      1. Let |result| be [=success=] with data |response|.
+    </dd>
+
+    <dt>[=read request/error steps=] given <var ignore>e</var>:
+    <dd>
+      1. Assert: |result| is null.
+
+      1. Let |result| be [=error=] with [=error code=] [=stream read error=].
+    </dd>
+  </dl>
+
+1. Set |stream|.\[[disturbed]] to true.
+
+1. If |stream|.\[[state]] is "<code>closed</code>", perform |read request|'s close steps.
+
+1. Otherwise, if |stream|.\[[state]] is "<code>errored</code>", perform |read
+   request|'s error steps given |stream|.\[[storedError]].
+
+1. Otherwise,
+
+    1. Assert: stream.\[[state]] is "readable".
+
+    1. Perform ! |stream|.\[[controller]].\[[PullSteps]](|read request|).
+
+1. Assert: |result| is not null.
+
+1. Return |result|.
 
 </div>
 
