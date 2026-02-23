@@ -1060,11 +1060,37 @@ implementation must proceed according to the WebSocket [=server-side
 requirements=], with the following steps run when deciding whether to
 accept the incoming connection:
 
-1. Let |resource name| be the resource name from [=reading the
-   client's opening handshake=]. If |resource name| is not in
-   |listener|'s [=list of WebSocket resources=], then stop
-   running these steps and act as if the requested service is not
+1. Using the data from [=reading the client's opening handshake=]:
+
+  1. Let |resource name| be the resource name.
+
+  1. Let |host| be the value of the Host header, if any, or undefined otherwise.
+
+  1. Let |origin| the the value of the Origin header, if any, or undefined
+     otherwise.
+
+1. If |resource name| is not in |listener|'s [=list of WebSocket resources=],
+   then stop running these steps and act as if the requested service is not
    available.
+
+1. If |host| is not an IP address, and is not a hostname that matches the
+   hostname of the WebSocket server or another hostname the implementation has
+   been configured to allow, or in any case if the implementation wants to
+   reject connections with |host| as the Host header, then stop running these
+   steps and act as if the requested service is not available.
+
+   Note: rejecting connections with unexpected values in the Host header
+   prevents DNS rebinding attacks. Implementations can opt to provide more
+   stringent controls where appropriate, for example only accepting connections
+   when the |host| value corresponds to a loopback interface [[!RFC5735]].
+
+1. If |origin| is not undefined, and does not match an origin that the
+   implementation has been configured to allow, then stop running these
+   steps and act as if the requested service is not available.
+
+   Note: rejecting connections with unexpected values in the Origin header is
+   necessary to prevent untrusted websites from establishing a WebDriver-BiDi
+   session.
 
 1. If |resource name| is the byte string "<code>/session</code>",
    and the implementation [=supports BiDi-only sessions=]:
