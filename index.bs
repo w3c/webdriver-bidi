@@ -3258,7 +3258,8 @@ A [=BiDi session=] has a <dfn>screencast recordings map</dfn> which is a [=/map=
 which the keys are [[!RFC9562|UUID]]s, and the values are [=structs=] with
 an [=struct/item=] named <code>mediaRecorder</code>, which is a {{MediaRecorder}},
 an [=struct/item=] named <code>mimeType</code>, which is a string,
-an [=struct/item=] named <code>recordedChunks</code>, which is a [=/list=] of {{BlobEvent/data}},
+an [=struct/item=] named <code>path</code>, which is a string,
+an [=struct/item=] named <code>size</code>, which is a number,
 an [=struct/item=] named <code>context</code>, which is a navigable.
 
 ### Types ### {#module-browsingcontext-types}
@@ -5149,7 +5150,8 @@ starts the screencast of a given navigable according to provided options.
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       browsingContext.StartScreencastResult = {
-         screencast: browsingContext.Screencast
+         screencast: browsingContext.Screencast,
+         path: text
       }
 
       browsingContext.Screencast = text
@@ -5184,7 +5186,7 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |media stream| be <a spec=ECMASCRIPT>Await</a>(|promise|).
 
-1. Let |recorded chunks| be an empty [=/list=].
+1. Let |path| be an implementation-defined file path where the recording will be stored.
 
 1. Let |media recorder options| be a struct with <code>mimeType</code> |mime type|.
 
@@ -5192,25 +5194,33 @@ The [=remote end steps=] with |command parameters| are:
    with {{MediaRecorder/stream}} |media stream| and
    {{MediaRecorderOptions}} |media recorder options|.
 
+1. Let |recording| be a new [=struct=] with
+   <code>mediaRecorder</code> |media recorder|,
+   <code>mimeType</code> |mime type|,
+   <code>path</code> |path|,
+   <code>size</code> 0,
+   <code>context</code> |navigable|.
+
 1. [=Add an event listener=] to |media recorder| with type {{MediaRecorder/dataavailable}}
    and callback that performs the following steps given |event|:
 
    1. Let |data| be |event|'s {{BlobEvent/data}}.
 
-   1. [=list/Append=] |data| to |recorded chunks|.
+   1. Let |bytes| be |data|'s underlying [=byte sequence=].
 
-1. Call {{MediaRecorder/start()}} on |media recorder|.
+   1. Append |bytes| to the file at |path|.
+
+   1. Set |recording|["<code>size</code>"] to |recording|["<code>size</code>"] + |bytes|'s length.
+
+1. Call {{MediaRecorder/start()}} on |media recorder| with <code>1000</code>.
 
 1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
 
-1. Set [=screencast recordings map=][|screencast|] to a struct with
-   <code>mediaRecorder</code> |media recorder|,
-   <code>mimeType</code> |mime type|,
-   <code>recordedChunks</code> |recorded chunks|,
-   <code>context</code> |navigable|.
+1. Set [=screencast recordings map=][|screencast|] to |recording|.
 
 1. Return a new [=/map=] matching the <code>browsingContext.StartScreencastResult</code>
-   with the <code>screencast</code> field set to |screencast|.
+   with the <code>screencast</code> field set to |screencast| and <code>path</code> field
+   set to |path|.
 
 </div>
 
@@ -5257,32 +5267,18 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |media recorder| be |screencast recording|["<code>mediaRecorder</code>"].
 
-1. Let |recorded chunks| be |screencast recording|["<code>recordedChunks</code>"].
-
-1. Let |navigable id| be the [=navigable id=] for |screencast recording|["<code>navigable</code>"].
-
-1. Let <var>realm</var> be the result of [=trying=] to [=get a realm from a navigable=]
-   with |navigable id| and null.
+1. Let |path| be |screencast recording|["<code>path</code>"].
 
 1. Call {{MediaRecorder/stop()}} on |media recorder|.
 
 1. Wait until |media recorder|'s {{MediaRecorder/stop}} [=fire an event|event fires=].
 
-1. Let |blob options| be a struct with <code>type</code> |screencast recording|["<code>mimeType</code>"].
-
-1. Let |blob| to be a new {{Blob}} in |realm| with {{blobParts}} |recorded chunks| and
-   {{BlobPropertyBag}} |blob options|.
-
-1. Let |path| be an implementation-defined file path where the recording will be stored.
-
-1. Let |bytes| be |blob|'s underlying [=byte sequence=].
-
-1. Write |bytes| to the file system at |path|.
+1. Let |size| be |screencast recording|["<code>size</code>"].
 
 1. [=map/Remove=] |screencast| from [=screencast recordings map=].
 
 1. Return a new [=/map=] matching the <code>browsingContext.StopScreencastResult</code>
-   with the <code>path</code> field set to |path| and <code>size</code> field set to |blob|'s {{Blob/size}}.
+   with the <code>path</code> field set to |path| and <code>size</code> field set to |size|.
 
 </div>
 
