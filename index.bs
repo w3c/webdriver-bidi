@@ -6500,25 +6500,25 @@ allows overriding the values of various media features.
       }
 
       emulation.MediaFeatures = {
-        ? "color": js-uint,
-        ? "color-index": js-uint,
-        ? "monochrome": js-uint,
-        ? "scan": "interlace" / "progressive",
-        ? "grid": 0 / 1,
-        ? "update": "none" / "slow" / "fast",
-        ? "overflow-block": "none" / "scroll" / "paged",
-        ? "overflow-inline": "none" / "scroll",
-        ? "color-gamut": "srgb" / "p3" / "rec2020",
-        ? "pointer": "none" / "coarse" / "fine",
-        ? "hover": "none" / "hover",
-        ? "any-pointer": "none" / "coarse" / "fine",
-        ? "any-hover": "none" / "hover",
-        ? "prefers-color-scheme": "light" / "dark",
-        ? "prefers-contrast": "no-preference" / "more" / "less" / "custom",
-        ? "prefers-reduced-motion": "no-preference" / "reduce",
-        ? "prefers-reduced-transparency": "no-preference" / "reduce",
-        ? "prefers-reduced-data": "no-preference" / "reduce",
-        ? "display-mode": "fullscreen" / "standalone" / "minimal-ui" / "browser" / "picture-in-picture",
+        ? "color": js-uint / null,
+        ? "color-index": js-uint / null,
+        ? "monochrome": js-uint / null,
+        ? "scan": "interlace" / "progressive" / null,
+        ? "grid": 0 / 1 / null,
+        ? "update": "none" / "slow" / "fast" / null,
+        ? "overflow-block": "none" / "scroll" / "paged" / null,
+        ? "overflow-inline": "none" / "scroll" / null,
+        ? "color-gamut": "srgb" / "p3" / "rec2020" / null,
+        ? "pointer": "none" / "coarse" / "fine" / null,
+        ? "hover": "none" / "hover" / null,
+        ? "any-pointer": "none" / "coarse" / "fine" / null,
+        ? "any-hover": "none" / "hover" / null,
+        ? "prefers-color-scheme": "light" / "dark" / null,
+        ? "prefers-contrast": "no-preference" / "more" / "less" / "custom" / null,
+        ? "prefers-reduced-motion": "no-preference" / "reduce" / null,
+        ? "prefers-reduced-transparency": "no-preference" / "reduce" / null,
+        ? "prefers-reduced-data": "no-preference" / "reduce" / null,
+        ? "display-mode": "fullscreen" / "standalone" / "minimal-ui" / "browser" / "picture-in-picture" / null,
       }
     </pre>
    </dd>
@@ -6530,9 +6530,8 @@ allows overriding the values of various media features.
    </dd>
 </dl>
 
-A [=remote end=] has a <dfn>media features override configuration</dfn>, which is
-[=WebDriver configuration=] with [=WebDriver configuration/associated type=] [=/map=] matching
-<code>emulation.MediaFeatures</code> production.
+A [=remote end=] has a <dfn>media features override configurations map</dfn>, which is a [=/map=]
+between string and [=WebDriver configuration=].
 
 <div algorithm>
 To get <dfn export>WebDriver BiDi media feature value</dfn> for [=/Document=] |document| and media
@@ -6540,13 +6539,15 @@ feature name |name|:
 
 1. Let |navigable| be |document|'s [=/node navigable=].
 
-1. Let |media features override| be the result of [=get WebDriver configuration value=] of
-   [=media features override configuration=] for |navigable|.
+1. If [=media features override configurations map=] does not [=map/contain=] |name|,
+   return null.
 
-1. If |media features override| is not [=WebDriver configuration/unset=] and
-   |media features override| [=map/contains=] |name|, return |media features override|[|name|].
+1. Let |media feature override| be the result of [=get WebDriver configuration value=] of
+   [=media features override configurations map=][|name|] for |navigable|.
 
-1. Return null.
+1. If |media feature override| is [=WebDriver configuration/unset=], return null.
+
+1. Return |media feature override|.
 
 </div>
 
@@ -6556,14 +6557,44 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |media features override| be |command parameters|["<code>features</code>"].
 
-1. If |media features override| is null, set |media features override| to
-   [=WebDriver configuration/unset=].
+1. If |media features override| is null:
 
-1. If the implementation does not support overriding any of the media features in
-   |media features override|, return [=error=] with [=error code=] [=unsupported operation=].
+   Note: to remove all the media feature emulations at once, we need a list of media features names.
+   We use keys of the [=media features override configurations map=], as it contains all the media
+   features that were ever used.
 
-1. Let |affected navigables| be the result of [=store WebDriver configuration=]
-   [=media features override configuration=] |media features override| for |command parameters|.
+   1. Set |media features override| to a new [=/map=].
+
+   1. For each |media feature name| of the result of [=map/get the keys=] of
+      [=media features override configurations map=]:
+
+      1. [=map/Set=] |media features override|[|media feature name|] to null.
+
+1. For each |media feature name| of the result of [=map/get the keys=] of |media features override|:
+
+   1. If the implementation is unable to emulate [=media feature=] |media feature name| with
+      value of |media features override|[|media feature name|] for any reason, return [=error=] with
+      [=error code=] [=unsupported operation=].
+
+1. Let |affected navigables| be a new [=/set=].
+
+1. For each |media feature name| of the result of [=map/get the keys=] of |media features override|:
+
+   1. If [=media features override configurations map=] does not [=map/contain=]
+      |media feature name|, [=map/set=]
+      [=media features override configurations map=][|media feature name|] to a new
+      [=WebDriver configuration=] with [=WebDriver configuration/associated type=] string or
+      integer.
+
+   1. Let |media feature override| be |media features override|[|media feature name|].
+
+   1. If |media feature override| is null, set |media feature override| to
+      [=WebDriver configuration/unset=].
+
+   1. Set |affected navigables| to the [=set/union=] of |affected navigables| and the result of
+      [=trying=] to [=store WebDriver configuration=]
+      [=media features override configurations map=][|media feature name|] |media feature override|
+      for |command parameters|.
 
 1. For each |navigable| of |affected navigables|:
    1. [=list/For each=] |document| currently loaded in |navigable| or its [=descendant navigables=]:
