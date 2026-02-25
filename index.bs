@@ -5137,6 +5137,8 @@ TODO: Move it as a hook in the html spec instead.
 
 1. [=Update scrollbar type override=] for |navigable|.
 
+1. [=Update text layout mode override=] for |navigable|.
+
 </div>
 
 <div algorithm="remote end steps for browsingContext.setViewport">
@@ -6078,6 +6080,7 @@ EmulationCommand = (
   emulation.SetScreenSettingsOverride //
   emulation.SetScriptingEnabled //
   emulation.SetScrollbarTypeOverride //
+  emulation.SetTextLayoutModeOverride //
   emulation.SetTimezoneOverride //
   emulation.SetTouchOverride //
   emulation.SetUserAgentOverride
@@ -6093,6 +6096,7 @@ EmulationResult = (
   emulation.SetScreenOrientationOverrideResult /
   emulation.SetScriptingEnabledResult /
   emulation.SetScrollbarTypeOverrideResult /
+  emulation.SetTextLayoutModeOverrideResult /
   emulation.SetTimezoneOverrideResult /
   emulation.SetTouchOverrideResult /
   emulation.SetUserAgentOverrideResult
@@ -7097,6 +7101,85 @@ The [=remote end steps=] given |command parameters| are:
 1. For each |navigable| of |affected navigables|:
 
    1. [=Update scrollbar type override=] for |navigable|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+
+#### The emulation.setTextLayoutModeOverride Command #### {#command-emulation-setTextLayoutModeOverride}
+
+The <dfn export for=commands>emulation.setTextLayoutModeOverride</dfn> command modifies
+the text layout mode on the given top-level traversables or user contexts.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetTextLayoutModeOverride = (
+        method: "emulation.setTextLayoutModeOverride",
+        params: emulation.SetTextLayoutModeOverrideParameters
+      )
+
+      emulation.SetTextLayoutModeOverrideParameters = {
+        textLayoutMode: emulation.TextLayoutMode / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.TextLayoutMode = "mobile"
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetTextLayoutModeOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+A [=remote end=] has a <dfn>text layout mode override configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] string.
+
+<div algorithm>
+To <dfn>update text layout mode override</dfn> for [=/navigable=] |navigable|:
+
+Note: Text layout mode "<code>mobile</code>" enables text autosizing (font
+inflation), which is an algorithm used primarily on mobile devices to boost the
+legibility of text blocks when fitting them into a small viewport. This ensures
+that content remains readable without requiring the user to zoom in. This
+behavior is often controlled via the 'text-size-adjust' CSS property.
+See [[!CSS-SIZE-ADJUST-1]].
+
+1. Let |text layout mode override| be the result of [=get WebDriver configuration value=] of
+   [=text layout mode override configuration=] for |navigable|.
+
+1. Assert that |text layout mode override| is "<code>mobile</code>" or
+   [=WebDriver configuration/unset=].
+
+1. If |text layout mode override| is "<code>mobile</code>", run [=implementation-defined=] steps to
+   make the |navigable|'s [=active document=] to use the "<code>mobile</code>" text layout mode.
+
+1. Otherwise, run [=implementation-defined=] steps to make the |navigable|'s [=active document=] to
+   use an [=implementation-defined=] default text layout mode.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setTextLayoutModeOverride">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |text layout mode override| be |command parameters|["<code>textLayoutMode</code>"].
+
+1. If |text layout mode override| is null, set |text layout mode override| to
+   [=WebDriver configuration/unset=].
+
+1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+   [=text layout mode override configuration=] |text layout mode override| for |command parameters|.
+
+1. For each |navigable| of |affected navigables|:
+
+   1. [=Update text layout mode override=] for |navigable|.
 
 1. Return [=success=] with data null.
 
