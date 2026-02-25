@@ -5116,11 +5116,7 @@ TODO: Move it as a hook in the html spec instead.
    1. If [=geolocation overrides map=] [=map/contains=] |user context|,
       [=set emulated position data=] with |navigable| and [=geolocation overrides map=][|user context|].
 
-   1. If [=forced colors mode theme overrides map=] [=map/contains=] |user context|:
-
-      1. Let |theme| be [=forced colors mode theme overrides map=][|user context|].
-
-      1. [=Set emulated forced colors theme data=] with |navigable| and |theme|.
+   1. [=Update emulated forced colors theme=] for |navigable|.
 
    1. If [=screen orientation overrides map=] [=map/contains=] |user context|,
       [=set emulated screen orientation=] with |navigable| and
@@ -6117,9 +6113,6 @@ an [=struct/item=] named <dfn for="emulated maxTouchPoints">default</dfn>, which
 an [=struct/item=] named <dfn for="emulated maxTouchPoints">user contexts</dfn>, which is a weak map between [=user context|user contexts=] and integer, initially empty;
 and an [=struct/item=] named <dfn for="emulated maxTouchPoints">navigables</dfn>, which is a weak map between [=/navigables=] and integer, initially empty.
 
-A [=remote end=] has a <dfn>forced colors mode theme overrides map</dfn> which is a weak map
-between [=user context|user contexts=] and string or null.
-
 A <dfn>geolocation override</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn attribute for="geolocation override">latitude</dfn> which is a float;
 * [=struct/item=] named <dfn attribute for="geolocation override">longitude</dfn> which is a float;
@@ -6173,44 +6166,41 @@ The <dfn export for=commands>emulation.setForcedColorsModeThemeOverride</dfn> co
 
 Note: Check out the {{ForcedColorsModeAutomationTheme}} for the corresponding enum mapping in the CSS specification.
 
+A [=remote end=] has a <dfn>forced colors mode theme override configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] string.
+
+<div algorithm>
+To <dfn>update emulated forced colors theme</dfn> for [=/navigable=] |navigable|:
+
+1. Let |theme| be the result of [=get WebDriver configuration value=] of
+   [=forced colors mode theme override configuration=] for |navigable|.
+
+1. Assert: |theme| is "<code>light</code>", "<code>dark</code>" or
+   [=WebDriver configuration/unset=].
+
+1. If |theme| is [=WebDriver configuration/unset=], set |theme| to "<code>none</code>".
+
+1. [=Set emulated forced colors theme data=] with |navigable| and |theme|.
+
+</div>
+
 <div algorithm="remote end steps for emulation.setForcedColorsModeThemeOverride">
 
 The [=remote end steps=] with |command parameters| are:
 
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
-1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
 1. Let |theme| be |command parameters|["<code>theme</code>"].
 
-1. If |theme| is null, set |theme| to "<code>none</code>".
+1. If |theme| is null, set |theme| to [=WebDriver configuration/unset=].
 
-1. Let |navigables| be a [=/set=].
+1. If the implementation does not support setting |theme|, then return [=error=] with [=error code=]
+   [=unsupported operation=].
 
-1. If the <code>contexts</code> field of |command parameters| is present:
+1. Let |affected navigables| be the result of [=trying=] to [=store WebDriver configuration=]
+   [=forced colors mode theme override configuration=] |theme| for |command parameters|.
 
-   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=] with |command parameters|["<code>contexts</code>"].
+1. For each |navigable| of |affected navigables|:
 
-1. Otherwise:
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. [=map/Set=] [=forced colors mode theme overrides map=][|user context|] to |theme|.
-
-      1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]
-         whose [=associated user context=] is |user context|:
-
-         1. [=list/Append=] |top-level traversable| to |navigables|.
-
-1. For each |navigable| of |navigables|:
-
-   1. [=Set emulated forced colors theme data=] with |navigable| and |theme|.
+   1. [=Update emulated forced colors theme=] for |navigable|.
 
 1. Return [=success=] with data null.
 
