@@ -5113,8 +5113,7 @@ TODO: Move it as a hook in the html spec instead.
 
 1. If |navigable| is a [=/top-level traversable=]:
 
-   1. If [=geolocation overrides map=] [=map/contains=] |user context|,
-      [=set emulated position data=] with |navigable| and [=geolocation overrides map=][|user context|].
+   1. [=Update geolocation override=] for |navigable|.
 
    1. If [=forced colors mode theme overrides map=] [=map/contains=] |user context|:
 
@@ -6120,17 +6119,6 @@ and an [=struct/item=] named <dfn for="emulated maxTouchPoints">navigables</dfn>
 A [=remote end=] has a <dfn>forced colors mode theme overrides map</dfn> which is a weak map
 between [=user context|user contexts=] and string or null.
 
-A <dfn>geolocation override</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn attribute for="geolocation override">latitude</dfn> which is a float;
-* [=struct/item=] named <dfn attribute for="geolocation override">longitude</dfn> which is a float;
-* [=struct/item=] named <dfn attribute for="geolocation override">accuracy</dfn> which is a float;
-* [=struct/item=] named <dfn attribute for="geolocation override">altitude</dfn> which is a float or null;
-* [=struct/item=] named <dfn attribute for="geolocation override">altitudeAccuracy</dfn> which is a float or null;
-* [=struct/item=] named <dfn attribute for="geolocation override">heading</dfn> which is a float or null;
-* [=struct/item=] named <dfn attribute for="geolocation override">speed</dfn> which is a float or null.
-
-A [=remote end=] has a <dfn>geolocation overrides map</dfn> which is a weak map between [=user context|user contexts=] and [=geolocation override=].
-
 A <dfn>screen orientation override</dfn> is a [=struct=] with:
 
 * [=struct/item=] named <dfn attribute for="screen orientation override">natural</dfn> which is a string;
@@ -6261,6 +6249,31 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
    </dd>
 </dl>
 
+A <dfn>geolocation override</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn attribute for="geolocation override">latitude</dfn> which is a float;
+* [=struct/item=] named <dfn attribute for="geolocation override">longitude</dfn> which is a float;
+* [=struct/item=] named <dfn attribute for="geolocation override">accuracy</dfn> which is a float;
+* [=struct/item=] named <dfn attribute for="geolocation override">altitude</dfn> which is a float or null;
+* [=struct/item=] named <dfn attribute for="geolocation override">altitudeAccuracy</dfn> which is a float or null;
+* [=struct/item=] named <dfn attribute for="geolocation override">heading</dfn> which is a float or null;
+* [=struct/item=] named <dfn attribute for="geolocation override">speed</dfn> which is a float or null.
+
+A [=remote end=] has a <dfn>geolocation override configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] [=geolocation override=].
+
+<div algorithm>
+To <dfn>update geolocation override</dfn> for [=/navigable=] |navigable|:
+
+1. Let |emulated position data| be the result of [=get WebDriver configuration value=] of
+   [=geolocation override configuration=] for |navigable|.
+
+1. If |emulated position data| is [=WebDriver configuration/unset=], set |emulated position data| to
+   null.
+
+1. [=Set emulated position data=] with |navigable| and |emulated position data|.
+
+</div>
+
 <div algorithm="remote end steps for emulation.setGeolocationOverride">
 
 The [=remote end steps=] with |command parameters| are:
@@ -6283,49 +6296,17 @@ The [=remote end steps=] with |command parameters| are:
 
       Note: <code>message</code> will be ignored by implementation according to the geolocation spec.
 
-1. Otherwise, let |emulated position data| be
-   |command parameters|["<code>coordinates</code>"].
+1. Otherwise, let |emulated position data| be |command parameters|["<code>coordinates</code>"].
 
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
+1. If |emulated position data| is null, set |emulated position data| to
+   [=WebDriver configuration/unset=].
 
-1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
+1. Let |affected navigables| be the result of [=trying=] to [=store WebDriver configuration=]
+   [=geolocation override configuration=] |emulated position data| for |command parameters|.
 
-1. Let |navigables| be a [=/set=].
+1. For each |navigable| of |affected navigables|:
 
-1. If the <code>contexts</code> field of |command parameters| is present:
-
-   1. Let |navigables| be the result of [=trying=] to [=get valid top-level traversables by ids=] with |command parameters|["<code>contexts</code>"].
-
-1. Otherwise, if the <code>userContexts</code> field of |command parameters| is present:
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=] with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. If |emulated position data| is null, remove the |user context| from
-         [=geolocation overrides map=].
-
-      1. Otherwise, [=map/set=] [=geolocation overrides map=][|user context|] to
-         |emulated position data|.
-
-      1. [=list/For each=] |top-level traversable| of the list of all [=/top-level traversables=]
-         whose [=associated user context=] is |user context|:
-
-         1. [=list/Append=] |top-level traversable| to |navigables|.
-
-1. For each |navigable| of |navigables|:
-
-   1. Let |user context| be |navigable|'s [=associated user context=].
-
-   1. If |emulated position data| is null and [=geolocation overrides map=] [=map/contains=]
-      |user context|, [=set emulated position data=] with |navigable| and
-      [=geolocation overrides map=][|user context|].
-
-   1. Otherwise, [=set emulated position data=] with |navigable| and |emulated position data|.
+   1. [=Update geolocation override=] for |navigable|.
 
 1. Return [=success=] with data null.
 
