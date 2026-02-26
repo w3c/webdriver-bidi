@@ -90,6 +90,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: input cancel list; url: dfn-input-cancel-list
     text: intermediary node; url: dfn-intermediary-nodes
     text: invalid argument; url: dfn-invalid-argument
+    text: invalid element state; url: dfn-invalid-element-state
     text: invalid selector; url: dfn-invalid-selector
     text: invalid session id; url: dfn-invalid-session-id
     text: is element origin; url: dfn-is-element-origin
@@ -214,9 +215,12 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: activation notification; url: interaction.html#activation-notification
     text: active window; url: document-sequences.html#nav-window
     text: alert; url: timers-and-user-prompts.html#dom-alert
+    text: autofill; url: form-control-infrastructure.html#autofill
+    text: autofill detail tokens; url: form-control-infrastructure.html#autofill-detail-tokens
     text: close; url: document-sequences.html#close-a-top-level-traversable
     text: disabled; url: form-control-infrastructure.html#concept-fe-disabled
     text: File Upload state; url: input.html#file-upload-state-(type=file)
+    text: form-associated element; url: forms.html#form-associated-element
     text: confirm; url: timers-and-user-prompts.html#dom-confirm
     text: context mode; url: /canvas.html#offscreencanvas-context-mode
     text: create a classic script; url: webappapis.html#creating-a-classic-script
@@ -263,6 +267,7 @@ spec: INFRA; urlPrefix: https://infra.spec.whatwg.org/
   type: dfn
     text: break; url: iteration-break
     text: convert a JSON-derived JavaScript value to an Infra value; url: convert-a-json-derived-javascript-value-to-an-infra-value
+    text: values
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
     text: convert fetch timestamp; url: convert-fetch-timestamp
@@ -590,7 +595,8 @@ CommandData = (
   ScriptCommand //
   SessionCommand //
   StorageCommand //
-  WebExtensionCommand
+  WebExtensionCommand //
+  AutofillCommand
 )
 
 EmptyParams = {
@@ -828,6 +834,7 @@ with the following additional codes:
 <pre class="cddl" data-cddl-module="local-cddl">
 ErrorCode = "invalid argument" /
             "invalid selector" /
+            "invalid element state" /
             "invalid session id" /
             "invalid web extension" /
             "move target out of bounds" /
@@ -14590,6 +14597,189 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Return [=success=] with data null.
 
 </div>
+
+## The autofill Module ## {#module-autofill}
+
+The <dfn export for=modules>autofill module</dfn> contains functionality for triggering autofill.
+
+### Definition ### {#module-autofill-definition}
+
+{^remote end definition^}
+
+<pre class="cddl" data-cddl-module="remote-cddl">
+
+AutofillCommand = (
+  autofill.Trigger
+)
+</pre>
+
+### Commands ### {#module-autofill-commands}
+
+#### The autofill.trigger Command ####  {#command-autofill-trigger}
+
+The <dfn export for=commands>autofill.trigger</dfn> command triggers autofill
+on a particular form field using the provided fields.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      autofill.Trigger = (
+        method: "autofill.trigger",
+        params: autofill.TriggerParameters
+      )
+
+      autofill.TriggerParameters = {
+        context: browsingContext.BrowsingContext,
+        element: script.SharedReference,
+        ? card: autofill.Card,
+        ? address: autofill.Address
+      }
+
+      autofill.Field = {
+        name: autofill.FieldName,
+        value: text
+      }
+
+      autofill.Card = {
+        number: text,
+        name: text,
+        expiryMonth: text,
+        expiryYear: text,
+        cvc: text
+      }
+
+      autofill.Address = {
+        fields: [* autofill.Field]
+      }
+
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <code>
+     EmptyResult
+    </code>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for autofill.Trigger">
+
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let |navigable id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+    with |navigable id|.
+
+1. Let |document| be |navigable|'s [=active document=].
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=relevant global object=]'s <a>associated <code>Document</code></a> is
+   |document|.
+
+1. Let |realm| be |environment settings|' [=realm execution context=]'s
+  Realm component.
+
+1. Let |element id| be the value of the <code>element</code> field of
+   |command parameters|.
+
+1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
+   with the |element id|, |realm|, and |session|.
+
+1. If |element| is not a [=form-associated element=] or |element|'s [=form owner=] is
+   null, return an [=error=] with [=error code=] [=invalid element state=].
+
+1. Let |card| be the value of the <code>card</code> field of |command parameters| if present, or null otherwise.
+
+1. Let |address| be the value of the <code>address</code> field of |command parameters| if present, or null otherwise.
+
+1. If, for any reason, the remote end is unable to [=autofill=], return error with
+   [=error code=] [=unsupported operation=].
+
+1. If both |card| and |address| are not null, return error with [=error code=]
+   [=invalid argument=].
+
+1. If both |card| and |address| are null, return error with [=error code=]
+   [=invalid argument=].
+
+1. Let |parsed card| be the result of parsing |card| as an <code>autofill.Card</code>.
+
+1. Let |parsed address| be the result of parsing |card| as an <code>autofill.Address</code>.
+
+1. The [=/user agent=] should [=autofill=] |element| and |element|'s [=form
+   owner=], while taking into account the contents of |parsed card| and |parsed address|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The autofill.FieldName Type #### {#type-autofill-FieldName}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+AutofillToken = "name" /
+                "honorific-prefix" /
+                "given-name" /
+                "additional-name" /
+                "family-name" /
+                "honorific-suffix" /
+                "nickname" /
+                "username" /
+                "new-password" /
+                "current-password" /
+                "one-time-code" /
+                "organization-title" /
+                "organization" /
+                "street-address" /
+                "address-line1" /
+                "address-line2" /
+                "address-line3" /
+                "address-level4" /
+                "address-level3" /
+                "address-level2" /
+                "address-level1" /
+                "country" /
+                "country-name" /
+                "postal-code" /
+                "cc-name" /
+                "cc-given-name" /
+                "cc-additional-name" /
+                "cc-family-name" /
+                "cc-number" /
+                "cc-exp" /
+                "cc-exp-month" /
+                "cc-exp-year" /
+                "cc-csc" /
+                "cc-type" /
+                "transaction-currency" /
+                "transaction-amount" /
+                "language" /
+                "bday" /
+                "bday-day" /
+                "bday-month" /
+                "bday-year" /
+                "sex" /
+                "url" /
+                "photo" /
+                "tel" /
+                "tel-country-code" /
+                "tel-national" /
+                "tel-area-code" /
+                "tel-local" /
+                "tel-local-prefix" /
+                "tel-local-suffix" /
+                "tel-extension" /
+                "email" /
+                "impp"
+</pre>
+
+<pre class="cddl" data-cddl-module="remote-cddl,local-cddl">
+   autofill.FieldName = AutofillToken;
+</pre>
+
+The <code>autofill.FieldName</code> is an <code>AutofillToken</code>. Valid token
+values are defined in [=autofill detail tokens=].
 
 ### Events ### {#module-input-events}
 
