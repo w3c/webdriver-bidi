@@ -6079,7 +6079,8 @@ EmulationCommand = (
   emulation.SetScrollbarTypeOverride //
   emulation.SetTimezoneOverride //
   emulation.SetTouchOverride //
-  emulation.SetUserAgentOverride
+  emulation.SetUserAgentOverride //
+  emulation.SetViewportMetaOverride
 )
 
 </pre>
@@ -6094,7 +6095,8 @@ EmulationResult = (
   emulation.SetScrollbarTypeOverrideResult /
   emulation.SetTimezoneOverrideResult /
   emulation.SetTouchOverrideResult /
-  emulation.SetUserAgentOverrideResult
+  emulation.SetUserAgentOverrideResult /
+  emulation.SetViewportMetaOverrideResult
 )
 </pre>
 
@@ -6908,6 +6910,74 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Return [=success=] with data null.
 
 </div>
+
+#### The emulation.setViewportMetaOverride Command #### {#command-emulation-setViewportMetaOverride}
+
+The <dfn export for=commands>emulation.setViewportMetaOverride</dfn> command modifies whether the browser respects
+the <code>&lt;meta name=viewport&gt;</code> tag.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetViewportMetaOverride = (
+        method: "emulation.setViewportMetaOverride",
+        params: emulation.SetViewportMetaOverrideParameters
+      )
+
+      emulation.SetViewportMetaOverrideParameters = {
+        viewportMeta: true / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetViewportMetaOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+A [=remote end=] has a <dfn>viewport meta override configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] boolean.
+
+<div algorithm>
+
+The <dfn export>WebDriver BiDi viewport meta state</dfn> steps given
+[=/Document=] |document| are:
+
+1. Let |navigable| be |document|'s [=node navigable=].
+
+1. Let |viewport meta override| be the result of [=get WebDriver configuration value=] of
+   [=viewport meta override configuration=] for |navigable|.
+
+1. If |viewport meta override| is [=WebDriver configuration/unset=], return null.
+
+1. Return |viewport meta override|.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setViewportMetaOverride">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |viewport meta override| be |command parameters|["<code>viewportMeta</code>"].
+
+1. If |viewport meta override| is null, set |viewport meta override| to
+   [=WebDriver configuration/unset=].
+
+1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+   [=viewport meta override configuration=] |viewport meta override| for |command parameters|.
+
+1. For each |navigable| of |affected navigables|, run [=evaluate media queries and report changes=]
+   for [=/document=] currently loaded in a specified |navigable|.
+
+1. Return [=success=] with data null.
+
+</div>
+
 
 #### The emulation.setScriptingEnabled Command ####  {#command-emulation-setScriptingEnabled}
 
@@ -14916,6 +14986,18 @@ Other specifications can define <dfn>console steps</dfn>.
 Insert the following steps at the start of the [=determine the device pixel ratio=] algorithm:
 
 1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
+
+### The viewport meta element ### {#patches-viewport-meta-element}
+
+Issue: remove after https://github.com/w3c/csswg-drafts/pull/13548 is merged.
+
+The 'Viewport meta element' section of the [[!CSS-VIEWPORT-1]] specification is modified to verify the
+[=WebDriver BiDi viewport meta state=].
+
+If [=WebDriver BiDi viewport meta state=] given the `viewport` meta element's
+[=node document=] is true, the user agent MUST use the `viewport` meta element.
+
+Otherwise, the user agent MAY use the `viewport` meta element.
 
 # Appendices # {#appendices}
 
