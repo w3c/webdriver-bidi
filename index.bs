@@ -3265,7 +3265,8 @@ A [=BiDi session=] has a <dfn>screencast recordings map</dfn> which is a [=/map=
 which the keys are [[!RFC9562|UUID]]s, and the values are <dfn>screencast recording</dfn>, which is a [=struct=] with
 an [=struct/item=] named <dfn for="screencast recording">mediaRecorder</dfn>, which is a {{MediaRecorder}},
 an [=struct/item=] named <dfn for="screencast recording">path</dfn>, which is a string,
-an [=struct/item=] named <dfn for="screencast recording">size</dfn>, which is a number.
+an [=struct/item=] named <dfn for="screencast recording">size</dfn>, which is a number,
+an [=struct/item=] named <dfn for="screencast recording">writeError</dfn>, which is a string.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -5213,9 +5214,14 @@ The [=remote end steps=] with |command parameters| are:
 
    1. Let |bytes| be |data|'s underlying [=byte sequence=].
 
-   1. Append |bytes| to the file at |path|.
+   1. If appending |bytes| to the file at |path| fails:
 
-   1. Set |recording|'s [=screencast recording/size=] to |recording|'s [=screencast recording/size=] + |bytes|'s length.
+      1. Set |recording|'s [=screencast recording/writeError=] to an
+         implementation-defined string describing the write failure.
+
+      1. Call {{MediaRecorder/stop()}} on |media recorder|.
+
+   1. Otherwise, set |recording|'s [=screencast recording/size=] to |recording|'s [=screencast recording/size=] + |bytes|'s length.
 
 1. Call {{MediaRecorder/start()}} on |media recorder| with |command parameters|["<code>timeslice</code>"].
 
@@ -5269,6 +5275,9 @@ The [=remote end steps=] with |command parameters| are:
    [=error=] with [=error code=] [=no such screencast=].
 
 1. Let |screencast recording| be [=screencast recordings map=][|screencast|].
+
+1. If |screencast recording| contains [=screencast recording/writeError=], return
+   [=error=] with [=error code=] [=unknown error=].
 
 1. Let |media recorder| be |screencast recording|'s [=screencast recording/mediaRecorder=].
 
