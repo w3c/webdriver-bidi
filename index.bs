@@ -312,7 +312,8 @@ spec: SELECTORS4; urlPrefix: https://drafts.csswg.org/selectors-4/
 spec: WEB-IDL; urlPrefix: https://webidl.spec.whatwg.org/
   type: dfn
     text: DOMException; url: #idl-DOMException
-    text: SyntaxError; url:#syntaxerror
+    text: SyntaxError; url: #syntaxerror
+    text: react; url: #dfn-perform-steps-once-promise-is-settled
 spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
   type: dfn
     text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
@@ -5196,45 +5197,49 @@ The [=remote end steps=] with |command parameters| are:
 1. Let |promise| be the result of [=trying=] to [=capture a browsing context viewport=] with
    |navigable| and |command parameters|["<code>streamOptions</code>"].
 
-1. Let |media stream| be <a spec=ECMASCRIPT>Await</a>(|promise|).
+1. [=React=] to promise:
 
-1. Let |path| be an implementation-defined file path where the recording will be stored.
+   1. If |promise| was rejected, return [=error=] with [=error code=] [=unknown error=].
 
-1. Let |media recorder options| be a new [=/map=] with the <code>mimeType</code> field
-   set to |mime type|.
+   1. If |promise| was fulfilled with value |media stream|, then:
 
-1. Let |media recorder| be a new {{MediaRecorder}} in |realm|
-   with {{MediaRecorder/stream}} |media stream| and
-   {{MediaRecorderOptions}} |media recorder options|.
+      1. Let |path| be an implementation-defined file path where the recording will be stored.
 
-1. Let |recording| be a new [=screencast recording=] with
-   [=screencast recording/mediaRecorder=] |media recorder|,
-   [=screencast recording/path=] |path|,
-   [=screencast recording/size=] 0.
+      1. Let |media recorder options| be a new [=/map=] with the <code>mimeType</code> field
+         set to |mime type|.
 
-1. Whenever the implementation is going to [=fire a blob event=] named {{MediaRecorder/dataavailable}}
-   at |media recorder| with |blob|, run the following steps:
+      1. Let |media recorder| be a new {{MediaRecorder}} in |realm|
+         with {{MediaRecorder/stream}} |media stream| and
+         {{MediaRecorderOptions}} |media recorder options|.
 
-   1. Let |bytes| be |blob|'s underlying [=byte sequence=].
+      1. Let |recording| be a new [=screencast recording=] with
+         [=screencast recording/mediaRecorder=] |media recorder|,
+         [=screencast recording/path=] |path|,
+         [=screencast recording/size=] 0.
 
-   1. Append |bytes| to the file at |path|. If this fails:
+      1. Whenever the implementation is going to [=fire a blob event=] named {{MediaRecorder/dataavailable}}
+         at |media recorder| with |blob|, run the following steps:
 
-      1. Set |recording|'s [=screencast recording/writeError=] to an
-         implementation-defined string describing the write failure.
+         1. Let |bytes| be |blob|'s underlying [=byte sequence=].
 
-      1. [=Call=]({{MediaRecorder/stop}}, |media recorder|).
+         1. Append |bytes| to the file at |path|. If this fails:
 
-   1. Otherwise, set |recording|'s [=screencast recording/size=] to |recording|'s [=screencast recording/size=] + |bytes|'s length.
+            1. Set |recording|'s [=screencast recording/writeError=] to an
+               implementation-defined string describing the write failure.
 
-1. [=Call=]({{MediaRecorder/start}}, |media recorder|, |command parameters|["<code>timeslice</code>"]).
+            1. [=Call=]({{MediaRecorder/stop}}, |media recorder|).
 
-1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
+         1. Otherwise, set |recording|'s [=screencast recording/size=] to |recording|'s [=screencast recording/size=] + |bytes|'s length.
 
-1. Set [=screencast recordings map=][|screencast|] to |recording|.
+      1. [=Call=]({{MediaRecorder/start}}, |media recorder|, |command parameters|["<code>timeslice</code>"]).
 
-1. Return a new [=/map=] matching the <code>browsingContext.StartScreencastResult</code>
-   with the <code>screencast</code> field set to |screencast| and <code>path</code> field
-   set to |path|.
+      1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
+
+      1. Set [=screencast recordings map=][|screencast|] to |recording|.
+
+      1. Return a new [=/map=] matching the <code>browsingContext.StartScreencastResult</code>
+         with the <code>screencast</code> field set to |screencast| and <code>path</code> field
+         set to |path|.
 
 </div>
 
