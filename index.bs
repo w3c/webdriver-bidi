@@ -299,6 +299,10 @@ spec: DOM; urlPrefix: https://dom.spec.whatwg.org/
     text: nodes; url: #concept-node
     text: ORDERED_NODE_SNAPSHOT_TYPE; url: #dom-xpathresult-ordered_node_snapshot_type
     text: snapshotItem; url: #dom-xpathresult-snapshotitem
+spec: FILE-API; urlPrefix: https://w3c.github.io/FileAPI/
+  type: dfn
+    text: Blob; url: #dfn-Blob
+    text: blobParts; url: #dfn-blobParts
 spec: FULLSCREEN; urlPrefix: https://fullscreen.spec.whatwg.org/
   type: dfn
     text: fullscreen an element; url: #fullscreen-an-element
@@ -312,7 +316,8 @@ spec: SELECTORS4; urlPrefix: https://drafts.csswg.org/selectors-4/
 spec: WEB-IDL; urlPrefix: https://webidl.spec.whatwg.org/
   type: dfn
     text: DOMException; url: #idl-DOMException
-    text: SyntaxError; url:#syntaxerror
+    text: SyntaxError; url: #syntaxerror
+    text: react; url: #dfn-perform-steps-once-promise-is-settled
 spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
   type: dfn
     text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
@@ -323,6 +328,15 @@ spec: ACCNAME; urlPrefix:https://www.w3.org/TR/accname-1.2
 spec: CORE-AAM; urlPrefix:https://www.w3.org/TR/core-aam-1.2
   type: dfn
     text: computed role; url: /#roleMappingComputedRole
+spec: MEDIACAPTURE-RECORD; urlPrefix: https://w3c.github.io/mediacapture-record/
+  type: dfn
+    text: is type supported; url: #abstract-opdef-is-type-supported
+    text: fire a blob event; url: #fire-a-blob-event
+    text: MediaRecorder; url: #mediarecorder-api
+    text: MediaRecorderOptions; url: #mediarecorderoptions-section
+spec: MEDIACAPTURE-VIEWPORT; urlPrefix: https://w3c.github.io/mediacapture-viewport/
+  type: dfn
+    text: capture a browsing context viewport; url: #dfn-capture-a-browsing-context-viewport
 spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
   type: dfn
     text: resolution media feature; url: #resolution
@@ -796,6 +810,9 @@ with the following additional codes:
   <dt><dfn for=errors export>no such request</dfn>
   <dd>Tried to continue an unknown [=/request=].
 
+  <dt><dfn for=errors export>no such screencast</dfn>
+  <dd>Tried to stop an unknown screencast recording.
+
   <dt><dfn for=errors export>no such script</dfn>
   <dd>Tried to remove an unknown [=preload script=].
 
@@ -841,6 +858,7 @@ ErrorCode = "invalid argument" /
             "no such network data" /
             "no such node" /
             "no such request" /
+            "no such screencast" /
             "no such script" /
             "no such storage partition" /
             "no such user context" /
@@ -1817,6 +1835,12 @@ To <dfn>cleanup the session</dfn> given |session|:
 
    1. For each |collected data| in [=collected network data=], [=remove collector from data=]
       with |collected data| and |collector id|.
+
+1. For each |screencast recording| in |session|'s [=screencast recordings map=]:
+
+   1. Let |media recorder| be |screencast recording|["<code>mediaRecorder</code>"].
+
+   1. [=Call=]({{MediaRecorder/stop}}, |media recorder|).
 
 1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
 
@@ -3273,6 +3297,8 @@ BrowsingContextCommand = (
   browsingContext.Reload //
   browsingContext.SetBypassCSP //
   browsingContext.SetViewport //
+  browsingContext.StartScreencast //
+  browsingContext.StopScreencast //
   browsingContext.TraverseHistory
 )
 </pre>
@@ -3293,6 +3319,8 @@ BrowsingContextResult = (
   browsingContext.ReloadResult /
   browsingContext.SetBypassCSPResult /
   browsingContext.SetViewportResult /
+  browsingContext.StartScreencastResult /
+  browsingContext.StopScreencastResult /
   browsingContext.TraverseHistoryResult
 )
 
@@ -3361,6 +3389,13 @@ weak map between [=user context|user contexts=] and [=unhandled prompt behavior 
 
 A [=remote end=] has a <dfn>scripting enabled overrides map</dfn> which is a weak
 map between [=/navigables=] or [=user context|user contexts=] and boolean.
+
+A [=BiDi session=] has a <dfn>screencast recordings map</dfn> which is a [=/map=] in
+which the keys are [[!RFC9562|UUID]]s, and the values are <dfn>screencast recording</dfn>, which is a [=struct=] with
+an [=struct/item=] named <dfn for="screencast recording">mediaRecorder</dfn>, which is a {{MediaRecorder}},
+an [=struct/item=] named <dfn for="screencast recording">path</dfn>, which is a string,
+an [=struct/item=] named <dfn for="screencast recording">size</dfn>, which is a number,
+an [=struct/item=] named <dfn for="screencast recording">writeError</dfn>, which is a string.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -5280,6 +5315,189 @@ The [=remote end steps=] with |command parameters| are:
          1. [=Set device pixel ratio override=] with |navigable| and |device pixel ratio|.
 
 1. Return [=success=] with data null.
+
+</div>
+
+#### The browsingContext.startScreencast Command ####  {#command-browsingContext-startScreencast}
+
+The <dfn export for=commands>browsingContext.startScreencast</dfn> command
+starts the screencast of a given navigable and writes it to a file.
+
+Note: The [=remote end=] creates and writes the screencast file, but does not delete it.
+Cleaning up the file is left to the [=local end=]. In some configurations this might not be
+possible — for example, if the [=remote end=] has read/write access to the filesystem but
+the [=local end=] has only read-only access.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browsingContext.StartScreencast = (
+        method: "browsingContext.startScreencast",
+        params: browsingContext.StartScreencastParameters
+      )
+
+      browsingContext.StartScreencastParameters = {
+        context: browsingContext.BrowsingContext,
+        mimeType: text,
+        ? streamOptions: browsingContext.MediaStreamOptions,
+        ? timeslice: js-uint .default 1000
+      }
+
+      browsingContext.MediaStreamOptions = {
+         ? video: bool / browsingContext.MediaTrackConstraints .default true;
+         ? audio: bool .default false;
+      }
+
+      browsingContext.MediaTrackConstraints = {
+         ? width: js-uint,
+         ? height: js-uint,
+      }
+
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.StartScreencastResult = {
+         screencast: browsingContext.Screencast,
+         path: text
+      }
+
+      browsingContext.Screencast = text
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.startScreencast">
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |navigable id| be |command parameters|["<code>context</code>"].
+
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
+
+1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
+   [=error code=] [=invalid argument=].
+
+1. Let |mime type| be |command parameters|["<code>mimeType</code>"].
+
+1. If [=is type supported=] with |mime type| returns false, return [=error=] with
+   [=error code=] [=invalid argument=].
+
+1. If the implementation is unable to record a screencast of |navigable| for any
+   reason then return [=error=] with [=error code=] [=unsupported operation=].
+
+1. Let |promise| be the result of [=trying=] to [=capture a browsing context viewport=] with
+   |navigable| and |command parameters|["<code>streamOptions</code>"].
+
+1. [=React=] to promise:
+
+   1. If |promise| was rejected, return [=error=] with [=error code=] [=unknown error=].
+
+   1. If |promise| was fulfilled with value |media stream|, then:
+
+      1. Let |path| be an implementation-defined file path where the recording will be stored.
+
+      1. Let |media recorder options| be a new [=/map=] with the <code>mimeType</code> field
+         set to |mime type|.
+
+      1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
+
+      1. Let |realm| be result of [=trying=] to [=get or create a sandbox realm=] given
+         |screencast| and |navigable|.
+
+      1. Let |media recorder| be a new {{MediaRecorder}} in |realm|
+         with {{MediaRecorder/stream}} |media stream| and
+         {{MediaRecorderOptions}} |media recorder options|.
+
+      1. Let |recording| be a new [=screencast recording=] with
+         [=screencast recording/mediaRecorder=] |media recorder|,
+         [=screencast recording/path=] |path|,
+         [=screencast recording/size=] 0.
+
+      1. Whenever the implementation is going to [=fire a blob event=] named {{MediaRecorder/dataavailable}}
+         at |media recorder| with |blob|, run the following steps:
+
+         1. Let |bytes| be |blob|'s underlying [=byte sequence=].
+
+         1. Append |bytes| to the file at |path|. If this fails:
+
+            1. Set |recording|'s [=screencast recording/writeError=] to an
+               implementation-defined string describing the write failure.
+
+            1. [=Call=]({{MediaRecorder/stop}}, |media recorder|).
+
+         1. Otherwise, set |recording|'s [=screencast recording/size=] to |recording|'s [=screencast recording/size=] + |bytes|'s length.
+
+      1. [=Call=]({{MediaRecorder/start}}, |media recorder|, |command parameters|["<code>timeslice</code>"]).
+
+      1. Set [=screencast recordings map=][|screencast|] to |recording|.
+
+      1. Return a new [=/map=] matching the <code>browsingContext.StartScreencastResult</code>
+         with the <code>screencast</code> field set to |screencast| and <code>path</code> field
+         set to |path|.
+
+</div>
+
+#### The browsingContext.stopScreencast Command ####  {#command-browsingContext-stopScreencast}
+
+The <dfn export for=commands>browsingContext.stopScreencast</dfn> command
+stops the screencast.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browsingContext.StopScreencast = (
+        method: "browsingContext.stopScreencast",
+        params: browsingContext.StopScreencastParameters
+      )
+
+      browsingContext.StopScreencastParameters = {
+        screencast: browsingContext.Screencast
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.StopScreencastResult = {
+         path: text,
+         size: js-uint
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.stopScreencast">
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |screencast| be the value of the "<code>screencast</code>" field in |command
+   parameters|.
+
+1. If [=screencast recordings map=] does not <a for=map>contain</a> |screencast|, return
+   [=error=] with [=error code=] [=no such screencast=].
+
+1. Let |screencast recording| be [=screencast recordings map=][|screencast|].
+
+1. If |screencast recording| contains [=screencast recording/writeError=], return
+   [=error=] with [=error code=] [=unknown error=].
+
+1. Let |media recorder| be |screencast recording|'s [=screencast recording/mediaRecorder=].
+
+1. Let |path| be |screencast recording|'s [=screencast recording/path=].
+
+1. [=Call=]({{MediaRecorder/stop}}, |media recorder|).
+
+1. Wait until |media recorder|'s {{MediaRecorder/stop}} [=fire an event|event fires=].
+
+1. Let |size| be |screencast recording|'s [=screencast recording/size=].
+
+1. [=map/Remove=] |screencast| from [=screencast recordings map=].
+
+1. Return a new [=/map=] matching the <code>browsingContext.StopScreencastResult</code>
+   with the <code>path</code> field set to |path| and <code>size</code> field set to |size|.
 
 </div>
 
