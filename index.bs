@@ -337,6 +337,11 @@ spec: STREAMS; urlPrefix: https://streams.spec.whatwg.org/
 spec: TOUCH-EVENTS; urlPrefix: https://www.w3.org/community/reports/touchevents/CG-FINAL-touch-events-20240704/
   type: dfn
     text: expose legacy touch event APIs; url: #conditionally-exposing-legacy-touch-event-apis
+spec: URLPATTERN; urlPrefix: https://urlpattern.spec.whatwg.org/
+  type: dfn
+    text: create a URLPattern; url: #url-pattern-create
+    text: URL pattern match; url: #url-pattern-match
+    text: URLPatternInit; url: #dictdef-urlpatterninit
 spec: WebSockets; urlPrefix: https://websockets.spec.whatwg.org/
   type: dfn
     text: WebSocket; url: #websocket
@@ -8859,13 +8864,12 @@ network.UrlPattern = (
 
 network.UrlPatternPattern = {
     type: "pattern",
-    ?protocol: text,
-    ?hostname: text,
-    ?port: text,
-    ?pathname: text,
-    ?search: text,
+    ? protocol: text,
+    ? hostname: text,
+    ? port: text,
+    ? pathname: text,
+    ? search: text,
 }
-
 
 network.UrlPatternString = {
     type: "string",
@@ -8875,296 +8879,50 @@ network.UrlPatternString = {
 </pre>
 
 A <code>network.UrlPattern</code> represents a pattern used for matching request
-URLs for [=network intercepts=].
-
-When URLs are matched against a <code>network.UrlPattern</code> the URL is
-parsed, and each component is compared for equality with the corresponding field
-in the pattern, if present. Missing fields from the pattern always match.
-
-Note: This syntax is designed with future extensibility in mind. In particular
-the syntax forbids characters that are treated specially in the [[URLPattern]]
-specification. These can be escaped by prefixing them with a U+005C (\) character.
-
-<div algorithm>
-To <dfn>unescape URL pattern</dfn> given |pattern|
-
-1. Let |forbidden characters| be the [=/set=] of codepoints «U+0028 ((), U+0029
-   ()), U+002A (*), U+007B ({), U+007D (})»
-
-1. Let |result| be the empty string.
-
-1. Let |is escaped character| be false.
-
-1. For each |codepoint| in |pattern|:
-
-  1. If |is escaped character| is false:
-
-    1. If |forbidden characters| [=set/contains=] |codepoint|, return [=error=]
-       with [=error code=] [=invalid argument=].
-
-    1. If |codepoint| is U+005C (\):
-
-        1. Set |is escaped character| to true.
-
-        1. Continue.
-
-  1. Append |codepoint| to result.
-
-  1. Set |is escaped character| to false.
-
-1. Return [=success=] with data |result|.
-
-</div>
+URLs for [=network intercepts=]. URL patterns use the syntax and semantics
+defined by [[!URLPattern]].
 
 <div algorithm>
 To <dfn>parse URL pattern</dfn>, given |pattern|:
 
-1. Let |has protocol| be true.
-
-1. Let |has hostname| be true.
-
-1. Let |has port| be true.
-
-1. Let |has pathname| be true.
-
-1. Let |has search| be true.
-
 1. If |pattern| matches the <code>network.UrlPatternPattern</code> production:
 
-  1. Let |pattern url| be the empty string.
+  1. Let |init| be a new [=URLPatternInit=].
 
-  1. If |pattern| [=map/contains=] "<code>protocol</code>":
+  1. If |pattern| [=map/contains=] "<code>protocol</code>", set
+     |init|["<code>protocol</code>"] to |pattern|["<code>protocol</code>"].
 
-    1. If |pattern|["<code>protocol</code>"] is the empty string, return [=error=]
-       with [=error code=] [=invalid argument=].
+  1. If |pattern| [=map/contains=] "<code>hostname</code>", set
+     |init|["<code>hostname</code>"] to |pattern|["<code>hostname</code>"].
 
-    1. Let |protocol| be the result of [=trying=] to [=unescape
-       URL Pattern=] with |pattern|["<code>protocol</code>"].
+  1. If |pattern| [=map/contains=] "<code>port</code>", set
+     |init|["<code>port</code>"] to |pattern|["<code>port</code>"].
 
-    1. For each |codepoint| in |protocol|:
+  1. If |pattern| [=map/contains=] "<code>pathname</code>", set
+     |init|["<code>pathname</code>"] to |pattern|["<code>pathname</code>"].
 
-      1. If |codepoint| is not [=ASCII alphanumeric=] and «U+002B (+), U+002D
-         (-), U+002E (.)» does not [=set/contains|contain=] |codepoint|:
+  1. If |pattern| [=map/contains=] "<code>search</code>", set
+     |init|["<code>search</code>"] to |pattern|["<code>search</code>"].
 
-        1. Return [=error=] with [=error code=] invalid argument.
-
-    1. Append |protocol| to |pattern url|.
-
-  1. Otherwise:
-
-    1. Set |has protocol| to false.
-
-    1. Append "<code>http</code>" to |pattern url|.
-
-  1. Let |scheme| be [=ASCII lowercase=] with |pattern url|.
-
-  1. Append "<code>:</code>" to |pattern url|.
-
-  1. If |scheme| [=is special=], append "<code>//</code>" to |pattern url|.
-
-  1. If |pattern| [=map/contains=] "<code>hostname</code>":
-
-    1. If |pattern|["<code>hostname</code>"] is the empty string, return [=error=]
-       with [=error code=] [=invalid argument=].
-
-    1. If |scheme| is "<code>file</code>" return [=error=] with [=error code=]
-       [=invalid argument=].
-
-    1. Let |hostname| be the result of [=trying=] to [=unescape
-       URL Pattern=] with |pattern|["<code>hostname</code>"].
-
-    1. Let |inside brackets| be false.
-
-    1. For each |codepoint| in |hostname|:
-
-      1. If «U+002F (/), U+003F (?), U+0023 (#)» [=set/contains=]
-         |codepoint|:
-
-        1. Return [=error=] with [=error code=] [=invalid argument=].
-
-      1. If |inside brackets| is false and |codepoint| is U+003A (:):
-
-        1. Return [=error=] with [=error code=] [=invalid argument=].
-
-      1. If |codepoint| is U+005B ([), set |inside brackets| to true.
-
-      1. If |codepoint| is U+005D (]), set |inside brackets| to false.
-
-    1. Append |hostname| to |pattern url|.
-
-  1. Otherwise:
-
-    1. If |scheme| is not "<code>file</code>", append "<code>placeholder</code>" to
-       |pattern url|.
-
-    1. Set |has hostname| to false.
-
-  1. If |pattern| [=map/contains=] "<code>port</code>":
-
-    1. If |pattern|["<code>port</code>"] is the empty string, return [=error=]
-       with [=error code=] [=invalid argument=].
-
-    1. Let |port| be the result of [=trying=] to [=unescape
-       URL Pattern=] with |pattern|["<code>port</code>"].
-
-    1. Append "<code>:</code>" to |pattern url|.
-
-    1. For each |codepoint| in |port|:
-
-      1. If |codepoint| is not an [=ASCII digit=]:
-
-        1. Return [=error=] with [=error code=] [=invalid argument=].
-
-    1. Append |port| to |pattern url|.
-
-  1. Otherwise:
-
-    1. Set |has port| to false.
-
-  1. If |pattern| [=map/contains=] "<code>pathname</code>":
-
-    1. Let |pathname| be the result of [=trying=] to [=unescape URL Pattern=] with
-       |pattern|["<code>pathname</code>"].
-
-    1. If |pathname| does not [=string/starts with|start with=] U+002F (/), then
-       append "<code>/</code>" to |pattern url|.
-
-    1. For each |codepoint| in |pathname|:
-
-      1. If «U+003F (?), U+0023 (#)» [=set/contains=]
-         |codepoint|:
-
-        1. Return [=error=] with [=error code=] [=invalid argument=].
-
-    1. Append |pathname| to |pattern url|.
-
-  1. Otherwise:
-
-    1. Set |has pathname| to false.
-
-  1. If |pattern| [=map/contains=] "<code>search</code>":
-
-    1. Let |search| be the result of [=trying=] to [=unescape URL pattern=] with
-       |pattern|["<code>search</code>"].
-
-    1. If |search| does not [=string/starts with|start with=] U+003F (?), then
-       append "<code>?</code>" to |pattern url|.
-
-    1. For each |codepoint| in |search|:
-
-      1. If |codepoint| is U+0023 (#):
-
-        1. Return [=error=] with [=error code=] [=invalid argument=].
-
-    1. Append |search| to |pattern url|.
-
-  1. Otherwise:
-
-    1. Set |has search| to false.
+  1. Let |url pattern| be the result of [=creating a URLPattern=] given |init|.
 
 1. Otherwise, if |pattern| matches the <code>network.UrlPatternString</code> production:
 
-  1. Let |pattern url| be the result of [=trying=] to [=unescape URL
-     pattern=] with |pattern|["<code>pattern</code>"].
+  1. Let |url pattern| be the result of [=creating a URLPattern=] given
+     |pattern|["<code>pattern</code>"].
 
-1. Let |url| be the result of [=URL Parser|parsing=] |pattern url|.
+1. If |url pattern| is failure, return [=error=] with [=error code=]
+   [=invalid argument=].
 
-1. If |url| is failure, return [=error=] with [=error code=] [=invalid argument=].
-
-1. Let |parsed| be a struct with the following fields:
-   <dl>
-     <dt>protocol
-     <dd>|url|'s [=url/scheme=] if |has protocol| is true, or null otherwise.
-     <dt>hostname
-     <dd>|url|'s [=url/host=] if |has hostname| is true, or null otherwise.
-     <dt>port
-     <dd>
-     1. If |has port| is false:
-
-       1. null.
-
-     1. Otherwise:
-
-       1. If |url|'s [=url/scheme=] [=is special=] and |url|'s [=url/scheme=]'s
-          [=default port=] is not null, and |url|'s [=url/port=] is null or is
-          equal to [=url/scheme=]'s [=default port=]:
-
-         1. The empty string.
-
-       1. Otherwise, if |url|'s [=url/port=] is not null:
-
-         1. [=Serialize an integer=] with |url|'s [=url/port=].
-
-       1. Otherwise:
-
-         1. null.
-
-     <dt>pathname
-     <dd>
-     1. If |has pathname| is false:
-
-       1. null.
-
-     1. Otherwise:
-
-       1. The result of running the [=URL path serializer=] with |url|, if
-         |url|'s [=url/path=] is not the empty string and is not [=list/empty=],
-         or null otherwise.
-
-     <dt>search
-     <dd>
-     1. If |has search| is false:
-
-       1. null.
-
-     1. Otherwise:
-
-       1. The empty string if |url|'s [=url/query=] is null, or |url|'s [=url/query=] otherwise.
-   </dl>
-
-1. Return [=success=] with data |parsed|.
+1. Return [=success=] with data |url pattern|.
 
 </div>
 
 <div algorithm>
 To <dfn>match URL pattern</dfn> given |url pattern| and |url string|:
 
-1. Let |url| be the result of [=URL parser|parsing=] |url string|.
-
-1. If |url pattern|'s protocol is not null and is not equal to |url|'s
-   [=url/scheme=], return false.
-
-1. If |url pattern|'s hostname is not null and is not equal to |url|'s
-   [=url/host=], return false.
-
-1. If |url pattern|'s port is not null:
-
-   1. Let |port| be null.
-
-   1. If |url|'s [=url/scheme=] [=is special=] and |url|'s
-      [=url/scheme=]'s [=default port=] is not null, and |url|'s [=url/port=] is
-      null or is equal to [=url/scheme=]'s [=default port=]:
-
-     1. Set |port| to the empty string.
-
-   1. Otherwise, if |url|'s [=url/port=], is not null:
-
-     1. Set |port| to [=serialize an integer=] with |url|'s [=url/port=].
-
-   1. If |url pattern|'s port is not equal to |port|, return false.
-
-1. If |url pattern|'s pathname is not null and is not equal to the result of
-   running the [=URL path serializer=] with |url|, return false.
-
-1. If |url pattern|'s search is not null:
-
-   1. Let |url query| be |url|'s [=url/query=].
-
-   1. If |url query| is null, set |url query| to the empty string.
-
-   1. If |url pattern|'s search is not equal to |url query|, return false.
-
-1. Return true.
+1. Return the result of running [=URL pattern match=] given |url pattern| and
+   |url string|.
 
 </div>
 
