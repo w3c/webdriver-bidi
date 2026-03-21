@@ -6280,6 +6280,7 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
           (coordinates: emulation.GeolocationCoordinates / null) //
           (error: emulation.GeolocationPositionError)
         ),
+        ? accuracyMode: "precise" / "approximate",
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
       }
@@ -6311,6 +6312,7 @@ A <dfn>geolocation override</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn attribute for="geolocation override">latitude</dfn> which is a float;
 * [=struct/item=] named <dfn attribute for="geolocation override">longitude</dfn> which is a float;
 * [=struct/item=] named <dfn attribute for="geolocation override">accuracy</dfn> which is a float;
+* [=struct/item=] named <dfn attribute for="geolocation override">accuracyMode</dfn> which is a string;
 * [=struct/item=] named <dfn attribute for="geolocation override">altitude</dfn> which is a float or null;
 * [=struct/item=] named <dfn attribute for="geolocation override">altitudeAccuracy</dfn> which is a float or null;
 * [=struct/item=] named <dfn attribute for="geolocation override">heading</dfn> which is a float or null;
@@ -6358,6 +6360,15 @@ The [=remote end steps=] with |command parameters| are:
 
 1. If |emulated position data| is null, set |emulated position data| to
    [=WebDriver configuration/unset=].
+
+1. If |emulated position data| is not [=WebDriver configuration/unset=]:
+
+   1. Let |accuracy mode| be "<code>precise</code>".
+
+   1. If |command parameters| [=map/contains=] "<code>accuracyMode</code>", set |accuracy mode| to
+      |command parameters|["<code>accuracyMode</code>"].
+
+   1. [=map/set|Set=] |emulated position data|["<code>accuracyMode</code>"] to |accuracy mode|.
 
 1. Let |affected navigables| be the result of [=trying=] to [=store WebDriver configuration=]
    [=geolocation override configuration=] |emulated position data| for |command parameters|.
