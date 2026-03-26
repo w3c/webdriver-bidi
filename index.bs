@@ -6280,6 +6280,7 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
           (coordinates: emulation.GeolocationCoordinates / null) //
           (error: emulation.GeolocationPositionError)
         ),
+        ? accuracyMode: "precise" / "approximate",
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
       }
@@ -6295,7 +6296,7 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
       }
 
       emulation.GeolocationPositionError = {
-         type: "positionUnavailable"
+         code: uint
       }
     </pre>
    </dd>
@@ -6307,14 +6308,7 @@ The <dfn export for=commands>emulation.setGeolocationOverride</dfn> command modi
    </dd>
 </dl>
 
-A <dfn>geolocation override</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn attribute for="geolocation override">latitude</dfn> which is a float;
-* [=struct/item=] named <dfn attribute for="geolocation override">longitude</dfn> which is a float;
-* [=struct/item=] named <dfn attribute for="geolocation override">accuracy</dfn> which is a float;
-* [=struct/item=] named <dfn attribute for="geolocation override">altitude</dfn> which is a float or null;
-* [=struct/item=] named <dfn attribute for="geolocation override">altitudeAccuracy</dfn> which is a float or null;
-* [=struct/item=] named <dfn attribute for="geolocation override">heading</dfn> which is a float or null;
-* [=struct/item=] named <dfn attribute for="geolocation override">speed</dfn> which is a float or null.
+A <dfn>geolocation override</dfn> is a [=/map=].
 
 A [=remote end=] has a <dfn>geolocation override configuration</dfn>, which is
 [=WebDriver configuration=] with [=WebDriver configuration/associated type=] [=geolocation override=].
@@ -6336,28 +6330,39 @@ To <dfn>update geolocation override</dfn> for [=/navigable=] |navigable|:
 
 The [=remote end steps=] with |command parameters| are:
 
-1. If |command parameters| [=map/contains=] "<code>coordinates</code>" and
-   |command parameters|["<code>coordinates</code>"] [=map/contains=]
-   "<code>altitudeAccuracy</code>" and
-   |command parameters|["<code>coordinates</code>"] doesn't [=map/contain=]
-   "<code>altitude</code>", return [=error=] with [=error code=]
-   [=invalid argument=].
+1. Let |emulated position data| be [=WebDriver configuration/unset=].
 
 1. If |command parameters| [=map/contains=] "<code>error</code>":
 
-   1. Assert |command parameters|["<code>error</code>"]["<code>type</code>"] equals
-      "<code>positionUnavailable</code>".
+   1. If |command parameters|["<code>error</code>"]["<code>code</code>"] is not a
+      valid value defined for [=GeolocationPositionError=], return
+      [=error=] with [=error code=] [=invalid argument=].
 
-   1. Let |emulated position data| be a [=/map=] matching [=GeolocationPositionError=]
-      production, with <code>code</code> field set to [=POSITION_UNAVAILABLE=] and
-      <code>message</code> field set to the empty string.
+   1. Set |emulated position data| to a new [=/map=].
 
-      Note: <code>message</code> will be ignored by implementation according to the geolocation spec.
+   1. [=map/set|Set=] |emulated position data|["<code>error</code>"] to
+      |command parameters|["<code>error</code>"].
 
-1. Otherwise, let |emulated position data| be |command parameters|["<code>coordinates</code>"].
+1. Otherwise, if |command parameters| [=map/contains=] "<code>coordinates</code>":
 
-1. If |emulated position data| is null, set |emulated position data| to
-   [=WebDriver configuration/unset=].
+   1. If |command parameters|["<code>coordinates</code>"] is not null:
+
+      1. Assert |command parameters|["<code>coordinates</code>"] [=map/contains=]
+         "<code>latitude</code>" and |command parameters|["<code>coordinates</code>"]
+         [=map/contains=] "<code>longitude</code>".
+
+      1. Set |emulated position data| to a new [=/map=].
+
+      1. [=map/set|Set=] |emulated position data|["<code>coordinates</code>"] to
+         |command parameters|["<code>coordinates</code>"].
+
+      1. If |command parameters| [=map/contains=] "<code>accuracyMode</code>":
+
+         1. Assert |command parameters|["<code>accuracyMode</code>"] is "<code>precise</code>"
+            or "<code>approximate</code>".
+
+         1. [=map/set|Set=] |emulated position data|["<code>accuracyMode</code>"] to
+            |command parameters|["<code>accuracyMode</code>"].
 
 1. Let |affected navigables| be the result of [=trying=] to [=store WebDriver configuration=]
    [=geolocation override configuration=] |emulated position data| for |command parameters|.
