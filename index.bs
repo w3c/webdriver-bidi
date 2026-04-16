@@ -901,6 +901,9 @@ with the following additional codes:
   <dt><dfn for=errors export>no such web extension</dfn>
   <dd>Tried to reference an unknown web extension.
 
+  <dt><dfn for=errors export>stream closed</dfn>
+  <dd>Tried to interact with a closed [=Stream=].
+
   <dt><dfn for=errors export>stream read error</dfn>
   <dd>Unable to read from a [=Stream=].
 
@@ -943,6 +946,7 @@ ErrorCode = "invalid argument" /
             "no such user context" /
             "no such web extension" /
             "session not created" /
+            "stream closed" /
             "stream read error" /
             "unable to capture screen" /
             "unable to close browser" /
@@ -7605,11 +7609,18 @@ The [=remote end steps=] given |session| and |command parameters| are:
    be |command parameters|["<code>reason</code>"]. Otherwise let |reason| be
    undefined.
 
-1. Run [$ReadableStreamCancel$]\(|stream|, |reason|).
+1. [=Run in the specification realm=] the following steps:
+
+  1. Let |promise| be the result of [=ReadableStream/Cancel=] |stream| with
+     |reason|.
+
+1. If |promise| was rejected, return [=error=] with [=error code=] [=stream closed=].
+
+1. Return [=success=] with data null.
 
 </div>
 
-### The io.readStream Command ### {#command-io.readStream}
+#### The io.readStream Command #### {#command-io.readStream}
 
 The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of a
 [=readable stream=].
@@ -7645,50 +7656,49 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |result| be null.
 
-1. Let |read request| be a new [=read request=] with the following items:
-  <dl>
-    <dt>[=read request/chunk steps=] given |chunk|:
-    <dd>
-      1. Assert: |result| is null.
+1. [=Run in the specification realm=] with the following steps:
 
-      1. Let |response| be a new `io.ReadResult` with the <code>value</code>
-         field set to [=serialize protocol bytes=] given |chunk| and the
-         <code>done</code> field set to false.
+  1. Let |reader| be ? [$AcquireReadableStreamDefaultReader$](|stream|).
 
-      1. Let |result| be [=success=] with data |response|.
-    </dd>
+  1. If |reader| is an [=abrupt completion=], return [=error=] with [=error
+     code=] [=stream read error=].
 
-    <dt>[=read request/close steps=]:
-    <dd>
-      1. Assert: |result| is null.
+  1. Let |promise| be [=a new promise=].
 
-      1. Let |response| be a new `io.ReadResult` with the <code>value</code>
-         field set to <code>""</code> and the <code>done</code> field set to
-         true.
+  1. Let |read request| be a new [=read request=] with the following [=struct/items=]:
 
-      1. Let |result| be [=success=] with data |response|.
-    </dd>
+     <dl>
+        <dt>[=read request/chunk steps=], given |chunk|
+        <dd>Resolve |promise| with «[ "value" → |chunk|, "done" → false ]».
+        <dt>[=read request/close steps=]
+        <dd>Resolve promise with «[ "value" → undefined, "done" → true ]».
+        <dt>[=read request/error steps=], given |e|
+        <dd>Reject |promise| with |e|.
+     </dl>
 
-    <dt>[=read request/error steps=] given <var ignore>e</var>:
-    <dd>
-      1. Assert: |result| is null.
+  1. Let |read result| be [$ReadableStreamDefaultReaderRead$](|reader|, |read request|).
 
-      1. Let |result| be [=error=] with [=error code=] [=stream read error=].
-    </dd>
-  </dl>
+  1. If |read result| is an [=abrupt completion=], return [=error=] with [=error
+     code=] [=stream read error=].
 
-1. Set |stream|.\[[disturbed]] to true.
+  1. Let |react result| be [=react=] to |promise| with the following steps:
 
-1. If |stream|.\[[state]] is "<code>closed</code>", perform |read request|'s close steps.
+     <dl>
+       <dt>When the promise is fulfilled with |value|:
+       <dd>
+        1. Let |response| be a new `io.ReadResult` with the <code>value</code>
+           field set to [=serialize protocol bytes=] given |value| and the
+           <code>done</code> field set to false.
 
-1. Otherwise, if |stream|.\[[state]] is "<code>errored</code>", perform |read
-   request|'s error steps given |stream|.\[[storedError]].
+        1. Set |result| to [=success=] with data |response|.
 
-1. Otherwise,
+       <dt>When the promise is rejected with <var ignore>reason</var>:
+       <dd>
+         1. Set |result| to [=error=] with [=error code=] [=stream read error=].
+     </dl>
 
-    1. Assert: stream.\[[state]] is "readable".
-
-    1. Perform ! |stream|.\[[controller]].\[[PullSteps]](|read request|).
+  1. If |react result| is an [=abrupt completion=], return [=error=] with [=error
+     code=] [=stream read error=].
 
 1. Assert: |result| is not null.
 
