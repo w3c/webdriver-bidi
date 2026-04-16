@@ -551,6 +551,94 @@ To <dfn>store WebDriver configuration</dfn> [=WebDriver configuration=] |configu
 
 </div>
 
+This specification makes use of <dfn>specification agent</dfn>. This is a
+JavaScript <a spec=ecmascript>agent</a> used for running specification algorithms defined in terms
+of JavaScript operations.
+
+Note: the [=specification agent=] is a spec formalism; implementations are free
+to implement the underlying algorithms without actually executing any JavaScript.
+
+The [=specification agent=] belongs to the <dfn ignore>specification agent
+cluster</dfn>. It is the only <a spec=ecmascript>agent</a> in this [=agent
+cluster=].
+
+The [=specification agent=] is assumed to be present whenever the [=remote end=]
+is running. It is configured as if created by the following steps:
+
+1. Let |candidate execution| be a new [=candidate execution=].
+
+1. Let [=specification agent=] be a new agent whose \[[CanBlock]] is canfalse,
+   \[[Signifier]] is signifier, \[[CandidateExecution]] is |candidate execution|,
+   and \[[IsLockFree1]], \[[IsLockFree2]], and \[[LittleEndian]] are set at the
+   implementation's discretion.
+
+1. Set agent's [=agent/event loop=] to a new [=/event loop=].
+
+The <dfn>specification realm</dfn> is the [=realm=] used to run specification
+scripts. The <dfn>specification environment settings</dfn> is the
+[=environment settings object=] for the specification realm. Both are assumed to
+be created whenever the remote end is running, as if by the follow steps:
+
+1. Let |realm execution context| be [=create a new realm=] in the
+   [=specification agent=] without specific customizations to create a global
+   object or global this binding
+
+   Issue: It's unclear if we need a specific global object in this realm.
+
+1. Set [=specification realm=] to the value of [=realm execution context=]'s Realm component.
+
+1. Set [=specification environment settings=] to a new [=environment settings object=]
+   with the following fields:
+    <dl>
+      <dt>[=environment/id=]
+      <dd>A new unique opaque string
+      <dt>[=environment/creation URL=]
+      <dd>null
+      <dt>[=environment/top-level creation URL=]
+      <dd>null
+      <dt>[=environment/top-level origin=]
+      <dd>null
+      <dt>[=environment/target browsing context=]
+      <dd>null
+      <dt>[=environment/active service worker=]
+      <dd>null
+      <dt>[=environment/execution ready flag=]
+      <dd>true
+    </dl>
+
+   and the following algorithms:
+    <dl>
+       <dt>The [=environment settings object/realm execution context=]
+       <dd>|realm execution context|
+       <dt>The [=environment settings object/module map=]
+       <dd>A new [=environment settings object/module map=]
+       <dt>The [=environment settings object/API base URL=]
+       <dd>null
+       <dt>The [=environment settings object/origin=]
+       <dd>A new [=opaque origin=]
+       <dt>The [=environment settings object/has cross-site ancestor=]
+       <dd>False
+       <dt>The [=environment settings object/policy container=]
+       <dd>A new [=/policy container=]
+       <dt>The [=environment settings object/cross-origin isolated capability=]
+       <dd>True
+       <dt>The [=environment settings object/time origin=]
+       <dd>Assert: this algorithm is never called
+     </dl>
+
+<div algorithm>
+
+To <dfn>run in the specification realm</dfn> given |steps|:
+
+1. [=Prepare to run script=] with [=specification environment settings=].
+
+1. Run each step in |steps|.
+
+1. [=Clean up after running script=] with [=specification environment settings=].
+
+</div>
+
+
 # Protocol # {#protocol}
 
 This section defines the basic concepts of the WebDriver BiDi
