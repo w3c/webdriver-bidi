@@ -217,6 +217,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: activation notification; url: interaction.html#activation-notification
     text: active window; url: document-sequences.html#nav-window
     text: alert; url: timers-and-user-prompts.html#dom-alert
+    text: associated `Document`; url: nav-history-apis.html#concept-document-window
     text: close; url: document-sequences.html#close-a-top-level-traversable
     text: disabled; url: form-control-infrastructure.html#concept-fe-disabled
     text: File Upload state; url: input.html#file-upload-state-(type=file)
@@ -326,12 +327,6 @@ spec: ACCNAME; urlPrefix:https://www.w3.org/TR/accname-1.2
 spec: CORE-AAM; urlPrefix:https://www.w3.org/TR/core-aam-1.2
   type: dfn
     text: computed role; url: /#roleMappingComputedRole
-spec: MEDIACAPTURE-RECORD; urlPrefix: https://w3c.github.io/mediacapture-record/
-  type: dfn
-    text: fire a blob event; url: #fire-a-blob-event
-spec: MEDIACAPTURE-VIEWPORT; urlPrefix: https://w3c.github.io/mediacapture-viewport/
-  type: dfn
-    text: capture a browsing context viewport; url: #dfn-capture-a-browsing-context-viewport
 spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
   type: dfn
     text: resolution media feature; url: #resolution
@@ -340,9 +335,10 @@ spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
   type: dfn
     text: field-name token; url: #fields.names
     text: method token; url: #method.overview
-spec: STREAMS; urlPrefix: https://streams.spec.whatwg.org/
+spec: SCREEN-CAPTURE; urlPrefix: https://www.w3.org/TR/screen-capture/
   type: dfn
-    text: ReadableStream; url: #readablestream
+    text: browser; url: #dfn-browser
+    text: display surface; url: dfn-display-surface
 spec: TOUCH-EVENTS; urlPrefix: https://www.w3.org/community/reports/touchevents/CG-FINAL-touch-events-20240704/
   type: dfn
     text: expose legacy touch event APIs; url: #conditionally-exposing-legacy-touch-event-apis
@@ -1833,9 +1829,12 @@ To <dfn>cleanup the session</dfn> given |session|:
 
 1. For each |screencast recording| in |session|'s [=screencast recordings map=]:
 
-   1. Let |media recorder| be |screencast recording|["<code>mediaRecorder</code>"].
+   1. [=Stop a screencast recording=] given |screencast recording|.
 
-   1. [=Call=]({{MediaRecorder/stop}}, |media recorder|).
+   1. Wait until |screencast recording|'s [=screencast recording/state=] is
+      "<code>stopped</code>".
+
+   1. [=map/Remove=] |screencast recording| from [=screencast recordings map=].
 
 1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
 
@@ -3391,12 +3390,61 @@ map between [=/navigables=] or [=user context|user contexts=] and boolean.
 A [=remote end=] has a <dfn>download id map</dfn> which is is a weak map between
 [=response=] and download ids. It is initially empty.
 
+A <dfn>screencast stream</dfn> is an abstract stream of the viewport of a
+[=/top-level traversable=], consisting of a <dfn for="screencast stream">video track</dfn>
+containing the rendered visual output of the top-level document's viewport,
+and optionally an <dfn for="screencast stream">audio track</dfn> containing the audio output of the viewport.
+
 A [=BiDi session=] has a <dfn>screencast recordings map</dfn> which is a [=/map=] in
-which the keys are [[!RFC9562|UUID]]s, and the values are <dfn>screencast recording</dfn>, which is a [=struct=] with
-an [=struct/item=] named <dfn for="screencast recording">mediaRecorder</dfn>, which is a {{MediaRecorder}},
+which the keys are [[!RFC9562|UUID]]s, and the values are <dfn>screencast recording</dfn>,
+which is a [=struct=] with
+an [=struct/item=] named <dfn for="screencast recording">stream</dfn>, which is a [=screencast stream=],
 an [=struct/item=] named <dfn for="screencast recording">path</dfn>, which is a string,
+an [=struct/item=] named <dfn for="screencast recording">state</dfn>, which is one of
+"<code>recording</code>", "<code>stopping</code>", "<code>stopped</code>",
 an [=struct/item=] named <dfn for="screencast recording">size</dfn>, which is a number,
-an [=struct/item=] named <dfn for="screencast recording">writeError</dfn>, which is a string.
+an [=struct/item=] named <dfn for="screencast recording">writeError</dfn>, which is a string or null.
+
+<div algorithm>
+To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |recording|, |mime type| and |timeslice|:
+
+1. The implementation must begin encoding |recording|'s
+   [=screencast recording/stream=] using |mime type|, producing successive chunks of encoded data as
+   [=byte sequences=]. A new chunk must be produced at least every |timeslice|
+   milliseconds while |recording|'s [=screencast recording/state=] is
+   "<code>recording</code>".
+
+1. For each chunk |bytes| produced for |recording|, run the following steps:
+
+   1. Append |bytes| to the file at |recording|'s [=screencast recording/path=].
+      If this fails:
+
+      1. Set |recording|'s [=screencast recording/writeError=] to an
+         implementation-defined string describing the write failure.
+
+      1. [=Stop a screencast recording=] given |recording|.
+
+   1. Otherwise, set |recording|'s [=screencast recording/size=] to
+      |recording|'s [=screencast recording/size=] + |bytes|'s length.
+
+</div>
+
+<div algorithm>
+To <dfn>stop a screencast recording</dfn> given a [=screencast recording=] |recording|:
+
+1. If |recording|'s [=screencast recording/state=] is "<code>recording</code>":
+
+   1. Set |recording|'s [=screencast recording/state=] to "<code>stopping</code>".
+
+   1. The implementation must stop producing new chunks for |recording|, flush any
+      remaining encoded data as a final chunk (processed as in
+      [=start a screencast recording=]), stop capturing from |recording|'s
+      [=screencast recording/stream=] and release its
+      [=screencast stream/video track=] and, if present, its
+      [=screencast stream/audio track=], and then set |recording|'s
+      [=screencast recording/state=] to "<code>stopped</code>".
+
+</div>
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -5356,7 +5404,7 @@ the [=local end=] has only read-only access.
       }
 
       browsingContext.MediaStreamOptions = {
-         ? video: bool / browsingContext.MediaTrackConstraints .default true;
+         ? video: true / browsingContext.MediaTrackConstraints;
          ? audio: bool .default false;
       }
 
@@ -5381,7 +5429,7 @@ the [=local end=] has only read-only access.
 </dl>
 
 <div algorithm="remote end steps for browsingContext.startScreencast">
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |navigable id| be |command parameters|["<code>context</code>"].
 
@@ -5393,69 +5441,66 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |mime type| be |command parameters|["<code>mimeType</code>"].
 
-1. If [$is type supported$] with |mime type| returns false, return [=error=] with
-   [=error code=] [=invalid argument=].
-
 1. If the implementation is unable to record a screencast of |navigable| for any
    reason then return [=error=] with [=error code=] [=unsupported operation=].
 
-1. Let |environment settings| be the [=environment settings object=] representing
-   a specification execution environment.
+1. Let |stream options| be |command parameters|["<code>streamOptions</code>"].
 
-   Issue: The specification execution environment has to be better defined.
+1. Let |stream| be a new [=screencast stream=] for |navigable|, constructed as follows:
 
-1. [=Prepare to run script=] with |environment settings|.
+   1. Create a |video track| which must be a live-capture of the [=/browser=] [=display surface=]
+      of the [=relevant global object=]'s [=associated `Document`=]'s |navigable|'s
+      <a spec=css2>viewport</a>.
 
-1. Let |promise| be the result of [=trying=] to [=capture a browsing context viewport=] with
-   |navigable| and |command parameters|["<code>streamOptions</code>"].
+   1. If |stream options|["<code>video</code>"] is a map:
 
-1. [=React=] to |promise|:
+      1. If |stream options|["<code>video</code>"] [=map/contains=] <code>width</code>:
 
-   1. If |promise| was rejected, return [=error=] with [=error code=] [=unknown error=].
+         1. The [=screencast stream/video track=] must satisfy its <code>width</code>,
+            otherwise if the implementation cannot satisfy these constraints,
+            return [=error=] with [=error code=] [=unknown error=].
 
-   1. If |promise| was fulfilled with value |media stream|, then:
+      1. If |stream options|["<code>video</code>"] [=map/contains=] <code>height</code>:
 
-      1. Let |path| be an implementation-defined file path where the recording will be stored.
+         1. The [=screencast stream/video track=] must satisfy its <code>height</code>,
+            otherwise if the implementation cannot satisfy these constraints,
+            return [=error=] with [=error code=] [=unknown error=].
 
-      1. Let |media recorder options| be a new [=/map=] with the <code>mimeType</code> field
-         set to |mime type|.
+   1. [=map/Set=] |video track| to |stream|[[=screencast stream/video track=]].
 
-      1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
+   1. If |stream options|["<code>audio</code>"] is true:
 
-      1. Let |realm| be |environment settings|' [=realm execution context=]'s Realm component.
+      1. Create an |audio track| which must be the combined audio produced by the sum of documents
+         that consist of the [=relevant global object=]'s [=associated `Document`=]'s
+         |navigable|'s [=navigable/active document=], and all [=navigable/active documents=]
+         in nested [=/browsing context=]s of the [=relevant global object=]'s [=associated `Document`=]'s |navigable|.
 
-      1. Let |media recorder| be a new {{MediaRecorder}} in |realm|
-         with {{MediaRecorder/stream}} |media stream| and
-         {{MediaRecorderOptions}} |media recorder options|.
+      1. [=map/Set=] |audio track| to |stream|[[=screencast stream/audio track=]].
 
-      1. Let |recording| be a new [=screencast recording=] with
-         [=screencast recording/mediaRecorder=] |media recorder|,
-         [=screencast recording/path=] |path|,
-         [=screencast recording/size=] 0.
+   1. If the implementation is unable to produce |stream|, return [=error=] with
+      [=error code=] [=unknown error=].
 
-      1. Whenever the implementation is going to [=fire a blob event=] named {{MediaRecorder/dataavailable}}
-         at |media recorder| with |blob|, run the following steps:
+1. Let |path| be an implementation-defined file path where the recording will
+   be stored.
 
-         1. Let |bytes| be |blob|'s underlying [=byte sequence=].
+1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
 
-         1. Append |bytes| to the file at |path|. If this fails:
+1. Let |recording| be a new [=screencast recording=] with
+   [=screencast recording/stream=] |stream|,
+   [=screencast recording/path=] |path|,
+   [=screencast recording/state=] "<code>recording</code>",
+   [=screencast recording/size=] 0,
+   [=screencast recording/writeError=] null.
 
-            1. Set |recording|'s [=screencast recording/writeError=] to an
-               implementation-defined string describing the write failure.
+1. Set |session|'s [=screencast recordings map=][|screencast|] to |recording|.
 
-            1. [=Call=]({{MediaRecorder/stop}}, |media recorder|).
+1. [=Start a screencast recording=] given |recording|, |mime type| and |command parameters|["<code>timeslice</code>"].
 
-         1. Otherwise, set |recording|'s [=screencast recording/size=] to |recording|'s [=screencast recording/size=] + |bytes|'s length.
+1. Let |body| be a new [=/map=] matching the <code>browsingContext.StartScreencastResult</code>
+   with the <code>screencast</code> field set to |screencast| and
+   <code>path</code> field set to |path|.
 
-      1. [=Call=]({{MediaRecorder/start}}, |media recorder|, |command parameters|["<code>timeslice</code>"]).
-
-      1. [=Clean up after running script=] with |environment settings|.
-
-      1. Set [=screencast recordings map=][|screencast|] to |recording|.
-
-      1. Return a new [=/map=] matching the <code>browsingContext.StartScreencastResult</code>
-         with the <code>screencast</code> field set to |screencast| and <code>path</code> field
-         set to |path|.
+1. Return [=success=] with data |body|.
 
 </div>
 
@@ -5490,33 +5535,34 @@ stops the screencast.
 </dl>
 
 <div algorithm="remote end steps for browsingContext.stopScreencast">
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |screencast| be the value of the "<code>screencast</code>" field in |command
    parameters|.
 
-1. If [=screencast recordings map=] does not <a for=map>contain</a> |screencast|, return
-   [=error=] with [=error code=] [=no such screencast=].
+1. If |session|'s [=screencast recordings map=] does not <a for=map>contain</a>
+   |screencast|, return [=error=] with [=error code=] [=no such screencast=].
 
-1. Let |screencast recording| be [=screencast recordings map=][|screencast|].
+1. Let |screencast recording| be |session|'s [=screencast recordings map=][|screencast|].
 
-1. If |screencast recording| contains [=screencast recording/writeError=], return
-   [=error=] with [=error code=] [=unknown error=].
+1. [=Stop a screencast recording=] given |screencast recording|.
 
-1. Let |media recorder| be |screencast recording|'s [=screencast recording/mediaRecorder=].
+1. Wait until |screencast recording|'s [=screencast recording/state=] is
+   "<code>stopped</code>".
+
+1. [=map/Remove=] |screencast| from |session|'s [=screencast recordings map=].
+
+1. If |screencast recording|'s [=screencast recording/writeError=] is not null,
+   return [=error=] with [=error code=] [=unknown error=].
 
 1. Let |path| be |screencast recording|'s [=screencast recording/path=].
 
-1. [=Call=]({{MediaRecorder/stop}}, |media recorder|).
-
-1. Wait until |media recorder|'s {{MediaRecorder/stop}} [=fire an event|event fires=].
-
 1. Let |size| be |screencast recording|'s [=screencast recording/size=].
 
-1. [=map/Remove=] |screencast| from [=screencast recordings map=].
-
-1. Return a new [=/map=] matching the <code>browsingContext.StopScreencastResult</code>
+1. Let |body| be a new [=/map=] matching the <code>browsingContext.StopScreencastResult</code>
    with the <code>path</code> field set to |path| and <code>size</code> field set to |size|.
+
+1. Return [=success=] with data |body|.
 
 </div>
 
