@@ -187,6 +187,9 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: test; url: #sec-regexp.prototype.test
     text: time value; url: sec-time-values-and-time-range
     text: undefined; url: sec-undefined-value
+spec: FETCH; urlPrefix: https://fetch.spec.whatwg.org/
+  type: dfn
+    text: response; url: #concept-response
 spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
   type: dfn
     text: rectangle; url: rectangle
@@ -3253,6 +3256,9 @@ The progress of navigation is communicated using an immutable [=struct=]
   <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-downloaded-filepath">downloadedFilepath</dfn></dt>
   <dd>If the navigation is a download which is finished and the downloaded file is
   available, absolute filepath of the downloaded file, otherwise null.</dd>
+
+  <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-download-response">downloadResponse</dfn></dt>
+  <dd>If the navigation is a download, [=response=], otherwise null.</dd>
 </dl>
 
 ### Definition ### {#module-browsingContext-definition}
@@ -3361,6 +3367,9 @@ weak map between [=user context|user contexts=] and [=unhandled prompt behavior 
 
 A [=remote end=] has a <dfn>scripting enabled overrides map</dfn> which is a weak
 map between [=/navigables=] or [=user context|user contexts=] and boolean.
+
+A [=remote end=] has a <dfn>download id map</dfn> which is is a weak map between
+[=response=] and download ids. It is initially empty.
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -3632,6 +3641,16 @@ The <code>browsingContext.Navigation</code> type is a unique string identifying 
 navigation.
 
 TODO: Link to the definition in the HTML spec.
+
+#### The browsingContext.Download Type #### {#type-browsingContext-Download}
+
+{^remote end definition^} and {^local end definition^}
+
+<pre class="cddl" data-cddl-module="remote-cddl,local-cddl">
+browsingContext.Download = text;
+</pre>
+
+The <code>browsingContext.Download</code> type is a unique string identifying a download.
 
 
 #### The browsingContext.NavigationInfo Type #### {#type-browsingContext-NavigationInfo}
@@ -5748,6 +5767,7 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load complete
         )
 
         browsingContext.DownloadWillBeginParams = {
+          download: browsingContext.Download,
           suggestedFilename: text,
           browsingContext.BaseNavigationInfo
         }
@@ -5763,14 +5783,19 @@ The [=remote end event trigger=] is the
 1. Let |navigation info| be the result of [=get the navigation info=] given
    |navigable| and |navigation status|.
 
+1. Let |download| be the string representation of a [[!RFC9562|UUID]].
+
+1. [=map/Set=] [=download id map=][|navigation status|'s [=WebDriver BiDi navigation status/downloadResponse=]] to |download|.
+
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.DownloadWillBeginParams</code> production, with the
    <code>context</code> field set to |navigation info|["<code>context</code>"], the
    <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
    the <code>timestamp</code> field set to
    |navigation info|["<code>timestamp</code>"], the <code>url</code> field set to
-   |navigation info|["<code>url</code>"] and <code>suggestedFilename</code> field set
-   to |navigation status|'s [=WebDriver BiDi navigation status/suggestedFilename=].
+   |navigation info|["<code>url</code>"], the <code>download</code> field set to |download|
+   and the <code>suggestedFilename</code> field set to
+   |navigation status|'s [=WebDriver BiDi navigation status/suggestedFilename=].
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.DownloadWillBegin</code> production, with the
@@ -5814,11 +5839,13 @@ The [=remote end event trigger=] is the
 
         browsingContext.DownloadCanceledParams = (
           status: "canceled",
+          download: browsingContext.Download,
           browsingContext.BaseNavigationInfo
         )
 
         browsingContext.DownloadCompleteParams = (
           status: "complete",
+          download: browsingContext.Download,
           filepath: text / null,
           browsingContext.BaseNavigationInfo
         )
@@ -5837,10 +5864,16 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download end<
 1. Assert |navigation info|["<code>status</code>"] is equal to either
    "<code>complete</code>" or "<code>canceled</code>".
 
+1. Let |download response| be |navigation status|'s [=WebDriver BiDi navigation status/downloadResponse=].
+
+1. If [=download id map=] [=map/contains=] |download response|, let |download| be
+   [=download id map=][|download response|], otherwise let |download| be
+   the string representation of a [[!RFC9562|UUID]].
+
 1. If |navigation info|["<code>status</code>"] is "<code>complete</code>", let
    |params| be a [=/map=] matching the
-   <code>browsingContext.DownloadCompleteParams</code> production, with the
-   <code>filepath</code> field set to
+   <code>browsingContext.DownloadCompleteParams</code> production, with the <code>download</code> field
+   set to |download|, the <code>filepath</code> field set to
    |navigation status|'s [=WebDriver BiDi navigation status/downloadedFilepath=], the
    <code>context</code> field set to |navigation info|["<code>context</code>"], the
    <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
@@ -5852,9 +5885,9 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download end<
    not available for whatever reason.
 
 1. Otherwise, let |params| be a [=/map=] matching the
-   <code>browsingContext.DownloadCanceledParams</code> production, with the
-   <code>context</code> field set to |navigation info|["<code>context</code>"], the
-   <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
+   <code>browsingContext.DownloadCanceledParams</code> production, with the <code>download</code> field
+   set to |download|, the <code>context</code> field set to |navigation info|["<code>context</code>"],
+   the <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
    the <code>timestamp</code> field set to
    |navigation info|["<code>timestamp</code>"], and the <code>url</code> field set to
    |navigation info|["<code>url</code>"].
