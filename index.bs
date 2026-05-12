@@ -1831,9 +1831,6 @@ To <dfn>cleanup the session</dfn> given |session|:
 
    1. [=Stop a screencast recording=] given |screencast recording|.
 
-   1. Wait until |screencast recording|'s [=screencast recording/state=] is
-      "<code>stopped</code>".
-
    1. [=map/Remove=] |screencast recording| from [=screencast recordings map=].
 
 1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
@@ -3407,41 +3404,45 @@ an [=struct/item=] named <dfn for="screencast recording">size</dfn>, which is a 
 an [=struct/item=] named <dfn for="screencast recording">writeError</dfn>, which is a string or null.
 
 <div algorithm>
-To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |recording|, |mime type|:
+To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |recording| and |mime type|:
 
-1. Begin encoding |recording|'s [=screencast recording/stream=] using |mime type|,
-   producing successive chunks of encoded data as [=byte sequences=].
-   Produce a new chunk at the implementation defined interaval while
-   |recording|'s [=screencast recording/state=] is "<code>recording</code>".
+1. Run the following steps [=in parallel=]:
 
-1. For each chunk |bytes| produced for |recording|, run the following steps:
+   1. Begin encoding |recording|'s [=screencast recording/stream=] using |mime type|,
+      producing successive chunks of encoded data as [=byte sequences=].
+      Produce a new chunk at the implementation defined interaval while
+      |recording|'s [=screencast recording/state=] is "<code>recording</code>".
 
-   1. Append |bytes| to the file at |recording|'s [=screencast recording/path=].
-      If this fails:
+   1. For each chunk |bytes| produced for |recording|, run the following steps:
 
-      1. Set |recording|'s [=screencast recording/writeError=] to an
-         implementation-defined string describing the write failure.
+      1. Append |bytes| to the file at |recording|'s [=screencast recording/path=].
+         If this fails:
 
-      1. [=Stop a screencast recording=] given |recording|.
+         1. Set |recording|'s [=screencast recording/writeError=] to an
+            implementation-defined string describing the write failure.
 
-   1. Otherwise, set |recording|'s [=screencast recording/size=] to
-      |recording|'s [=screencast recording/size=] + |bytes|'s length.
+         1. [=Stop a screencast recording=] given |recording|.
+
+      1. Otherwise, set |recording|'s [=screencast recording/size=] to
+         |recording|'s [=screencast recording/size=] + |bytes|'s length.
 
 </div>
 
 <div algorithm>
 To <dfn>stop a screencast recording</dfn> given a [=screencast recording=] |recording|:
 
-1. If |recording|'s [=screencast recording/state=] is "<code>recording</code>":
+1. If |recording|'s [=screencast recording/state=] is not "<code>recording</code>" then return.
 
-   1. Set |recording|'s [=screencast recording/state=] to "<code>stopping</code>".
+1. Set |recording|'s [=screencast recording/state=] to "<code>stopping</code>".
 
-   1. Stop producing new chunks for |recording|, flush any remaining encoded
-      data as a final chunk (processed as in [=start a screencast recording=]),
-      stop capturing from |recording|'s [=screencast recording/stream=] and release its
-      [=screencast stream/video track=] and, if present, its
-      [=screencast stream/audio track=], and then set |recording|'s
-      [=screencast recording/state=] to "<code>stopped</code>".
+1. Stop producing new chunks for |recording|, flush any remaining encoded
+   data as a final chunk (processed as in [=start a screencast recording=]),
+   stop capturing from |recording|'s [=screencast recording/stream=] and release its
+   [=screencast stream/video track=] and, if present, its
+   [=screencast stream/audio track=], and then set |recording|'s
+   [=screencast recording/state=] to "<code>stopped</code>".
+
+1. Wait until |recording|'s [=screencast recording/state=] is "<code>stopped</code>".
 
 </div>
 
@@ -5537,7 +5538,8 @@ stops the screencast.
     <pre class="cddl" data-cddl-module="local-cddl">
       browsingContext.StopScreencastResult = {
          path: text,
-         size: js-uint
+         size: js-uint,
+         ? error: text
       }
     </pre>
    </dd>
@@ -5555,9 +5557,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |screencast recording| be |session|'s [=screencast recordings map=][|screencast|].
 
 1. [=Stop a screencast recording=] given |screencast recording|.
-
-1. Wait until |screencast recording|'s [=screencast recording/state=] is
-   "<code>stopped</code>".
 
 1. [=map/Remove=] |screencast| from |session|'s [=screencast recordings map=].
 
