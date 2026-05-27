@@ -14624,7 +14624,7 @@ steps</dfn> given |session|:
   1. Let |element| be the result of [=trying=] to [=deserialize remote reference=]
      with |reference|, |realm|, and |session|.
 
-  1. If |element| doesn't implement {{Element}} return [=error=] with [=error code=]
+  1. If |element| doesn't implement {{Node}} return [=error=] with [=error code=]
      [=no such element=].
 
   1. Return [=success=] with data |element|.
@@ -14668,7 +14668,10 @@ Note: for a detailed description of the behavior of this command, see the
         actions: [*input.NoneSourceAction]
       }
 
-      input.NoneSourceAction = input.PauseAction
+      input.NoneSourceAction = (
+        input.PauseAction /
+        input.ScrollIntoViewAction
+      )
 
       input.KeySourceActions = {
         type: "key",
@@ -14716,6 +14719,18 @@ Note: for a detailed description of the behavior of this command, see the
       input.PauseAction = {
         type: "pause",
         ? duration: js-uint
+      }
+
+      input.ScrollIntoViewBehavior = "auto" / "instant" / "smooth"
+
+      input.ScrollIntoViewAlignment = "start" / "center" / "end" / "nearest"
+
+      input.ScrollIntoViewAction = {
+        type: "scrollIntoView",
+        ? onlyIfNecessary: bool .default true,
+        ? behavior: input.ScrollIntoViewBehavior .default "instant",
+        ? block: input.ScrollIntoViewAlignment .default "end",
+        ? inline: input.ScrollIntoViewAlignment .default "nearest"
       }
 
       input.KeyDownAction = {
