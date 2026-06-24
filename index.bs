@@ -556,6 +556,94 @@ To <dfn>store WebDriver configuration</dfn> [=WebDriver configuration=] |configu
 
 </div>
 
+This specification makes use of <dfn>specification agent</dfn>. This is a
+JavaScript <a spec=ecmascript>agent</a> used for running specification algorithms defined in terms
+of JavaScript operations.
+
+Note: the [=specification agent=] is a spec formalism; implementations are free
+to implement the underlying algorithms without actually executing any JavaScript.
+
+The [=specification agent=] belongs to the <dfn ignore>specification agent
+cluster</dfn>. It is the only <a spec=ecmascript>agent</a> in this [=agent
+cluster=].
+
+The [=specification agent=] is assumed to be present whenever the [=remote end=]
+is running. It is configured as if created by the following steps:
+
+1. Let |candidate execution| be a new [=candidate execution=].
+
+1. Let [=specification agent=] be a new agent whose \[[CanBlock]] is canfalse,
+   \[[Signifier]] is signifier, \[[CandidateExecution]] is |candidate execution|,
+   and \[[IsLockFree1]], \[[IsLockFree2]], and \[[LittleEndian]] are set at the
+   implementation's discretion.
+
+1. Set agent's [=agent/event loop=] to a new [=/event loop=].
+
+The <dfn>specification realm</dfn> is the [=realm=] used to run specification
+scripts. The <dfn>specification environment settings</dfn> is the
+[=environment settings object=] for the specification realm. Both are assumed to
+be created whenever the remote end is running, as if by the follow steps:
+
+1. Let |realm execution context| be [=create a new realm=] in the
+   [=specification agent=] without specific customizations to create a global
+   object or global this binding
+
+   Issue: It's unclear if we need a specific global object in this realm.
+
+1. Set [=specification realm=] to the value of [=realm execution context=]'s Realm component.
+
+1. Set [=specification environment settings=] to a new [=environment settings object=]
+   with the following fields:
+    <dl>
+      <dt>[=environment/id=]
+      <dd>A new unique opaque string
+      <dt>[=environment/creation URL=]
+      <dd>null
+      <dt>[=environment/top-level creation URL=]
+      <dd>null
+      <dt>[=environment/top-level origin=]
+      <dd>null
+      <dt>[=environment/target browsing context=]
+      <dd>null
+      <dt>[=environment/active service worker=]
+      <dd>null
+      <dt>[=environment/execution ready flag=]
+      <dd>true
+    </dl>
+
+   and the following algorithms:
+    <dl>
+       <dt>The [=environment settings object/realm execution context=]
+       <dd>|realm execution context|
+       <dt>The [=environment settings object/module map=]
+       <dd>A new [=environment settings object/module map=]
+       <dt>The [=environment settings object/API base URL=]
+       <dd>null
+       <dt>The [=environment settings object/origin=]
+       <dd>A new [=opaque origin=]
+       <dt>The [=environment settings object/has cross-site ancestor=]
+       <dd>False
+       <dt>The [=environment settings object/policy container=]
+       <dd>A new [=/policy container=]
+       <dt>The [=environment settings object/cross-origin isolated capability=]
+       <dd>True
+       <dt>The [=environment settings object/time origin=]
+       <dd>Assert: this algorithm is never called
+     </dl>
+
+<div algorithm>
+
+To <dfn>run in the specification realm</dfn> given |steps|:
+
+1. [=Prepare to run script=] with [=specification environment settings=].
+
+1. Run each step in |steps|.
+
+1. [=Clean up after running script=] with [=specification environment settings=].
+
+</div>
+
+
 # Protocol # {#protocol}
 
 This section defines the basic concepts of the WebDriver BiDi
@@ -591,6 +679,7 @@ CommandData = (
   BrowsingContextCommand //
   EmulationCommand //
   InputCommand //
+  IoCommand //
   NetworkCommand //
   ScriptCommand //
   SessionCommand //
@@ -633,6 +722,7 @@ ResultData = (
   BrowsingContextResult /
   EmulationResult /
   InputResult /
+  IoResult /
   NetworkResult /
   ScriptResult /
   SessionResult /
@@ -813,11 +903,20 @@ with the following additional codes:
   <dt><dfn for=errors export>no such storage partition</dfn>
   <dd>Tried to access data in a non-existent storage partition.
 
+  <dt><dfn for=errors export>no such stream</dfn>
+  <dd>Tried to access an unknown [=Stream=].
+
   <dt><dfn for=errors export>no such user context</dfn>
   <dd>Tried to reference an unknown [=user context=].
 
   <dt><dfn for=errors export>no such web extension</dfn>
   <dd>Tried to reference an unknown web extension.
+
+  <dt><dfn for=errors export>stream closed</dfn>
+  <dd>Tried to interact with a closed [=Stream=].
+
+  <dt><dfn for=errors export>stream read error</dfn>
+  <dd>Unable to read from a [=Stream=].
 
   <dt><dfn for=errors export>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
@@ -854,10 +953,13 @@ ErrorCode = "invalid argument" /
             "no such request" /
             "no such screencast" /
             "no such script" /
+            "no such stream" /
             "no such storage partition" /
             "no such user context" /
             "no such web extension" /
             "session not created" /
+            "stream closed" /
+            "stream read error" /
             "unable to capture screen" /
             "unable to close browser" /
             "unable to set cookie" /
@@ -7687,6 +7789,218 @@ is legacy, user agent might run [=implementation-defined=] steps to respect the
    to |maxTouchPoints|.
 
 1. Return [=success=] with data null.
+
+</div>
+
+## The io Module ## {#module-io}
+
+The <dfn export for=modules>io</dfn> module contains commands and events
+relating to IO operations.
+
+### Definition ### {#module-io-definition}
+
+{^remote end definition^}
+
+<pre class="cddl" data-cddl-module="remote-cddl">
+
+IoCommand = (
+  io.Cancel //
+  io.ReadStream //
+)
+
+</pre>
+
+{^local end definition^}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+
+IoResult = (
+   io.ReadStreamResult
+)
+</pre>
+
+A [=BiDi Session=] has a <dfn>readable stream map</dfn> which is a [=/map=] between
+a <code>io.Stream</code> and a [=readable stream=].
+
+<div class="algorithm">
+
+To <dfn>get a readable stream</dfn> given <var ignore>session</var> and |stream|:
+
+1. Let |stream map| be |session|'s [=readable stream map=].
+
+1. If |stream map| [=map/contains=] |stream|, return [=success=] with data
+   |stream map|[|stream|].
+
+1. Return [=error=] with [=error code=] [=no such stream=].
+
+</div>
+
+### Types ### {#module-io-types}
+
+#### The io.ReadableStream Type #### {#type-io-ReadableStream}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+io.ReadableStream = {
+  stream: io.Stream,
+}
+</pre>
+
+The <code>io.ReadableStream</code> type represents a [=readable stream=].
+
+#### The io.ReadData Type #### {#type-io-ReadData}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+io.ReadData = {
+  value: network.BytesValue,
+  done: bool
+}
+</pre>
+
+The <code>io.ReadData</code> type represents the result of reading a value
+from a [=readable stream=].
+
+
+#### The io.Stream Type #### {#type-io-Stream}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+io.Stream = text
+</pre>
+
+The <code>io.Stream</code> type represents a handle to an IO [=stream=].
+
+### Commands ### {#module-io-commands}
+
+#### The io.cancel Command ####  {#command-io-cancel}
+
+The <dfn export for=commands>io.Cancel</dfn> command cancels a [=readable stream=].
+
+<dl>
+  <dt>Command Type</dt>
+  <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      io.Cancel = (
+        method: "io.cancel",
+        params: io.CancelParameters
+      )
+
+      io.CancelParameters = {
+        stream: io.Stream,
+        ? reason: text,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      io.CancelResult = EmptyResult
+    </pre>
+  </dd>
+</dl>
+
+<div algorithm="remote end steps for io.Cancel">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |stream| be the result of trying to [=get a readable stream=] with
+   |session| and |command parameters|["<code>stream</code>"].
+
+1. If |command parameters| [=map/contains=] "<code>reason</code>, let |reason|
+   be |command parameters|["<code>reason</code>"]. Otherwise let |reason| be
+   undefined.
+
+1. [=Run in the specification realm=] the following steps:
+
+  1. Let |promise| be the result of [=ReadableStream/Cancel=] |stream| with
+     |reason|.
+
+1. If |promise| was rejected, return [=error=] with [=error code=] [=stream closed=].
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The io.readStream Command #### {#command-io.readStream}
+
+The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of a
+[=readable stream=].
+
+<dl>
+  <dt>Command Type</dt>
+  <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      io.ReadStream = (
+       method: "io.readStream",
+       params: io.ReadStreamParameters
+      )
+
+      io.ReadStreamParameters = {
+        stream: io.Stream,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      io.ReadStreamResult = io.ReadData
+    </pre>
+   </dd>
+</dl>
+
+
+<div algorithm="remote end steps for io.readStream">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |stream| be the result of [=trying=] to [=get a readable stream=] with
+   |session| and |command parameters|["<code>stream</code>"].
+
+1. Let |result| be null.
+
+1. [=Run in the specification realm=] with the following steps:
+
+  1. Let |reader| be ? [$AcquireReadableStreamDefaultReader$](|stream|).
+
+  1. If |reader| is an [=abrupt completion=], return [=error=] with [=error
+     code=] [=stream read error=].
+
+  1. Let |promise| be [=a new promise=].
+
+  1. Let |read request| be a new [=read request=] with the following [=struct/items=]:
+
+     <dl>
+        <dt>[=read request/chunk steps=], given |chunk|
+        <dd>Resolve |promise| with «[ "value" → |chunk|, "done" → false ]».
+        <dt>[=read request/close steps=]
+        <dd>Resolve promise with «[ "value" → undefined, "done" → true ]».
+        <dt>[=read request/error steps=], given |e|
+        <dd>Reject |promise| with |e|.
+     </dl>
+
+  1. Let |read result| be [$ReadableStreamDefaultReaderRead$](|reader|, |read request|).
+
+  1. If |read result| is an [=abrupt completion=], return [=error=] with [=error
+     code=] [=stream read error=].
+
+  1. Let |react result| be [=react=] to |promise| with the following steps:
+
+     <dl>
+       <dt>When the promise is fulfilled with |value|:
+       <dd>
+        1. Let |response| be a new `io.ReadResult` with the <code>value</code>
+           field set to [=serialize protocol bytes=] given |value| and the
+           <code>done</code> field set to false.
+
+        1. Set |result| to [=success=] with data |response|.
+
+       <dt>When the promise is rejected with <var ignore>reason</var>:
+       <dd>
+         1. Set |result| to [=error=] with [=error code=] [=stream read error=].
+     </dl>
+
+  1. If |react result| is an [=abrupt completion=], return [=error=] with [=error
+     code=] [=stream read error=].
+
+1. Assert: |result| is not null.
+
+1. Return |result|.
 
 </div>
 
