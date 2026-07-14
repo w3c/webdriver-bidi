@@ -816,7 +816,7 @@ with the following additional codes:
   <dd>Tried to access data in a non-existent storage partition.
 
   <dt><dfn for=errors export>no such stream</dfn>
-  <dd>Tried to access an unknown [=Stream=].
+  <dd>Tried to access an unknown [=/stream=].
 
   <dt><dfn for=errors export>no such user context</dfn>
   <dd>Tried to reference an unknown [=user context=].
@@ -824,8 +824,11 @@ with the following additional codes:
   <dt><dfn for=errors export>no such web extension</dfn>
   <dd>Tried to reference an unknown web extension.
 
+  <dt><dfn for=errors export>stream closed</dfn>
+  <dd>Tried to interact with a closed [=/stream=].
+
   <dt><dfn for=errors export>stream read error</dfn>
-  <dd>Unable to read from a [=Stream=].
+  <dd>Unable to read from a [=/stream=].
 
   <dt><dfn for=errors export>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
@@ -862,11 +865,12 @@ ErrorCode = "invalid argument" /
             "no such request" /
             "no such screencast" /
             "no such script" /
-            "no such stream" /
             "no such storage partition" /
+            "no such stream" /
             "no such user context" /
             "no such web extension" /
             "session not created" /
+            "stream closed" /
             "stream read error" /
             "unable to capture screen" /
             "unable to close browser" /
@@ -7727,14 +7731,21 @@ IoResult = (
 )
 </pre>
 
-A [=BiDi Session=] has a <dfn>readable stream map</dfn> which is a [=/map=] between
-a <code>io.Stream</code> and a [=readable stream=].
+A <dfn lt="stream|IO stream" export>stream</dfn> is an abstract source of
+data that can be read from or written to.
+
+A [=BiDi Session=] has a <dfn>readable stream settings map</dfn> which is a [=/map=] between
+a <code>io.Stream</code> and [=stream settings=].
+
+<dfn>Stream settings</dfn> is a [=struct=] with
+an [=struct/item=] named <dfn for="stream settings">stream</dfn>, which is a [=readable stream=],
+an [=struct/item=] named <dfn for="stream settings">navigable</dfn>, which is a <code>browsingContext.BrowsingContext</code> or null.
 
 <div class="algorithm">
 
-To <dfn>get a readable stream</dfn> given <var ignore>session</var> and |stream|:
+To <dfn>get readable stream settings</dfn> given <var ignore>session</var> and |stream|:
 
-1. Let |stream map| be |session|'s [=readable stream map=].
+1. Let |stream map| be |session|'s [=readable stream settings map=].
 
 1. If |stream map| [=map/contains=] |stream|, return [=success=] with data
    |stream map|[|stream|].
@@ -7759,7 +7770,7 @@ The <code>io.ReadableStream</code> type represents a [=readable stream=].
 
 <pre class="cddl" data-cddl-module="local-cddl">
 io.ReadData = {
-  value: network.BytesValue,
+  value: network.BytesValue / null,
   done: bool
 }
 </pre>
@@ -7774,7 +7785,7 @@ from a [=readable stream=].
 io.Stream = text
 </pre>
 
-The <code>io.Stream</code> type represents a handle to an IO [=stream=].
+The <code>io.Stream</code> type represents a handle to an IO [=/stream=].
 
 ### Commands ### {#module-io-commands}
 
@@ -7808,18 +7819,51 @@ The <dfn export for=commands>io.Cancel</dfn> command cancels a [=readable stream
 <div algorithm="remote end steps for io.Cancel">
 The [=remote end steps=] given |session| and |command parameters| are:
 
-1. Let |stream| be the result of trying to [=get a readable stream=] with
+1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
    |session| and |command parameters|["<code>stream</code>"].
 
-1. If |command parameters| [=map/contains=] "<code>reason</code>, let |reason|
+1. Let |stream| be |stream settings|[[=stream settings/stream=]].
+
+1. Let |navigable id| be |stream settings|[[=stream settings/navigable=]].
+
+1. If |command parameters| [=map/contains=] "<code>reason</code>", let |reason|
    be |command parameters|["<code>reason</code>"]. Otherwise let |reason| be
    undefined.
 
-1. Run [$ReadableStreamCancel$]\(|stream|, |reason|).
+1. If |navigable id| is not null:
+
+     1. Let |realm| be the result of [=trying=] to [=get a realm from a navigable=]
+        with |navigable id| and null.
+
+     1. Let |environment settings| be the [=environment settings object=] whose
+        [=realm execution context=]'s Realm component is |realm|.
+
+     1. [=Prepare to run script=] with |environment settings|.
+
+     1. Let |promise| be the result of [=ReadableStream/cancel=] |stream| with
+        |reason|.
+
+     1. [=React=] to |promise|:
+
+      1. If |promise| was rejected, then:
+
+         1. [=Clean up after running script=] with |environment settings|.
+
+         1. Return [=error=] with [=error code=] [=stream closed=].
+
+      1. If |promise| was fulfilled, then:
+
+         1. [=Clean up after running script=] with |environment settings|.
+
+         1. Return [=success=] with data null.
+
+1. Otherwise, return error with [=error code=] [=unsupported operation=].
+
+   TODO: Add support for streams that don't have an associated navigable.
 
 </div>
 
-### The io.readStream Command ### {#command-io.readStream}
+#### The io.readStream Command #### {#command-io.readStream}
 
 The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of a
 [=readable stream=].
@@ -7850,59 +7894,62 @@ The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of
 <div algorithm="remote end steps for io.readStream">
 The [=remote end steps=] given |session| and |command parameters| are:
 
-1. Let |stream| be the result of [=trying=] to [=get a readable stream=] with
+1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
    |session| and |command parameters|["<code>stream</code>"].
 
-1. Let |result| be null.
+1. Let |stream| be |stream settings|[[=stream settings/stream=]].
 
-1. Let |read request| be a new [=read request=] with the following items:
-  <dl>
-    <dt>[=read request/chunk steps=] given |chunk|:
-    <dd>
-      1. Assert: |result| is null.
+1. Let |navigable id| be |stream settings|[[=stream settings/navigable=]].
 
-      1. Let |response| be a new `io.ReadResult` with the <code>value</code>
+1. If |navigable id| is not null:
+
+   1. Let |realm| be the result of [=trying=] to [=get a realm from a navigable=]
+      with |navigable id| and null.
+
+   1. Let |environment settings| be the [=environment settings object=] whose
+      [=realm execution context=]'s Realm component is |realm|.
+
+   1. [=Prepare to run script=] with |environment settings|.
+
+   1. Let |reader| be the result of [=ReadableStream/getting a reader=] for |stream|.
+
+   1. Let |read result| be the result of calling {{ReadableStreamDefaultReader/read()}} for |reader|.
+
+   1. If |read result|.\[[Type]] is <code>normal</code>.:
+
+      1. Set |read result| to <a spec=ECMASCRIPT>Await</a>(|read result|.\[[Value]]).
+
+   1. [=Clean up after running script=] with |environment settings|.
+
+   1. [=ReadableStreamDefaultReader/Release=] |reader|.
+
+   1. If |read result|.\[[Type]] is <code>throw</code>, return [=error=] with
+      [=error code=] [=stream read error=].
+
+   1. Assert: |read result|.\[[Type]] is <code>normal</code>.
+
+   1. Let |read value| be |read result|.\[[Value]].
+
+   1. Let |done| be |read value|["<code>done</code>"].
+
+   1. If |done| is true:
+
+      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
+         field set to null and the <code>done</code> field set to true.
+
+   1. Otherwise:
+
+      1. Let |chunk| be |read value|["<code>value</code>"].
+
+      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
          field set to [=serialize protocol bytes=] given |chunk| and the
          <code>done</code> field set to false.
 
-      1. Let |result| be [=success=] with data |response|.
-    </dd>
+   1. Return [=success=] with data |response|.
 
-    <dt>[=read request/close steps=]:
-    <dd>
-      1. Assert: |result| is null.
+1. Otherwise, return [=error=] with [=error code=] [=unsupported operation=].
 
-      1. Let |response| be a new `io.ReadResult` with the <code>value</code>
-         field set to <code>""</code> and the <code>done</code> field set to
-         true.
-
-      1. Let |result| be [=success=] with data |response|.
-    </dd>
-
-    <dt>[=read request/error steps=] given <var ignore>e</var>:
-    <dd>
-      1. Assert: |result| is null.
-
-      1. Let |result| be [=error=] with [=error code=] [=stream read error=].
-    </dd>
-  </dl>
-
-1. Set |stream|.\[[disturbed]] to true.
-
-1. If |stream|.\[[state]] is "<code>closed</code>", perform |read request|'s close steps.
-
-1. Otherwise, if |stream|.\[[state]] is "<code>errored</code>", perform |read
-   request|'s error steps given |stream|.\[[storedError]].
-
-1. Otherwise,
-
-    1. Assert: stream.\[[state]] is "readable".
-
-    1. Perform ! |stream|.\[[controller]].\[[PullSteps]](|read request|).
-
-1. Assert: |result| is not null.
-
-1. Return |result|.
+   TODO: Add support for streams that don't have an associated navigable.
 
 </div>
 
