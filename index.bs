@@ -7781,7 +7781,7 @@ from a [=readable stream=].
 
 #### The io.Stream Type #### {#type-io-Stream}
 
-<pre class="cddl" data-cddl-module="local-cddl">
+<pre class="cddl" data-cddl-module="remote-cddl,local-cddl">
 io.Stream = text
 </pre>
 
@@ -12360,7 +12360,8 @@ script.RemoteValue = (
   script.NodeListRemoteValue /
   script.HTMLCollectionRemoteValue /
   script.NodeRemoteValue /
-  script.WindowProxyRemoteValue
+  script.WindowProxyRemoteValue /
+  script.ReadableStreamRemoteValue
 )
 
 script.ListRemoteValue = [*script.RemoteValue];
@@ -12510,6 +12511,13 @@ script.WindowProxyRemoteValue = {
 
 script.WindowProxyProperties = {
   context: browsingContext.BrowsingContext
+}
+
+script.ReadableStreamRemoteValue = {
+  type: "readable-stream",
+  stream: io.Stream,
+  ? handle: script.Handle,
+  ? internalId: script.InternalId,
 }
 </pre>
 
@@ -12883,6 +12891,31 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
        production in the {^local end definition^}, with the <code>handle</code>
        property set to |handle id| if it's not null, or omitted otherwise, and
        the <code>value</code> property set to |serialized|.
+
+    <dt>|value| is a [=platform object=] that implements {{ReadableStream}}
+    <dd>
+    1. Let |stream realm| be |value|'s [=relevant settings object=]'s
+       [=realm execution context=]'s Realm component.
+
+    1. Let |navigable| be the result of [=get the navigable=] with |stream realm|.
+
+    1. If |navigable| is null, let |navigable id| be null. Otherwise, let
+       |navigable id| be the [=navigable id=] for |navigable|.
+
+    1. Let |stream id| be the string representation of a [[!RFC9562|UUID]].
+
+    1. Let |stream settings| be a [=stream settings=] struct with the
+       [=stream settings/stream=] item set to |value| and the
+       [=stream settings/navigable=] item set to |navigable id|.
+
+    1. Set |session|'s [=readable stream settings map=][|stream id|] to
+       |stream settings|.
+
+    1. Let |remote value| be a [=/map=] matching the
+       <code>script.ReadableStreamRemoteValue</code> production in the
+       {^local end definition^}, with the <code>stream</code> property set to
+       |stream id|, and the <code>handle</code> property set to |handle id| if
+       it's not null, or omitted otherwise.
 
     <dt>|value| is a [=platform object=]
     <dd>1. Let |remote value| be a [=/map=] matching the <code>script.ObjectRemoteValue</code>
