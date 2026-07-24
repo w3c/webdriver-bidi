@@ -2806,7 +2806,7 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
 
   1. [=Cleanup the session=] with |session|.
 
-  1. [=Close=] any [=navigable/top-level traversables=] without [=prompting to unload=].
+  1. [=/Close=] any [=navigable/top-level traversables=] without [=prompting to unload=].
 
   1. Perform implementation defined steps to clean up resources associated with
      the [=remote end=] under automation.
@@ -3047,7 +3047,7 @@ The [=remote end steps=] with |command parameters| are:
 
   1. If |navigable|'s [=associated user context=] is |user context|:
 
-    1. [=Close=] |navigable| without [=prompting to unload=].
+    1. [=/Close=] |navigable| without [=prompting to unload=].
 
 1. [=set/Remove=] |user context| for the [=set of user contexts=].
 
@@ -3414,13 +3414,15 @@ A [=BiDi session=] has a <dfn>screencast recordings map</dfn> which is a [=/map=
 which the keys are [[!RFC9562|UUID]]s, and the values are <dfn>screencast recording</dfn>,
 which is a [=struct=] with
 an [=struct/item=] named <dfn for="screencast recording">stream</dfn>, which is a [=screencast stream=],
-an [=struct/item=] named <dfn for="screencast recording">path</dfn>, which is a string,
+an [=struct/item=] named <dfn for="screencast recording">path</dfn>, which is a string or null,
+an [=struct/item=] named <dfn for="screencast recording">byte buffer</dfn>, which is a [=/byte buffer=] or null,
 an [=struct/item=] named <dfn for="screencast recording">state</dfn>, which is one of
 "<code>recording</code>", "<code>stopping</code>", "<code>stopped</code>",
 an [=struct/item=] named <dfn for="screencast recording">writeError</dfn>, which is a string or null.
 
 <div algorithm>
-To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |recording| and |mime type|:
+To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |recording|, |output type| and
+|mime type|:
 
 1. Run the following steps [=in parallel=]:
 
@@ -3431,13 +3433,19 @@ To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |rec
 
    1. For each chunk |bytes| produced for |recording|, run the following steps:
 
-      1. Append |bytes| to the file at |recording|'s [=screencast recording/path=].
-         If this fails:
+      1. If |output type| is "<code>file</code>":
 
-         1. Set |recording|'s [=screencast recording/writeError=] to an
-            implementation-defined string describing the write failure.
+         1. Append |bytes| to the file at |recording|'s [=screencast recording/path=].
+            If this fails:
 
-         1. [=Stop a screencast recording=] given |recording|.
+            1. Set |recording|'s [=screencast recording/writeError=] to an
+               implementation-defined string describing the write failure.
+
+            1. [=Stop a screencast recording=] given |recording|.
+
+      1. Otherwise:
+
+         1. [=byte buffer/Enqueue=] given |recording|'s [=screencast recording/byte buffer=] and |bytes|.
 
 </div>
 
@@ -3456,6 +3464,9 @@ To <dfn>stop a screencast recording</dfn> given a [=screencast recording=] |reco
    [=screencast recording/state=] to "<code>stopped</code>".
 
 1. Wait until |recording|'s [=screencast recording/state=] is "<code>stopped</code>".
+
+1. If |recording|'s [=screencast recording/byte buffer=] is not null, [=byte buffer/close=]
+   |recording|'s [=screencast recording/byte buffer=].
 
 </div>
 
@@ -4207,11 +4218,11 @@ The [=remote end steps=] with |command parameters| are:
 
   1. If |prompt unload| is true:
 
-     1. [=Close=] |navigable|.
+     1. [=/Close=] |navigable|.
 
   1. Otherwise:
 
-     1. [=Close=] |navigable| without [=prompting to unload=].
+     1. [=/Close=] |navigable| without [=prompting to unload=].
 
   1. Return [=success=] with data null.
 
@@ -5393,12 +5404,21 @@ The [=remote end steps=] with |command parameters| are:
 #### The browsingContext.startScreencast Command ####  {#command-browsingContext-startScreencast}
 
 The <dfn export for=commands>browsingContext.startScreencast</dfn> command
-starts the screencast of a given navigable and writes it to a file.
+starts the screencast of a given navigable. Depending on the <code>outputType</code>
+argument the recording is either written to a file on the [=remote end=]
+("<code>file</code>") or exposed as an <code>io.Stream</code> that the [=local end=]
+reads with the [=io.ReadStream=] command ("<code>stream</code>").
 
-Note: The [=remote end=] creates and writes the screencast file, but does not delete it.
-Cleaning up the file is left to the [=local end=]. In some configurations this might not be
-possible — for example, if the [=remote end=] has read/write access to the filesystem but
-the [=local end=] has only read-only access.
+Note: When <code>outputType</code> is "<code>file</code>", the [=remote end=] creates and
+writes the screencast file, but does not delete it. Cleaning up the file is left to the
+[=local end=]. In some configurations this might not be possible — for example, if the
+[=remote end=] has read/write access to the filesystem but the [=local end=] has only
+read-only access.
+
+Note: When <code>outputType</code> is "<code>stream</code>", the returned
+<code>stream</code> remains valid until the screencast is stopped with
+[=browsingContext.stopScreencast=]; canceling the stream with [=io.Cancel=] tears down the
+[=stream settings/stream=] only and does not stop the underlying screencast recording.
 
 <dl>
    <dt>Command Type</dt>
@@ -5411,6 +5431,7 @@ the [=local end=] has only read-only access.
 
       browsingContext.StartScreencastParameters = {
         context: browsingContext.BrowsingContext,
+        outputType: "file" / "stream",
         ? mimeType: text,
         ? video: browsingContext.MediaTrackConstraints,
         ? audio: bool .default false,
@@ -5429,7 +5450,8 @@ the [=local end=] has only read-only access.
     <pre class="cddl" data-cddl-module="local-cddl">
       browsingContext.StartScreencastResult = {
          screencast: browsingContext.Screencast,
-         path: text
+         ? path: text,
+         ? stream: io.Stream,
       }
 
     </pre>
@@ -5441,6 +5463,8 @@ the [=local end=] has only read-only access.
 
 <div algorithm="remote end steps for browsingContext.startScreencast">
 The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |output type| be |command parameters|["<code>outputType</code>"].
 
 1. Let |navigable id| be |command parameters|["<code>context</code>"].
 
@@ -5501,24 +5525,46 @@ The [=remote end steps=] given |session| and |command parameters| are:
    1. If the implementation is unable to produce |stream|, return [=error=] with
       [=error code=] [=unknown error=].
 
-1. Let |path| be an implementation-defined file path where the recording will
-   be stored.
+1. Let |path| be null.
+
+1. Let |byte buffer| be null.
+
+1. Let |stream id| be null.
+
+1. If |output type| is "<code>file</code>":
+
+   1. Let |path| be an implementation-defined file path where the recording will be stored.
+
+1. Otherwise:
+
+   1. Let |byte buffer| be a new [=/byte buffer=].
+
+   1. Let |stream id| be the string representation of a [[!RFC9562|UUID]].
+
+   1. Let |stream settings| be a [=stream settings=] [=struct=] with
+      [=stream settings/stream=] set to |byte buffer| and [=stream settings/realm=] set to null.
+
+   1. Set |session|'s [=readable stream settings map=][|stream id|] to |stream settings|.
 
 1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
 
 1. Let |recording| be a new [=screencast recording=] with
    [=screencast recording/stream=] |stream|,
    [=screencast recording/path=] |path|,
+   [=screencast recording/byte buffer=] |byte buffer|,
    [=screencast recording/state=] "<code>recording</code>",
    [=screencast recording/writeError=] null.
 
 1. Set |session|'s [=screencast recordings map=][|screencast|] to |recording|.
 
-1. [=Start a screencast recording=] given |recording| and |mime type|.
+1. [=Start a screencast recording=] given |recording|, |output type| and |mime type|.
 
 1. Let |body| be a new [=/map=] matching the <code>browsingContext.StartScreencastResult</code>
-   with the <code>screencast</code> field set to |screencast| and
-   <code>path</code> field set to |path|.
+   with the <code>screencast</code> field set to |screencast|.
+
+1. If |path| is not null, set |body|["<code>path</code>"] to |path|.
+
+1. If |stream id| is not null, set |body|["<code>stream</code>"] to |stream id|.
 
 1. Return [=success=] with data |body|.
 
@@ -5547,7 +5593,7 @@ stops the screencast.
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       browsingContext.StopScreencastResult = {
-         path: text,
+         ? path: text,
          ? error: text
       }
     </pre>
@@ -5574,8 +5620,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |path| be |screencast recording|'s [=screencast recording/path=].
 
 1. Let |body| be a new [=/map=] matching the <code>browsingContext.StopScreencastResult</code>
-   with the <code>path</code> field set to |path|, <code>error</code> field set to |error|
-   if |error| is not null or omitted otherwise.
+   with the <code>path</code> field set to |path| if |path| is not null or omitted otherwise,
+   <code>error</code> field set to |error| if |error| is not null or omitted otherwise.
 
 1. Return [=success=] with data |body|.
 
@@ -7738,8 +7784,40 @@ A [=BiDi Session=] has a <dfn>readable stream settings map</dfn> which is a [=/m
 a <code>io.Stream</code> and [=stream settings=].
 
 <dfn>Stream settings</dfn> is a [=struct=] with
-an [=struct/item=] named <dfn for="stream settings">stream</dfn>, which is a [=readable stream=],
+an [=struct/item=] named <dfn for="stream settings">stream</dfn>, which is a [=readable stream=] or a [=/byte buffer=],
 an [=struct/item=] named <dfn for="stream settings">realm</dfn>, which is a <code>script.Realm</code> or null.
+
+A <dfn>byte buffer</dfn> is a [=struct=] with
+an [=struct/item=] named <dfn for="byte buffer">chunk queue</dfn>, which is a [=/queue=] of [=byte sequences=], initially empty,
+an [=struct/item=] named <dfn for="byte buffer">state</dfn>, which is one of "<code>open</code>", "<code>closed</code>",
+or "<code>failed</code>", initially "<code>open</code>".
+
+<div class="algorithm">
+
+To <dfn for="byte buffer">enqueue</dfn> given a [=/byte buffer=] |buffer| and a [=byte sequence=] |bytes|:
+
+1. If |buffer|'s [=byte buffer/state=] is not "<code>open</code>", return.
+
+1. While |buffer|'s [=byte buffer/chunk queue=]'s [=list/size=] is greater than or
+   equal to an implementation-defined maximum, [=queue/dequeue=] from |buffer|'s
+   [=byte buffer/chunk queue=].
+
+   Note: The maximum number of buffered chunks is implementation-defined. When the
+   buffer is full the oldest buffered chunks are dropped.
+
+1. [=queue/Enqueue=] |bytes| in |buffer|'s [=byte buffer/chunk queue=].
+
+</div>
+
+<div class="algorithm">
+
+To <dfn for="byte buffer">close</dfn> a [=/byte buffer=] |buffer|:
+
+1. If |buffer|'s [=byte buffer/state=] is not "<code>open</code>", return.
+
+1. Set |buffer|'s [=byte buffer/state=] to "<code>closed</code>".
+
+</div>
 
 <div class="algorithm">
 
@@ -7854,9 +7932,16 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
          1. Return [=success=] with data null.
 
-1. Otherwise, return error with [=error code=] [=unsupported operation=].
+1. Otherwise:
 
-   TODO: Add support for streams that don't have an associated realm.
+   1. Assert: |stream| is a [=/byte buffer=].
+
+   1. If |stream|'s [=byte buffer/state=] is "<code>open</code>", set |stream|'s
+      [=byte buffer/state=] to "<code>failed</code>".
+
+   1. Set |stream|'s [=byte buffer/chunk queue=] to a new empty [=/queue=].
+
+   1. Return [=success=] with data null.
 
 </div>
 
@@ -7956,9 +8041,40 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Return [=success=] with data |response|.
 
-1. Otherwise, return [=error=] with [=error code=] [=unsupported operation=].
+1. Otherwise:
 
-   TODO: Add support for streams that don't have an associated realm.
+   1. Assert: |stream| is a [=/byte buffer=].
+
+   1. Wait until |stream|'s [=byte buffer/chunk queue=] is not [=list/empty=] or |stream|'s
+      [=byte buffer/state=] is not "<code>open</code>".
+
+      Note: The [=byte buffer/chunk queue=] is filled [=in parallel=] by the producer of
+      the [=stream settings/stream=]'s data, and its [=byte buffer/state=] leaves
+      "<code>open</code>" when the producer finishes or the [=stream settings/stream=] is
+      canceled with [=io.Cancel=]. This step blocks until one of those happens, so an
+      [=io.ReadStream=] command resolves as soon as a chunk is available rather than
+      returning an empty result.
+
+   1. If |stream|'s [=byte buffer/chunk queue=] is not [=list/empty=]:
+
+      1. Let |chunk| be the result of [=queue/dequeue|dequeuing=] from |stream|'s
+         [=byte buffer/chunk queue=].
+
+      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
+         field set to [=serialize protocol bytes=] given |chunk| and the
+         <code>done</code> field set to false.
+
+      1. Return [=success=] with data |response|.
+
+   1. If |stream|'s [=byte buffer/state=] is "<code>failed</code>", return [=error=]
+      with [=error code=] [=stream read error=].
+
+   1. Assert: |stream|'s [=byte buffer/state=] is "<code>closed</code>".
+
+   1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
+      field set to null and the <code>done</code> field set to true.
+
+   1. Return [=success=] with data |response|.
 
 </div>
 
