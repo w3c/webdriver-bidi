@@ -730,6 +730,16 @@ Authors of external specifications are encouraged to to add new modules rather t
 existing ones. Where it is desired to extend an existing module, it is preferred to integrate the
 extension directly into the specification containing the original module definition.
 
+An implementation may extend a [=command=]'s [=command parameters=] with
+vendor-specific fields. For this to be expressible in the {^remote end
+definition^}, a parameter map that permits such extension exposes a
+[[!RFC8610|CDDL]] group socket whose name is the parameters type name
+followed by "<code>.extension</code>", prefixed with "<code>$$</code>", and
+whose default is the empty group. An [=extension module=] adds fields by
+augmenting that socket. As with the [=module names=] of [=extension modules=],
+each field name added in this way must begin with a prefix that is unique for a
+given implementation, followed by a U+003A (:) character.
+
 ## Commands ## {#commands}
 
 A <dfn export>command</dfn> is an asynchronous operation, requested by
@@ -15102,7 +15112,10 @@ The <dfn export for=commands>webExtension.install</dfn> command installs a web e
 
       webExtension.InstallParameters = {
          extensionData: webExtension.ExtensionData,
+         $$webExtension.InstallParameters.extension,
       }
+
+      $$webExtension.InstallParameters.extension //= ()
 
       webExtension.ExtensionData = (
          webExtension.ExtensionArchivePath /
