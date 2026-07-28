@@ -110,7 +110,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: scroll into view; url: dfn-scrolls-into-view
     text: session ID; url: dfn-session-id
     text: session not created; url: dfn-session-not-created
-    text: session; url: dfn-sessions
+    text: session; url: dfn-webdriver-session
     text: set a property; url: dfn-set-a-property
     text: success; url: dfn-success
     text: table for cookie conversion; url: dfn-table-for-cookie-conversion
@@ -187,6 +187,9 @@ spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
     text: test; url: #sec-regexp.prototype.test
     text: time value; url: sec-time-values-and-time-range
     text: undefined; url: sec-undefined-value
+spec: FETCH; urlPrefix: https://fetch.spec.whatwg.org/
+  type: dfn
+    text: response; url: #concept-response
 spec: GEOMETRY; urlPrefix: https://drafts.fxtf.org/geometry/
   type: dfn
     text: rectangle; url: rectangle
@@ -214,6 +217,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: activation notification; url: interaction.html#activation-notification
     text: active window; url: document-sequences.html#nav-window
     text: alert; url: timers-and-user-prompts.html#dom-alert
+    text: associated `Document`; url: nav-history-apis.html#concept-document-window
     text: close; url: document-sequences.html#close-a-top-level-traversable
     text: disabled; url: form-control-infrastructure.html#concept-fe-disabled
     text: File Upload state; url: input.html#file-upload-state-(type=file)
@@ -265,10 +269,10 @@ spec: INFRA; urlPrefix: https://infra.spec.whatwg.org/
     text: convert a JSON-derived JavaScript value to an Infra value; url: convert-a-json-derived-javascript-value-to-an-infra-value
 spec: RESOURCE-TIMING; urlPrefix: https://w3c.github.io/resource-timing/
   type: dfn
-    text: convert fetch timestamp; url: convert-fetch-timestamp
+    text: convert fetch timestamp; url: dfn-convert-fetch-timestamp
 spec: HR-TIME; urlPrefix: https://w3c.github.io/hr-time/
   type: dfn
-    text: get time origin timestamp; url: dfn-get-time-origin-timestamp
+    text: get time origin timestamp; url: get-time-origin-timestamp
 spec: RFC4648; urlPrefix: https://datatracker.ietf.org/doc/html/rfc4648
   type: dfn
     text: Base64 Encode; url: section-4
@@ -312,7 +316,7 @@ spec: SELECTORS4; urlPrefix: https://drafts.csswg.org/selectors-4/
 spec: WEB-IDL; urlPrefix: https://webidl.spec.whatwg.org/
   type: dfn
     text: DOMException; url: #idl-DOMException
-    text: SyntaxError; url:#syntaxerror
+    text: SyntaxError; url: #syntaxerror
 spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
   type: dfn
     text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
@@ -327,13 +331,16 @@ spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
   type: dfn
     text: resolution media feature; url: #resolution
     text: media type; url: #media-type
+    text: media feature; url: #media-features
+    text: mf-name; url: #typedef-mf-name
 spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
   type: dfn
     text: field-name token; url: #fields.names
     text: method token; url: #method.overview
-spec: STREAMS; urlPrefix: https://streams.spec.whatwg.org/
+spec: SCREEN-CAPTURE; urlPrefix: https://www.w3.org/TR/screen-capture/
   type: dfn
-    text: ReadableStream; url: #readablestream
+    text: browser; url: #dfn-browser
+    text: display surface; url: dfn-display-surface
 spec: TOUCH-EVENTS; urlPrefix: https://www.w3.org/community/reports/touchevents/CG-FINAL-touch-events-20240704/
   type: dfn
     text: expose legacy touch event APIs; url: #conditionally-exposing-legacy-touch-event-apis
@@ -654,6 +661,9 @@ EventData = (
 )
 </pre>
 
+An <dfn export>EmptyResult</dfn> is a result type with no required fields,
+used as the return type for commands that don't produce result data.
+
 {^Remote end definition^} and {^Local end definition^}
 
 <pre class="cddl" data-cddl-module="remote-cddl,local-cddl">
@@ -796,6 +806,9 @@ with the following additional codes:
   <dt><dfn for=errors export>no such request</dfn>
   <dd>Tried to continue an unknown [=/request=].
 
+  <dt><dfn for=errors export>no such screencast</dfn>
+  <dd>Tried to stop an unknown screencast recording.
+
   <dt><dfn for=errors export>no such script</dfn>
   <dd>Tried to remove an unknown [=preload script=].
 
@@ -841,6 +854,7 @@ ErrorCode = "invalid argument" /
             "no such network data" /
             "no such node" /
             "no such request" /
+            "no such screencast" /
             "no such script" /
             "no such storage partition" /
             "no such user context" /
@@ -1818,6 +1832,12 @@ To <dfn>cleanup the session</dfn> given |session|:
    1. For each |collected data| in [=collected network data=], [=remove collector from data=]
       with |collected data| and |collector id|.
 
+1. For each |screencast recording| in |session|'s [=screencast recordings map=]:
+
+   1. [=Stop a screencast recording=] given |screencast recording|.
+
+   1. [=map/Remove=] |screencast recording| from [=screencast recordings map=].
+
 1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
 
 1. Perform any implementation-specific cleanup steps.
@@ -2614,6 +2634,10 @@ To <dfn>set the client window state</dfn> given |window| and |state|:
 
        Note: This is a no-op for documents in window that are not fullscreen.
 
+1. If |current state| is "<code>maximized</code>" or "<code>minimized</code>":
+
+  1. [=Restore the client window=] |window|.
+
 1. Switch on the value of |state|:
 
    <dl>
@@ -2625,9 +2649,6 @@ To <dfn>set the client window state</dfn> given |window| and |state|:
            [=fullscreen an element=] with |document|'s [=document element=].
 
         1. [=Break=].
-
-    <dt>"<code>normal</code>"
-    <dd>1. [=Restore the client window=] |window|.
 
     <dt>"<code>maximize</code>"
     <dd>1. [=Maximize the client window=] |window|.
@@ -3252,6 +3273,9 @@ The progress of navigation is communicated using an immutable [=struct=]
   <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-downloaded-filepath">downloadedFilepath</dfn></dt>
   <dd>If the navigation is a download which is finished and the downloaded file is
   available, absolute filepath of the downloaded file, otherwise null.</dd>
+
+  <dt><dfn export for="WebDriver BiDi navigation status" id="navigation-status-download-response">downloadResponse</dfn></dt>
+  <dd>If the navigation is a download, [=response=], otherwise null.</dd>
 </dl>
 
 ### Definition ### {#module-browsingContext-definition}
@@ -3270,7 +3294,10 @@ BrowsingContextCommand = (
   browsingContext.Navigate //
   browsingContext.Print //
   browsingContext.Reload //
+  browsingContext.SetBypassCSP //
   browsingContext.SetViewport //
+  browsingContext.StartScreencast //
+  browsingContext.StopScreencast //
   browsingContext.TraverseHistory
 )
 </pre>
@@ -3289,7 +3316,10 @@ BrowsingContextResult = (
   browsingContext.NavigateResult /
   browsingContext.PrintResult /
   browsingContext.ReloadResult /
+  browsingContext.SetBypassCSPResult /
   browsingContext.SetViewportResult /
+  browsingContext.StartScreencastResult /
+  browsingContext.StopScreencastResult /
   browsingContext.TraverseHistoryResult
 )
 
@@ -3358,6 +3388,64 @@ weak map between [=user context|user contexts=] and [=unhandled prompt behavior 
 
 A [=remote end=] has a <dfn>scripting enabled overrides map</dfn> which is a weak
 map between [=/navigables=] or [=user context|user contexts=] and boolean.
+
+A [=remote end=] has a <dfn>download id map</dfn> which is is a weak map between
+[=response=] and download ids. It is initially empty.
+
+A <dfn>screencast stream</dfn> is an abstract stream of the viewport of a
+[=/top-level traversable=], consisting of a <dfn for="screencast stream">video track</dfn>
+containing the rendered visual output of the [=/top-level traversable=]'s document's viewport,
+and optionally an <dfn for="screencast stream">audio track</dfn> containing the audio output
+of the [=/top-level traversable=]'s document.
+
+A [=BiDi session=] has a <dfn>screencast recordings map</dfn> which is a [=/map=] in
+which the keys are [[!RFC9562|UUID]]s, and the values are <dfn>screencast recording</dfn>,
+which is a [=struct=] with
+an [=struct/item=] named <dfn for="screencast recording">stream</dfn>, which is a [=screencast stream=],
+an [=struct/item=] named <dfn for="screencast recording">path</dfn>, which is a string,
+an [=struct/item=] named <dfn for="screencast recording">state</dfn>, which is one of
+"<code>recording</code>", "<code>stopping</code>", "<code>stopped</code>",
+an [=struct/item=] named <dfn for="screencast recording">writeError</dfn>, which is a string or null.
+
+<div algorithm>
+To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |recording| and |mime type|:
+
+1. Run the following steps [=in parallel=]:
+
+   1. Begin encoding |recording|'s [=screencast recording/stream=] using |mime type|,
+      producing successive chunks of encoded data as [=byte sequences=].
+      Produce a new chunk at the implementation defined interaval while
+      |recording|'s [=screencast recording/state=] is "<code>recording</code>".
+
+   1. For each chunk |bytes| produced for |recording|, run the following steps:
+
+      1. Append |bytes| to the file at |recording|'s [=screencast recording/path=].
+         If this fails:
+
+         1. Set |recording|'s [=screencast recording/writeError=] to an
+            implementation-defined string describing the write failure.
+
+         1. [=Stop a screencast recording=] given |recording|.
+
+</div>
+
+<div algorithm>
+To <dfn>stop a screencast recording</dfn> given a [=screencast recording=] |recording|:
+
+1. If |recording|'s [=screencast recording/state=] is not "<code>recording</code>" then return.
+
+1. Set |recording|'s [=screencast recording/state=] to "<code>stopping</code>".
+
+1. Stop producing new chunks for |recording|, flush any remaining encoded
+   data as a final chunk (processed as in [=start a screencast recording=]),
+   stop capturing from |recording|'s [=screencast recording/stream=] and release its
+   [=screencast stream/video track=] and, if present, its
+   [=screencast stream/audio track=], and then set |recording|'s
+   [=screencast recording/state=] to "<code>stopped</code>".
+
+1. Wait until |recording|'s [=screencast recording/state=] is "<code>stopped</code>".
+
+</div>
 
 ### Types ### {#module-browsingcontext-types}
 
@@ -3629,6 +3717,16 @@ The <code>browsingContext.Navigation</code> type is a unique string identifying 
 navigation.
 
 TODO: Link to the definition in the HTML spec.
+
+#### The browsingContext.Download Type #### {#type-browsingContext-Download}
+
+{^remote end definition^} and {^local end definition^}
+
+<pre class="cddl" data-cddl-module="remote-cddl,local-cddl">
+browsingContext.Download = text;
+</pre>
+
+The <code>browsingContext.Download</code> type is a unique string identifying a download.
 
 
 #### The browsingContext.NavigationInfo Type #### {#type-browsingContext-NavigationInfo}
@@ -3970,8 +4068,8 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Immediately after the next invocation of the [=run the animation frame
    callbacks=] algorithm for |document|:
 
-   Issue: This ought to be integrated into the update rendering algorithm in
-   some more explicit way.
+   Issue(w3c/webdriver-bidi#1131): This ought to be integrated into the update
+   rendering algorithm in some more explicit way.
 
 1. Let |origin| be the value of the <code>context</code> field of |command
    parameters| if present, or "viewport" otherwise.
@@ -4631,8 +4729,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |context nodes| be an empty [=/list=].
 
-1. If |start nodes parameter| is null, [=list/append=] the [=document element=]
-   of |navigable|'s [=active document=] to |context nodes|. Otherwise, for each
+1. If |start nodes parameter| is null, [=list/append=] the |navigable|'s
+   [=active document=] to |context nodes|. Otherwise, for each
    |serialized start node| in |start nodes parameter|:
 
    1. Let |start node| be the result of [=trying=] to [=deserialize shared reference=] given
@@ -4894,8 +4992,8 @@ Note: The minimum page size is 1 point, which is (2.54 / 72) cm as per
 1. Immediately after the next invocation of the [=run the animation frame
    callbacks=] algorithm for |document|:
 
-   Issue: This ought to be integrated into the update rendering algorithm
-   in some more explicit way.
+   Issue(w3c/webdriver-bidi#1131): This ought to be integrated into the update
+   rendering algorithm in some more explicit way.
 
   1. Let |pdf data| be the result taking UA-specific steps to generate a
      paginated representation of |document|, with the CSS [=media type=] set to
@@ -5016,6 +5114,71 @@ The [=remote end steps=] with |command parameters| are:
 1. Return the result of [=await a navigation=] with |navigable|, |request|, |wait
    condition|, history handling "<code>reload</code>", and ignore
    cache |ignore cache|.
+
+</div>
+
+#### The browsingContext.setBypassCSP Command ####  {#command-browsingContext-setBypassCSP}
+
+The <dfn export for=commands>browsingContext.setBypassCSP</dfn> command allows bypassing Content Security Policy enforcement.
+
+Note: When CSP bypass is enabled, all CSP directives are bypassed, including those that would normally block eval(), new Function(), inline scripts, and resource loading.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      browsingContext.SetBypassCSP = (
+        method: "browsingContext.setBypassCSP",
+        params: browsingContext.SetBypassCSPParameters
+      )
+
+      browsingContext.SetBypassCSPParameters = {
+        bypass: true / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.SetBypassCSPResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+A [=remote end=] has a <dfn>bypass CSP configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] boolean.
+
+<div algorithm>
+
+The <dfn export>WebDriver BiDi CSP is bypassed</dfn> steps given
+[=/navigable=] |navigable| are:
+
+1. Let |top-level traversable| be |navigable|'s [=navigable/top-level traversable=].
+
+1. Let |bypass CSP enabled| be the result of [=get WebDriver configuration value=] of
+   [=bypass CSP configuration=] for |top-level traversable|.
+
+1. Assert: |bypass CSP enabled| is <code>true</code> or [=WebDriver configuration/unset=].
+
+1. If |bypass CSP enabled| is [=WebDriver configuration/unset=], return false.
+
+1. Return true.
+
+</div>
+
+<div algorithm="remote end steps for browsingContext.setBypassCSP">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. Let |bypass| be |command parameters|["<code>bypass</code>"].
+
+1. If |bypass| is null, set |bypass| to [=WebDriver configuration/unset=].
+
+1. [=Try=] to [=store WebDriver configuration=] [=bypass CSP configuration=] |bypass| for |command parameters|.
+
+1. Return [=success=] with data null.
 
 </div>
 
@@ -5212,6 +5375,197 @@ The [=remote end steps=] with |command parameters| are:
          1. [=Set device pixel ratio override=] with |navigable| and |device pixel ratio|.
 
 1. Return [=success=] with data null.
+
+</div>
+
+#### The browsingContext.startScreencast Command ####  {#command-browsingContext-startScreencast}
+
+The <dfn export for=commands>browsingContext.startScreencast</dfn> command
+starts the screencast of a given navigable and writes it to a file.
+
+Note: The [=remote end=] creates and writes the screencast file, but does not delete it.
+Cleaning up the file is left to the [=local end=]. In some configurations this might not be
+possible — for example, if the [=remote end=] has read/write access to the filesystem but
+the [=local end=] has only read-only access.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browsingContext.StartScreencast = (
+        method: "browsingContext.startScreencast",
+        params: browsingContext.StartScreencastParameters
+      )
+
+      browsingContext.StartScreencastParameters = {
+        context: browsingContext.BrowsingContext,
+        ? mimeType: text,
+        ? video: browsingContext.MediaTrackConstraints,
+        ? audio: bool .default false,
+      }
+
+      browsingContext.MediaTrackConstraints = {
+         ? width: js-uint,
+         ? height: js-uint,
+         ? frameRate: js-uint,
+      }
+
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.StartScreencastResult = {
+         screencast: browsingContext.Screencast,
+         path: text
+      }
+
+    </pre>
+    <pre class="cddl" data-cddl-module="local-cddl,remote-cddl">
+      browsingContext.Screencast = text
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.startScreencast">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |navigable id| be |command parameters|["<code>context</code>"].
+
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
+
+1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
+   [=error code=] [=invalid argument=].
+
+1. If |command parameters| [=map/contains=] the <code>mimeType</code> field:
+
+   1. Let |mime type| be |command parameters|["<code>mimeType</code>"].
+
+1. Otherwise, set |mime type| to the implementation-defined default format.
+
+1. If the implementation is unable to record a screencast of |navigable| for any
+   reason then return [=error=] with [=error code=] [=unsupported operation=].
+
+1. Let |stream| be a new [=screencast stream=] for |navigable|, constructed as follows:
+
+   1. Create a |video track| which must be a live-capture of the [=/browser=] [=display surface=]
+      of the [=relevant global object=]'s [=associated `Document`=]'s |navigable|'s
+      <a spec=css2>viewport</a>.
+
+   1. If |command parameters| [=map/contains=] "<code>video</code>":
+
+      1. Let |video| be |command parameters|["<code>video</code>"].
+
+      1. If |video| [=map/contains=] <code>width</code>:
+
+         1. The user agent must attempt to obtain media whose width is as close as possible
+            to |video|["<code>width</code>"] given the capabilities
+            of the hardware and the other constraints specified.
+
+      1. If |video| [=map/contains=] <code>height</code>:
+
+         1. The user agent must attempt to obtain media whose height is as close as possible
+            to |video|["<code>height</code>"] given the capabilities
+            of the hardware and the other constraints specified.
+
+      1. If |video| [=map/contains=] <code>frameRate</code>:
+
+         1. The user agent must attempt to obtain media whose frame rate is as close as possible
+            to |video|["<code>frameRate</code>"] given the capabilities
+            of the hardware and the other constraints specified.
+
+   1. [=map/Set=] |video track| to |stream|[[=screencast stream/video track=]].
+
+   1. If |command parameters|["<code>audio</code>"] is true:
+
+      1. Create an |audio track| which contains the combined audio produced by the sum of documents
+         that consist of the [=relevant global object=]'s [=associated `Document`=]'s
+         |navigable|'s [=navigable/active document=], and all [=navigable/active documents=]
+         in nested [=/browsing context=]s of the [=relevant global object=]'s [=associated `Document`=]'s |navigable|.
+
+      1. [=map/Set=] |audio track| to |stream|[[=screencast stream/audio track=]].
+
+   1. If the implementation is unable to produce |stream|, return [=error=] with
+      [=error code=] [=unknown error=].
+
+1. Let |path| be an implementation-defined file path where the recording will
+   be stored.
+
+1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
+
+1. Let |recording| be a new [=screencast recording=] with
+   [=screencast recording/stream=] |stream|,
+   [=screencast recording/path=] |path|,
+   [=screencast recording/state=] "<code>recording</code>",
+   [=screencast recording/writeError=] null.
+
+1. Set |session|'s [=screencast recordings map=][|screencast|] to |recording|.
+
+1. [=Start a screencast recording=] given |recording| and |mime type|.
+
+1. Let |body| be a new [=/map=] matching the <code>browsingContext.StartScreencastResult</code>
+   with the <code>screencast</code> field set to |screencast| and
+   <code>path</code> field set to |path|.
+
+1. Return [=success=] with data |body|.
+
+</div>
+
+#### The browsingContext.stopScreencast Command ####  {#command-browsingContext-stopScreencast}
+
+The <dfn export for=commands>browsingContext.stopScreencast</dfn> command
+stops the screencast.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browsingContext.StopScreencast = (
+        method: "browsingContext.stopScreencast",
+        params: browsingContext.StopScreencastParameters
+      )
+
+      browsingContext.StopScreencastParameters = {
+        screencast: browsingContext.Screencast
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      browsingContext.StopScreencastResult = {
+         path: text,
+         ? error: text
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.stopScreencast">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |screencast| be the value of the "<code>screencast</code>" field in |command
+   parameters|.
+
+1. If |session|'s [=screencast recordings map=] does not <a for=map>contain</a>
+   |screencast|, return [=error=] with [=error code=] [=no such screencast=].
+
+1. Let |screencast recording| be |session|'s [=screencast recordings map=][|screencast|].
+
+1. [=Stop a screencast recording=] given |screencast recording|.
+
+1. [=map/Remove=] |screencast| from |session|'s [=screencast recordings map=].
+
+1. Let |error| be |screencast recording|'s [=screencast recording/writeError=].
+
+1. Let |path| be |screencast recording|'s [=screencast recording/path=].
+
+1. Let |body| be a new [=/map=] matching the <code>browsingContext.StopScreencastResult</code>
+   with the <code>path</code> field set to |path|, <code>error</code> field set to |error|
+   if |error| is not null or omitted otherwise.
+
+1. Return [=success=] with data |body|.
 
 </div>
 
@@ -5680,6 +6034,7 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load complete
         )
 
         browsingContext.DownloadWillBeginParams = {
+          download: browsingContext.Download,
           suggestedFilename: text,
           browsingContext.BaseNavigationInfo
         }
@@ -5695,14 +6050,19 @@ The [=remote end event trigger=] is the
 1. Let |navigation info| be the result of [=get the navigation info=] given
    |navigable| and |navigation status|.
 
+1. Let |download| be the string representation of a [[!RFC9562|UUID]].
+
+1. [=map/Set=] [=download id map=][|navigation status|'s [=WebDriver BiDi navigation status/downloadResponse=]] to |download|.
+
 1. Let |params| be a [=/map=] matching the
    <code>browsingContext.DownloadWillBeginParams</code> production, with the
    <code>context</code> field set to |navigation info|["<code>context</code>"], the
    <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
    the <code>timestamp</code> field set to
    |navigation info|["<code>timestamp</code>"], the <code>url</code> field set to
-   |navigation info|["<code>url</code>"] and <code>suggestedFilename</code> field set
-   to |navigation status|'s [=WebDriver BiDi navigation status/suggestedFilename=].
+   |navigation info|["<code>url</code>"], the <code>download</code> field set to |download|
+   and the <code>suggestedFilename</code> field set to
+   |navigation status|'s [=WebDriver BiDi navigation status/suggestedFilename=].
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.DownloadWillBegin</code> production, with the
@@ -5746,11 +6106,13 @@ The [=remote end event trigger=] is the
 
         browsingContext.DownloadCanceledParams = (
           status: "canceled",
+          download: browsingContext.Download,
           browsingContext.BaseNavigationInfo
         )
 
         browsingContext.DownloadCompleteParams = (
           status: "complete",
+          download: browsingContext.Download,
           filepath: text / null,
           browsingContext.BaseNavigationInfo
         )
@@ -5769,10 +6131,16 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download end<
 1. Assert |navigation info|["<code>status</code>"] is equal to either
    "<code>complete</code>" or "<code>canceled</code>".
 
+1. Let |download response| be |navigation status|'s [=WebDriver BiDi navigation status/downloadResponse=].
+
+1. If [=download id map=] [=map/contains=] |download response|, let |download| be
+   [=download id map=][|download response|], otherwise let |download| be
+   the string representation of a [[!RFC9562|UUID]].
+
 1. If |navigation info|["<code>status</code>"] is "<code>complete</code>", let
    |params| be a [=/map=] matching the
-   <code>browsingContext.DownloadCompleteParams</code> production, with the
-   <code>filepath</code> field set to
+   <code>browsingContext.DownloadCompleteParams</code> production, with the <code>download</code> field
+   set to |download|, the <code>filepath</code> field set to
    |navigation status|'s [=WebDriver BiDi navigation status/downloadedFilepath=], the
    <code>context</code> field set to |navigation info|["<code>context</code>"], the
    <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
@@ -5784,9 +6152,9 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi download end<
    not available for whatever reason.
 
 1. Otherwise, let |params| be a [=/map=] matching the
-   <code>browsingContext.DownloadCanceledParams</code> production, with the
-   <code>context</code> field set to |navigation info|["<code>context</code>"], the
-   <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
+   <code>browsingContext.DownloadCanceledParams</code> production, with the <code>download</code> field
+   set to |download|, the <code>context</code> field set to |navigation info|["<code>context</code>"],
+   the <code>navigation</code> field set to |navigation info|["<code>navigation</code>"],
    the <code>timestamp</code> field set to
    |navigation info|["<code>timestamp</code>"], and the <code>url</code> field set to
    |navigation info|["<code>url</code>"].
@@ -6072,6 +6440,7 @@ EmulationCommand = (
   emulation.SetForcedColorsModeThemeOverride //
   emulation.SetGeolocationOverride //
   emulation.SetLocaleOverride //
+  emulation.SetMediaFeaturesOverride //
   emulation.SetNetworkConditions //
   emulation.SetScreenOrientationOverride //
   emulation.SetScreenSettingsOverride //
@@ -6090,6 +6459,7 @@ EmulationResult = (
   emulation.SetForcedColorsModeThemeOverrideResult /
   emulation.SetGeolocationOverrideResult /
   emulation.SetLocaleOverrideResult /
+  emulation.SetMediaFeaturesOverrideResult /
   emulation.SetScreenOrientationOverrideResult /
   emulation.SetScriptingEnabledResult /
   emulation.SetScrollbarTypeOverrideResult /
@@ -6412,7 +6782,93 @@ The [=remote end steps=] with |command parameters| are:
 
 </div>
 
-#### The emulation.setNetworkConditions Command ####  {#command-emulation-setNetworkConditions}
+#### The emulation.setMediaFeaturesOverride Command ####  {#command-emulation-setMediaFeaturesOverride}
+
+The <dfn export for=commands>emulation.setMediaFeaturesOverride</dfn> command
+allows overriding the values of various media features.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetMediaFeaturesOverride = (
+        method: "emulation.setMediaFeaturesOverride",
+        params: emulation.SetMediaFeaturesOverrideParameters
+      )
+
+      emulation.SetMediaFeaturesOverrideParameters = {
+        features: emulation.MediaFeatures / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.MediaFeatures = [emulation.MediaFeature]
+
+      emulation.MediaFeature = {
+         name: text
+         value: text
+      }
+
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetMediaFeaturesOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+A [=remote end=] has a <dfn>media features override configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] [=/map=].
+
+<div algorithm>
+To get <dfn export>WebDriver BiDi media feature value</dfn> for [=/Document=] |document| and media
+feature name |name|:
+
+1. Let |navigable| be |document|'s [=/node navigable=].
+
+1. Let |media features override map| be the result of [=get WebDriver configuration value=] of
+   [=media features override configuration=] for |navigable|.
+
+1. If |media features override map| is not [=WebDriver configuration/unset=] and
+   |media features override map| [=map/contains=] |name|, return
+   |media features override map|[|name|].
+
+1. Return null.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setMediaFeaturesOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |media features override| be |command parameters|["<code>features</code>"].
+
+1. If |media features override| is null, set |media features override| to
+   [=WebDriver configuration/unset=].
+
+1. Let |media features override map| be an empty [=/map=].
+
+1. For each |media feature| of |media features override|:
+   1. [=map/Set=] |media features override map|[|media feature|["<code>name</code>"]] to
+      |media feature|["<code>value</code>"].
+
+1. If the implementation does not support overriding any of the media features in
+   |media features override map|, return [=error=] with [=error code=] [=unsupported operation=].
+
+1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+   [=media features override configuration=] |media features override map| for |command parameters|.
+
+1. For each |navigable| of |affected navigables|:
+   1. [=list/For each=] |document| currently loaded in |navigable| or its [=descendant navigables=]:
+      1. Run [=evaluate media queries and report changes=] for |document|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setNetworkConditions Command #### {#command-emulation-setNetworkConditions}
 
 The <dfn export for=commands>emulation.setNetworkConditions</dfn> command
 emulates specific network conditions for the given browsing context or for a user
@@ -14267,7 +14723,7 @@ InputCommand = (
 )
 </pre>
 
-<pre class="cddl" data-cddl-module="remote-cddl">
+<pre class="cddl" data-cddl-module="local-cddl">
 InputResult = (
   input.PerformActionsResult /
   input.ReleaseActionsResult /
@@ -14466,15 +14922,15 @@ Note: for a detailed description of the behavior of this command, see the
       }
 
       input.PointerCommonProperties = (
-        ? width: js-uint .default 1,
-        ? height: js-uint .default 1,
-        ? pressure: float .default 0.0,
-        ? tangentialPressure: float .default 0.0,
-        ? twist: (0..359) .default 0,
+        ? width: js-uint,
+        ? height: js-uint,
+        ? pressure: (0.0..1.0),
+        ? tangentialPressure: (-1.0..1.0),
+        ? twist: (0..359),
         ; 0 .. Math.PI / 2
-        ? altitudeAngle: (0.0..1.5707963267948966) .default 0.0,
+        ? altitudeAngle: (0.0..1.5707963267948966),
         ; 0 .. 2 * Math.PI
-        ? azimuthAngle: (0.0..6.283185307179586) .default 0.0,
+        ? azimuthAngle: (0.0..6.283185307179586),
       )
 
       input.Origin = "viewport" / "pointer" / input.ElementOrigin
@@ -14668,7 +15124,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 <dl>
    <dt>Event Type</dt>
    <dd>
-      <pre class="cddl" data-cddl-module="local-cddl,remote-cddl">
+      <pre class="cddl" data-cddl-module="local-cddl">
          input.FileDialogOpened = (
             method: "input.fileDialogOpened",
             params: input.FileDialogInfo
@@ -14987,6 +15443,27 @@ Insert the following steps at the start of the [=determine the device pixel rati
 
 1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
 
+### Evaluating Media Queries ### {#patchs-evaluating-media-queries}
+
+Issue: Remove after https://github.com/w3c/csswg-drafts/pull/13549 is merged.
+
+The [<dfn export>evaluate media feature</dfn> algorithm is modified to support WebDriver BiDi
+overrides. Replace the step "The result is the result of evaluating the specified media feature" to:
+
+<div algorithm="evaluate media feature">
+To get the result of evaluating a [=media feature=] |media feature| in the given [=/Document=] |document|:
+
+1. Let |media feature name| be the |media feature|'s [=mf-name=].
+
+1. Let |emulated value| be the result of getting [=WebDriver BiDi media feature value=] for the
+   |document| and |media feature name|.
+
+1. If |emulated value| is not null, return |emulated value|.
+
+1. Otherwise, return the result of evaluating the specified |media feature|.
+
+</div>
+
 ### The viewport meta element ### {#patches-viewport-meta-element}
 
 Issue: remove after https://github.com/w3c/csswg-drafts/pull/13548 is merged.
@@ -15008,6 +15485,8 @@ Otherwise, the user agent MAY use the `viewport` meta element.
 Note: the list is not exhaustive and might not be up to date.
 
 The following external specifications define additional WebDriver BiDi modules:
+
+1. <a href="https://www.w3.org/TR/digital-credentials/#automated-testing">Digital Credentials API</a>
 
 1. <a href="https://www.w3.org/TR/permissions/#automation-webdriver-bidi">Permissions</a>
 
