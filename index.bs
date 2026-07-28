@@ -331,6 +331,8 @@ spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
   type: dfn
     text: resolution media feature; url: #resolution
     text: media type; url: #media-type
+    text: media feature; url: #media-features
+    text: mf-name; url: #typedef-mf-name
 spec: RFC9110; urlPrefix: https://httpwg.org/specs/rfc9110.html
   type: dfn
     text: field-name token; url: #fields.names
@@ -6438,6 +6440,7 @@ EmulationCommand = (
   emulation.SetForcedColorsModeThemeOverride //
   emulation.SetGeolocationOverride //
   emulation.SetLocaleOverride //
+  emulation.SetMediaFeaturesOverride //
   emulation.SetNetworkConditions //
   emulation.SetScreenOrientationOverride //
   emulation.SetScreenSettingsOverride //
@@ -6455,6 +6458,7 @@ EmulationResult = (
   emulation.SetForcedColorsModeThemeOverrideResult /
   emulation.SetGeolocationOverrideResult /
   emulation.SetLocaleOverrideResult /
+  emulation.SetMediaFeaturesOverrideResult /
   emulation.SetScreenOrientationOverrideResult /
   emulation.SetScriptingEnabledResult /
   emulation.SetScrollbarTypeOverrideResult /
@@ -6776,7 +6780,93 @@ The [=remote end steps=] with |command parameters| are:
 
 </div>
 
-#### The emulation.setNetworkConditions Command ####  {#command-emulation-setNetworkConditions}
+#### The emulation.setMediaFeaturesOverride Command ####  {#command-emulation-setMediaFeaturesOverride}
+
+The <dfn export for=commands>emulation.setMediaFeaturesOverride</dfn> command
+allows overriding the values of various media features.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      emulation.SetMediaFeaturesOverride = (
+        method: "emulation.setMediaFeaturesOverride",
+        params: emulation.SetMediaFeaturesOverrideParameters
+      )
+
+      emulation.SetMediaFeaturesOverrideParameters = {
+        features: emulation.MediaFeatures / null,
+        ? contexts: [+browsingContext.BrowsingContext],
+        ? userContexts: [+browser.UserContext],
+      }
+
+      emulation.MediaFeatures = [emulation.MediaFeature]
+
+      emulation.MediaFeature = {
+         name: text
+         value: text
+      }
+
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      emulation.SetMediaFeaturesOverrideResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+A [=remote end=] has a <dfn>media features override configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] [=/map=].
+
+<div algorithm>
+To get <dfn export>WebDriver BiDi media feature value</dfn> for [=/Document=] |document| and media
+feature name |name|:
+
+1. Let |navigable| be |document|'s [=/node navigable=].
+
+1. Let |media features override map| be the result of [=get WebDriver configuration value=] of
+   [=media features override configuration=] for |navigable|.
+
+1. If |media features override map| is not [=WebDriver configuration/unset=] and
+   |media features override map| [=map/contains=] |name|, return
+   |media features override map|[|name|].
+
+1. Return null.
+
+</div>
+
+<div algorithm="remote end steps for emulation.setMediaFeaturesOverride">
+
+The [=remote end steps=] with |command parameters| are:
+
+1. Let |media features override| be |command parameters|["<code>features</code>"].
+
+1. If |media features override| is null, set |media features override| to
+   [=WebDriver configuration/unset=].
+
+1. Let |media features override map| be an empty [=/map=].
+
+1. For each |media feature| of |media features override|:
+   1. [=map/Set=] |media features override map|[|media feature|["<code>name</code>"]] to
+      |media feature|["<code>value</code>"].
+
+1. If the implementation does not support overriding any of the media features in
+   |media features override map|, return [=error=] with [=error code=] [=unsupported operation=].
+
+1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+   [=media features override configuration=] |media features override map| for |command parameters|.
+
+1. For each |navigable| of |affected navigables|:
+   1. [=list/For each=] |document| currently loaded in |navigable| or its [=descendant navigables=]:
+      1. Run [=evaluate media queries and report changes=] for |document|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The emulation.setNetworkConditions Command #### {#command-emulation-setNetworkConditions}
 
 The <dfn export for=commands>emulation.setNetworkConditions</dfn> command
 emulates specific network conditions for the given browsing context or for a user
@@ -15282,6 +15372,27 @@ Other specifications can define <dfn>console steps</dfn>.
 Insert the following steps at the start of the [=determine the device pixel ratio=] algorithm:
 
 1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
+
+### Evaluating Media Queries ### {#patchs-evaluating-media-queries}
+
+Issue: Remove after https://github.com/w3c/csswg-drafts/pull/13549 is merged.
+
+The [<dfn export>evaluate media feature</dfn> algorithm is modified to support WebDriver BiDi
+overrides. Replace the step "The result is the result of evaluating the specified media feature" to:
+
+<div algorithm="evaluate media feature">
+To get the result of evaluating a [=media feature=] |media feature| in the given [=/Document=] |document|:
+
+1. Let |media feature name| be the |media feature|'s [=mf-name=].
+
+1. Let |emulated value| be the result of getting [=WebDriver BiDi media feature value=] for the
+   |document| and |media feature name|.
+
+1. If |emulated value| is not null, return |emulated value|.
+
+1. Otherwise, return the result of evaluating the specified |media feature|.
+
+</div>
 
 # Appendices # {#appendices}
 
