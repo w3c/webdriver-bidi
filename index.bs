@@ -3739,7 +3739,7 @@ browsingContext.BaseNavigationInfo = (
   navigation: browsingContext.Navigation / null,
   timestamp: js-uint,
   url: text,
-  ? userContext: browser.UserContext,
+  userContext: browser.UserContext,
 )
 
 browsingContext.NavigationInfo = {
@@ -4239,7 +4239,7 @@ The <dfn export for=commands>browsingContext.create</dfn> command creates a new
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.CreateResult = {
           context: browsingContext.BrowsingContext,
-          ? userContext: browser.UserContext
+          userContext: browser.UserContext
         }
     </pre>
    </dd>
@@ -5907,7 +5907,7 @@ given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigati
           context: browsingContext.BrowsingContext,
           timestamp: js-uint,
           url: text,
-          ? userContext: browser.UserContext
+          userContext: browser.UserContext
         }
       </pre>
    </dd>
@@ -6305,7 +6305,7 @@ given [=/navigable=] |navigable| and [=WebDriver BiDi navigation status|navigati
           context: browsingContext.BrowsingContext,
           accepted: bool,
           type: browsingContext.UserPromptType,
-          ? userContext: browser.UserContext,
+          userContext: browser.UserContext,
           ? userText: text
         }
       </pre>
@@ -6359,7 +6359,7 @@ given {{Window}} |window|, string |type|, boolean |accepted| and optional text |
           handler: session.UserPromptHandlerType,
           message: text,
           type: browsingContext.UserPromptType,
-          ? userContext: browser.UserContext,
+          userContext: browser.UserContext,
           ? defaultValue: text
         }
       </pre>
@@ -8471,13 +8471,17 @@ network.BaseParameters = (
     redirectCount: js-uint,
     request: network.RequestData,
     timestamp: js-uint,
-    ? userContext: browser.UserContext / null,
+    userContext: browser.UserContext / null,
     ? intercepts: [+network.Intercept]
 )
 </pre>
 
 The <code>network.BaseParameters</code> type is an abstract type representing
 the data that's common to all network events.
+
+Note: the <code>context</code> and <code>userContext</code> fields are either
+both non-null, when the request is associated with a [=/navigable=], or both
+null.
 
 Issue: Consider including the `sharedId` of the document node that initiated the
 request in addition to the context.
@@ -11922,7 +11926,7 @@ script.WindowRealmInfo = {
   script.BaseRealmInfo,
   type: "window",
   context: browsingContext.BrowsingContext,
-  ? userContext: browser.UserContext,
+  userContext: browser.UserContext,
   ? sandbox: text
 }
 
@@ -13081,6 +13085,10 @@ The <code>script.Source</code> type represents a <code>script.Realm</code> with
 an optional <code>browsingContext.BrowsingContext</code> and related
 <code>browser.UserContext</code> in which a script related event occurred.
 
+Note: the <code>context</code> and <code>userContext</code> fields are either
+both present, when the realm is associated with a [=/navigable=], or both
+omitted.
+
 <div algorithm>
 To <dfn>get the source</dfn> given |source realm|:
 
@@ -13097,7 +13105,8 @@ To <dfn>get the source</dfn> given |source realm|:
 
   1. Let |navigable id| be the [=navigable id=] for |navigable| if |navigable| is not null.
 
-  1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=].
+  1. Let |user context id| be the [=user context id=] of |navigable|'s
+     [=associated user context=] if |navigable| is not null.
 
   Otherwise let |navigable| be null.
 
@@ -13106,7 +13115,7 @@ To <dfn>get the source</dfn> given |source realm|:
    field set to |realm|, the <code>context</code> field set
    to |navigable id| if |navigable| is not null, or unset otherwise,
    and the <code>userContext</code> field set to |user context id| if
-   |navigable is not null, or unset otherwise.
+   |navigable| is not null, or unset otherwise.
 
 1. Return |source|.
 
@@ -15132,9 +15141,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
          input.FileDialogInfo = {
             context: browsingContext.BrowsingContext,
-            ? userContext: browser.UserContext,
-            ? element: script.SharedReference,
             multiple: bool,
+            userContext: browser.UserContext,
+            ? element: script.SharedReference,
          }
       </pre>
    </dd>
