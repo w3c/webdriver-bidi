@@ -3871,11 +3871,17 @@ Base64-encoded string.
         ? origin: ("viewport" / "document") .default "viewport",
         ? format: browsingContext.ImageFormat,
         ? clip: browsingContext.ClipRectangle,
+        ? imageSize: browsingContext.ImageSize,
       }
 
       browsingContext.ImageFormat = {
          type: text,
          ? quality: 0.0..1.0,
+      }
+
+      browsingContext.ImageSize = {
+         ? width: js-uint,
+         ? height: js-uint,
       }
 
       browsingContext.ClipRectangle = (
@@ -3975,18 +3981,60 @@ To <dfn>rectangle intersection</dfn> given |rect1| and |rect2|
 </div>
 
 <div algorithm>
-To <dfn>render document to a canvas</dfn> given |document| and |rect|:
+To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image size|:
 
 1. Let |ratio| be [=determine the device pixel ratio=] given |document|'s
    [=default view=].
 
-1. Let |paint width| be |rect|'s [=width dimension=] multiplied by |ratio|,
-   rounded to the nearest integer, so it matches the width of |rect| in device
-   pixels.
+1. Let |paint width| be 0.
 
-1. Let |paint height| be |rect|'s [=height dimension=] multiplied by |ratio|,
-   rounded to the nearest integer, so it matches the height of |rect| in device
-   pixels.
+1. Let |paint height| be 0.
+
+1. If |image size| is not null:
+
+   1. Let |requested width| be the <code>width</code> field of |image size| if
+      present, or null otherwise.
+
+   1. Let |requested height| be the <code>height</code> field of |image size| if
+      present, or null otherwise.
+
+   1. Run the steps under the first matching condition:
+      <dl>
+        <dt>|requested width| is not null and |requested height| is not null:
+        <dd>
+        1. Set |paint width| to |requested width|.
+
+        1. Set |paint height| to |requested height|.
+
+        Note: In this case the aspect ratio of |rect| is not preserved unless it
+        happens to match the aspect ratio of the requested size.
+
+        <dt>|requested width| is not null:
+        <dd>
+        1. Set |paint width| to |requested width|.
+
+        1. Set |paint height| to |requested width| multiplied by |rect|'s [=height dimension=],
+           divided by |rect|'s [=width dimension=], rounded to the nearest integer, so that the
+           aspect ratio of |rect| is preserved.
+
+        <dt>|requested height| is not null:
+        <dd>
+        1. Set |paint height| to |requested height|.
+
+        1. Set |paint width| to |requested height| multiplied by |rect|'s [=width dimension=],
+           divided by |rect|'s [=height dimension=], rounded to the nearest integer, so that the
+           aspect ratio of |rect| is preserved.
+      </dl>
+
+1. Otherwise:
+
+   1. Let |paint width| be |rect|'s [=width dimension=] multiplied by |ratio|,
+      rounded to the nearest integer, so it matches the width of |rect| in device
+      pixels.
+
+   1. Let |paint height| be |rect|'s [=height dimension=] multiplied by |ratio|,
+      rounded to the nearest integer, so it matches the height of |rect| in device
+      pixels.
 
 1. Let |canvas| be a new {{HTMLCanvasElement}} with {{HTMLCanvasElement/width}} |paint
    width| and {{HTMLCanvasElement/height}} |paint height|.
@@ -3998,8 +4046,8 @@ To <dfn>render document to a canvas</dfn> given |document| and |rect|:
 
 1. Complete implementation specific steps equivalent to drawing the region of
    the framebuffer representing the region of |document| covered by |rect| to
-   |canvas context|, such that each pixel in the framebuffer corresponds to a pixel in
-   |canvas context| with (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
+   |canvas context|, scaling it as needed to cover |canvas context|, with
+   (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
    viewport coordinates corresponding to (0,0) in |canvas context| and (|rect|'s
    [=x coordinate=] + |rect|'s [=width dimension=], |rect|'s
    [=y coordinate=] + |rect|'s [=height dimension=]) corresponding to (|paint
@@ -4135,7 +4183,11 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. If |rect|'s [=width dimension=] is 0 or |rect|'s [=height dimension=] is 0,
    return [=error=] with error code [=unable to capture screen=].
 
-1. Let |canvas| be [=render document to a canvas=] with |document| and |rect|.
+1. Let |image size| be the value of the <code>imageSize</code> field of |command
+   parameters| if present, or null otherwise.
+
+1. Let |canvas| be [=render document to a canvas=] with |document|, |rect| and
+   |image size|.
 
 1. Let |format| be the <code>format</code> field of |command parameters|.
 
