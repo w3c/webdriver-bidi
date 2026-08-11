@@ -226,6 +226,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: create a classic script; url: webappapis.html#creating-a-classic-script
     text: create a new browsing context; url: browsers.html#creating-a-new-browsing-context
     text: create a new top-level traversable; url: document-sequences.html#creating-a-new-top-level-traversable
+    text: current transformation matrix; url: canvas.html#current-transformation-matrix
     text: default script fetch options; url: webappapis.html#default-script-fetch-options
     text: default view; url: nav-history-apis.html#dom-document-defaultview
     text: descendant navigables; url: document-sequences.html#descendant-navigables
@@ -241,6 +242,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: ongoing-navigation; url: browsing-the-web.html#ongoing-navigation
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
+    text: output bitmap; url: canvas.html#output-bitmap
     text: parent; for:navigable; url: document-sequences.html#nav-parent
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: prompt; url: timers-and-user-prompts.html#dom-prompt
@@ -3880,8 +3882,8 @@ Base64-encoded string.
       }
 
       browsingContext.ImageSize = {
-         ? width: js-uint,
-         ? height: js-uint,
+         ? width: js-uint .gt 0,
+         ? height: js-uint .gt 0,
       }
 
       browsingContext.ClipRectangle = (
@@ -3986,6 +3988,12 @@ To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image si
 1. Let |ratio| be [=determine the device pixel ratio=] given |document|'s
    [=default view=].
 
+1. Let |framebuffer width| be |rect|'s [=width dimension=] multiplied by
+   |ratio|, so it matches the width of |rect| in device pixels.
+
+1. Let |framebuffer height| be |rect|'s [=height dimension=] multiplied by
+   |ratio|, so it matches the height of |rect| in device pixels.
+
 1. Let |paint width| be 0.
 
 1. Let |paint height| be 0.
@@ -4028,13 +4036,9 @@ To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image si
 
 1. Otherwise:
 
-   1. Let |paint width| be |rect|'s [=width dimension=] multiplied by |ratio|,
-      rounded to the nearest integer, so it matches the width of |rect| in device
-      pixels.
+   1. Set |paint width| to |framebuffer width|, rounded to the nearest integer.
 
-   1. Let |paint height| be |rect|'s [=height dimension=] multiplied by |ratio|,
-      rounded to the nearest integer, so it matches the height of |rect| in device
-      pixels.
+   1. Set |paint height| to |framebuffer height|, rounded to the nearest integer.
 
 1. Let |canvas| be a new {{HTMLCanvasElement}} with {{HTMLCanvasElement/width}} |paint
    width| and {{HTMLCanvasElement/height}} |paint height|.
@@ -4044,16 +4048,29 @@ To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image si
 
 1. Set |canvas|'s [=context mode=] to [=2D=].
 
-1. Complete implementation specific steps equivalent to drawing the region of
-   the framebuffer representing the region of |document| covered by |rect| to
-   |canvas context|, scaling it as needed to cover |canvas context|, with
-   (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
-   viewport coordinates corresponding to (0,0) in |canvas context| and (|rect|'s
-   [=x coordinate=] + |rect|'s [=width dimension=], |rect|'s
-   [=y coordinate=] + |rect|'s [=height dimension=]) corresponding to (|paint
-   width|, |paint height|).
+1. Let |source x| be |rect|'s [=x coordinate=] multiplied by |ratio|, and let
+   |source y| be |rect|'s [=y coordinate=] multiplied by |ratio|.
 
-1. Return [=canvas=].
+1. Let |source rectangle| be the rectangle whose corners are the four points
+   (|source x|, |source y|), (|source x| + |framebuffer width|, |source y|),
+   (|source x| + |framebuffer width|, |source y| + |framebuffer height|), and
+   (|source x|, |source y| + |framebuffer height|).
+
+1. Let |destination rectangle| be the rectangle whose corners are the four
+   points (0, 0), (|framebuffer width|, 0), (|framebuffer width|,
+   |framebuffer height|), and (0, |framebuffer height|).
+
+1. Invoke |canvas context|'s {{CanvasTransform/scale()}} method with
+   <var ignore>x</var> set to |paint width| divided by |framebuffer width|, and
+   <var ignore>y</var> set to |paint height| divided by |framebuffer height|.
+
+1. Complete implementation specific steps equivalent to painting the region of
+   |document|'s framebuffer specified by |source rectangle| on the region of
+   |canvas context|'s [=output bitmap=] specified by |destination rectangle|,
+   after applying |canvas context|'s [=current transformation matrix=] to
+   |destination rectangle|.
+
+1. Return |canvas|.
 
 </div>
 
