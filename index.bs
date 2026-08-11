@@ -3882,8 +3882,8 @@ Base64-encoded string.
       }
 
       browsingContext.ImageSize = {
-         ? width: js-uint .gt 0,
-         ? height: js-uint .gt 0,
+         ? maxWidth: js-uint .gt 0,
+         ? maxHeight: js-uint .gt 0,
       }
 
       browsingContext.ClipRectangle = (
@@ -3994,51 +3994,27 @@ To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image si
 1. Let |framebuffer height| be |rect|'s [=height dimension=] multiplied by
    |ratio|, so it matches the height of |rect| in device pixels.
 
-1. Let |paint width| be 0.
-
-1. Let |paint height| be 0.
+1. Let |scale| be 1.
 
 1. If |image size| is not null:
 
-   1. Let |requested width| be the <code>width</code> field of |image size| if
+   1. Let |max width| be the <code>maxWidth</code> field of |image size| if
       present, or null otherwise.
 
-   1. Let |requested height| be the <code>height</code> field of |image size| if
+   1. Let |max height| be the <code>maxHeight</code> field of |image size| if
       present, or null otherwise.
 
-   1. Run the steps under the first matching condition:
-      <dl>
-        <dt>|requested width| is not null and |requested height| is not null:
-        <dd>
-        1. Set |paint width| to |requested width|.
+   1. If |max width| is not null and |max width| divided by |framebuffer width|
+      is less than |scale|, set |scale| to |max width| divided by |framebuffer
+      width|.
 
-        1. Set |paint height| to |requested height|.
+   1. If |max height| is not null and |max height| divided by |framebuffer
+      height| is less than |scale|, set |scale| to |max height| divided by
+      |framebuffer height|.
 
-        Note: In this case the aspect ratio of |rect| is not preserved unless it
-        happens to match the aspect ratio of the requested size.
+1. Let |paint width| be |framebuffer width| multiplied by |scale|, rounded to the nearest integer.
 
-        <dt>|requested width| is not null:
-        <dd>
-        1. Set |paint width| to |requested width|.
-
-        1. Set |paint height| to |requested width| multiplied by |rect|'s [=height dimension=],
-           divided by |rect|'s [=width dimension=], rounded to the nearest integer, so that the
-           aspect ratio of |rect| is preserved.
-
-        <dt>|requested height| is not null:
-        <dd>
-        1. Set |paint height| to |requested height|.
-
-        1. Set |paint width| to |requested height| multiplied by |rect|'s [=width dimension=],
-           divided by |rect|'s [=height dimension=], rounded to the nearest integer, so that the
-           aspect ratio of |rect| is preserved.
-      </dl>
-
-1. Otherwise:
-
-   1. Set |paint width| to |framebuffer width|, rounded to the nearest integer.
-
-   1. Set |paint height| to |framebuffer height|, rounded to the nearest integer.
+1. Let |paint height| be |framebuffer height| multiplied by |scale|, rounded to the nearest integer.
 
 1. Let |canvas| be a new {{HTMLCanvasElement}} with {{HTMLCanvasElement/width}} |paint
    width| and {{HTMLCanvasElement/height}} |paint height|.
