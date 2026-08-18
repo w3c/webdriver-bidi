@@ -593,6 +593,7 @@ CommandData = (
   BrowsingContextCommand //
   EmulationCommand //
   InputCommand //
+  IoCommand //
   NetworkCommand //
   ScriptCommand //
   SessionCommand //
@@ -635,6 +636,7 @@ ResultData = (
   BrowsingContextResult /
   EmulationResult /
   InputResult /
+  IoResult /
   NetworkResult /
   ScriptResult /
   SessionResult /
@@ -815,11 +817,20 @@ with the following additional codes:
   <dt><dfn for=errors export>no such storage partition</dfn>
   <dd>Tried to access data in a non-existent storage partition.
 
+  <dt><dfn for=errors export>no such stream</dfn>
+  <dd>Tried to access an unknown [=/stream=].
+
   <dt><dfn for=errors export>no such user context</dfn>
   <dd>Tried to reference an unknown [=user context=].
 
   <dt><dfn for=errors export>no such web extension</dfn>
   <dd>Tried to reference an unknown web extension.
+
+  <dt><dfn for=errors export>stream closed</dfn>
+  <dd>Tried to interact with a closed [=/stream=].
+
+  <dt><dfn for=errors export>stream read error</dfn>
+  <dd>Unable to read from a [=/stream=].
 
   <dt><dfn for=errors export>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
@@ -857,9 +868,12 @@ ErrorCode = "invalid argument" /
             "no such screencast" /
             "no such script" /
             "no such storage partition" /
+            "no such stream" /
             "no such user context" /
             "no such web extension" /
             "session not created" /
+            "stream closed" /
+            "stream read error" /
             "unable to capture screen" /
             "unable to close browser" /
             "unable to set cookie" /
@@ -1541,7 +1555,7 @@ explicitly test that scripts running in sandboxes work in all implementations.
 
 ## Sandbox Realms ## {#sandbox-realm}
 
-Each sandbox is a unique ECMAScript [=Realm=]. However the sandbox realm
+Each sandbox is a unique ECMAScript [=/Realm=]. However the sandbox realm
 provides access to platform objects in an existing {{Window}} realm via
 {{SandboxProxy}} objects.
 
@@ -2794,7 +2808,7 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
 
   1. [=Cleanup the session=] with |session|.
 
-  1. [=Close=] any [=navigable/top-level traversables=] without [=prompting to unload=].
+  1. [=/Close=] any [=navigable/top-level traversables=] without [=prompting to unload=].
 
   1. Perform implementation defined steps to clean up resources associated with
      the [=remote end=] under automation.
@@ -3035,7 +3049,7 @@ The [=remote end steps=] with |command parameters| are:
 
   1. If |navigable|'s [=associated user context=] is |user context|:
 
-    1. [=Close=] |navigable| without [=prompting to unload=].
+    1. [=/Close=] |navigable| without [=prompting to unload=].
 
 1. [=set/Remove=] |user context| for the [=set of user contexts=].
 
@@ -3402,13 +3416,15 @@ A [=BiDi session=] has a <dfn>screencast recordings map</dfn> which is a [=/map=
 which the keys are [[!RFC9562|UUID]]s, and the values are <dfn>screencast recording</dfn>,
 which is a [=struct=] with
 an [=struct/item=] named <dfn for="screencast recording">stream</dfn>, which is a [=screencast stream=],
-an [=struct/item=] named <dfn for="screencast recording">path</dfn>, which is a string,
+an [=struct/item=] named <dfn for="screencast recording">path</dfn>, which is a string or null,
+an [=struct/item=] named <dfn for="screencast recording">byte buffer</dfn>, which is a [=/byte buffer=] or null,
 an [=struct/item=] named <dfn for="screencast recording">state</dfn>, which is one of
 "<code>recording</code>", "<code>stopping</code>", "<code>stopped</code>",
 an [=struct/item=] named <dfn for="screencast recording">writeError</dfn>, which is a string or null.
 
 <div algorithm>
-To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |recording| and |mime type|:
+To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |recording|, |output type| and
+|mime type|:
 
 1. Run the following steps [=in parallel=]:
 
@@ -3419,13 +3435,19 @@ To <dfn>start a screencast recording</dfn> given a [=screencast recording=] |rec
 
    1. For each chunk |bytes| produced for |recording|, run the following steps:
 
-      1. Append |bytes| to the file at |recording|'s [=screencast recording/path=].
-         If this fails:
+      1. If |output type| is "<code>file</code>":
 
-         1. Set |recording|'s [=screencast recording/writeError=] to an
-            implementation-defined string describing the write failure.
+         1. Append |bytes| to the file at |recording|'s [=screencast recording/path=].
+            If this fails:
 
-         1. [=Stop a screencast recording=] given |recording|.
+            1. Set |recording|'s [=screencast recording/writeError=] to an
+               implementation-defined string describing the write failure.
+
+            1. [=Stop a screencast recording=] given |recording|.
+
+      1. Otherwise:
+
+         1. [=byte buffer/Enqueue=] given |recording|'s [=screencast recording/byte buffer=] and |bytes|.
 
 </div>
 
@@ -3444,6 +3466,9 @@ To <dfn>stop a screencast recording</dfn> given a [=screencast recording=] |reco
    [=screencast recording/state=] to "<code>stopped</code>".
 
 1. Wait until |recording|'s [=screencast recording/state=] is "<code>stopped</code>".
+
+1. If |recording|'s [=screencast recording/byte buffer=] is not null, [=byte buffer/close=]
+   |recording|'s [=screencast recording/byte buffer=].
 
 </div>
 
@@ -4195,11 +4220,11 @@ The [=remote end steps=] with |command parameters| are:
 
   1. If |prompt unload| is true:
 
-     1. [=Close=] |navigable|.
+     1. [=/Close=] |navigable|.
 
   1. Otherwise:
 
-     1. [=Close=] |navigable| without [=prompting to unload=].
+     1. [=/Close=] |navigable| without [=prompting to unload=].
 
   1. Return [=success=] with data null.
 
@@ -5381,12 +5406,21 @@ The [=remote end steps=] with |command parameters| are:
 #### The browsingContext.startScreencast Command ####  {#command-browsingContext-startScreencast}
 
 The <dfn export for=commands>browsingContext.startScreencast</dfn> command
-starts the screencast of a given navigable and writes it to a file.
+starts the screencast of a given navigable. Depending on the <code>outputType</code>
+argument the recording is either written to a file on the [=remote end=]
+("<code>file</code>") or exposed as an <code>io.Stream</code> that the [=local end=]
+reads with the [=io.ReadStream=] command ("<code>stream</code>").
 
-Note: The [=remote end=] creates and writes the screencast file, but does not delete it.
-Cleaning up the file is left to the [=local end=]. In some configurations this might not be
-possible — for example, if the [=remote end=] has read/write access to the filesystem but
-the [=local end=] has only read-only access.
+Note: When <code>outputType</code> is "<code>file</code>", the [=remote end=] creates and
+writes the screencast file, but does not delete it. Cleaning up the file is left to the
+[=local end=]. In some configurations this might not be possible — for example, if the
+[=remote end=] has read/write access to the filesystem but the [=local end=] has only
+read-only access.
+
+Note: When <code>outputType</code> is "<code>stream</code>", the returned
+<code>stream</code> remains valid until the screencast is stopped with
+[=browsingContext.stopScreencast=]; canceling the stream with [=io.Cancel=] tears down the
+[=stream settings/stream=] only and does not stop the underlying screencast recording.
 
 <dl>
    <dt>Command Type</dt>
@@ -5399,6 +5433,7 @@ the [=local end=] has only read-only access.
 
       browsingContext.StartScreencastParameters = {
         context: browsingContext.BrowsingContext,
+        outputType: "file" / "stream",
         ? mimeType: text,
         ? video: browsingContext.MediaTrackConstraints,
         ? audio: bool .default false,
@@ -5417,7 +5452,8 @@ the [=local end=] has only read-only access.
     <pre class="cddl" data-cddl-module="local-cddl">
       browsingContext.StartScreencastResult = {
          screencast: browsingContext.Screencast,
-         path: text
+         ? path: text,
+         ? stream: io.Stream,
       }
 
     </pre>
@@ -5429,6 +5465,8 @@ the [=local end=] has only read-only access.
 
 <div algorithm="remote end steps for browsingContext.startScreencast">
 The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |output type| be |command parameters|["<code>outputType</code>"].
 
 1. Let |navigable id| be |command parameters|["<code>context</code>"].
 
@@ -5489,24 +5527,46 @@ The [=remote end steps=] given |session| and |command parameters| are:
    1. If the implementation is unable to produce |stream|, return [=error=] with
       [=error code=] [=unknown error=].
 
-1. Let |path| be an implementation-defined file path where the recording will
-   be stored.
+1. Let |path| be null.
+
+1. Let |byte buffer| be null.
+
+1. Let |stream id| be null.
+
+1. If |output type| is "<code>file</code>":
+
+   1. Let |path| be an implementation-defined file path where the recording will be stored.
+
+1. Otherwise:
+
+   1. Let |byte buffer| be a new [=/byte buffer=].
+
+   1. Let |stream id| be the string representation of a [[!RFC9562|UUID]].
+
+   1. Let |stream settings| be a [=stream settings=] [=struct=] with
+      [=stream settings/stream=] set to |byte buffer| and [=stream settings/realm=] set to null.
+
+   1. Set |session|'s [=readable stream settings map=][|stream id|] to |stream settings|.
 
 1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
 
 1. Let |recording| be a new [=screencast recording=] with
    [=screencast recording/stream=] |stream|,
    [=screencast recording/path=] |path|,
+   [=screencast recording/byte buffer=] |byte buffer|,
    [=screencast recording/state=] "<code>recording</code>",
    [=screencast recording/writeError=] null.
 
 1. Set |session|'s [=screencast recordings map=][|screencast|] to |recording|.
 
-1. [=Start a screencast recording=] given |recording| and |mime type|.
+1. [=Start a screencast recording=] given |recording|, |output type| and |mime type|.
 
 1. Let |body| be a new [=/map=] matching the <code>browsingContext.StartScreencastResult</code>
-   with the <code>screencast</code> field set to |screencast| and
-   <code>path</code> field set to |path|.
+   with the <code>screencast</code> field set to |screencast|.
+
+1. If |path| is not null, set |body|["<code>path</code>"] to |path|.
+
+1. If |stream id| is not null, set |body|["<code>stream</code>"] to |stream id|.
 
 1. Return [=success=] with data |body|.
 
@@ -5535,7 +5595,7 @@ stops the screencast.
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
       browsingContext.StopScreencastResult = {
-         path: text,
+         ? path: text,
          ? error: text
       }
     </pre>
@@ -5562,8 +5622,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |path| be |screencast recording|'s [=screencast recording/path=].
 
 1. Let |body| be a new [=/map=] matching the <code>browsingContext.StopScreencastResult</code>
-   with the <code>path</code> field set to |path|, <code>error</code> field set to |error|
-   if |error| is not null or omitted otherwise.
+   with the <code>path</code> field set to |path| if |path| is not null or omitted otherwise,
+   <code>error</code> field set to |error| if |error| is not null or omitted otherwise.
 
 1. Return [=success=] with data |body|.
 
@@ -7847,6 +7907,334 @@ is legacy, user agent might run [=implementation-defined=] steps to respect the
    to |maxTouchPoints|.
 
 1. Return [=success=] with data null.
+
+</div>
+
+## The io Module ## {#module-io}
+
+The <dfn export for=modules>io</dfn> module contains commands and events
+relating to IO operations.
+
+### Definition ### {#module-io-definition}
+
+{^remote end definition^}
+
+<pre class="cddl" data-cddl-module="remote-cddl">
+
+IoCommand = (
+  io.Cancel //
+  io.ReadStream //
+)
+
+</pre>
+
+{^local end definition^}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+
+IoResult = (
+   io.ReadStreamResult
+)
+</pre>
+
+A <dfn lt="stream|IO stream" export>stream</dfn> is an abstract source of
+data that can be read from or written to.
+
+A [=BiDi Session=] has a <dfn>readable stream settings map</dfn> which is a [=/map=] between
+a <code>io.Stream</code> and [=stream settings=].
+
+<dfn>Stream settings</dfn> is a [=struct=] with
+an [=struct/item=] named <dfn for="stream settings">stream</dfn>, which is a [=readable stream=] or a [=/byte buffer=],
+an [=struct/item=] named <dfn for="stream settings">realm</dfn>, which is a <code>script.Realm</code> or null.
+
+A <dfn>byte buffer</dfn> is a [=struct=] with
+an [=struct/item=] named <dfn for="byte buffer">chunk queue</dfn>, which is a [=/queue=] of [=byte sequences=], initially empty,
+an [=struct/item=] named <dfn for="byte buffer">state</dfn>, which is one of "<code>open</code>", "<code>closed</code>",
+or "<code>failed</code>", initially "<code>open</code>".
+
+<div class="algorithm">
+
+To <dfn for="byte buffer">enqueue</dfn> given a [=/byte buffer=] |buffer| and a [=byte sequence=] |bytes|:
+
+1. If |buffer|'s [=byte buffer/state=] is not "<code>open</code>", return.
+
+1. While |buffer|'s [=byte buffer/chunk queue=]'s [=list/size=] is greater than or
+   equal to an implementation-defined maximum, [=queue/dequeue=] from |buffer|'s
+   [=byte buffer/chunk queue=].
+
+   Note: The maximum number of buffered chunks is implementation-defined. When the
+   buffer is full the oldest buffered chunks are dropped.
+
+1. [=queue/Enqueue=] |bytes| in |buffer|'s [=byte buffer/chunk queue=].
+
+</div>
+
+<div class="algorithm">
+
+To <dfn for="byte buffer">close</dfn> a [=/byte buffer=] |buffer|:
+
+1. If |buffer|'s [=byte buffer/state=] is not "<code>open</code>", return.
+
+1. Set |buffer|'s [=byte buffer/state=] to "<code>closed</code>".
+
+</div>
+
+<div class="algorithm">
+
+To <dfn>get readable stream settings</dfn> given <var ignore>session</var> and |stream|:
+
+1. Let |stream map| be |session|'s [=readable stream settings map=].
+
+1. If |stream map| [=map/contains=] |stream|, return [=success=] with data
+   |stream map|[|stream|].
+
+1. Return [=error=] with [=error code=] [=no such stream=].
+
+</div>
+
+### Types ### {#module-io-types}
+
+#### The io.ReadableStream Type #### {#type-io-ReadableStream}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+io.ReadableStream = {
+  stream: io.Stream,
+}
+</pre>
+
+The <code>io.ReadableStream</code> type represents a [=readable stream=].
+
+#### The io.ReadData Type #### {#type-io-ReadData}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+io.ReadData = {
+  value: network.BytesValue / null,
+  done: bool
+}
+</pre>
+
+The <code>io.ReadData</code> type represents the result of reading a value
+from a [=readable stream=].
+
+
+#### The io.Stream Type #### {#type-io-Stream}
+
+<pre class="cddl" data-cddl-module="remote-cddl,local-cddl">
+io.Stream = text
+</pre>
+
+The <code>io.Stream</code> type represents a handle to an IO [=/stream=].
+
+### Commands ### {#module-io-commands}
+
+#### The io.cancel Command ####  {#command-io-cancel}
+
+The <dfn export for=commands>io.Cancel</dfn> command cancels a [=readable stream=].
+
+<dl>
+  <dt>Command Type</dt>
+  <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      io.Cancel = (
+        method: "io.cancel",
+        params: io.CancelParameters
+      )
+
+      io.CancelParameters = {
+        stream: io.Stream,
+        ? reason: text,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      io.CancelResult = EmptyResult
+    </pre>
+  </dd>
+</dl>
+
+<div algorithm="remote end steps for io.Cancel">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
+   |session| and |command parameters|["<code>stream</code>"].
+
+1. Let |stream| be |stream settings|[[=stream settings/stream=]].
+
+1. Let |realm id| be |stream settings|[[=stream settings/realm=]].
+
+1. If |command parameters| [=map/contains=] "<code>reason</code>", let |reason|
+   be |command parameters|["<code>reason</code>"]. Otherwise let |reason| be
+   undefined.
+
+1. If |realm id| is not null:
+
+     1. Let |realm| be the result of [=trying=] to [=get a realm=] with |realm id|.
+
+     1. Let |environment settings| be the [=environment settings object=] whose
+        [=realm execution context=]'s Realm component is |realm|.
+
+     1. [=Prepare to run script=] with |environment settings|.
+
+     1. Let |promise| be the result of [=ReadableStream/cancel=] |stream| with
+        |reason|.
+
+     1. [=Clean up after running script=] with |environment settings|.
+
+     1. [=React=] to |promise|:
+
+      1. If |promise| was rejected, then:
+
+         1. Return [=error=] with [=error code=] [=stream closed=].
+
+      1. If |promise| was fulfilled, then:
+
+         1. Return [=success=] with data null.
+
+1. Otherwise:
+
+   1. Assert: |stream| is a [=/byte buffer=].
+
+   1. If |stream|'s [=byte buffer/state=] is "<code>open</code>", set |stream|'s
+      [=byte buffer/state=] to "<code>failed</code>".
+
+   1. Set |stream|'s [=byte buffer/chunk queue=] to a new empty [=/queue=].
+
+   1. Return [=success=] with data null.
+
+</div>
+
+#### The io.readStream Command #### {#command-io.readStream}
+
+The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of a
+[=readable stream=].
+
+<dl>
+  <dt>Command Type</dt>
+  <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      io.ReadStream = (
+       method: "io.readStream",
+       params: io.ReadStreamParameters
+      )
+
+      io.ReadStreamParameters = {
+        stream: io.Stream,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      io.ReadStreamResult = io.ReadData
+    </pre>
+   </dd>
+</dl>
+
+
+<div algorithm="remote end steps for io.readStream">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
+   |session| and |command parameters|["<code>stream</code>"].
+
+1. Let |stream| be |stream settings|[[=stream settings/stream=]].
+
+1. Let |realm id| be |stream settings|[[=stream settings/realm=]].
+
+1. If |realm id| is not null:
+
+   1. Let |realm| be the result of [=trying=] to [=get a realm=] with |realm id|.
+
+   1. Let |environment settings| be the [=environment settings object=] whose
+      [=realm execution context=]'s Realm component is |realm|.
+
+   1. [=Prepare to run script=] with |environment settings|.
+
+   1. Let |reader| be the result of [=trying=] to [=ReadableStream/getting a reader=] for |stream|.
+
+   1. Let |promise| be [=a new promise=].
+
+   1. Let |read request| be a new [=read request=] with the following [=struct/items=]:
+
+     <dl>
+        <dt>[=read request/chunk steps=], given |chunk|
+        <dd>Resolve |promise| with «[ "value" → |chunk|, "done" → false ]».
+        <dt>[=read request/close steps=]
+        <dd>Resolve promise with «[ "value" → undefined, "done" → true ]».
+        <dt>[=read request/error steps=], given |e|
+        <dd>Reject |promise| with |e|.
+     </dl>
+
+   1. Let |read request| be the result of [=ReadableStreamDefaultReader/read a chunk=] from |reader| given |read request|.
+
+   1. If |read result|.\[[Type]] is <code>normal</code>.:
+
+      1. Set |read result| to <a spec=ECMASCRIPT>Await</a>(|read result|.\[[Value]]).
+
+   1. [=Clean up after running script=] with |environment settings|.
+
+   1. [=ReadableStreamDefaultReader/Release=] |reader|.
+
+   1. If |read result|.\[[Type]] is <code>throw</code>, return [=error=] with
+      [=error code=] [=stream read error=].
+
+   1. Assert: |read result|.\[[Type]] is <code>normal</code>.
+
+   1. Let |read value| be |read result|.\[[Value]].
+
+   1. Let |done| be |read value|["<code>done</code>"].
+
+   1. If |done| is true:
+
+      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
+         field set to null and the <code>done</code> field set to true.
+
+   1. Otherwise:
+
+      1. Let |chunk| be |read value|["<code>value</code>"].
+
+      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
+         field set to [=serialize protocol bytes=] given |chunk| and the
+         <code>done</code> field set to false.
+
+   1. Return [=success=] with data |response|.
+
+1. Otherwise:
+
+   1. Assert: |stream| is a [=/byte buffer=].
+
+   1. Wait until |stream|'s [=byte buffer/chunk queue=] is not [=list/empty=] or |stream|'s
+      [=byte buffer/state=] is not "<code>open</code>".
+
+      Note: The [=byte buffer/chunk queue=] is filled [=in parallel=] by the producer of
+      the [=stream settings/stream=]'s data, and its [=byte buffer/state=] leaves
+      "<code>open</code>" when the producer finishes or the [=stream settings/stream=] is
+      canceled with [=io.Cancel=]. This step blocks until one of those happens, so an
+      [=io.ReadStream=] command resolves as soon as a chunk is available rather than
+      returning an empty result.
+
+   1. If |stream|'s [=byte buffer/chunk queue=] is not [=list/empty=]:
+
+      1. Let |chunk| be the result of [=queue/dequeue|dequeuing=] from |stream|'s
+         [=byte buffer/chunk queue=].
+
+      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
+         field set to [=serialize protocol bytes=] given |chunk| and the
+         <code>done</code> field set to false.
+
+      1. Return [=success=] with data |response|.
+
+   1. If |stream|'s [=byte buffer/state=] is "<code>failed</code>", return [=error=]
+      with [=error code=] [=stream read error=].
+
+   1. Assert: |stream|'s [=byte buffer/state=] is "<code>closed</code>".
+
+   1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
+      field set to null and the <code>done</code> field set to true.
+
+   1. Return [=success=] with data |response|.
 
 </div>
 
@@ -11465,9 +11853,9 @@ script.Handle = text;
 </pre>
 
 The <code>script.Handle</code> type represents a handle to an object owned by
-the ECMAScript runtime. The handle is only valid in a specific [=Realm=].
+the ECMAScript runtime. The handle is only valid in a specific [=/Realm=].
 
-Each ECMAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
+Each ECMAScript [=/Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
 strong [=/map=] from handle ids to their corresponding objects.
 
 #### The script.InternalId Type #### {#type-script-InternalId}
@@ -11703,7 +12091,7 @@ on realm creation.
 script.Realm = text;
 </pre>
 
-Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
+Each [=/realm=] has an associated <dfn export>realm id</dfn>, which is a string
 uniquely identifying that realm. This is implicitly set when the realm is
 created.
 
@@ -11719,10 +12107,10 @@ To <dfn>get a realm</dfn> given |realm id|:
 
 1. If |realm id| is null, return [=success=] with data null.
 
-1. If there is no [=realm=] with [=realm id|id=] |realm id| return
+1. If there is no [=/realm=] with [=realm id|id=] |realm id| return
    [=error=] with [=error code=] [=no such frame=]
 
-1. Let |realm| be the [=realm=] with [=realm id|id=] |realm id|.
+1. Let |realm| be the [=/realm=] with [=realm id|id=] |realm id|.
 
 1. Return [=success=] with data |realm|
 
@@ -12151,7 +12539,7 @@ script.RemoteObjectReference = {
 
 The <code><dfn>script.RemoteReference</dfn></code> type is either a
 <code>script.RemoteObjectReference</code> representing a remote reference to an
-existing ECMAScript object in [=handle object map=] in the given [=Realm=], or
+existing ECMAScript object in [=handle object map=] in the given [=/Realm=], or
 is a <code>script.SharedReference</code> representing a reference to a [=node=].
 
 Issue: handle "stale object reference" case.
@@ -12257,7 +12645,8 @@ script.RemoteValue = (
   script.NodeListRemoteValue /
   script.HTMLCollectionRemoteValue /
   script.NodeRemoteValue /
-  script.WindowProxyRemoteValue
+  script.WindowProxyRemoteValue /
+  script.ReadableStreamRemoteValue
 )
 
 script.ListRemoteValue = [*script.RemoteValue];
@@ -12407,6 +12796,13 @@ script.WindowProxyRemoteValue = {
 
 script.WindowProxyProperties = {
   context: browsingContext.BrowsingContext
+}
+
+script.ReadableStreamRemoteValue = {
+  type: "readable-stream",
+  stream: io.Stream,
+  ? handle: script.Handle,
+  ? internalId: script.InternalId,
 }
 </pre>
 
@@ -12780,6 +13176,29 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
        production in the {^local end definition^}, with the <code>handle</code>
        property set to |handle id| if it's not null, or omitted otherwise, and
        the <code>value</code> property set to |serialized|.
+
+    <dt>|value| is a [=platform object=] that implements {{ReadableStream}}
+    <dd>
+    1. Let |stream realm| be |value|'s [=relevant settings object=]'s
+       [=realm execution context=]'s Realm component.
+
+    1. If |stream realm| is null, let |realm id| be null. Otherwise, let
+       |realm id| be the [=realm id=] for |stream realm|.
+
+    1. Let |stream id| be the string representation of a [[!RFC9562|UUID]].
+
+    1. Let |stream settings| be a [=stream settings=] struct with the
+       [=stream settings/stream=] item set to |value| and the
+       [=stream settings/realm=] item set to |realm id|.
+
+    1. Set |session|'s [=readable stream settings map=][|stream id|] to
+       |stream settings|.
+
+    1. Let |remote value| be a [=/map=] matching the
+       <code>script.ReadableStreamRemoteValue</code> production in the
+       {^local end definition^}, with the <code>stream</code> property set to
+       |stream id|, and the <code>handle</code> property set to |handle id| if
+       it's not null, or omitted otherwise.
 
     <dt>|value| is a [=platform object=]
     <dd>1. Let |remote value| be a [=/map=] matching the <code>script.ObjectRemoteValue</code>
@@ -13630,7 +14049,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 #### The script.getRealms Command ####  {#command-script-getRealms}
 
 The <dfn export for=commands>script.getRealms</dfn> command returns a list of
-all realms, optionally filtered to [=realms=] of a specific type, or to the
+all realms, optionally filtered to [=/realms=] of a specific type, or to the
 realm associated with a [=/navigable=]'s [=active document=].
 
 <dl>
@@ -13961,6 +14380,13 @@ Define the following [=unloading document cleanup steps=] with |document|:
 
 1. Let |realm id| be the [=realm id=] for |realm|.
 
+1. For each |active session| in [=active sessions=]:
+
+   1. For each |stream setting| in [=active sessions=]'s [=stream settings=]:
+
+      1. If |stream setting|[[=stream settings/realm=]] equal |realm id|
+         [=map/remove=] |stream setting|.
+
 1. Let |params| be a [=/map=] matching the
    <code>script.RealmDestroyedParameters</code> production, with the
    <code>realm</code> field set to |realm id|.
@@ -13985,6 +14411,13 @@ worker=] algorithm:
 1. Let |realm| be |environment settings|'s [=environment settings object's Realm=].
 
 1. Let |realm id| be the [=realm id=] for |realm|.
+
+1. For each |active session| in [=active sessions=]:
+
+   1. For each |stream setting| in [=active sessions=]'s [=stream settings=]:
+
+      1. If |stream setting|[[=stream settings/realm=]] equal |realm id|
+         [=map/remove=] |stream setting|.
 
 1. Let |params| be a [=/map=] matching the <code>script.RealmDestroyedParameters</code>
    production, with the <code>realm</code> field set of |realm id|.
