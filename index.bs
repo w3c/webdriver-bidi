@@ -5691,30 +5691,41 @@ are:
       <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.ContextCreated = (
          method: "browsingContext.contextCreated",
-         params: browsingContext.Info
+         params: browsingContext.ContextCreatedParameters
         )
+
+        browsingContext.ContextCreatedParameters = {
+          ~browsingContext.Info,
+          hasImmediateNavigation: bool,
+        }
       </pre>
    </dd>
 </dl>
 
 <div algorithm>
 
-To <dfn>Recursively emit context created events</dfn> given |session| and |navigable|:
+To <dfn>Recursively emit context created events</dfn> given |session|, |navigable|,
+and |has immediate navigation|:
 
-1. [=Emit a context created event=] with |session| and |navigable|.
+1. [=Emit a context created event=] with |session|, |navigable|, and
+   |has immediate navigation|.
 
 1. For each child navigable, |child|, of |navigable|:
 
-  1. [=Recursively emit context created events=] given |session| and |child|.
+  1. [=Recursively emit context created events=] given |session|, |child|, and
+     |has immediate navigation|.
 
 </div>
 
 <div algorithm>
 
-To <dfn>Emit a context created event</dfn> given |session| and |navigable|:
+To <dfn>Emit a context created event</dfn> given |session|, |navigable|, and
+|has immediate navigation|:
 
 1. Let |params| be the result of [=get the navigable info=] given
    |navigable|, 0, and true.
+
+1. Set |params|["<code>hasImmediateNavigation</code>"] to |has immediate navigation|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.ContextCreated</code> production, with the
@@ -5729,7 +5740,7 @@ To <dfn>Emit a context created event</dfn> given |session| and |navigable|:
 
 The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable created</dfn> steps given
-[=/navigable=] |navigable| and [=/navigable=] |opener navigable|:
+[=/navigable=] |navigable|, |has immediate navigation|, and [=/navigable=] |opener navigable|:
 
 1. Set |navigable|'s [=original opener=] to |opener navigable|,
    if |opener navigable| is provided.
@@ -5743,7 +5754,8 @@ the <dfn export>WebDriver BiDi navigable created</dfn> steps given
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.contextCreated</code>" and |related navigables|:
 
-  1. [=Emit a context created event=] given |session| and |navigable|.
+  1. [=Emit a context created event=] given |session|, |navigable|, and
+     |has immediate navigation|.
 
 </div>
 
@@ -5754,7 +5766,7 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 1, given
 
 1. For each |navigable| in |navigables|:
 
-  1. [=Recursively emit context created events=] given |session| and |navigable|.
+  1. [=Recursively emit context created events=] given |session|, |navigable|, and false.
 
 </div>
 
