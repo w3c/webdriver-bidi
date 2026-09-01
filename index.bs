@@ -7799,16 +7799,6 @@ To <dfn>cancel a readable stream</dfn> given |realm|, |stream| and |reason|:
 
 ### Types ### {#module-io-types}
 
-#### The io.ReadableStream Type #### {#type-io-ReadableStream}
-
-<pre class="cddl" data-cddl-module="local-cddl">
-io.ReadableStream = {
-  stream: io.Stream,
-}
-</pre>
-
-The <code>io.ReadableStream</code> type represents a [=readable stream=].
-
 #### The io.ReadData Type #### {#type-io-ReadData}
 
 <pre class="cddl" data-cddl-module="local-cddl">
@@ -7964,11 +7954,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
         <dd>Reject |promise| with |e|.
      </dl>
 
-   1. Let |read request| be the result of [=ReadableStreamDefaultReader/read a chunk=] from |reader| given |read request|.
+   1. [=ReadableStreamDefaultReader/Read a chunk=] from |reader| given |read request|.
 
-   1. If |read result|.\[[Type]] is <code>normal</code>:
-
-      1. Set |read result| to <a spec=ECMASCRIPT>Await</a>(|read result|.\[[Value]]).
+   1. Let |read result| be <a spec=ECMASCRIPT>Await</a>(|promise|).
 
    1. [=Clean up after running script=] with |environment settings|.
 
@@ -12971,6 +12959,9 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
        |stream id|, and the <code>handle</code> property set to |handle id| if
        it's not null, or omitted otherwise.
 
+   1. [=Set internal ids if needed=] with |serialization internal map|,
+      |remote value| and |value|.
+
     <dt>|value| is a [=platform object=]
     <dd>1. Let |remote value| be a [=/map=] matching the <code>script.ObjectRemoteValue</code>
            production in the {^local end definition^}, with the <code>handle</code>
@@ -14156,8 +14147,9 @@ Define the following [=unloading document cleanup steps=] with |document|:
    1. For each |stream id| → |stream settings| in |active session|'s
       [=readable stream settings map=]:
 
-      1. If |stream settings|[[=stream settings/realm=]] equals |realm id|,
-         [=remove a readable stream=] given |active session| and |stream id|.
+      1. If |stream settings|[[=stream settings/realm=]] equals |realm id|:
+
+         1. [=Remove a readable stream=] given |active session| and |stream id|.
 
 1. Let |params| be a [=/map=] matching the
    <code>script.RealmDestroyedParameters</code> production, with the
