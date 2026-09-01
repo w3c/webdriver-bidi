@@ -7754,7 +7754,8 @@ a <code>io.Stream</code> and [=stream settings=].
 
 <dfn>Stream settings</dfn> is a [=struct=] with
 an [=struct/item=] named <dfn for="stream settings">stream</dfn>, which is a [=readable stream=],
-an [=struct/item=] named <dfn for="stream settings">realm</dfn>, which is a <code>script.Realm</code> or null.
+an [=struct/item=] named <dfn for="stream settings">realm</dfn>, which is a <code>script.Realm</code> or null, and
+an [=struct/item=] named <dfn for="stream settings">handle</dfn>, which is a <code>script.Handle</code>.
 
 <div class="algorithm">
 
@@ -12559,8 +12560,10 @@ script.WindowProxyProperties = {
 
 script.ReadableStreamRemoteValue = {
   type: "readable-stream",
-  stream: io.Stream,
-  ? handle: script.Handle,
+  ? (
+    stream: io.Stream,
+    handle: script.Handle,
+  ),
   ? internalId: script.InternalId,
 }
 </pre>
@@ -12938,29 +12941,33 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
 
     <dt>|value| is a [=platform object=] that implements {{ReadableStream}}
     <dd>
-    1. Let |stream realm| be |value|'s [=relevant settings object=]'s
-       [=realm execution context=]'s Realm component.
-
-    1. If |stream realm| is null, let |realm id| be null. Otherwise, let
-       |realm id| be the [=realm id=] for |stream realm|.
-
-    1. Let |stream id| be the string representation of a [[!RFC9562|UUID]].
-
-    1. Let |stream settings| be a [=stream settings=] struct with the
-       [=stream settings/stream=] item set to |value| and the
-       [=stream settings/realm=] item set to |realm id|.
-
-    1. Set |session|'s [=readable stream settings map=][|stream id|] to
-       |stream settings|.
-
     1. Let |remote value| be a [=/map=] matching the
        <code>script.ReadableStreamRemoteValue</code> production in the
-       {^local end definition^}, with the <code>stream</code> property set to
-       |stream id|, and the <code>handle</code> property set to |handle id| if
-       it's not null, or omitted otherwise.
+       {^local end definition^}, with the <code>handle</code> property set to
+       |handle id| if it's not null, or omitted otherwise.
 
-   1. [=Set internal ids if needed=] with |serialization internal map|,
-      |remote value| and |value|.
+    1. [=Set internal ids if needed=] with |serialization internal map|,
+       |remote value| and |value|.
+
+    1. If |handle id| is not null:
+
+       1. Let |stream realm| be |value|'s [=relevant settings object=]'s
+          [=realm execution context=]'s Realm component.
+
+       1. If |stream realm| is null, let |realm id| be null. Otherwise, let
+          |realm id| be the [=realm id=] for |stream realm|.
+
+       1. Let |stream id| be the string representation of a [[!RFC9562|UUID]].
+
+       1. Let |stream settings| be a [=stream settings=] struct with the
+          [=stream settings/stream=] item set to |value|, the
+          [=stream settings/realm=] item set to |realm id|, and the
+          [=stream settings/handle=] item set to |handle id|.
+
+       1. Set |session|'s [=readable stream settings map=][|stream id|] to
+          |stream settings|.
+
+       1. Set |remote value|["<code>stream</code>"] to |stream id|.
 
     <dt>|value| is a [=platform object=]
     <dd>1. Let |remote value| be a [=/map=] matching the <code>script.ObjectRemoteValue</code>
@@ -13493,7 +13500,7 @@ other handles or strong ECMAScript references.
 </dl>
 
 <div algorithm="remote end steps for script.disown">
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given the value of the <code>target</code> field of |command parameters|.
@@ -13504,7 +13511,19 @@ The [=remote end steps=] with |command parameters| are:
 
    1. Let |handle map| be |realm|'s [=handle object map=]
 
-   1. If |handle map| contains |handle id|, remove |handle id| from the |handle map|.
+   1. If |handle map| contains |handle id|:
+
+      1. Remove |handle id| from the |handle map|.
+
+      1. For each |stream id| → |stream settings| in |session|'s
+         [=readable stream settings map=]:
+
+         1. If |stream settings|[[=stream settings/handle=]] equals |handle id|:
+
+            1. [=Cancel a readable stream=] given |realm|,
+               |stream settings|[[=stream settings/stream=]] and undefined.
+
+            1. [=Remove a readable stream=] given |session| and |stream id|.
 
 1. Return [=success=] with data null.
 
