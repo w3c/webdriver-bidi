@@ -132,6 +132,8 @@ spec: CONSOLE; urlPrefix: https://console.spec.whatwg.org
 spec: ECMASCRIPT-I18N; urlPrefix: https://tc39.es/ecma402/
   type: dfn
     text: DefaultLocale; url: #sec-defaultlocale
+    text: finite; url: #finite
+    text: integral Number; url: #integral-number
     text: IsStructurallyValidLanguageTag; url: #sec-isstructurallyvalidlanguagetag
 spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
   type: dfn
@@ -3983,6 +3985,19 @@ To <dfn>rectangle intersection</dfn> given |rect1| and |rect2|
 </div>
 
 <div algorithm>
+To <dfn>round a number</dfn> given |number|:
+
+1. If |number| is not [=finite=] or |number| is an [=integral Number=], return |number|.
+
+1. If |number| < 0.5𝔽 and |number| > +0𝔽, return +0𝔽.
+
+1. If |number| < -0𝔽 and n ≥ -0.5𝔽, return -0𝔽.
+
+1. Return the [=integral Number=] closest to |number|, preferring the Number closer to +∞ in the case of a tie.
+
+</div>
+
+<div algorithm>
 To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image size|:
 
 1. Let |ratio| be [=determine the device pixel ratio=] given |document|'s
@@ -4012,9 +4027,13 @@ To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image si
       height| is less than |scale|, set |scale| to |max height| divided by
       |framebuffer height|.
 
-1. Let |paint width| be the maximum of 1 and |framebuffer width| multiplied by |scale|, rounded to the nearest integer.
+1. Let |scale width| be [=round a number=] given |framebuffer width| multiplied by |scale| rounded to the nearest integer.
 
-1. Let |paint height| be the maximum of 1 and |framebuffer height| multiplied by |scale|, rounded to the nearest integer.
+1. Let |scale height| be [=round a number=] given |framebuffer height| multiplied by |scale| rounded to the nearest integer.
+
+1. Let |paint width| be the maximum of 1 and |scale width|.
+
+1. Let |paint height| be the maximum of 1 and |scale height|.
 
 1. Let |canvas| be a new {{HTMLCanvasElement}} with {{HTMLCanvasElement/width}} |paint
    width| and {{HTMLCanvasElement/height}} |paint height|.
@@ -4036,15 +4055,24 @@ To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image si
    points (0, 0), (|framebuffer width|, 0), (|framebuffer width|,
    |framebuffer height|), and (0, |framebuffer height|).
 
-1. Invoke |canvas context|'s {{CanvasTransform/scale()}} method with
+1. Run the steps corresponding to the {{CanvasTransform/scale()}} method on |canvas context| with
    <var ignore>x</var> set to |paint width| divided by |framebuffer width|, and
    <var ignore>y</var> set to |paint height| divided by |framebuffer height|.
 
+   Note: Running these steps doesn't cause any script to execute.
+
 1. Complete implementation specific steps equivalent to painting the region of
    |document|'s framebuffer specified by |source rectangle| on the region of
-   |canvas context|'s [=output bitmap=] specified by |destination rectangle|,
-   after applying |canvas context|'s [=current transformation matrix=] to
-   |destination rectangle|.
+   |canvas context|'s [=output bitmap=] specified by |destination rectangle|.
+
+   When the dimensions of |destination rectangle| are smaller than |source rectangle|,
+   then the value painted at a point in the |destination rectangle| is computed
+   by filtering the data from |document|'s framebuffer. The user agent may use
+   any filtering algorithm (for example bilinear interpolation or nearest-neighbor).
+   When the filtering algorithm requires a pixel value from outside the framebuffer,
+   it must instead use the value from the nearest edge pixel. (That is, the filter uses "clamp-to-edge" behavior.)
+   When the filtering algorithm requires a pixel value from outside the |source rectangle|
+   but inside the framebuffer, then the value from the framebuffer must be used.
 
 1. Return |canvas|.
 
