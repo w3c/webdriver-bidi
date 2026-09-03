@@ -132,6 +132,8 @@ spec: CONSOLE; urlPrefix: https://console.spec.whatwg.org
 spec: ECMASCRIPT-I18N; urlPrefix: https://tc39.es/ecma402/
   type: dfn
     text: DefaultLocale; url: #sec-defaultlocale
+    text: finite; url: #finite
+    text: integral Number; url: #integral-number
     text: IsStructurallyValidLanguageTag; url: #sec-isstructurallyvalidlanguagetag
 spec: ECMASCRIPT; urlPrefix: https://tc39.es/ecma262/
   type: dfn
@@ -241,6 +243,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: navigation id; url: browsing-the-web.html#navigation-id
     text: ongoing-navigation; url: browsing-the-web.html#ongoing-navigation
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
+    text: output bitmap; url: canvas.html#output-bitmap
     text: parent; for:navigable; url: document-sequences.html#nav-parent
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: prompt; url: timers-and-user-prompts.html#dom-prompt
@@ -3868,11 +3871,17 @@ Base64-encoded string.
         ? origin: ("viewport" / "document") .default "viewport",
         ? format: browsingContext.ImageFormat,
         ? clip: browsingContext.ClipRectangle,
+        ? imageSize: browsingContext.ImageSize,
       }
 
       browsingContext.ImageFormat = {
          type: text,
          ? quality: 0.0..1.0,
+      }
+
+      browsingContext.ImageSize = {
+         ? maxWidth: (js-uint .gt 1),
+         ? maxHeight: (js-uint .gt 1),
       }
 
       browsingContext.ClipRectangle = (
@@ -3972,18 +3981,55 @@ To <dfn>rectangle intersection</dfn> given |rect1| and |rect2|
 </div>
 
 <div algorithm>
-To <dfn>render document to a canvas</dfn> given |document| and |rect|:
+To <dfn>round a number</dfn> given |number|:
+
+1. If |number| is not [=finite=] or |number| is an [=integral Number=], return |number|.
+
+1. If |number| < 0.5𝔽 and |number| > +0𝔽, return +0𝔽.
+
+1. If |number| < -0𝔽 and n ≥ -0.5𝔽, return -0𝔽.
+
+1. Return the [=integral Number=] closest to |number|, preferring the Number closer to +∞ in the case of a tie.
+
+</div>
+
+<div algorithm>
+To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image size|:
 
 1. Let |ratio| be [=determine the device pixel ratio=] given |document|'s
    [=default view=].
 
-1. Let |paint width| be |rect|'s [=width dimension=] multiplied by |ratio|,
-   rounded to the nearest integer, so it matches the width of |rect| in device
-   pixels.
+1. Let |framebuffer width| be |rect|'s [=width dimension=] multiplied by
+   |ratio|, so it matches the width of |rect| in device pixels.
 
-1. Let |paint height| be |rect|'s [=height dimension=] multiplied by |ratio|,
-   rounded to the nearest integer, so it matches the height of |rect| in device
-   pixels.
+1. Let |framebuffer height| be |rect|'s [=height dimension=] multiplied by
+   |ratio|, so it matches the height of |rect| in device pixels.
+
+1. Let |scale| be 1.
+
+1. If |image size| is not null:
+
+   1. Let |max width| be the <code>maxWidth</code> field of |image size| if
+      present, or null otherwise.
+
+   1. Let |max height| be the <code>maxHeight</code> field of |image size| if
+      present, or null otherwise.
+
+   1. If |max width| is not null and |max width| divided by |framebuffer width|
+      is less than |scale|, set |scale| to |max width| divided by |framebuffer
+      width|.
+
+   1. If |max height| is not null and |max height| divided by |framebuffer
+      height| is less than |scale|, set |scale| to |max height| divided by
+      |framebuffer height|.
+
+1. Let |scale width| be [=round a number=] given |framebuffer width| multiplied by |scale| rounded to the nearest integer.
+
+1. Let |scale height| be [=round a number=] given |framebuffer height| multiplied by |scale| rounded to the nearest integer.
+
+1. Let |paint width| be the maximum of 1 and |scale width|.
+
+1. Let |paint height| be the maximum of 1 and |scale height|.
 
 1. Let |canvas| be a new {{HTMLCanvasElement}} with {{HTMLCanvasElement/width}} |paint
    width| and {{HTMLCanvasElement/height}} |paint height|.
@@ -3993,16 +4039,32 @@ To <dfn>render document to a canvas</dfn> given |document| and |rect|:
 
 1. Set |canvas|'s [=context mode=] to [=2D=].
 
-1. Complete implementation specific steps equivalent to drawing the region of
-   the framebuffer representing the region of |document| covered by |rect| to
-   |canvas context|, such that each pixel in the framebuffer corresponds to a pixel in
-   |canvas context| with (|rect|'s [=x coordinate=], |rect|'s [=y coordinate=]) in
-   viewport coordinates corresponding to (0,0) in |canvas context| and (|rect|'s
-   [=x coordinate=] + |rect|'s [=width dimension=], |rect|'s
-   [=y coordinate=] + |rect|'s [=height dimension=]) corresponding to (|paint
-   width|, |paint height|).
+1. Let |source x| be |rect|'s [=x coordinate=] multiplied by |ratio|, and let
+   |source y| be |rect|'s [=y coordinate=] multiplied by |ratio|.
 
-1. Return [=canvas=].
+1. Let |source rectangle| be the rectangle whose corners are the four points
+   (|source x|, |source y|), (|source x| + |framebuffer width|, |source y|),
+   (|source x| + |framebuffer width|, |source y| + |framebuffer height|), and
+   (|source x|, |source y| + |framebuffer height|).
+
+1. Let |destination rectangle| be the rectangle whose corners are the four
+   points (0, 0), (|framebuffer width|, 0), (|framebuffer width|,
+   |framebuffer height|), and (0, |framebuffer height|).
+
+1. Complete implementation specific steps equivalent to painting the region of
+   |document|'s framebuffer specified by |source rectangle| on the region of
+   |canvas context|'s [=output bitmap=] specified by |destination rectangle|.
+
+   When the dimensions of |destination rectangle| are smaller than |source rectangle|,
+   then the value painted at a point in the |destination rectangle| is computed
+   by filtering the data from |document|'s framebuffer. The user agent may use
+   any filtering algorithm (for example bilinear interpolation or nearest-neighbor).
+   When the filtering algorithm requires a pixel value from outside the framebuffer,
+   it must instead use the value from the nearest edge pixel. (That is, the filter uses "clamp-to-edge" behavior.)
+   When the filtering algorithm requires a pixel value from outside the |source rectangle|
+   but inside the framebuffer, then the value from the framebuffer must be used.
+
+1. Return |canvas|.
 
 </div>
 
@@ -4132,7 +4194,11 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. If |rect|'s [=width dimension=] is 0 or |rect|'s [=height dimension=] is 0,
    return [=error=] with error code [=unable to capture screen=].
 
-1. Let |canvas| be [=render document to a canvas=] with |document| and |rect|.
+1. Let |image size| be the value of the <code>imageSize</code> field of |command
+   parameters| if present, or null otherwise.
+
+1. Let |canvas| be [=render document to a canvas=] with |document|, |rect| and
+   |image size|.
 
 1. Let |format| be the <code>format</code> field of |command parameters|.
 
