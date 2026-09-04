@@ -114,6 +114,10 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: set a property; url: dfn-set-a-property
     text: success; url: dfn-success
     text: table for cookie conversion; url: dfn-table-for-cookie-conversion
+    text: start the timer; url: dfn-start-the-timer
+    text: timeout; url: dfn-timeout
+    text: timeout fired flag; for: timer; url: dfn-timeout-fired-flag
+    text: timer; url: dfn-timer
     text: try; url: dfn-try
     text: trying; url: dfn-try
     text: unable to capture screen; url: dfn-unable-to-capture-screen
@@ -872,6 +876,7 @@ ErrorCode = "invalid argument" /
             "session not created" /
             "stream closed" /
             "stream read error" /
+            "timeout" /
             "unable to capture screen" /
             "unable to close browser" /
             "unable to set cookie" /
@@ -7894,7 +7899,10 @@ The [=remote end steps=] given |session| and |command parameters| are:
 #### The io.readStream Command #### {#command-io.readStream}
 
 The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of a
-[=readable stream=].
+[=readable stream=]. If provided, the <code>timeout</code> parameter specifies the
+maximum number of milliseconds to wait for the next chunk. If the timeout
+expires, the command returns an [=error=] with [=error code=] [=timeout=]
+without removing the stream.
 
 <dl>
   <dt>Command Type</dt>
@@ -7907,6 +7915,7 @@ The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of
 
       io.ReadStreamParameters = {
         stream: io.Stream,
+        ? timeout: js-uint,
       }
     </pre>
    </dd>
@@ -7923,6 +7932,9 @@ The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of
 The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |stream id| be |command parameters|["<code>stream</code>"].
+
+1. Let |timeout| be |command parameters|["<code>timeout</code>"] if present, or
+   null otherwise.
 
 1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
    |session| and |stream id|.
@@ -7942,6 +7954,10 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Let |reader| be the result of [=trying=] to [=ReadableStream/getting a reader=] for |stream|.
 
+   1. Let |timer| be a new [=timer=].
+
+   1. If |timeout| is not null, [=start the timer=] with |timer| and |timeout|.
+
    1. Let |promise| be [=a new promise=].
 
    1. Let |read request| be a new [=read request=] with the following [=struct/items=]:
@@ -7957,11 +7973,17 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. [=ReadableStreamDefaultReader/Read a chunk=] from |reader| given |read request|.
 
-   1. Let |read result| be <a spec=ECMASCRIPT>Await</a>(|promise|).
+   1. Wait until |promise| is resolved, or |timer|'s [=timer/timeout fired flag=]
+      is set, whichever occurs first.
 
    1. [=Clean up after running script=] with |environment settings|.
 
    1. [=ReadableStreamDefaultReader/Release=] |reader|.
+
+   1. If |promise| is still pending and |timer|'s [=timer/timeout fired flag=]
+      is set, return [=error=] with [=error code=] [=timeout=].
+
+   1. Let |read result| be <a spec=ECMASCRIPT>Await</a>(|promise|).
 
    1. If |read result|.\[[Type]] is <code>throw</code>:
 
