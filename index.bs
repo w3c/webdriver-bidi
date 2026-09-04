@@ -1866,7 +1866,7 @@ To <dfn>cleanup the session</dfn> given |session|:
       1. Let |realm| be the [=/realm=] with [=realm id|id=] |realm id|.
 
       1. [=Cancel a readable stream=] given |realm|,
-         |stream settings|[[=stream settings/stream=]] and undefined.
+         |stream settings| and undefined.
 
 1. [=map/Clear=] |session|'s [=readable stream settings map=].
 
@@ -7757,10 +7757,17 @@ data that can be read from or written to.
 A [=BiDi Session=] has a <dfn>readable stream settings map</dfn> which is a [=/map=] between
 a <code>io.Stream</code> and [=stream settings=].
 
-<dfn>Stream settings</dfn> is a [=struct=] with
-an [=struct/item=] named <dfn for="stream settings">stream</dfn>, which is a [=readable stream=],
-an [=struct/item=] named <dfn for="stream settings">realm</dfn>, which is a <code>script.Realm</code> or null, and
-an [=struct/item=] named <dfn for="stream settings">handle</dfn>, which is a <code>script.Handle</code>.
+<dfn>Stream settings</dfn> is a [=struct=] with the following [=struct/items=]:
+
+* <dfn for="stream settings">stream</dfn>, which is a [=readable stream=].
+* <dfn for="stream settings">realm</dfn>, which is a <code>script.Realm</code> or null.
+* <dfn for="stream settings">handle</dfn>, which is a <code>script.Handle</code>.
+* <dfn for="stream settings">reader</dfn>, which is a {{ReadableStreamDefaultReader}}
+  or null, initially null.
+* <dfn for="stream settings">read promise</dfn>, which is a promise or null,
+  initially null.
+* <dfn for="stream settings">read command active</dfn>, which is a boolean,
+  initially false.
 
 <div class="algorithm">
 
@@ -7787,15 +7794,26 @@ To <dfn>remove a readable stream</dfn> given |session| and |stream|:
 
 <div class="algorithm">
 
-To <dfn>cancel a readable stream</dfn> given |realm|, |stream| and |reason|:
+To <dfn>cancel a readable stream</dfn> given |realm|, |stream settings| and |reason|:
+
+1. Let |stream| be |stream settings|[[=stream settings/stream=]].
+
+1. Let |reader| be |stream settings|[[=stream settings/reader=]].
 
 1. Let |environment settings| be the [=environment settings object=] whose
    [=realm execution context=]'s Realm component is |realm|.
 
 1. [=Prepare to run script=] with |environment settings|.
 
-1. Let |promise| be the result of [=ReadableStream/cancel=] |stream| with
-   |reason|.
+1. If |reader| is null, let |promise| be the result of [=ReadableStream/cancel=]
+   |stream| with |reason|.
+
+1. Otherwise:
+
+   1. Let |promise| be the result of [=ReadableStreamDefaultReader/cancel=]
+      |reader| with |reason|.
+
+   1. [=ReadableStreamDefaultReader/Release=] |reader|.
 
 1. [=Clean up after running script=] with |environment settings|.
 
@@ -7863,8 +7881,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
    |session| and |stream id|.
 
-1. Let |stream| be |stream settings|[[=stream settings/stream=]].
-
 1. Let |realm id| be |stream settings|[[=stream settings/realm=]].
 
 1. If |command parameters| [=map/contains=] "<code>reason</code>", let |reason|
@@ -7876,7 +7892,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
      1. Let |realm| be the result of [=trying=] to [=get a realm=] with |realm id|.
 
      1. Let |promise| be the result of [=cancel a readable stream=] given
-        |realm|, |stream| and |reason|.
+        |realm|, |stream settings| and |reason|.
 
      1. [=Remove a readable stream=] given |session| and |stream id|.
 
@@ -7939,8 +7955,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
    |session| and |stream id|.
 
-1. Let |stream| be |stream settings|[[=stream settings/stream=]].
-
 1. Let |realm id| be |stream settings|[[=stream settings/realm=]].
 
 1. If |realm id| is not null:
@@ -7950,44 +7964,81 @@ The [=remote end steps=] given |session| and |command parameters| are:
    1. Let |environment settings| be the [=environment settings object=] whose
       [=realm execution context=]'s Realm component is |realm|.
 
+   1. Let |stream map| be |session|'s [=readable stream settings map=].
+
+   1. Wait until |stream settings|[[=stream settings/read command active=]] is
+      false or |stream map| no longer [=map/contains=] |stream id|.
+
+   1. If |stream map| no longer [=map/contains=] |stream id|, return [=error=]
+      with [=error code=] [=no such stream=].
+
+   1. Set |stream settings|[[=stream settings/read command active=]] to true.
+
+   1. Let |stream| be |stream settings|[[=stream settings/stream=]].
+
    1. [=Prepare to run script=] with |environment settings|.
 
-   1. Let |reader| be the result of [=trying=] to [=ReadableStream/getting a reader=] for |stream|.
+   1. Let |reader| be |stream settings|[[=stream settings/reader=]].
+
+   1. If |reader| is null:
+
+      1. Set |reader| to the result of [=ReadableStream/getting a reader=] for
+         |stream|.
+
+      1. Set |stream settings|[[=stream settings/reader=]] to |reader|.
 
    1. Let |timer| be a new [=timer=].
 
    1. If |timeout| is not null, [=start the timer=] with |timer| and |timeout|.
 
-   1. Let |promise| be [=a new promise=].
+   1. Let |promise| be |stream settings|[[=stream settings/read promise=]].
 
-   1. Let |read request| be a new [=read request=] with the following [=struct/items=]:
+   1. If |promise| is null:
 
-     <dl>
-        <dt>[=read request/chunk steps=], given |chunk|
-        <dd>Resolve |promise| with «[ "value" → |chunk|, "done" → false ]».
-        <dt>[=read request/close steps=]
-        <dd>Resolve promise with «[ "value" → undefined, "done" → true ]».
-        <dt>[=read request/error steps=], given |e|
-        <dd>Reject |promise| with |e|.
-     </dl>
+      1. Set |promise| to [=a new promise=].
 
-   1. [=ReadableStreamDefaultReader/Read a chunk=] from |reader| given |read request|.
+      1. Set |stream settings|[[=stream settings/read promise=]] to |promise|.
+
+      1. Let |read request| be a new [=read request=] with the following
+         [=struct/items=]:
+
+        <dl>
+           <dt>[=read request/chunk steps=], given |chunk|
+           <dd>Resolve |promise| with «[ "value" → |chunk|, "done" → false ]».
+           <dt>[=read request/close steps=]
+           <dd>Resolve promise with «[ "value" → undefined, "done" → true ]».
+           <dt>[=read request/error steps=], given |e|
+           <dd>Reject |promise| with |e|.
+        </dl>
+
+      1. [=ReadableStreamDefaultReader/Read a chunk=] from |reader| given
+         |read request|.
 
    1. Wait until |promise| is resolved, or |timer|'s [=timer/timeout fired flag=]
       is set, whichever occurs first.
 
-   1. Let |timed out| be true if |promise| is still pending and |timer|'s
-      [=timer/timeout fired flag=] is set, or false otherwise.
+   1. If |promise| is still pending and |timer|'s [=timer/timeout fired flag=]
+      is set:
 
-   1. [=Clean up after running script=] with |environment settings|.
+      1. [=Clean up after running script=] with |environment settings|.
 
-   1. [=ReadableStreamDefaultReader/Release=] |reader|.
+      1. Set |stream settings|[[=stream settings/read command active=]] to false.
+
+      1. Return [=error=] with [=error code=] [=timeout=].
 
    1. Let |read result| be <a spec=ECMASCRIPT>Await</a>(|promise|).
 
-   1. If |timed out| is true, return [=error=] with [=error code=] [=timeout=].
+   1. Set |stream settings|[[=stream settings/read promise=]] to null.
 
    1. If |read result|.\[[Type]] is <code>throw</code>:
+
+      1. [=ReadableStreamDefaultReader/Release=] |reader|.
+
+      1. Set |stream settings|[[=stream settings/reader=]] to null.
+
+      1. [=Clean up after running script=] with |environment settings|.
+
+      1. Set |stream settings|[[=stream settings/read command active=]] to false.
 
       1. [=Remove a readable stream=] given |session| and |stream id|.
 
@@ -8001,7 +8052,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. If |done| is true:
 
-      1. [=Remove a readable stream=] given |session| and |stream id|.
+      1. [=ReadableStreamDefaultReader/Release=] |reader|.
+
+      1. Set |stream settings|[[=stream settings/reader=]] to null.
 
       1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
          field set to null and the <code>done</code> field set to true.
@@ -8013,6 +8066,13 @@ The [=remote end steps=] given |session| and |command parameters| are:
       1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
          field set to [=forgiving-base64 encode=] |chunk| and the <code>done</code> field
          set to false.
+
+   1. [=Clean up after running script=] with |environment settings|.
+
+   1. Set |stream settings|[[=stream settings/read command active=]] to false.
+
+   1. If |done| is true, [=remove a readable stream=] given |session| and
+      |stream id|.
 
    1. Return [=success=] with data |response|.
 
@@ -12986,7 +13046,10 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
        1. Let |stream settings| be a [=stream settings=] struct with the
           [=stream settings/stream=] item set to |value|, the
           [=stream settings/realm=] item set to |realm id|, and the
-          [=stream settings/handle=] item set to |handle id|.
+          [=stream settings/handle=] item set to |handle id|, the
+          [=stream settings/reader=] and [=stream settings/read promise=] items
+          set to null, and the [=stream settings/read command active=] item set
+          to false.
 
        1. Set |session|'s [=readable stream settings map=][|stream id|] to
           |stream settings|.
@@ -13545,7 +13608,7 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. If |stream settings|[[=stream settings/handle=]] equals |handle id|:
 
             1. [=Cancel a readable stream=] given |realm|,
-               |stream settings|[[=stream settings/stream=]] and undefined.
+               |stream settings| and undefined.
 
             1. [=Remove a readable stream=] given |session| and |stream id|.
 
