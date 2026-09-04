@@ -114,6 +114,10 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: set a property; url: dfn-set-a-property
     text: success; url: dfn-success
     text: table for cookie conversion; url: dfn-table-for-cookie-conversion
+    text: start the timer; url: dfn-start-the-timer
+    text: timeout; url: dfn-timeout
+    text: timeout fired flag; for: timer; url: dfn-timeout-fired-flag
+    text: timer; url: dfn-timer
     text: try; url: dfn-try
     text: trying; url: dfn-try
     text: unable to capture screen; url: dfn-unable-to-capture-screen
@@ -593,6 +597,7 @@ CommandData = (
   BrowsingContextCommand //
   EmulationCommand //
   InputCommand //
+  IoCommand //
   NetworkCommand //
   ScriptCommand //
   SessionCommand //
@@ -635,6 +640,7 @@ ResultData = (
   BrowsingContextResult /
   EmulationResult /
   InputResult /
+  IoResult /
   NetworkResult /
   ScriptResult /
   SessionResult /
@@ -815,11 +821,20 @@ with the following additional codes:
   <dt><dfn for=errors export>no such storage partition</dfn>
   <dd>Tried to access data in a non-existent storage partition.
 
+  <dt><dfn for=errors export>no such stream</dfn>
+  <dd>Tried to access an unknown [=/stream=].
+
   <dt><dfn for=errors export>no such user context</dfn>
   <dd>Tried to reference an unknown [=user context=].
 
   <dt><dfn for=errors export>no such web extension</dfn>
   <dd>Tried to reference an unknown web extension.
+
+  <dt><dfn for=errors export>stream closed</dfn>
+  <dd>Tried to interact with a closed [=/stream=].
+
+  <dt><dfn for=errors export>stream read error</dfn>
+  <dd>Unable to read from a [=/stream=].
 
   <dt><dfn for=errors export>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
@@ -857,9 +872,13 @@ ErrorCode = "invalid argument" /
             "no such screencast" /
             "no such script" /
             "no such storage partition" /
+            "no such stream" /
             "no such user context" /
             "no such web extension" /
             "session not created" /
+            "stream closed" /
+            "stream read error" /
+            "timeout" /
             "unable to capture screen" /
             "unable to close browser" /
             "unable to set cookie" /
@@ -1541,7 +1560,7 @@ explicitly test that scripts running in sandboxes work in all implementations.
 
 ## Sandbox Realms ## {#sandbox-realm}
 
-Each sandbox is a unique ECMAScript [=Realm=]. However the sandbox realm
+Each sandbox is a unique ECMAScript [=/Realm=]. However the sandbox realm
 provides access to platform objects in an existing {{Window}} realm via
 {{SandboxProxy}} objects.
 
@@ -1837,6 +1856,21 @@ To <dfn>cleanup the session</dfn> given |session|:
    1. [=Stop a screencast recording=] given |screencast recording|.
 
    1. [=map/Remove=] |screencast recording| from [=screencast recordings map=].
+
+1. For each <var ignore>stream id</var> → |stream settings| in |session|'s
+   [=readable stream settings map=]:
+
+   1. Let |realm id| be |stream settings|[[=stream settings/realm=]].
+
+   1. If |realm id| is not null and there is a [=/realm=] with
+      [=realm id|id=] |realm id|:
+
+      1. Let |realm| be the [=/realm=] with [=realm id|id=] |realm id|.
+
+      1. [=Cancel a readable stream=] given |realm|,
+         |stream settings| and undefined.
+
+1. [=map/Clear=] |session|'s [=readable stream settings map=].
 
 1. If [=active sessions=] is [=list/empty=], [=cleanup remote end state=].
 
@@ -7938,6 +7972,388 @@ is legacy, user agent might run [=implementation-defined=] steps to respect the
 
 </div>
 
+## The io Module ## {#module-io}
+
+The <dfn export for=modules>io</dfn> module contains commands and events
+relating to IO operations.
+
+### Definition ### {#module-io-definition}
+
+{^remote end definition^}
+
+<pre class="cddl" data-cddl-module="remote-cddl">
+
+IoCommand = (
+  io.CancelStream //
+  io.ReadStream //
+)
+
+</pre>
+
+{^local end definition^}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+
+IoResult = (
+   io.ReadStreamResult
+)
+</pre>
+
+A <dfn lt="stream|IO stream" export>stream</dfn> is an abstract source of
+data that can be read from or written to.
+
+A [=BiDi Session=] has a <dfn>readable stream settings map</dfn> which is a [=/map=] between
+a <code>io.Stream</code> and [=stream settings=].
+
+<dfn>Stream settings</dfn> is a [=struct=] with the following [=struct/items=]:
+
+* <dfn for="stream settings">stream</dfn>, which is a [=readable stream=].
+* <dfn for="stream settings">realm</dfn>, which is a <code>script.Realm</code> or null.
+* <dfn for="stream settings">handle</dfn>, which is a <code>script.Handle</code>.
+* <dfn for="stream settings">reader</dfn>, which is a {{ReadableStreamDefaultReader}}
+  or null, initially null.
+* <dfn for="stream settings">read promise</dfn>, which is a promise or null,
+  initially null.
+* <dfn for="stream settings">read command active</dfn>, which is a boolean,
+  initially false.
+
+<div class="algorithm">
+
+To <dfn>get readable stream settings</dfn> given <var ignore>session</var> and |stream|:
+
+1. Let |stream map| be |session|'s [=readable stream settings map=].
+
+1. If |stream map| [=map/contains=] |stream|, return [=success=] with data
+   |stream map|[|stream|].
+
+1. Return [=error=] with [=error code=] [=no such stream=].
+
+</div>
+
+<div class="algorithm">
+
+To <dfn>remove a readable stream</dfn> given |session| and |stream|:
+
+1. Let |stream map| be |session|'s [=readable stream settings map=].
+
+1. If |stream map| [=map/contains=] |stream|, [=map/remove=] |stream map|[|stream|].
+
+</div>
+
+<div class="algorithm">
+
+To <dfn>cancel a readable stream</dfn> given |realm|, |stream settings| and |reason|:
+
+1. Let |stream| be |stream settings|[[=stream settings/stream=]].
+
+1. Let |reader| be |stream settings|[[=stream settings/reader=]].
+
+1. Let |environment settings| be the [=environment settings object=] whose
+   [=realm execution context=]'s Realm component is |realm|.
+
+1. [=Prepare to run script=] with |environment settings|.
+
+1. If |reader| is null or |reader|'s
+   <a spec=STREAMS for=ReadableStreamGenericReader>\[[stream]]</a> internal slot
+   is undefined, let |promise| be the result of [=ReadableStream/cancel=] |stream|
+   with |reason|.
+
+1. Otherwise:
+
+   1. Let |promise| be the result of [=ReadableStreamDefaultReader/cancel=]
+      |reader| with |reason|.
+
+   1. [=ReadableStreamDefaultReader/Release=] |reader|.
+
+1. Set |stream settings|[[=stream settings/reader=]] to null.
+
+1. [=Clean up after running script=] with |environment settings|.
+
+1. Return |promise|.
+
+</div>
+
+### Types ### {#module-io-types}
+
+#### The io.ReadData Type #### {#type-io-ReadData}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+io.ReadData = {
+  value: text / null,
+  done: bool
+}
+</pre>
+
+The <code>io.ReadData</code> type represents the result of reading a value
+from a [=readable stream=].
+
+
+#### The io.Stream Type #### {#type-io-Stream}
+
+<pre class="cddl" data-cddl-module="remote-cddl,local-cddl">
+io.Stream = text
+</pre>
+
+The <code>io.Stream</code> type represents a handle to an IO [=/stream=].
+
+### Commands ### {#module-io-commands}
+
+#### The io.cancelStream Command ####  {#command-io-cancelStream}
+
+The <dfn export for=commands>io.CancelStream</dfn> command cancels a [=readable stream=].
+
+<dl>
+  <dt>Command Type</dt>
+  <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      io.CancelStream = (
+        method: "io.cancelStream",
+        params: io.CancelStreamParameters
+      )
+
+      io.CancelStreamParameters = {
+        stream: io.Stream,
+        ? reason: text,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      io.CancelStreamResult = EmptyResult
+    </pre>
+  </dd>
+</dl>
+
+<div algorithm="remote end steps for io.CancelStream">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |stream id| be |command parameters|["<code>stream</code>"].
+
+1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
+   |session| and |stream id|.
+
+1. Let |realm id| be |stream settings|[[=stream settings/realm=]].
+
+1. If |command parameters| [=map/contains=] "<code>reason</code>", let |reason|
+   be |command parameters|["<code>reason</code>"]. Otherwise let |reason| be
+   undefined.
+
+1. If |realm id| is not null:
+
+     1. Let |realm| be the result of [=trying=] to [=get a realm=] with |realm id|.
+
+     1. Let |promise| be the result of [=cancel a readable stream=] given
+        |realm|, |stream settings| and |reason|.
+
+     1. [=Remove a readable stream=] given |session| and |stream id|.
+
+     1. [=React=] to |promise|:
+
+      1. If |promise| was rejected, then:
+
+         1. Return [=error=] with [=error code=] [=stream closed=].
+
+      1. If |promise| was fulfilled, then:
+
+         1. Return [=success=] with data null.
+
+1. Otherwise, return error with [=error code=] [=unsupported operation=].
+
+   TODO: Add support for streams that don't have an associated realm.
+
+</div>
+
+#### The io.readStream Command #### {#command-io.readStream}
+
+The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of a
+[=readable stream=]. If provided, the <code>timeout</code> parameter specifies the
+maximum number of milliseconds to wait for the next chunk. If the timeout
+expires, the command returns an [=error=] with [=error code=] [=timeout=]
+without removing the stream. Only one invocation for the same stream can be
+active at a time. Additional concurrent invocations return an [=error=] with
+[=error code=] [=stream read error=].
+
+<dl>
+  <dt>Command Type</dt>
+  <dd>
+    <pre class="cddl" data-cddl-module="remote-cddl">
+      io.ReadStream = (
+       method: "io.readStream",
+       params: io.ReadStreamParameters
+      )
+
+      io.ReadStreamParameters = {
+        stream: io.Stream,
+        ? timeout: js-uint,
+      }
+    </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      io.ReadStreamResult = io.ReadData
+    </pre>
+   </dd>
+</dl>
+
+
+<div algorithm="remote end steps for io.readStream">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |stream id| be |command parameters|["<code>stream</code>"].
+
+1. Let |timeout| be |command parameters|["<code>timeout</code>"] if present, or
+   null otherwise.
+
+1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
+   |session| and |stream id|.
+
+1. If |stream settings|[[=stream settings/read command active=]] is true,
+   return [=error=] with [=error code=] [=stream read error=].
+
+1. Set |stream settings|[[=stream settings/read command active=]] to true.
+
+1. Let |realm id| be |stream settings|[[=stream settings/realm=]].
+
+1. If |realm id| is not null:
+
+   1. Let |realm| be the result of [=trying=] to [=get a realm=] with |realm id|.
+
+   1. Let |environment settings| be the [=environment settings object=] whose
+      [=realm execution context=]'s Realm component is |realm|.
+
+   1. Let |stream| be |stream settings|[[=stream settings/stream=]].
+
+   1. [=Prepare to run script=] with |environment settings|.
+
+   1. Let |reader| be |stream settings|[[=stream settings/reader=]].
+
+   1. If |reader| is null:
+
+      1. Set |reader| to the result of [=ReadableStream/getting a reader=] for
+         |stream|.
+
+      1. Set |stream settings|[[=stream settings/reader=]] to |reader|.
+
+   1. Let |timer| be a new [=timer=].
+
+   1. If |timeout| is not null, [=start the timer=] with |timer| and |timeout|.
+
+   1. Let |promise| be |stream settings|[[=stream settings/read promise=]].
+
+   1. If |promise| is null:
+
+      1. Set |promise| to [=a new promise=].
+
+      1. Set |stream settings|[[=stream settings/read promise=]] to |promise|.
+
+      1. Let |read request| be a new [=read request=] with the following
+         [=struct/items=]:
+
+        <dl>
+           <dt>[=read request/chunk steps=], given |chunk|
+           <dd>
+           1. If |chunk| is not a {{Uint8Array}} object:
+
+              1. Let |error| be a new
+                 <a data-link-type="exception">TypeError</a> object in |realm|.
+
+              1. Reject |promise| with |error|.
+
+              1. Return.
+
+           1. Resolve |promise| with «[ "value" → |chunk|, "done" → false ]».
+
+           <dt>[=read request/close steps=]
+           <dd>Resolve promise with «[ "value" → undefined, "done" → true ]».
+           <dt>[=read request/error steps=], given |e|
+           <dd>Reject |promise| with |e|.
+        </dl>
+
+      1. [=ReadableStreamDefaultReader/Read a chunk=] from |reader| given
+         |read request|.
+
+   1. [=Clean up after running script=] with |environment settings|.
+
+   1. Wait until |promise| is settled, or |timer|'s [=timer/timeout fired flag=]
+      is set, whichever occurs first.
+
+   1. If |promise| is still pending and |timer|'s [=timer/timeout fired flag=]
+      is set:
+
+      1. Set |stream settings|[[=stream settings/read command active=]] to false.
+
+      1. Return [=error=] with [=error code=] [=timeout=].
+
+   1. Let |read result| be <a spec=ECMASCRIPT>Await</a>(|promise|).
+
+   1. Set |stream settings|[[=stream settings/read promise=]] to null.
+
+   1. If |read result|.\[[Type]] is <code>throw</code>:
+
+      1. If |reader|'s
+         <a spec=STREAMS for=ReadableStreamGenericReader>\[[stream]]</a> internal
+         slot is not undefined:
+
+         1. [=Prepare to run script=] with |environment settings|.
+
+         1. [=ReadableStreamDefaultReader/release=] |reader|.
+
+         1. [=Clean up after running script=] with |environment settings|.
+
+      1. Set |stream settings|[[=stream settings/reader=]] to null.
+
+      1. Set |stream settings|[[=stream settings/read command active=]] to false.
+
+      1. [=Remove a readable stream=] given |session| and |stream id|.
+
+      1. Return [=error=] with [=error code=] [=stream read error=].
+
+   1. Assert: |read result|.\[[Type]] is <code>normal</code>.
+
+   1. Let |read value| be |read result|.\[[Value]].
+
+   1. Let |done| be |read value|["<code>done</code>"].
+
+   1. If |done| is true:
+
+      1. If |reader|'s
+         <a spec=STREAMS for=ReadableStreamGenericReader>\[[stream]]</a> internal
+         slot is not undefined:
+
+         1. [=Prepare to run script=] with |environment settings|.
+
+         1. [=ReadableStreamDefaultReader/release=] |reader|.
+
+         1. [=Clean up after running script=] with |environment settings|.
+
+      1. Set |stream settings|[[=stream settings/reader=]] to null.
+
+      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
+         field set to null and the <code>done</code> field set to true.
+
+   1. Otherwise:
+
+      1. Let |chunk| be |read value|["<code>value</code>"].
+
+      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
+         field set to [=forgiving-base64 encode=] |chunk| and the <code>done</code> field
+         set to false.
+
+   1. Set |stream settings|[[=stream settings/read command active=]] to false.
+
+   1. If |done| is true, [=remove a readable stream=] given |session| and
+      |stream id|.
+
+   1. Return [=success=] with data |response|.
+
+1. Otherwise, return [=error=] with [=error code=] [=unsupported operation=].
+
+   TODO: Add support for streams that don't have an associated realm.
+
+</div>
+
 ## The network Module ## {#module-network}
 
 The <dfn export for=modules>network</dfn> module contains commands and events
@@ -11553,9 +11969,9 @@ script.Handle = text;
 </pre>
 
 The <code>script.Handle</code> type represents a handle to an object owned by
-the ECMAScript runtime. The handle is only valid in a specific [=Realm=].
+the ECMAScript runtime. The handle is only valid in a specific [=/Realm=].
 
-Each ECMAScript [=Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
+Each ECMAScript [=/Realm=] has a corresponding <dfn>handle object map</dfn>. This is a
 strong [=/map=] from handle ids to their corresponding objects.
 
 #### The script.InternalId Type #### {#type-script-InternalId}
@@ -11791,7 +12207,7 @@ on realm creation.
 script.Realm = text;
 </pre>
 
-Each [=realm=] has an associated <dfn export>realm id</dfn>, which is a string
+Each [=/realm=] has an associated <dfn export>realm id</dfn>, which is a string
 uniquely identifying that realm. This is implicitly set when the realm is
 created.
 
@@ -11807,10 +12223,10 @@ To <dfn>get a realm</dfn> given |realm id|:
 
 1. If |realm id| is null, return [=success=] with data null.
 
-1. If there is no [=realm=] with [=realm id|id=] |realm id| return
+1. If there is no [=/realm=] with [=realm id|id=] |realm id| return
    [=error=] with [=error code=] [=no such frame=]
 
-1. Let |realm| be the [=realm=] with [=realm id|id=] |realm id|.
+1. Let |realm| be the [=/realm=] with [=realm id|id=] |realm id|.
 
 1. Return [=success=] with data |realm|
 
@@ -12239,7 +12655,7 @@ script.RemoteObjectReference = {
 
 The <code><dfn>script.RemoteReference</dfn></code> type is either a
 <code>script.RemoteObjectReference</code> representing a remote reference to an
-existing ECMAScript object in [=handle object map=] in the given [=Realm=], or
+existing ECMAScript object in [=handle object map=] in the given [=/Realm=], or
 is a <code>script.SharedReference</code> representing a reference to a [=node=].
 
 Issue: handle "stale object reference" case.
@@ -12345,7 +12761,8 @@ script.RemoteValue = (
   script.NodeListRemoteValue /
   script.HTMLCollectionRemoteValue /
   script.NodeRemoteValue /
-  script.WindowProxyRemoteValue
+  script.WindowProxyRemoteValue /
+  script.ReadableStreamRemoteValue
 )
 
 script.ListRemoteValue = [*script.RemoteValue];
@@ -12495,6 +12912,15 @@ script.WindowProxyRemoteValue = {
 
 script.WindowProxyProperties = {
   context: browsingContext.BrowsingContext
+}
+
+script.ReadableStreamRemoteValue = {
+  type: "readable-stream",
+  ? (
+    stream: io.Stream,
+    handle: script.Handle,
+  ),
+  ? internalId: script.InternalId,
 }
 </pre>
 
@@ -12868,6 +13294,39 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
        production in the {^local end definition^}, with the <code>handle</code>
        property set to |handle id| if it's not null, or omitted otherwise, and
        the <code>value</code> property set to |serialized|.
+
+    <dt>|value| is a [=platform object=] that implements {{ReadableStream}}
+    <dd>
+    1. Let |remote value| be a [=/map=] matching the
+       <code>script.ReadableStreamRemoteValue</code> production in the
+       {^local end definition^}, with the <code>handle</code> property set to
+       |handle id| if it's not null, or omitted otherwise.
+
+    1. [=Set internal ids if needed=] with |serialization internal map|,
+       |remote value| and |value|.
+
+    1. If |handle id| is not null:
+
+       1. Let |stream realm| be |value|'s [=relevant settings object=]'s
+          [=realm execution context=]'s Realm component.
+
+       1. If |stream realm| is null, let |realm id| be null. Otherwise, let
+          |realm id| be the [=realm id=] for |stream realm|.
+
+       1. Let |stream id| be the string representation of a [[!RFC9562|UUID]].
+
+       1. Let |stream settings| be a [=stream settings=] struct with the
+          [=stream settings/stream=] item set to |value|, the
+          [=stream settings/realm=] item set to |realm id|, and the
+          [=stream settings/handle=] item set to |handle id|, the
+          [=stream settings/reader=] and [=stream settings/read promise=] items
+          set to null, and the [=stream settings/read command active=] item set
+          to false.
+
+       1. Set |session|'s [=readable stream settings map=][|stream id|] to
+          |stream settings|.
+
+       1. Set |remote value|["<code>stream</code>"] to |stream id|.
 
     <dt>|value| is a [=platform object=]
     <dd>1. Let |remote value| be a [=/map=] matching the <code>script.ObjectRemoteValue</code>
@@ -13400,7 +13859,7 @@ other handles or strong ECMAScript references.
 </dl>
 
 <div algorithm="remote end steps for script.disown">
-The [=remote end steps=] with |command parameters| are:
+The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given the value of the <code>target</code> field of |command parameters|.
@@ -13411,7 +13870,19 @@ The [=remote end steps=] with |command parameters| are:
 
    1. Let |handle map| be |realm|'s [=handle object map=]
 
-   1. If |handle map| contains |handle id|, remove |handle id| from the |handle map|.
+   1. If |handle map| contains |handle id|:
+
+      1. Remove |handle id| from the |handle map|.
+
+      1. For each |stream id| → |stream settings| in |session|'s
+         [=readable stream settings map=]:
+
+         1. If |stream settings|[[=stream settings/handle=]] equals |handle id|:
+
+            1. [=Cancel a readable stream=] given |realm|,
+               |stream settings| and undefined.
+
+            1. [=Remove a readable stream=] given |session| and |stream id|.
 
 1. Return [=success=] with data null.
 
@@ -13718,7 +14189,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 #### The script.getRealms Command ####  {#command-script-getRealms}
 
 The <dfn export for=commands>script.getRealms</dfn> command returns a list of
-all realms, optionally filtered to [=realms=] of a specific type, or to the
+all realms, optionally filtered to [=/realms=] of a specific type, or to the
 realm associated with a [=/navigable=]'s [=active document=].
 
 <dl>
@@ -14049,6 +14520,15 @@ Define the following [=unloading document cleanup steps=] with |document|:
 
 1. Let |realm id| be the [=realm id=] for |realm|.
 
+1. For each |active session| in [=active sessions=]:
+
+   1. For each |stream id| → |stream settings| in |active session|'s
+      [=readable stream settings map=]:
+
+      1. If |stream settings|[[=stream settings/realm=]] equals |realm id|:
+
+         1. [=Remove a readable stream=] given |active session| and |stream id|.
+
 1. Let |params| be a [=/map=] matching the
    <code>script.RealmDestroyedParameters</code> production, with the
    <code>realm</code> field set to |realm id|.
@@ -14073,6 +14553,14 @@ worker=] algorithm:
 1. Let |realm| be |environment settings|'s [=environment settings object's Realm=].
 
 1. Let |realm id| be the [=realm id=] for |realm|.
+
+1. For each |active session| in [=active sessions=]:
+
+   1. For each |stream id| → |stream settings| in |active session|'s
+      [=readable stream settings map=]:
+
+      1. If |stream settings|[[=stream settings/realm=]] equals |realm id|,
+         [=remove a readable stream=] given |active session| and |stream id|.
 
 1. Let |params| be a [=/map=] matching the <code>script.RealmDestroyedParameters</code>
    production, with the <code>realm</code> field set to |realm id|.
