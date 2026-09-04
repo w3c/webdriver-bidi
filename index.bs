@@ -7805,8 +7805,10 @@ To <dfn>cancel a readable stream</dfn> given |realm|, |stream settings| and |rea
 
 1. [=Prepare to run script=] with |environment settings|.
 
-1. If |reader| is null, let |promise| be the result of [=ReadableStream/cancel=]
-   |stream| with |reason|.
+1. If |reader| is null or |reader|'s
+   <a spec=STREAMS for=ReadableStreamGenericReader>\[[stream]]</a> internal slot
+   is undefined, let |promise| be the result of [=ReadableStream/cancel=] |stream|
+   with |reason|.
 
 1. Otherwise:
 
@@ -7814,6 +7816,8 @@ To <dfn>cancel a readable stream</dfn> given |realm|, |stream settings| and |rea
       |reader| with |reason|.
 
    1. [=ReadableStreamDefaultReader/Release=] |reader|.
+
+1. Set |stream settings|[[=stream settings/reader=]] to null.
 
 1. [=Clean up after running script=] with |environment settings|.
 
@@ -8029,7 +8033,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. If |read result|.\[[Type]] is <code>throw</code>:
 
-      1. [=ReadableStreamDefaultReader/Release=] |reader|.
+      1. If |reader|'s
+         <a spec=STREAMS for=ReadableStreamGenericReader>\[[stream]]</a> internal
+         slot is not undefined, [=ReadableStreamDefaultReader/release=] |reader|.
 
       1. Set |stream settings|[[=stream settings/reader=]] to null.
 
@@ -8049,7 +8055,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. If |done| is true:
 
-      1. [=ReadableStreamDefaultReader/Release=] |reader|.
+      1. If |reader|'s
+         <a spec=STREAMS for=ReadableStreamGenericReader>\[[stream]]</a> internal
+         slot is not undefined, [=ReadableStreamDefaultReader/release=] |reader|.
 
       1. Set |stream settings|[[=stream settings/reader=]] to null.
 
