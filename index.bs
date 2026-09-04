@@ -7918,7 +7918,9 @@ The <dfn export for=commands>io.ReadStream</dfn> command reads the next chunk of
 [=readable stream=]. If provided, the <code>timeout</code> parameter specifies the
 maximum number of milliseconds to wait for the next chunk. If the timeout
 expires, the command returns an [=error=] with [=error code=] [=timeout=]
-without removing the stream.
+without removing the stream. Only one invocation for the same stream can be
+active at a time. Additional concurrent invocations return an [=error=] with
+[=error code=] [=stream read error=].
 
 <dl>
   <dt>Command Type</dt>
@@ -7955,6 +7957,11 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
    |session| and |stream id|.
 
+1. If |stream settings|[[=stream settings/read command active=]] is true,
+   return [=error=] with [=error code=] [=stream read error=].
+
+1. Set |stream settings|[[=stream settings/read command active=]] to true.
+
 1. Let |realm id| be |stream settings|[[=stream settings/realm=]].
 
 1. If |realm id| is not null:
@@ -7963,16 +7970,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Let |environment settings| be the [=environment settings object=] whose
       [=realm execution context=]'s Realm component is |realm|.
-
-   1. Let |stream map| be |session|'s [=readable stream settings map=].
-
-   1. Wait until |stream settings|[[=stream settings/read command active=]] is
-      false or |stream map| no longer [=map/contains=] |stream id|.
-
-   1. If |stream map| no longer [=map/contains=] |stream id|, return [=error=]
-      with [=error code=] [=no such stream=].
-
-   1. Set |stream settings|[[=stream settings/read command active=]] to true.
 
    1. Let |stream| be |stream settings|[[=stream settings/stream=]].
 
