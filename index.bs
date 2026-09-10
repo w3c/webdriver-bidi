@@ -7830,13 +7830,15 @@ To <dfn>cancel a readable stream</dfn> given |realm|, |stream settings| and |rea
 
 <pre class="cddl" data-cddl-module="local-cddl">
 io.ReadData = {
+  type: "bytes",
   value: text / null,
   done: bool
 }
 </pre>
 
 The <code>io.ReadData</code> type represents the result of reading a value
-from a [=readable stream=].
+from a [=readable stream=]. The <code>type</code> field indicates how the
+<code>value</code> field is encoded.
 
 
 #### The io.Stream Type #### {#type-io-Stream}
@@ -8005,7 +8007,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
         <dl>
            <dt>[=read request/chunk steps=], given |chunk|
            <dd>
-           1. If |chunk| is not a {{Uint8Array}} object:
+           1. If |chunk| is not a {{BufferSource}}:
 
               1. Let |error| be a new
                  <a data-link-type="exception">TypeError</a> object in |realm|.
@@ -8013,6 +8015,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
               1. Reject |promise| with |error|.
 
               1. Return.
+
+            Issue: Add support for chunks that are not [=byte sequences=], by serializing
+            them as a <code>script.RemoteValue</code>.
 
            1. Resolve |promise| with «[ "value" → |chunk|, "done" → false ]».
 
@@ -8081,16 +8086,19 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
       1. Set |stream settings|[[=stream settings/reader=]] to null.
 
-      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
-         field set to null and the <code>done</code> field set to true.
+      1. Let |response| be a new <code>io.ReadData</code> with the
+         <code>type</code> field set to "<code>bytes</code>", the
+         <code>value</code> field set to null and the <code>done</code> field
+         set to true.
 
    1. Otherwise:
 
-      1. Let |chunk| be |read value|["<code>value</code>"].
+      1. Let |bytes| be |read value|["<code>value</code>"].
 
-      1. Let |response| be a new <code>io.ReadData</code> with the <code>value</code>
-         field set to [=forgiving-base64 encode=] |chunk| and the <code>done</code> field
-         set to false.
+      1. Let |response| be a new <code>io.ReadData</code> with the
+         <code>type</code> field set to "<code>bytes</code>", the
+         <code>value</code> field set to [=forgiving-base64 encode=] |bytes|
+         and the <code>done</code> field set to false.
 
    1. Set |stream settings|[[=stream settings/read command active=]] to false.
 
