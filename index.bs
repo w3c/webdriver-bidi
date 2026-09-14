@@ -4547,7 +4547,7 @@ list of all nodes matching the specified locator.
    <dd>
     <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.LocateNodesResult = {
-            nodes: [ * script.NodeRemoteValue ]
+            nodes: [ * script.SharedNodeRemoteValue ]
         }
     </pre>
    </dd>
@@ -4809,6 +4809,14 @@ The [=remote end steps=] with |session| and |command parameters| are:
    1. Let |start node| be the result of [=trying=] to [=deserialize shared reference=] given
       |serialized start node|, |realm| and |session|.
 
+   1. If |start node|'s [=/node navigable=] is null, return [=error=] with
+      [=error code=] [=no such node=].
+
+      Note: This happens when the node was adopted into a document that is not
+      associated with a navigable, such as the associated inert template
+      document of a <code>template</code> element. Nodes located from such a start node
+      could not be serialized with a shared id.
+
    1. [=list/Append=] |start node| to |context nodes|.
 
 1. Assert [=list/size=] of |context nodes| is greater than 0.
@@ -4899,6 +4907,9 @@ The [=remote end steps=] with |session| and |command parameters| are:
    1. Let |serialized node| be the result of [=serialize as a remote value=] with
       |result node|, |serialization options|, |result ownership|, a new [=/map=]
       as serialization internal map, |realm| and |session|.
+
+   1. Assert: |serialized node| matches the <code>script.SharedNodeRemoteValue</code>
+      production.
 
    1. [=list/Append=] |serialized node| to |serialized nodes|.
 
@@ -12476,26 +12487,55 @@ script.HTMLCollectionRemoteValue = {
   ? value: script.ListRemoteValue,
 }
 
-script.NodeRemoteValue = {
+script.BaseNodeRemoteValue = (
   type: "node",
-  ? sharedId: script.SharedId,
   ? handle: script.Handle,
-  ? internalId: script.InternalId,
+  ? internalId: script.InternalId
+)
+
+script.NodeRemoteValue = {
+  script.BaseNodeRemoteValue,
+  ? sharedId: script.SharedId,
   ? value: script.NodeProperties,
 }
 
-script.NodeProperties = {
+script.BaseNodeProperties = (
   nodeType: js-uint,
   childNodeCount: js-uint,
   ? attributes: {*text => text},
-  ? children: [*script.NodeRemoteValue],
   ? localName: text,
   ? mode: "open" / "closed",
   ? namespaceURI: text,
-  ? nodeValue: text,
+  ? nodeValue: text
+)
+
+script.NodeProperties = {
+  script.BaseNodeProperties,
+  ? children: [*script.NodeRemoteValue],
   ? shadowRoot: script.NodeRemoteValue / null,
 }
+</pre>
 
+A <code>script.SharedNodeRemoteValue</code> is a <code>script.NodeRemoteValue</code>
+that is known to carry a shared id, recursively for any serialized children and
+shadow roots. It is used for results of commands that serialize nodes in a
+context where [=get shared id for a node=] cannot return null.
+
+<pre class="cddl" data-cddl-module="local-cddl">
+script.SharedNodeRemoteValue = {
+  script.BaseNodeRemoteValue,
+  sharedId: script.SharedId,
+  ? value: script.SharedNodeProperties,
+}
+
+script.SharedNodeProperties = {
+  script.BaseNodeProperties,
+  ? children: [*script.SharedNodeRemoteValue],
+  ? shadowRoot: script.SharedNodeRemoteValue / null,
+}
+</pre>
+
+<pre class="cddl" data-cddl-module="remote-cddl,local-cddl">
 script.WindowProxyRemoteValue = {
   type: "window",
   value: script.WindowProxyProperties,
