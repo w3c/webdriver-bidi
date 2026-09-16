@@ -5472,6 +5472,7 @@ the [=local end=] has only read-only access.
 
       browsingContext.StartScreencastParameters = {
         context: browsingContext.BrowsingContext,
+        ? destinationFolder: text,
         ? mimeType: text,
         ? video: browsingContext.MediaTrackConstraints,
         ? audio: bool .default false,
@@ -5510,6 +5511,23 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. If |navigable| is not a [=/top-level traversable=], return [=error=] with
    [=error code=] [=invalid argument=].
+
+1. If |command parameters| [=map/contains=] the <code>destinationFolder</code> field:
+
+   1. Let |destination folder| be |command parameters|["<code>destinationFolder</code>"].
+
+   1. Let |destination folder entry| be [=locate an entry=] given
+      [=file system locator/path=] |destination folder| and
+      [=file system locator/root=] corresponding to the root of the file system.
+
+   1. If |destination folder entry| is null, return [=error=] with [=error code=]
+      [=invalid argument=].
+
+   1. Let |path| be an implementation-defined file path for a new file in
+      |destination folder entry| where the recording will be stored.
+
+1. Otherwise, let |path| be an implementation-defined file path where the
+   recording will be stored.
 
 1. If |command parameters| [=map/contains=] the <code>mimeType</code> field:
 
@@ -5562,8 +5580,6 @@ The [=remote end steps=] given |session| and |command parameters| are:
    1. If the implementation is unable to produce |stream|, return [=error=] with
       [=error code=] [=unknown error=].
 
-1. Let |path| be an implementation-defined file path where the recording will
-   be stored.
 
 1. Let |screencast| be the string representation of a [[!RFC9562|UUID]].
 
