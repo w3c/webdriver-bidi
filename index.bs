@@ -7715,7 +7715,7 @@ The [=remote end steps=] given |command parameters| are:
 #### The emulation.setTextLayoutModeOverride Command #### {#command-emulation-setTextLayoutModeOverride}
 
 The <dfn export for=commands>emulation.setTextLayoutModeOverride</dfn> command modifies
-the text layout mode on the given top-level traversables or user contexts.
+the text layout mode on the given top-level traversables, user contexts or globally.
 
 <dl>
    <dt>Command Type</dt>
@@ -7754,18 +7754,18 @@ inflation), which is an algorithm used primarily on mobile devices to boost the
 legibility of text blocks when fitting them into a small viewport. This ensures
 that content remains readable without requiring the user to zoom in. This
 behavior is often controlled via the 'text-size-adjust' CSS property.
-See [[!CSS-SIZE-ADJUST-1]].
+See [[CSS-SIZE-ADJUST-1]].
 
 1. Let |text layout mode override| be the result of [=get WebDriver configuration value=] of
    [=text layout mode override configuration=] for |navigable|.
 
-1. Assert that |text layout mode override| is "<code>mobile</code>" or
+1. Assert: |text layout mode override| is "<code>mobile</code>" or
    [=WebDriver configuration/unset=].
 
 1. If |text layout mode override| is "<code>mobile</code>", run [=implementation-defined=] steps to
-   make the |navigable|'s [=active document=] to use the "<code>mobile</code>" text layout mode.
+   make the |navigable|'s [=active document=] use the "<code>mobile</code>" text layout mode.
 
-1. Otherwise, run [=implementation-defined=] steps to make the |navigable|'s [=active document=] to
+1. Otherwise, run [=implementation-defined=] steps to make the |navigable|'s [=active document=]
    use an [=implementation-defined=] default text layout mode.
 
 </div>
@@ -7779,7 +7779,10 @@ The [=remote end steps=] given |command parameters| are:
 1. If |text layout mode override| is null, set |text layout mode override| to
    [=WebDriver configuration/unset=].
 
-1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+1. If |text layout mode override| is not [=WebDriver configuration/unset=] and the implementation does not
+   support setting text layout mode override, then return [=error=] with [=error code=] [=unsupported operation=].
+
+1. Let |affected navigables| be the result of [=trying=] to [=store WebDriver configuration=]
    [=text layout mode override configuration=] |text layout mode override| for |command parameters|.
 
 1. For each |navigable| of |affected navigables|:
