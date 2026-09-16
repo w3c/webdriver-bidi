@@ -3491,7 +3491,7 @@ To <dfn export>get a navigable</dfn> given |navigable id|:
 <pre class="cddl" data-cddl-module="local-cddl">
 browsingContext.InfoList = [*browsingContext.Info]
 
-browsingContext.Info = {
+browsingContext.BaseInfo = (
   children: browsingContext.InfoList / null,
   clientWindow: browser.ClientWindow,
   context: browsingContext.BrowsingContext,
@@ -3499,6 +3499,10 @@ browsingContext.Info = {
   url: text,
   userContext: browser.UserContext,
   ? parent: browsingContext.BrowsingContext / null,
+)
+
+browsingContext.Info = {
+  browsingContext.BaseInfo
 }
 </pre>
 
@@ -5782,8 +5786,13 @@ are:
       <pre class="cddl" data-cddl-module="local-cddl">
         browsingContext.ContextCreated = (
          method: "browsingContext.contextCreated",
-         params: browsingContext.Info
+         params: browsingContext.ContextCreatedParameters
         )
+
+        browsingContext.ContextCreatedParameters = {
+         browsingContext.BaseInfo,
+         hasPlannedNavigation: bool,
+        }
       </pre>
    </dd>
 </dl>
@@ -5792,7 +5801,8 @@ are:
 
 To <dfn>Recursively emit context created events</dfn> given |session| and |navigable|:
 
-1. [=Emit a context created event=] with |session| and |navigable|.
+1. [=Emit a context created event=] with |session|, |navigable|, and
+   false.
 
 1. For each child navigable, |child|, of |navigable|:
 
@@ -5802,10 +5812,13 @@ To <dfn>Recursively emit context created events</dfn> given |session| and |navig
 
 <div algorithm>
 
-To <dfn>Emit a context created event</dfn> given |session| and |navigable|:
+To <dfn>Emit a context created event</dfn> given |session|, |navigable|, and
+|has planned navigation|:
 
 1. Let |params| be the result of [=get the navigable info=] given
    |navigable|, 0, and true.
+
+1. Set |params|["<code>hasPlannedNavigation</code>"] to |has planned navigation|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.ContextCreated</code> production, with the
@@ -5820,7 +5833,8 @@ To <dfn>Emit a context created event</dfn> given |session| and |navigable|:
 
 The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable created</dfn> steps given
-[=/navigable=] |navigable| and [=/navigable=] |opener navigable|:
+[=/navigable=] |navigable|, [=boolean=] |has planned navigation|, and
+optional [=/navigable=] |opener navigable| (default: null):
 
 1. Set |navigable|'s [=original opener=] to |opener navigable|,
    if |opener navigable| is provided.
@@ -5834,7 +5848,8 @@ the <dfn export>WebDriver BiDi navigable created</dfn> steps given
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.contextCreated</code>" and |related navigables|:
 
-  1. [=Emit a context created event=] given |session| and |navigable|.
+  1. [=Emit a context created event=] given |session|, |navigable|, and
+     |has planned navigation|.
 
 </div>
 
@@ -5845,7 +5860,7 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 1, given
 
 1. For each |navigable| in |navigables|:
 
-  1. [=Recursively emit context created events=] given |session| and |navigable|.
+  1. [=Recursively emit context created events=] given |session|, |navigable|, and false.
 
 </div>
 
