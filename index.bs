@@ -4285,8 +4285,8 @@ The [=remote end steps=] with |command parameters| are:
 
   <!-- This is based on step 5 of https://w3c.github.io/webdriver/#new-window,
        but without using the "current browsing context" concept. -->
-  1. Let |traversable| be the result of trying to [=/create a new top-level traversable=] steps with null and empty string,
-     and setting the [=associated user context=] for the newly created [=/top-level traversable=] to |user context|.
+  1. Let |traversable| be the result of trying to [=/create a new top-level traversable=] steps with null, empty string,
+     null and false, and setting the [=associated user context=] for the newly created [=/top-level traversable=] to |user context|.
      Which OS window the new [=/top-level traversable=] is created in depends on |type| and |reference navigable|:
 
      * If |type| is "<code>tab</code>" and the implementation supports
@@ -5706,6 +5706,10 @@ are:
    </dd>
 </dl>
 
+The <code>browsingContext.ContextCreatedParameters</code> <code>hasPlannedNavigation</code>
+indicates if a navigable is going to perform a navigation after the
+<code>browsingContext.contextCreated</code> event is dispatched.
+
 <div algorithm>
 
 To <dfn>Recursively emit context created events</dfn> given |session| and |navigable|:
@@ -5729,6 +5733,9 @@ To <dfn>Emit a context created event</dfn> given |session|, |navigable|, and
 
 1. Set |params|["<code>hasPlannedNavigation</code>"] to |has planned navigation|.
 
+1. Assert: |params| matches the <code>browsingContext.ContextCreated</code>
+   production.
+
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.ContextCreated</code> production, with the
    <code>params</code> field set to |params|.
@@ -5742,11 +5749,10 @@ To <dfn>Emit a context created event</dfn> given |session|, |navigable|, and
 
 The [=remote end event trigger=] is
 the <dfn export>WebDriver BiDi navigable created</dfn> steps given
-[=/navigable=] |navigable|, [=boolean=] |has planned navigation|, and
+[=/navigable=] |navigable|, boolean |has planned navigation|, and
 optional [=/navigable=] |opener navigable| (default: null):
 
-1. Set |navigable|'s [=original opener=] to |opener navigable|,
-   if |opener navigable| is provided.
+1. Set |navigable|'s [=original opener=] to |opener navigable|.
 
 1. If the [=navigable cache behavior=] with |navigable| is "<code>bypass</code>",
    then perform implementation-defined steps to disable any implementation-specific
@@ -5769,7 +5775,7 @@ The [=remote end subscribe steps=], with [=subscribe priority=] 1, given
 
 1. For each |navigable| in |navigables|:
 
-  1. [=Recursively emit context created events=] given |session|, |navigable|, and false.
+  1. [=Recursively emit context created events=] given |session| and |navigable|.
 
 </div>
 
