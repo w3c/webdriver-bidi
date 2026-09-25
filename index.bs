@@ -6984,23 +6984,26 @@ The [=remote end steps=] with |command parameters| are:
 
 1. Let |media features override| be |command parameters|["<code>features</code>"].
 
-1. If |media features override| is null, set |media features override| to
-   [=WebDriver configuration/unset=].
+1. Let |media features override map| be [=WebDriver configuration/unset=].
 
-1. Let |media features override map| be an empty [=/map=].
+1. If |media features override| is not null:
 
-1. For each |media feature| of |media features override|:
-   1. [=map/Set=] |media features override map|[|media feature|["<code>name</code>"]] to
-      |media feature|["<code>value</code>"].
+   1. Set |media features override map| to an empty [=/map=].
 
-1. If the implementation does not support overriding any of the media features in
-   |media features override map|, return [=error=] with [=error code=] [=unsupported operation=].
+   1. For each |media feature name| → |media feature value| of |media features override|:
 
-1. Let |affected navigables| be the result of [=store WebDriver configuration=]
+      1. If the implementation does not support overriding |media feature name|,
+         return [=error=] with [=error code=] [=unsupported operation=].
+
+      1. [=map/Set=] |media features override map|[|media feature name|] to |media feature value|.
+
+1. Let |affected navigables| be the result of [=trying=] to [=store WebDriver configuration=]
    [=media features override configuration=] |media features override map| for |command parameters|.
 
 1. For each |navigable| of |affected navigables|:
+
    1. [=list/For each=] |document| currently loaded in |navigable| or its [=descendant navigables=]:
+
       1. Run [=evaluate media queries and report changes=] for |document|.
 
 1. Return [=success=] with data null.
