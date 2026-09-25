@@ -8025,7 +8025,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
            1. Resolve |promise| with «[ "value" → |bytes|, "done" → false ]».
 
            <dt>[=read request/close steps=]
-           <dd>Resolve promise with «[ "value" → undefined, "done" → true ]».
+           <dd>Resolve |promise| with «[ "value" → undefined, "done" → true ]».
            <dt>[=read request/error steps=], given |e|
            <dd>Reject |promise| with |e|.
         </dl>
@@ -8033,23 +8033,31 @@ The [=remote end steps=] given |session| and |command parameters| are:
       1. [=ReadableStreamDefaultReader/Read a chunk=] from |reader| given
          |read request|.
 
+   1. Let |read result| be null.
+
+   1. [=React=] to |promise|:
+
+      1. If |promise| was fulfilled with value |value|, set |read result| to
+         «[ "status" → "fulfilled", "value" → |value| ]».
+
+      1. If |promise| was rejected, set |read result| to
+         «[ "status" → "rejected" ]».
+
    1. [=Clean up after running script=] with |environment settings|.
 
-   1. Wait until |promise| is settled, or |timer|'s [=timer/timeout fired flag=]
+   1. Wait until |read result| is not null, or |timer|'s [=timer/timeout fired flag=]
       is set, whichever occurs first.
 
-   1. If |promise| is still pending and |timer|'s [=timer/timeout fired flag=]
+   1. If |read result| is null and |timer|'s [=timer/timeout fired flag=]
       is set:
 
       1. Set |stream settings|[[=stream settings/read command active=]] to false.
 
       1. Return [=error=] with [=error code=] [=timeout=].
 
-   1. Let |read result| be <a spec=ECMASCRIPT>Await</a>(|promise|).
-
    1. Set |stream settings|[[=stream settings/read promise=]] to null.
 
-   1. If |read result|.\[[Type]] is <code>throw</code>:
+   1. If |read result|["status"] is "rejected":
 
       1. If |reader|'s
          <a spec=STREAMS for=ReadableStreamGenericReader>\[[stream]]</a> internal
@@ -8069,9 +8077,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
       1. Return [=error=] with [=error code=] [=stream read error=].
 
-   1. Assert: |read result|.\[[Type]] is <code>normal</code>.
-
-   1. Let |read value| be |read result|.\[[Value]].
+   1. Let |read value| be |read result|["value"].
 
    1. Let |done| be |read value|["<code>done</code>"].
 
