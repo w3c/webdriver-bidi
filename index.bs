@@ -14739,7 +14739,8 @@ log.Level = "debug" / "info" / "warn" / "error"
 log.Entry = (
   log.GenericLogEntry /
   log.ConsoleLogEntry /
-  log.JavascriptLogEntry
+  log.JavascriptLogEntry /
+  log.BrowserLogEntry
 )
 
 log.BaseLogEntry = (
@@ -14765,6 +14766,11 @@ log.ConsoleLogEntry = {
 log.JavascriptLogEntry = {
   log.BaseLogEntry,
   type: "javascript",
+}
+
+log.BrowserLogEntry = {
+  log.BaseLogEntry,
+  type: "browser",
 }
 </pre>
 
@@ -14899,10 +14905,47 @@ ignore>line number</var>, <var ignore>column number</var>, |message| and
      Otherwise, [=buffer a log event=] with |session|, |related browsing
      contexts|, and |body|.
 
-Issue: Lots more things require logging. CDP has LogEntryAdded types xml,
-javascript, network, storage, appcache, rendering, security, deprecation,
-worker, violation, intervention, recommendation, other. These are in addition to
-the js exception and console API types that are represented by different methods.
+When the user agent reports a message to its developer console that it
+generated itself, and that is not the result of the [=console steps=] or the
+[=error reporting steps=], it must [=report a browser log entry=] with the
+[=environment settings object=] the message is associated with, a
+<code>log.Level</code> value representing the severity of the message, the text
+of the message, and, if the message was triggered by script execution, a
+<code>script.StackTrace</code> representing the script that triggered it. The set
+of such messages, their text and their severity are [=implementation-defined=].
+
+Note: The content of browser log entries is not stable between different implementations,
+or different versions of the same implementation. Consumers are encouraged to allow for
+such differences, and not encode dependencies on the number of such events or their properties.
+
+To <dfn>report a browser log entry</dfn> given |settings|, |level|, |text|, and
+optional |stack|:
+
+1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
+
+1. Let |realm| be |settings|' [=realm execution context=]'s Realm component.
+
+1. Let |source| be the result of [=get the source=] given |realm|.
+
+1. Let |entry| be a [=/map=] matching the <code>log.BrowserLogEntry</code> production,
+   with <code>type</code> set to "<code>browser</code>", <code>level</code>
+   set to |level|, <code>text</code> set to |text|, <code>source</code> set
+   to |source|, and <code>timestamp</code> set to |timestamp|.
+
+1. If |stack| is provided, set |entry|["<code>stackTrace</code>"] to |stack|.
+
+1. Let |body| be a [=/map=] matching the <code>log.EntryAdded</code> production, with
+   the <code>params</code> field set to |entry|.
+
+1. Let |related navigables| be the result of [=get related navigables=] given |settings|.
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. If [=event is enabled=] with |session|, "<code>log.entryAdded</code>" and
+      |related navigables|, [=emit an event=] with |session| and |body|.
+
+      Otherwise, [=buffer a log event=] with |session|, |related navigables|,
+      and |body|.
 
 Issue: Allow implementation-defined log types
 
