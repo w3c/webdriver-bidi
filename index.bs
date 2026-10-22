@@ -84,6 +84,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: get a node; url: dfn-get-a-node
     text: get element origin; url: dfn-get-element-origin
     text: get or create a node reference; url: dfn-get-or-create-a-node-reference
+    text: get the active user prompt; url: dfn-get-the-active-user-prompt
     text: get the input state; url: dfn-get-the-input-state
     text: getting a property; url: dfn-getting-properties
     text: http session; url: dfn-http-session
@@ -117,6 +118,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: try; url: dfn-try
     text: trying; url: dfn-try
     text: unable to capture screen; url: dfn-unable-to-capture-screen
+    text: unexpected alert open; url: dfn-unexpected-alert-open
     text: unknown command; url: dfn-unknown-command
     text: unknown error; url: dfn-unknown-error
     text: user prompt handler; url: dfn-user-prompt-handler
@@ -235,6 +237,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: focused area of the document; url: interaction.html#focused-area-of-the-document
     text: getting all used history steps; url:browsing-the-web.html#getting-all-used-history-steps
     text: hidden; url: document-sequences.html#system-visibility-state
+    text: inclusive descendant navigables; url: document-sequences.html#inclusive-descendant-navigables
     text: history handling behavior; url: browsing-the-web.html#history-handling-behavior
     text: innerText getter steps; url:dom.html#dom-innertext
     text: input type; url: input.html#dom-input-type
@@ -866,6 +869,7 @@ ErrorCode = "invalid argument" /
             "unable to set file input" /
             "unavailable network data" /
             "underspecified storage partition" /
+            "unexpected alert open" /
             "unknown command" /
             "unknown error" /
             "unsupported operation"
@@ -4141,6 +4145,8 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
     with |navigable id|.
 
+1. [=Try=] to [=check for an open user prompt=] with |navigable|.
+
 1. If the implementation is unable to capture a screenshot of |navigable| for any
    reason then return [=error=] with [=error code=] [=unsupported operation=].
 
@@ -4799,6 +4805,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 
 1. Assert: |navigable| is not null.
 
+1. [=Try=] to [=check for an open user prompt=] with |navigable|.
+
 1. Let |realm| be the result of [=trying=] to [=get a realm from a navigable=]
    with [=navigable id=] of |navigable| and null.
 
@@ -4964,6 +4972,8 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Assert: |navigable| is not null.
 
+1. [=Try=] to [=check for an open user prompt=] with |navigable|.
+
 1. Let |wait condition| be "<code>committed</code>".
 
 1. If |command parameters| [=map/contains=] <code>wait</code>
@@ -5051,6 +5061,8 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
    with |navigable id|.
+
+1. [=Try=] to [=check for an open user prompt=] with |navigable|.
 
 1. If the implementation is unable to provide a paginated representation of
    |navigable| for any reason then return [=error=] with [=error code=]
@@ -5180,6 +5192,8 @@ The [=remote end steps=] with |command parameters| are:
    with |navigable id|.
 
 1. Assert: |navigable| is not null.
+
+1. [=Try=] to [=check for an open user prompt=] with |navigable|.
 
 1. Let |ignore cache| be the the value of the <code>ignoreCache</code> field of |command
    parameters| if present, or false otherwise.
@@ -5710,6 +5724,8 @@ The [=remote end steps=] with |command parameters| are:
    [=error code=] [=invalid argument=].
 
 1. Assert: |navigable| is not null.
+
+1. [=Try=] to [=check for an open user prompt=] with |navigable|.
 
 1. Let |delta| be |command parameters|["<code>delta</code>"].
 
@@ -6485,6 +6501,25 @@ given {{Window}} |window|, string |type|, boolean |accepted| and optional text |
       </pre>
    </dd>
 </dl>
+
+<div algorithm>
+To <dfn>check for an open user prompt</dfn> given |navigable|:
+
+1. Let |top-level traversable| be |navigable|'s [=navigable/top-level traversable=].
+
+1. [=list/For each=] |current navigable| of |top-level traversable|'s
+   [=active document=]'s [=inclusive descendant navigables=]:
+
+   1. If [=get the active user prompt=] given |current navigable|'s
+      [=active browsing context=] is not null, return [=error=] with
+      [=error code=] [=unexpected alert open=].
+
+1. Return [=success=] with data null.
+
+Note: A user prompt opened in any navigable blocks the whole top-level
+traversable, so the check is not limited to |navigable|.
+
+</div>
 
 <div algorithm>
 To <dfn>get navigable's user prompt handler</dfn> given |type| and |navigable|:
@@ -13650,6 +13685,11 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given the value of the <code>target</code> field of |command parameters|.
 
+1. Let |navigable| be [=get the navigable=] with |realm|.
+
+1. If |navigable| is not null, [=try=] to [=check for an open user prompt=]
+   with |navigable|.
+
 1. Let |realm id| be |realm|'s [=realm id=].
 
 1. Let |environment settings| be the [=environment settings object=] whose
@@ -13792,6 +13832,11 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |realm| be the result of [=trying=] to [=get a realm from a target=]
    given the value of the <code>target</code> field of |command parameters|.
+
+1. Let |navigable| be [=get the navigable=] with |realm|.
+
+1. If |navigable| is not null, [=try=] to [=check for an open user prompt=]
+   with |navigable|.
 
 1. Let |realm id| be |realm|'s [=realm id=].
 
@@ -15187,6 +15232,8 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
    with |navigable id|.
 
+1. [=Try=] to [=check for an open user prompt=] with |navigable|.
+
 1. Let |input state| be [=get the input state=] with |session| and |navigable|'s
    [=navigable/top-level traversable=].
 
@@ -15241,6 +15288,8 @@ The [=remote end steps=] given |session|, and |command parameters| are:
 
 1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
    with |navigable id|.
+
+1. [=Try=] to [=check for an open user prompt=] with |navigable|.
 
 1. Let |top-level traversable| be |navigable|'s [=navigable/top-level traversable=].
 
@@ -15300,6 +15349,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |navigable| be the result of [=trying=] to [=get a navigable=] with
    |navigable id|.
+
+1. [=Try=] to [=check for an open user prompt=] with |navigable|.
 
 1. Let |document| be |navigable|'s [=active document=].
 
