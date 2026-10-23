@@ -56,6 +56,7 @@ spec: RFC6265bis; urlPrefix: https://datatracker.ietf.org/doc/html/draft-ietf-ht
 spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
   type: dfn
     text: WebDriver new session algorithm; url: dfn-webdriver-new-session-algorithms
+    text: accept a user prompt; url: dfn-accepting
     text: accept insecure TLS; url: dfn-accept-insecure-tls
     text: actions; url: actions
     text: actions options; url: dfn-actions-options
@@ -74,6 +75,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: cookie value; url: dfn-cookie-value
     text: create a cookie; url: dfn-creating-a-cookie
     text: create a session; url: dfn-create-a-session
+    text: dismiss a user prompt; url: dfn-dismissed
     text: dispatch actions; url: dfn-dispatch-actions
     text: dispatch tick actions; url: dfn-dispatch-tick-actions
     text: draw a bounding box from the framebuffer; url: dfn-draw-a-bounding-box-from-the-framebuffer
@@ -119,6 +121,7 @@ spec: WEBDRIVER; urlPrefix: https://w3c.github.io/webdriver/
     text: unable to capture screen; url: dfn-unable-to-capture-screen
     text: unknown command; url: dfn-unknown-command
     text: unknown error; url: dfn-unknown-error
+    text: user prompt; url: dfn-user-prompts
     text: user prompt handler; url: dfn-user-prompt-handler
     text: unsupported operation; url: dfn-unsupported-operation
     text: web element reference; url: dfn-web-element-reference
@@ -245,6 +248,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
     text: output bitmap; url: canvas.html#output-bitmap
     text: parent; for:navigable; url: document-sequences.html#nav-parent
+    text: pause; url: webappapis.html#pause
     text: prompt to unload; url: browsing-the-web.html#prompt-to-unload-a-document
     text: prompt; url: timers-and-user-prompts.html#dom-prompt
     text: report an error; url: webappapis.html#report-the-error
@@ -262,6 +266,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: system visibility state; url: document-sequences.html#system-visibility-state
     text: traversable navigable; url:document-sequences.html#traversable-navigable
     text: traverse the history by a delta; url: browsing-the-web.html#traverse-the-history-by-a-delta
+    text: unload a document; url: browsing-the-web.html#unload-a-document
     text: update the file selection; url: input.html#update-the-file-selection
     text: visible; url: document-sequences.html#system-visibility-state
     text: worker event loop; url: webappapis.html#worker-event-loop-2
@@ -6545,6 +6550,32 @@ given {{Window}} |window|, string |type|, string |message|, and optional text |d
 1. Return |handler|.
 
 </div>
+
+A [=user prompt=] [=pause|pauses=] the [=/event loop=] of the document it is
+shown in. The following requirements apply to any command whose [=remote end
+steps=] are running while that event loop is paused, whether the command's own
+steps opened the prompt or the page did.
+
+The [=remote end steps=] of a command must not [=accept a user prompt|accept=]
+or [=dismiss a user prompt|dismiss=] a [=user prompt=].
+
+Note: A navigation that commits [=unload a document|unloads=] the document it
+replaces, which closes that document's prompts without the command accepting or
+dismissing them.
+
+Note: Because the [=WebDriver BiDi user prompt opened=] steps run before the
+prompt is shown, the <code>browsingContext.userPromptOpened</code> event is
+emitted before the response to any command that completes while the prompt is
+open.
+
+While a command's [=remote end steps=] are running with the event loop paused,
+the [=remote end=] continues to process
+<code>browsingContext.handleUserPrompt</code> and, if the session is also an
+[=HTTP session=], the [=user prompt=] commands of [[WEBDRIVER|WebDriver]]. A
+command whose [=remote end steps=] cannot progress until the prompt is closed
+is <dfn>held by a user prompt</dfn>. Once the prompt is closed by either, a
+command [=held by a user prompt=] completes with the result of its [=remote end
+steps=].
 
 ## The emulation Module ## {#module-emulation}
 
