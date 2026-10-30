@@ -6552,12 +6552,11 @@ given {{Window}} |window|, string |type|, string |message|, and optional text |d
 </div>
 
 A [=user prompt=] [=pause|pauses=] the [=/event loop=] of the document it is
-shown in. The following requirements apply to any command whose [=remote end
-steps=] are running while that event loop is paused, whether the command's own
-steps opened the prompt or the page did.
+shown in.
 
-The [=remote end steps=] of a command must not [=accept a user prompt|accept=]
-or [=dismiss a user prompt|dismiss=] a [=user prompt=].
+If a [=user prompt=] opens while a command's [=remote end steps=] are running,
+whether the command's own steps opened it or the page did, those steps must not
+[=accept a user prompt|accept=] or [=dismiss a user prompt|dismiss=] it.
 
 Note: A navigation that commits [=unload a document|unloads=] the document it
 replaces, which closes that document's prompts without the command accepting or
@@ -6568,14 +6567,16 @@ prompt is shown, the <code>browsingContext.userPromptOpened</code> event is
 emitted before the response to any command that completes while the prompt is
 open.
 
-While a command's [=remote end steps=] are running with the event loop paused,
-the [=remote end=] continues to process
-<code>browsingContext.handleUserPrompt</code> and, if the session is also an
-[=HTTP session=], the [=user prompt=] commands of [[WEBDRIVER|WebDriver]]. A
-command whose [=remote end steps=] cannot progress until the prompt is closed
-is <dfn>held by a user prompt</dfn>. Once the prompt is closed by either, a
-command [=held by a user prompt=] completes with the result of its [=remote end
-steps=].
+A command whose [=remote end steps=] cannot progress until a [=user prompt=] is
+closed is <dfn>held by a user prompt</dfn>. If the session is also an [=HTTP
+session=], the [=remote end=] continues to process the [=user prompt=] commands
+of [[WEBDRIVER|WebDriver]] while a command is [=held by a user prompt=]. Once
+the prompt is closed, a command [=held by a user prompt=] completes with the
+result of its [=remote end steps=].
+
+Note: Because the [=remote end steps=] of each command run in parallel, a
+<code>browsingContext.handleUserPrompt</code> command can close the prompt
+while another command is [=held by a user prompt=].
 
 ## The emulation Module ## {#module-emulation}
 
