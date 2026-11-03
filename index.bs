@@ -241,6 +241,7 @@ spec: HTML; urlPrefix: https://html.spec.whatwg.org/multipage/
     text: navigable; for:window; url: nav-history-apis.html#window-navigable
     text: navigables; url: document-sequences.html#navigables
     text: navigation id; url: browsing-the-web.html#navigation-id
+    text: navigationId; for: navigate; url: browsing-the-web.html#navigation-navigation-id
     text: ongoing-navigation; url: browsing-the-web.html#ongoing-navigation
     text: origin-clean; url: canvas.html#concept-canvas-origin-clean
     text: output bitmap; url: canvas.html#output-bitmap
@@ -3598,11 +3599,11 @@ To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|,
 1. Let |navigation id| be the string representation of a
    [[!RFC9562|UUID]] based on truly random, or pseudo-random numbers.
 
-1. [=Navigate=] |navigable| with resource |request|, and using
-   |navigable|'s [=active document=] as the source
-   {{Document}}, with [=navigation id=] |navigation id|, and [=history
-   handling behavior=] |history handling|. If |ignore cache| is true,
-   the navigation must not load resources from the HTTP cache.
+1. [=Navigate=] |navigable| with resource |request|, and using null as the
+   source {{Document}}, with [=navigate/navigationId=] |navigation id|,
+   [=history handling behavior=] |history handling|, and [=user navigation
+   involvement=] "[=user navigation involvement/browser UI=]". If |ignore cache|
+   is true, the navigation must not load resources from the HTTP cache.
 
    Issue: property specify how the |ignore cache| flag works. This needs to
    consider whether only the first load of a resource bypasses the cache
@@ -3613,6 +3614,10 @@ To <dfn>await a navigation</dfn> given |navigable|, |request|, |wait condition|,
 1.  Let (|event received|, |navigation status|) be [=await=] given
     «"<code>navigation started</code>", "<code>navigation failed</code>",
     "<code>fragment navigated</code>"», and |navigation id|.
+
+   Issue: If a <code>navigate</code> event handler cancels or intercepts a
+   navigation to a fragment, [[HTML]] invokes none of these with |navigation
+   id|, and this step does not complete.
 
 1. Assert: |navigation status|'s [=WebDriver BiDi navigation status/id=] is |navigation id|.
 
