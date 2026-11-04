@@ -3251,9 +3251,9 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 #### The browser.setFileDialogBehavior Command #### {#command-browser-setFileDialogBehavior}
 
-A <dfn>file dialog behavior struct</dfn> is a [=struct=] with:
-* [=struct/item=] named <dfn id="file-dialog-behavior-struct-accepted" for="file-dialog-behavior-struct">accepted</dfn> which is a boolean;
-* [=struct/item=] named <dfn id="file-dialog-behavior-struct-files" for="file-dialog-behavior-struct">files</dfn> which is a [=/list=] of strings or null.
+A <dfn export>file dialog behavior struct</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn export id="file-dialog-behavior-struct-accepted" for="file dialog behavior struct">accepted</dfn> which is a boolean;
+* [=struct/item=] named <dfn export id="file-dialog-behavior-struct-files" for="file dialog behavior struct">files</dfn> which is a [=/list=] of strings or null.
 
 A [=remote end=] has a <dfn>file dialog behavior</dfn> which is a [=struct=] with an [=struct/item=]
 named <dfn for="file dialog behavior">default file dialog behavior</dfn>, which is a
@@ -3332,8 +3332,8 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
       otherwise let |files| be null.
 
    1. Let |file dialog behavior| be a [=file dialog behavior struct=] with
-      [=file-dialog-behavior-struct/accepted=] set to |accepted| and
-      [=file-dialog-behavior-struct/files=] set to |files|.
+      [=file dialog behavior struct/accepted=] set to |accepted| and
+      [=file dialog behavior struct/files=] set to |files|.
 
 1. If the implementation does not support required |file dialog behavior|, then return
    [=error=] with [=error code=] [=unsupported operation=].
@@ -15494,16 +15494,12 @@ A <dfn>WebDriver BiDi file picker options</dfn> is a [=struct=] with an [=struct
 
 <div algorithm>
 The [=remote end event trigger=] is the
-<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given [=/element=] or null |element| and
-optionally [=WebDriver BiDi file picker options=] |file picker options| (default: null):
+<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given [=/navigable=] |navigable|,
+optional [=/element=] |element| (default: null), and optional
+[=WebDriver BiDi file picker options=] |file picker options| (default: null):
 
 Note: unlike other user prompt handlers, the default behavior is to allow for the file dialog to be
 opened.
-
-1. If |element| is not null, let |navigable| be |element|'s [=node document=]'s [=/navigable=].
-
-1. Otherwise, let |navigable| be [=current settings object=]'s [=relevant global object=]'s
-   <a>associated <code>Document</code></a>'s [=/node navigable=].
 
 1. Let |navigable id| be |navigable|'s [=navigable id=].
 
@@ -15542,11 +15538,19 @@ opened.
 
 1. If |file dialog behavior| is not null:
 
-  1. If |multiple| is <code>false</code>, |file dialog behavior|'s
-     [=file-dialog-behavior-struct/files=] is not null, and [=list/size=] of
-     |file dialog behavior|'s [=file-dialog-behavior-struct/files=] is greater than 1,
-     return a [=file dialog behavior struct=] with [=file-dialog-behavior-struct/accepted=]
-     set to false and [=file-dialog-behavior-struct/files=] set to null.
+  1. If |file dialog behavior|'s [=file dialog behavior struct/accepted=] is true:
+
+    1. Let |files| be |file dialog behavior|'s [=file dialog behavior struct/files=].
+
+    1. If |multiple| is <code>false</code> and [=list/size=] of |files| is greater than 1, or if,
+       for any reason, the [=remote end=] is unable to select the files or directories with paths
+       given in |files| for the file dialog, return a [=file dialog behavior struct=] with
+       [=file dialog behavior struct/accepted=] set to false and
+       [=file dialog behavior struct/files=] set to null.
+
+       Note: For example, [=remote ends=] might be unable to select paths that do not currently
+       exist on the filesystem or do not match the requested file dialog type (such as providing a
+       file path for a directory picker).
 
   1. Return |file dialog behavior|.
 
@@ -15570,8 +15574,8 @@ opened.
       "<code>ignore</code>", set |dismissed| to true.
 
 1. If |dismissed| is true, return a [=file dialog behavior struct=] with
-   [=file-dialog-behavior-struct/accepted=] set to false and
-   [=file-dialog-behavior-struct/files=] set to null.
+   [=file dialog behavior struct/accepted=] set to false and
+   [=file dialog behavior struct/files=] set to null.
 
 1. Return null.
 
