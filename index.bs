@@ -1857,6 +1857,14 @@ To <dfn>cleanup remote end state</dfn>.
    implementation-specific resource caches that are usually enabled in the
    current [=remote end=] configuration.
 
+1. For each |directory| in [=temporary directories=]:
+
+  1. Perform implementation-defined steps to recursively remove |directory| from
+     the [=remote end=] filesystem, restoring any modified file or directory
+     permissions if needed.
+
+  1. [=set/Remove=] |directory| from [=temporary directories=].
+
 </div>
 
 ### Types ### {#module-session-types}
@@ -2470,6 +2478,7 @@ managing the remote end browser process.
 <pre class="cddl" data-cddl-module="remote-cddl">
 BrowserCommand = (
   browser.Close //
+  browser.CreateTemporaryDirectory //
   browser.CreateUserContext //
   browser.GetClientWindows //
   browser.GetUserContexts //
@@ -2485,6 +2494,7 @@ BrowserCommand = (
 <pre class="cddl" data-cddl-module="local-cddl">
 BrowserResult = (
   browser.CloseResult /
+  browser.CreateTemporaryDirectoryResult /
   browser.CreateUserContextResult /
   browser.GetClientWindowsResult /
   browser.GetUserContextsResult /
@@ -2813,6 +2823,179 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
      automation, or shutting down the [=WebSocket Listener=]. Because of
      differences between browsers and operating systems it is not possible to
      specify in detail precise invariants [=local ends=] can depend on here.
+
+</div>
+
+#### The browser.createTemporaryDirectory Command #### {#command-browser-createTemporaryDirectory}
+
+A [=remote end=] has a <dfn>temporary directories</dfn> which is a [=/set=] of
+strings representing the filesystem paths of temporary directories created by
+the [=remote end=], initially empty.
+
+The <dfn export for=commands>browser.createTemporaryDirectory</dfn> command
+creates a temporary directory on the [=remote end=] filesystem, optionally
+populated with initial files, subdirectories, and symbolic links, and returns
+its absolute path.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browser.CreateTemporaryDirectory = (
+        method: "browser.createTemporaryDirectory",
+        params: browser.CreateTemporaryDirectoryParameters
+      )
+
+      browser.CreateTemporaryDirectoryParameters = {
+        ? entries: [*browser.TemporaryDirectoryEntry]
+      }
+
+      browser.TemporaryDirectoryEntry = (
+        browser.TemporaryFileEntry /
+        browser.TemporarySubdirectoryEntry /
+        browser.TemporarySymlinkEntry
+      )
+
+      browser.TemporaryFileEntry = {
+        type: "file",
+        path: text,
+        ? (
+          (data: text) //
+          (size: js-uint)
+        ),
+        ? permissions: browser.TemporaryEntryPermissions
+      }
+
+      browser.TemporarySubdirectoryEntry = {
+        type: "directory",
+        path: text,
+        ? permissions: browser.TemporaryEntryPermissions
+      }
+
+      browser.TemporarySymlinkEntry = {
+        type: "symlink",
+        path: text,
+        target: text
+      }
+
+      browser.TemporaryEntryPermissions = {
+        ? readable: bool,
+        ? writable: bool,
+        ? executable: bool
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.CreateTemporaryDirectoryResult = {
+        path: text
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.createTemporaryDirectory">
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. If the [=remote end=] does not support creating temporary directories on its
+   filesystem, return [=error=] with [=error code=] [=unsupported operation=].
+
+1. Perform implementation-defined steps to create a new, unique, empty temporary
+   directory on the [=remote end=] filesystem. If this fails for any reason,
+   return [=error=] with [=error code=] [=unknown error=].
+
+1. Let |root path| be the absolute filesystem path of the created temporary
+   directory.
+
+1. [=set/Append=] |root path| to [=temporary directories=].
+
+1. If |command parameters| [=map/contains=] "<code>entries</code>":
+
+  1. For each |entry| in |command parameters|["<code>entries</code>"]:
+
+    1. Let |relative path| be |entry|["<code>path</code>"].
+
+    1. If |relative path| is an empty string, is an absolute path, or resolves
+       to a location outside of |root path| (for example, by containing
+       "<code>..</code>" path traversal segments), return [=error=] with
+       [=error code=] [=invalid argument=].
+
+    1. Let |entry path| be the filesystem path obtained by resolving
+       |relative path| relative to |root path|, creating any missing parent
+       directories within |root path| as needed.
+
+    1. Switch on |entry|["<code>type</code>"]:
+
+       <dl>
+        <dt>"<code>file</code>"
+        <dd>
+          1. Let |bytes| be an empty [=byte sequence=].
+
+          1. If |entry| [=map/contains=] "<code>data</code>":
+
+            1. Set |bytes| to the result of [=forgiving-base64 decode|forgiving-base64 decoding=]
+               |entry|["<code>data</code>"].
+
+            1. If |bytes| is failure, return [=error=] with [=error code=]
+               [=invalid argument=].
+
+          1. Otherwise, if |entry| [=map/contains=] "<code>size</code>":
+
+            1. Set |bytes| to a [=byte sequence=] of length
+               |entry|["<code>size</code>"] where every byte is <code>0x00</code>.
+
+          1. Perform implementation-defined steps to create or overwrite a file
+             at |entry path| containing |bytes|. If this fails for any reason,
+             return [=error=] with [=error code=] [=unknown error=].
+
+        <dt>"<code>directory</code>"
+        <dd>
+          1. Perform implementation-defined steps to ensure a directory exists
+             at |entry path|. If this fails for any reason (for example, if a
+             non-directory file already exists at |entry path|), return
+             [=error=] with [=error code=] [=unknown error=].
+
+        <dt>"<code>symlink</code>"
+        <dd>
+          1. Let |target| be |entry|["<code>target</code>"].
+
+          1. If |target| is an empty string, is an absolute path, or resolves to
+             a location outside of |root path|, return [=error=] with
+             [=error code=] [=invalid argument=].
+
+          1. If the [=remote end=] or host operating system does not support
+             creating symbolic links, return [=error=] with [=error code=]
+             [=unsupported operation=].
+
+          1. Perform implementation-defined steps to create a symbolic link at
+             |entry path| pointing to |target| resolved relative to |root path|.
+             If this fails for any reason, return [=error=] with [=error code=]
+             [=unknown error=].
+       </dl>
+
+    1. If |entry| [=map/contains=] "<code>permissions</code>":
+
+      1. Let |permissions| be |entry|["<code>permissions</code>"].
+
+      1. If the [=remote end=] or host operating system does not support
+         configuring the requested file or directory permissions in
+         |permissions|, return [=error=] with [=error code=]
+         [=unsupported operation=].
+
+      1. Perform implementation-defined steps to apply the read, write, and
+         execute permissions specified by |permissions|["<code>readable</code>"],
+         |permissions|["<code>writable</code>"], and
+         |permissions|["<code>executable</code>"] (when present) to the entry at
+         |entry path|. If this fails for any reason, return [=error=] with
+         [=error code=] [=unknown error=].
+
+1. Let |result| be a [=/map=] matching the
+   <code>browser.CreateTemporaryDirectoryResult</code> production with the
+   <code>path</code> field set to |root path|.
+
+1. Return [=success=] with data |result|.
 
 </div>
 
