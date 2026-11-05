@@ -1857,6 +1857,10 @@ To <dfn>cleanup remote end state</dfn>.
    implementation-specific resource caches that are usually enabled in the
    current [=remote end=] configuration.
 
+1. Set [=file dialog behavior=]'s [=file dialog behavior/default file dialog behavior=] to null.
+
+1. [=map/Clear=] [=file dialog behavior=]'s [=file dialog behavior/user context file dialog behavior=].
+
 </div>
 
 ### Types ### {#module-session-types}
@@ -3253,7 +3257,7 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 A <dfn export>file dialog behavior struct</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn export id="file-dialog-behavior-struct-accepted" for="file dialog behavior struct">accepted</dfn> which is a boolean;
-* [=struct/item=] named <dfn export id="file-dialog-behavior-struct-files" for="file dialog behavior struct">files</dfn> which is a [=/list=] of strings or null.
+* [=struct/item=] named <dfn export id="file-dialog-behavior-struct-paths" for="file dialog behavior struct">paths</dfn> which is a [=/list=] of strings or null.
 
 A [=remote end=] has a <dfn>file dialog behavior</dfn> which is a [=struct=] with an [=struct/item=]
 named <dfn for="file dialog behavior">default file dialog behavior</dfn>, which is a
@@ -3284,7 +3288,7 @@ for="file dialog behavior">user context file dialog behavior</dfn>, which is a w
 
       browser.FileDialogBehaviorAccept = (
         type: "accept",
-        files: [+text]
+        paths: [+text]
       )
 
       browser.FileDialogBehaviorCancel = (
@@ -3327,13 +3331,13 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
       false.
 
    1. If |command parameters|["<code>fileDialogBehavior</code>"] [=map/contains=]
-      "<code>files</code>", let |files| be
-      |command parameters|["<code>fileDialogBehavior</code>"]["<code>files</code>"],
-      otherwise let |files| be null.
+      "<code>paths</code>", let |paths| be
+      |command parameters|["<code>fileDialogBehavior</code>"]["<code>paths</code>"],
+      otherwise let |paths| be null.
 
    1. Let |file dialog behavior| be a [=file dialog behavior struct=] with
       [=file dialog behavior struct/accepted=] set to |accepted| and
-      [=file dialog behavior struct/files=] set to |files|.
+      [=file dialog behavior struct/paths=] set to |paths|.
 
 1. If the implementation does not support required |file dialog behavior|, then return
    [=error=] with [=error code=] [=unsupported operation=].
@@ -15540,17 +15544,18 @@ opened.
 
   1. If |file dialog behavior|'s [=file dialog behavior struct/accepted=] is true:
 
-    1. Let |files| be |file dialog behavior|'s [=file dialog behavior struct/files=].
+    1. Let |paths| be |file dialog behavior|'s [=file dialog behavior struct/paths=].
 
-    1. If |multiple| is <code>false</code> and [=list/size=] of |files| is greater than 1, or if,
+    1. If |multiple| is <code>false</code> and [=list/size=] of |paths| is greater than 1, or if,
        for any reason, the [=remote end=] is unable to select the files or directories with paths
-       given in |files| for the file dialog, return a [=file dialog behavior struct=] with
+       given in |paths| for the file dialog, return a [=file dialog behavior struct=] with
        [=file dialog behavior struct/accepted=] set to false and
-       [=file dialog behavior struct/files=] set to null.
+       [=file dialog behavior struct/paths=] set to null.
 
        Note: For example, [=remote ends=] might be unable to select paths that do not currently
-       exist on the filesystem or do not match the requested file dialog type (such as providing a
-       file path for a directory picker).
+       exist on the filesystem (for open file or directory dialogs, or when the parent directory
+       does not exist for a save file dialog) or do not match the requested file dialog type (such
+       as providing a file path for a directory picker, or a directory path for a file picker).
 
   1. Return |file dialog behavior|.
 
@@ -15575,7 +15580,7 @@ opened.
 
 1. If |dismissed| is true, return a [=file dialog behavior struct=] with
    [=file dialog behavior struct/accepted=] set to false and
-   [=file dialog behavior struct/files=] set to null.
+   [=file dialog behavior struct/paths=] set to null.
 
 1. Return null.
 
