@@ -1857,10 +1857,6 @@ To <dfn>cleanup remote end state</dfn>.
    implementation-specific resource caches that are usually enabled in the
    current [=remote end=] configuration.
 
-1. Set [=file dialog behavior=]'s [=file dialog behavior/default file dialog behavior=] to null.
-
-1. [=map/Clear=] [=file dialog behavior=]'s [=file dialog behavior/user context file dialog behavior=].
-
 </div>
 
 ### Types ### {#module-session-types}
@@ -3259,11 +3255,9 @@ A <dfn export>file dialog behavior struct</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn export id="file-dialog-behavior-struct-accepted" for="file dialog behavior struct">accepted</dfn> which is a boolean;
 * [=struct/item=] named <dfn export id="file-dialog-behavior-struct-paths" for="file dialog behavior struct">paths</dfn> which is a [=/list=] of strings or null.
 
-A [=remote end=] has a <dfn>file dialog behavior</dfn> which is a [=struct=] with an [=struct/item=]
-named <dfn for="file dialog behavior">default file dialog behavior</dfn>, which is a
-[=file dialog behavior struct=] or null, and an [=struct/item=] named <dfn
-for="file dialog behavior">user context file dialog behavior</dfn>, which is a weak map between
-[=user context|user contexts=] and [=file dialog behavior struct=].
+A [=remote end=] has a <dfn>file dialog behavior configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=]
+[=file dialog behavior struct=].
 
 <dl>
    <dt>Command Type</dt>
@@ -3304,25 +3298,12 @@ for="file dialog behavior">user context file dialog behavior</dfn>, which is a w
    </dd>
 </dl>
 
-<div algorithm>
-To <dfn export>get file dialog behavior</dfn> given |navigable|:
-
-1. Let |user context| be |navigable|'s [=associated user context=].
-
-1. If [=file dialog behavior=]'s [=file dialog behavior/user context file dialog behavior=] [=map/contains=]
-   |user context|, return [=file dialog behavior=]'s
-   [=file dialog behavior/user context file dialog behavior=][|user context|].
-
-1. Return [=file dialog behavior=]'s [=file dialog behavior/default file dialog behavior=].
-
-</div>
-
 <div algorithm="remote end steps for browser.setFileDialogBehavior">
 
-The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+The [=remote end steps=] given |command parameters| are:
 
 1. If |command parameters|["<code>fileDialogBehavior</code>"] is null, let
-   |file dialog behavior| be null.
+   |file dialog behavior| be [=WebDriver configuration/unset=].
 
 1. Otherwise:
 
@@ -3339,29 +3320,18 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
       [=file dialog behavior struct/accepted=] set to |accepted| and
       [=file dialog behavior struct/paths=] set to |paths|.
 
-1. If the implementation does not support required |file dialog behavior|, then return
+1. If |file dialog behavior| is not [=WebDriver configuration/unset=] and the
+   implementation does not support setting |file dialog behavior|, then return
    [=error=] with [=error code=] [=unsupported operation=].
 
-1. If the <code>userContexts</code> field of |command parameters| is present:
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and the
+   implementation is unable to configure file dialog behavior per
+   [=user context=], then return [=error=] with [=error code=]
+   [=unsupported operation=].
 
-   1. If the implementation is unable to configure file dialog behavior per
-      [=user context=], then return [=error=] with [=error code=]
-      [=unsupported operation=].
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. If |file dialog behavior| is null, [=map/remove=] |user context| from [=file dialog behavior=]'s
-         [=file dialog behavior/user context file dialog behavior=].
-
-      1. Otherwise, [=map/set=] [=file dialog behavior=]'s
-         [=file dialog behavior/user context file dialog behavior=][|user context|] to
-         |file dialog behavior|.
-
-1. Otherwise, set [=file dialog behavior=]'s [=file dialog behavior/default file dialog behavior=] to
-   |file dialog behavior|.
+1. [=Try=] to [=store WebDriver configuration=]
+   [=file dialog behavior configuration=] |file dialog behavior| for
+   |command parameters|.
 
 1. Return [=success=] with data null.
 
@@ -15538,9 +15508,10 @@ opened.
 
   1. [=Emit an event=] with |session| and |body|.
 
-1. Let |file dialog behavior| be [=get file dialog behavior=] with |navigable|.
+1. Let |file dialog behavior| be the result of [=get WebDriver configuration value=] of
+   [=file dialog behavior configuration=] for |navigable|.
 
-1. If |file dialog behavior| is not null:
+1. If |file dialog behavior| is not [=WebDriver configuration/unset=]:
 
   1. If |file dialog behavior|'s [=file dialog behavior struct/accepted=] is true:
 
