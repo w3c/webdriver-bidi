@@ -1859,9 +1859,7 @@ To <dfn>cleanup remote end state</dfn>.
 
 1. For each |directory| in [=temporary directories=]:
 
-  1. Perform implementation-defined steps to recursively remove |directory| from
-     the [=remote end=] filesystem, restoring any modified file or directory
-     permissions if needed.
+  1. [=Remove temporary directory=] |directory|.
 
   1. [=set/Remove=] |directory| from [=temporary directories=].
 
@@ -2832,6 +2830,15 @@ A [=remote end=] has a <dfn>temporary directories</dfn> which is a [=/set=] of
 strings representing the filesystem paths of temporary directories created by
 the [=remote end=], initially empty.
 
+<div algorithm="remove temporary directory">
+To <dfn>remove temporary directory</dfn> given a |directory|:
+
+1. Perform implementation-defined steps to recursively remove |directory| from
+   the [=remote end=] filesystem, restoring any modified file or directory
+   permissions if needed.
+
+</div>
+
 The <dfn export for=commands>browser.createTemporaryDirectory</dfn> command
 creates a temporary directory on the [=remote end=] filesystem, optionally
 populated with initial files, subdirectories, and symbolic links, and returns
@@ -2909,9 +2916,9 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. Let |root path| be the absolute filesystem path of the created temporary
    directory.
 
-1. [=set/Append=] |root path| to [=temporary directories=].
-
 1. If |command parameters| [=map/contains=] "<code>entries</code>":
+
+  1. Let |pending permissions| be an empty [=/list=].
 
   1. For each |entry| in |command parameters|["<code>entries</code>"]:
 
@@ -2919,8 +2926,11 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
     1. If |relative path| is an empty string, is an absolute path, or resolves
        to a location outside of |root path| (for example, by containing
-       "<code>..</code>" path traversal segments), return [=error=] with
-       [=error code=] [=invalid argument=].
+       "<code>..</code>" path traversal segments):
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=] [=invalid argument=].
 
     1. Let |entry path| be the filesystem path obtained by resolving
        |relative path| relative to |root path|, creating any missing parent
@@ -2938,8 +2948,11 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
             1. Set |bytes| to the result of [=forgiving-base64 decode|forgiving-base64 decoding=]
                |entry|["<code>data</code>"].
 
-            1. If |bytes| is failure, return [=error=] with [=error code=]
-               [=invalid argument=].
+            1. If |bytes| is failure:
+
+              1. [=Remove temporary directory=] |root path|.
+
+              1. Return [=error=] with [=error code=] [=invalid argument=].
 
           1. Otherwise, if |entry| [=map/contains=] "<code>size</code>":
 
@@ -2947,49 +2960,86 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
                |entry|["<code>size</code>"] where every byte is <code>0x00</code>.
 
           1. Perform implementation-defined steps to create or overwrite a file
-             at |entry path| containing |bytes|. If this fails for any reason,
-             return [=error=] with [=error code=] [=unknown error=].
+             at |entry path| containing |bytes|. If this fails for any reason:
+
+            1. [=Remove temporary directory=] |root path|.
+
+            1. Return [=error=] with [=error code=] [=unknown error=].
 
         <dt>"<code>directory</code>"
         <dd>
           1. Perform implementation-defined steps to ensure a directory exists
              at |entry path|. If this fails for any reason (for example, if a
-             non-directory file already exists at |entry path|), return
-             [=error=] with [=error code=] [=unknown error=].
+             non-directory file already exists at |entry path|):
+
+            1. [=Remove temporary directory=] |root path|.
+
+            1. Return [=error=] with [=error code=] [=unknown error=].
 
         <dt>"<code>symlink</code>"
         <dd>
           1. Let |target| be |entry|["<code>target</code>"].
 
           1. If |target| is an empty string, is an absolute path, or resolves to
-             a location outside of |root path|, return [=error=] with
-             [=error code=] [=invalid argument=].
+             a location outside of |root path|:
+
+            1. [=Remove temporary directory=] |root path|.
+
+            1. Return [=error=] with [=error code=] [=invalid argument=].
 
           1. If the [=remote end=] or host operating system does not support
-             creating symbolic links, return [=error=] with [=error code=]
-             [=unsupported operation=].
+             creating symbolic links:
+
+            1. [=Remove temporary directory=] |root path|.
+
+            1. Return [=error=] with [=error code=] [=unsupported operation=].
 
           1. Perform implementation-defined steps to create a symbolic link at
              |entry path| pointing to |target| resolved relative to |root path|.
-             If this fails for any reason, return [=error=] with [=error code=]
-             [=unknown error=].
+             If this fails for any reason:
+
+            1. [=Remove temporary directory=] |root path|.
+
+            1. Return [=error=] with [=error code=] [=unknown error=].
+
+          Note: Even when |entry path| is inside a subdirectory of |root path|,
+          |target| is resolved relative to |root path| rather than the parent
+          directory of |entry path|. Implementations using OS system calls that
+          interpret relative symbolic link targets relative to the link's parent
+          directory need to pass the path resolved against |root path| (or a
+          relative path computed from the link's parent directory).
        </dl>
 
     1. If |entry| [=map/contains=] "<code>permissions</code>":
 
-      1. Let |permissions| be |entry|["<code>permissions</code>"].
+      1. [=list/Append=] (|entry path|, |entry|["<code>permissions</code>"]) to
+         |pending permissions|.
 
-      1. If the [=remote end=] or host operating system does not support
-         configuring the requested file or directory permissions in
-         |permissions|, return [=error=] with [=error code=]
-         [=unsupported operation=].
+  1. Sort |pending permissions| in descending order of the path depth of
+     |entry path| so that entries are processed before their ancestor
+     directories.
 
-      1. Perform implementation-defined steps to apply the read, write, and
-         execute permissions specified by |permissions|["<code>readable</code>"],
-         |permissions|["<code>writable</code>"], and
-         |permissions|["<code>executable</code>"] (when present) to the entry at
-         |entry path|. If this fails for any reason, return [=error=] with
-         [=error code=] [=unknown error=].
+  1. For each (|entry path|, |permissions|) in |pending permissions|:
+
+    1. If the [=remote end=] or host operating system does not support
+       configuring the requested file or directory permissions in
+       |permissions|:
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=] [=unsupported operation=].
+
+    1. Perform implementation-defined steps to apply the read, write, and
+       execute permissions specified by |permissions|["<code>readable</code>"],
+       |permissions|["<code>writable</code>"], and
+       |permissions|["<code>executable</code>"] (when present) to the entry at
+       |entry path|. If this fails for any reason:
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=] [=unknown error=].
+
+1. [=set/Append=] |root path| to [=temporary directories=].
 
 1. Let |result| be a [=/map=] matching the
    <code>browser.CreateTemporaryDirectoryResult</code> production with the
