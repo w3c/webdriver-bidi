@@ -815,6 +815,9 @@ with the following additional codes:
   <dt><dfn for=errors export>no such storage partition</dfn>
   <dd>Tried to access data in a non-existent storage partition.
 
+  <dt><dfn for=errors export>no such temporary directory</dfn>
+  <dd>Tried to remove an unknown temporary directory.
+
   <dt><dfn for=errors export>no such user context</dfn>
   <dd>Tried to reference an unknown [=user context=].
 
@@ -823,6 +826,12 @@ with the following additional codes:
 
   <dt><dfn for=errors export>unable to close browser</dfn>
   <dd>Tried to close the browser, but failed to do so.
+
+  <dt><dfn for=errors export>unable to create temporary directory</dfn>
+  <dd>Tried to create or populate a temporary directory, but failed to do so.
+
+  <dt><dfn for=errors export>unable to remove temporary directory</dfn>
+  <dd>Tried to remove a temporary directory, but failed to do so.
 
   <dt><dfn for=errors export>unable to set cookie</dfn>
   <dd>Tried to create a cookie, but the user agent rejected it.
@@ -857,11 +866,14 @@ ErrorCode = "invalid argument" /
             "no such screencast" /
             "no such script" /
             "no such storage partition" /
+            "no such temporary directory" /
             "no such user context" /
             "no such web extension" /
             "session not created" /
             "unable to capture screen" /
             "unable to close browser" /
+            "unable to create temporary directory" /
+            "unable to remove temporary directory" /
             "unable to set cookie" /
             "unable to set file input" /
             "unavailable network data" /
@@ -1857,6 +1869,12 @@ To <dfn>cleanup remote end state</dfn>.
    implementation-specific resource caches that are usually enabled in the
    current [=remote end=] configuration.
 
+1. For each |directory| in [=temporary directories=]:
+
+  1. [=Remove temporary directory=] |directory|.
+
+  1. [=set/Remove=] |directory| from [=temporary directories=].
+
 </div>
 
 ### Types ### {#module-session-types}
@@ -2470,9 +2488,11 @@ managing the remote end browser process.
 <pre class="cddl" data-cddl-module="remote-cddl">
 BrowserCommand = (
   browser.Close //
+  browser.CreateTemporaryDirectory //
   browser.CreateUserContext //
   browser.GetClientWindows //
   browser.GetUserContexts //
+  browser.RemoveTemporaryDirectory //
   browser.RemoveUserContext //
   browser.SetClientWindowState //
   browser.SetDownloadBehavior
@@ -2485,9 +2505,11 @@ BrowserCommand = (
 <pre class="cddl" data-cddl-module="local-cddl">
 BrowserResult = (
   browser.CloseResult /
+  browser.CreateTemporaryDirectoryResult /
   browser.CreateUserContextResult /
   browser.GetClientWindowsResult /
   browser.GetUserContextsResult /
+  browser.RemoveTemporaryDirectoryResult /
   browser.RemoveUserContextResult /
   browser.SetClientWindowStateResult /
   browser.SetDownloadBehaviorResult
@@ -2816,6 +2838,365 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
 
 </div>
 
+#### The browser.createTemporaryDirectory Command #### {#command-browser-createTemporaryDirectory}
+
+A [=remote end=] has a <dfn>temporary directories</dfn> which is a [=/set=] of
+strings representing the filesystem paths of temporary directories created by
+the [=remote end=], initially empty.
+
+A [=remote end=] has a <dfn>max temporary directory size</dfn> which is a
+js-uint representing the maximum total size in bytes allowed for a temporary
+directory created by the [=remote end=]. Its value is implementation-defined.
+
+Note: This allows implementations to set resource usage limits on the size of
+individual files and the total size of a temporary directory.
+
+<div algorithm="remove temporary directory">
+To <dfn>remove temporary directory</dfn> given a |directory|:
+
+1. Perform implementation-defined steps to recursively remove |directory| and
+   its contents from the [=remote end=] filesystem, restoring any modified file
+   or directory permissions if needed, and without following symbolic links (so
+   that for any symbolic link entry, only the symbolic link itself is removed
+   and not its target). If removing any entry or restoring its permissions
+   fails, continue attempting to remove the remaining entries in |directory|.
+
+1. If |directory| was completely removed from the [=remote end=] filesystem,
+   return true; otherwise return false.
+
+</div>
+
+<div algorithm="resolve temporary directory relative path">
+To <dfn>resolve temporary directory relative path</dfn> given a |root path| and
+a |relative path|:
+
+1. If |relative path| is an empty string, or contains
+   "<code>\</code>" (U+005C REVERSE SOLIDUS) or U+0000 (NULL), return failure.
+
+1. Let |segments| be the result of [=strictly splitting=] |relative path| on
+   "<code>/</code>" (U+002F SOLIDUS).
+
+1. For each |segment| of |segments|:
+
+  1. If |segment| is an empty string, "<code>.</code>", or "<code>..</code>",
+     return failure.
+
+  1. If |segment| contains "<code>:</code>" (U+003A COLON), return
+     failure.
+
+1. Let |resolved path| be the native filesystem path obtained by joining
+   |root path| with each segment in |segments| in order using the host operating
+   system's path component separator.
+
+1. Return (|segments|, |resolved path|).
+
+</div>
+
+The <dfn export for=commands>browser.createTemporaryDirectory</dfn> command
+creates a temporary directory on the [=remote end=] filesystem, optionally
+populated with initial files, subdirectories, and symbolic links, and returns
+its absolute path.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browser.CreateTemporaryDirectory = (
+        method: "browser.createTemporaryDirectory",
+        params: browser.CreateTemporaryDirectoryParameters
+      )
+
+      browser.CreateTemporaryDirectoryParameters = {
+        ? entries: [*browser.TemporaryDirectoryEntry]
+      }
+
+      browser.TemporaryDirectoryEntry = (
+        browser.TemporaryFileEntry /
+        browser.TemporarySubdirectoryEntry /
+        browser.TemporarySymlinkEntry
+      )
+
+      browser.TemporaryFileEntry = {
+        type: "file",
+        path: text,
+        ? (
+          (data: network.BytesValue) //
+          (size: js-uint)
+        ),
+        ? permissions: browser.TemporaryEntryPermissions
+      }
+
+      browser.TemporarySubdirectoryEntry = {
+        type: "directory",
+        path: text,
+        ? permissions: browser.TemporaryEntryPermissions
+      }
+
+      browser.TemporarySymlinkEntry = {
+        type: "symlink",
+        path: text,
+        target: text
+      }
+
+      browser.TemporaryEntryPermissions = {
+        ? readable: bool,
+        ? writable: bool,
+        ? executable: bool
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.CreateTemporaryDirectoryResult = {
+        path: text
+      }
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.createTemporaryDirectory">
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. If the [=remote end=] does not support creating temporary directories on its
+   filesystem, return [=error=] with [=error code=] [=unsupported operation=].
+
+1. Perform implementation-defined steps to create a new, unique, empty temporary
+   directory on the [=remote end=] filesystem. If this fails for any reason,
+   return [=error=] with [=error code=] [=unable to create temporary directory=].
+
+1. Let |root path| be the absolute filesystem path of the created temporary
+   directory.
+
+1. If |command parameters| [=map/contains=] "<code>entries</code>":
+
+  1. Let |explicit paths| be an empty [=/set=].
+
+  1. Let |path types| be an empty [=/map=].
+
+  1. Let |pending symlinks| be an empty [=/list=].
+
+  1. Let |pending permissions| be an empty [=/list=].
+
+  1. Let |total size| be 0.
+
+  1. For each |entry| in |command parameters|["<code>entries</code>"]:
+
+    1. Let |resolved| be the result of running
+       [=resolve temporary directory relative path=] with |root path| and
+       |entry|["<code>path</code>"].
+
+    1. If |resolved| is failure:
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=] [=invalid argument=].
+
+    1. Let (|segments|, |entry path|) be |resolved|.
+
+    1. If |explicit paths| [=set/contains=] |segments|:
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=] [=invalid argument=].
+
+    1. If |path types| [=map/contains=] |segments| and
+       |entry|["<code>type</code>"] is not "<code>directory</code>":
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=] [=invalid argument=].
+
+    1. Let |prefix| be an empty [=/list=].
+
+    1. Let |index| be 0.
+
+    1. Let |segment count| be |segments|'s [=list/size=].
+
+    1. While |index| is less than |segment count| &minus; 1:
+
+      1. [=list/Append=] |segments|[|index|] to |prefix|.
+
+      1. Let |ancestor segments| be a [=list/clone=] of |prefix|.
+
+      1. If |path types| [=map/contains=] |ancestor segments| and
+         |path types|[|ancestor segments|] is not "<code>directory</code>":
+
+        1. [=Remove temporary directory=] |root path|.
+
+        1. Return [=error=] with [=error code=] [=invalid argument=].
+
+      1. [=map/Set=] |path types|[|ancestor segments|] to
+         "<code>directory</code>".
+
+      1. Set |index| to |index| + 1.
+
+    1. [=set/Append=] |segments| to |explicit paths|.
+
+    1. [=map/Set=] |path types|[|segments|] to |entry|["<code>type</code>"].
+
+    1. Perform implementation-defined steps to ensure that all parent
+       directories of |entry path| within |root path| exist. If this fails for
+       any reason (for example, due to an operating system restriction on a
+       directory name):
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=]
+         [=unable to create temporary directory=].
+
+    1. Switch on |entry|["<code>type</code>"]:
+
+       <dl>
+        <dt>"<code>file</code>"
+        <dd>
+          1. Let |bytes| be null.
+
+          1. Let |file size| be 0.
+
+          1. If |entry| [=map/contains=] "<code>data</code>":
+
+            1. Set |bytes| to the result of running
+               [=deserialize protocol bytes=] with |entry|["<code>data</code>"].
+
+            1. If |bytes| is failure:
+
+              1. [=Remove temporary directory=] |root path|.
+
+              1. Return [=error=] with [=error code=] [=invalid argument=].
+
+            1. Set |file size| to |bytes|'s [=byte sequence/length=].
+
+          1. Otherwise, if |entry| [=map/contains=] "<code>size</code>":
+
+            1. Set |file size| to |entry|["<code>size</code>"].
+
+          1. Set |total size| to |total size| + |file size|.
+
+          1. If |total size| is greater than [=max temporary directory size=]:
+
+            1. [=Remove temporary directory=] |root path|.
+
+            1. Return [=error=] with [=error code=]
+               [=unable to create temporary directory=].
+
+          1. If |bytes| is not null, perform implementation-defined steps to
+             create a new file at |entry path| containing |bytes|. Otherwise,
+             perform implementation-defined steps to create a new file at
+             |entry path| of length |file size| bytes where every byte is
+             <code>0x00</code>. If this fails for any reason (for example, due
+             to an operating system restriction on the file name or insufficient
+             disk space):
+
+            1. [=Remove temporary directory=] |root path|.
+
+            1. Return [=error=] with [=error code=]
+               [=unable to create temporary directory=].
+
+        <dt>"<code>directory</code>"
+        <dd>
+          1. Perform implementation-defined steps to ensure a directory exists
+             at |entry path|. If this fails for any reason (for example, due to
+             an operating system restriction on the directory name):
+
+            1. [=Remove temporary directory=] |root path|.
+
+            1. Return [=error=] with [=error code=]
+               [=unable to create temporary directory=].
+
+        <dt>"<code>symlink</code>"
+        <dd>
+          1. Let |resolved target| be the result of running
+             [=resolve temporary directory relative path=] with |root path| and
+             |entry|["<code>target</code>"].
+
+          1. If |resolved target| is failure:
+
+            1. [=Remove temporary directory=] |root path|.
+
+            1. Return [=error=] with [=error code=] [=invalid argument=].
+
+          1. Let (<var ignore>target segments</var>, |target path|) be
+             |resolved target|.
+
+          1. [=list/Append=] (|entry path|, |target path|) to
+             |pending symlinks|.
+       </dl>
+
+    1. If |entry| [=map/contains=] "<code>permissions</code>":
+
+      1. [=list/Append=] (|segments|, |entry path|,
+         |entry|["<code>permissions</code>"]) to |pending permissions|.
+
+  1. For each (|entry path|, |target path|) in |pending symlinks|:
+
+    1. If the [=remote end=] or host operating system does not support creating
+       symbolic links (including when the current process lacks operating system
+       privileges required to create symbolic links):
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=] [=unsupported operation=].
+
+    1. Perform implementation-defined steps to create a symbolic link at
+       |entry path| pointing to |target path|. If this fails for any reason:
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=]
+         [=unable to create temporary directory=].
+
+    Note: Even when |entry path| is inside a subdirectory of |root path|,
+    |target path| is resolved relative to |root path| rather than the parent
+    directory of |entry path|. Implementations using OS system calls that
+    interpret relative symbolic link targets relative to the link's parent
+    directory need to pass |target path| (or a relative path computed from the
+    link's parent directory).
+
+  1. Sort |pending permissions| in descending order of the [=list/size=] of
+     |segments| so that entries are processed before their ancestor
+     directories.
+
+  1. For each (<var ignore>segments</var>, |entry path|, |permissions|) in
+     |pending permissions|:
+
+    1. If the [=remote end=] or host operating system does not support
+       configuring or enforcing the specified file or directory permissions in
+       |permissions| for the operating system user account under which the
+       [=remote end=] browser is running (for example, configuring
+       <code>executable</code> permissions on an operating system without file
+       execute permission bits, or restricting <code>readable</code> or
+       <code>writable</code> permissions when running as a privileged root
+       account that bypasses filesystem permission checks):
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=] [=unsupported operation=].
+
+    1. Perform implementation-defined steps to apply the read, write, and
+       execute permissions specified by |permissions|["<code>readable</code>"],
+       |permissions|["<code>writable</code>"], and
+       |permissions|["<code>executable</code>"] (when present) for the operating
+       system user account under which the [=remote end=] browser is running to
+       the entry at |entry path|, leaving any omitted permission fields
+       unchanged. If this fails for any reason:
+
+      1. [=Remove temporary directory=] |root path|.
+
+      1. Return [=error=] with [=error code=]
+         [=unable to create temporary directory=].
+
+1. [=set/Append=] |root path| to [=temporary directories=].
+
+1. Let |result| be a [=/map=] matching the
+   <code>browser.CreateTemporaryDirectoryResult</code> production with the
+   <code>path</code> field set to |root path|.
+
+1. Return [=success=] with data |result|.
+
+</div>
+
 #### The browser.createUserContext Command #### {#command-browser-createUserContext}
 
 The <dfn export for=commands>browser.createUserContext</dfn> command creates a
@@ -2994,6 +3375,57 @@ The [=remote end steps=] are:
    <code>userContexts</code> field set to |user contexts|.
 
 1. Return [=success=] with data |result|.
+
+</div>
+
+
+#### The browser.removeTemporaryDirectory Command #### {#command-browser-removeTemporaryDirectory}
+
+The <dfn export for=commands>browser.removeTemporaryDirectory</dfn> command
+removes a temporary directory previously created by
+<code>[=browser.createTemporaryDirectory=]</code> from the [=remote end=]
+filesystem.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browser.RemoveTemporaryDirectory = (
+        method: "browser.removeTemporaryDirectory",
+        params: browser.RemoveTemporaryDirectoryParameters
+      )
+
+      browser.RemoveTemporaryDirectoryParameters = {
+        path: text
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.RemoveTemporaryDirectoryResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.removeTemporaryDirectory">
+
+The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
+
+1. Let |path| be |command parameters|["<code>path</code>"].
+
+1. If [=temporary directories=] does not [=set/contain=] |path|, return
+   [=error=] with [=error code=] [=no such temporary directory=].
+
+1. Let |removed| be the result of running [=remove temporary directory=] with
+   |path|.
+
+1. [=set/Remove=] |path| from [=temporary directories=].
+
+1. If |removed| is false, return [=error=] with [=error code=]
+   [=unable to remove temporary directory=].
+
+1. Return [=success=] with data null.
 
 </div>
 
