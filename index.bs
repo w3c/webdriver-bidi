@@ -2475,7 +2475,8 @@ BrowserCommand = (
   browser.GetUserContexts //
   browser.RemoveUserContext //
   browser.SetClientWindowState //
-  browser.SetDownloadBehavior
+  browser.SetDownloadBehavior //
+  browser.SetFileDialogBehavior
 )
 </pre>
 
@@ -2490,7 +2491,8 @@ BrowserResult = (
   browser.GetUserContextsResult /
   browser.RemoveUserContextResult /
   browser.SetClientWindowStateResult /
-  browser.SetDownloadBehaviorResult
+  browser.SetDownloadBehaviorResult /
+  browser.SetFileDialogBehaviorResult
 )
 </pre>
 
@@ -3242,6 +3244,94 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 1. Otherwise, set [=download behavior=]'s [=download behavior/default download behavior=] to
    |download behavior|.
+
+1. Return [=success=] with data null.
+
+</div>
+
+#### The browser.setFileDialogBehavior Command #### {#command-browser-setFileDialogBehavior}
+
+A <dfn export>file dialog behavior struct</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn export id="file-dialog-behavior-struct-accepted" for="file dialog behavior struct">accepted</dfn> which is a boolean;
+* [=struct/item=] named <dfn export id="file-dialog-behavior-struct-paths" for="file dialog behavior struct">paths</dfn> which is a [=/list=] of strings or null.
+
+A [=remote end=] has a <dfn>file dialog behavior configuration</dfn>, which is
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=]
+[=file dialog behavior struct=].
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browser.SetFileDialogBehavior = (
+        method: "browser.setFileDialogBehavior",
+        params: browser.SetFileDialogBehaviorParameters
+      )
+
+      browser.SetFileDialogBehaviorParameters = {
+        fileDialogBehavior: browser.FileDialogBehavior / null,
+        ? userContexts: [+browser.UserContext]
+      }
+
+      browser.FileDialogBehavior = {
+        (
+          browser.FileDialogBehaviorAccept //
+          browser.FileDialogBehaviorCancel
+        )
+      }
+
+      browser.FileDialogBehaviorAccept = (
+        type: "accept",
+        paths: [+text]
+      )
+
+      browser.FileDialogBehaviorCancel = (
+        type: "cancel"
+      )
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+      browser.SetFileDialogBehaviorResult = EmptyResult
+      </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browser.setFileDialogBehavior">
+
+The [=remote end steps=] given |command parameters| are:
+
+1. If |command parameters|["<code>fileDialogBehavior</code>"] is null, let
+   |file dialog behavior| be [=WebDriver configuration/unset=].
+
+1. Otherwise:
+
+   1. If |command parameters|["<code>fileDialogBehavior</code>"]["<code>type</code>"]
+      is "<code>accept</code>", let |accepted| be true, otherwise let |accepted| be
+      false.
+
+   1. If |command parameters|["<code>fileDialogBehavior</code>"] [=map/contains=]
+      "<code>paths</code>", let |paths| be
+      |command parameters|["<code>fileDialogBehavior</code>"]["<code>paths</code>"],
+      otherwise let |paths| be null.
+
+   1. Let |file dialog behavior| be a [=file dialog behavior struct=] with
+      [=file dialog behavior struct/accepted=] set to |accepted| and
+      [=file dialog behavior struct/paths=] set to |paths|.
+
+1. If |file dialog behavior| is not [=WebDriver configuration/unset=] and the
+   implementation does not support setting |file dialog behavior|, then return
+   [=error=] with [=error code=] [=unsupported operation=].
+
+1. If |command parameters| [=map/contains=] "<code>userContexts</code>" and the
+   implementation is unable to configure file dialog behavior per
+   [=user context=], then return [=error=] with [=error code=]
+   [=unsupported operation=].
+
+1. [=Try=] to [=store WebDriver configuration=]
+   [=file dialog behavior configuration=] |file dialog behavior| for
+   |command parameters|.
 
 1. Return [=success=] with data null.
 
@@ -15373,30 +15463,36 @@ The [=remote end steps=] given |session| and |command parameters| are:
    </dd>
 </dl>
 
-A <dfn>WebDriver BiDi file picker options</dfn> is a [=struct=] with an [=struct/item=] named
-<dfn for="WebDriver BiDi file picker options">multiple</dfn> which is a boolean.
+A <dfn export>WebDriver BiDi file picker options</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn export id="webdriver-bidi-file-picker-options-type" for="WebDriver BiDi file picker options">type</dfn> which is one of "<code>open-file</code>", "<code>save-file</code>", or "<code>directory</code>", initially "<code>open-file</code>";
+* [=struct/item=] named <dfn export id="webdriver-bidi-file-picker-options-multiple" for="WebDriver BiDi file picker options">multiple</dfn> which is a boolean, initially <code>false</code>.
 
 <div algorithm>
 The [=remote end event trigger=] is the
-<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given [=/element=] |element| and
-optionally [=WebDriver BiDi file picker options=] |file picker options| (default: null):
+<dfn export>WebDriver BiDi file dialog opened</dfn> steps, given [=/navigable=] |navigable|,
+optional [=/element=] |element| (default: null), and optional
+[=WebDriver BiDi file picker options=] |file picker options| (default: null):
 
 Note: unlike other user prompt handlers, the default behavior is to allow for the file dialog to be
 opened.
 
-1. Let |navigable| be the |element|'s [=node document=]'s [=/navigable=].
-
 1. Let |navigable id| be |navigable|'s [=navigable id=].
 
 1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=].
+
+1. Let |type| be "<code>open-file</code>".
 
 1. Let |multiple| be <code>false</code>.
 
 1. If |element| is not null and |element|'s <{input/multiple}> attribute is set,
     set |multiple| to <code>true</code>.
 
-1. If |file picker options| is not null and |file picker options|'s [=WebDriver BiDi file picker options/multiple=] is true, set |multiple| to
-      <code>true</code>.
+1. If |file picker options| is not null:
+
+   1. Set |type| to |file picker options|'s [=WebDriver BiDi file picker options/type=].
+
+   1. If |file picker options|'s [=WebDriver BiDi file picker options/multiple=] is true, set
+      |multiple| to <code>true</code>.
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -15419,6 +15515,29 @@ opened.
 
   1. [=Emit an event=] with |session| and |body|.
 
+1. Let |file dialog behavior| be the result of [=get WebDriver configuration value=] of
+   [=file dialog behavior configuration=] for |navigable|.
+
+1. If |file dialog behavior| is not [=WebDriver configuration/unset=]:
+
+  1. If |file dialog behavior|'s [=file dialog behavior struct/accepted=] is true:
+
+    1. Let |paths| be |file dialog behavior|'s [=file dialog behavior struct/paths=].
+
+    1. If |multiple| is <code>false</code> and [=list/size=] of |paths| is greater than 1, or if,
+       for any reason, the [=remote end=] is unable to select the files or directories with paths
+       given in |paths| for a file dialog of type |type|, return a [=file dialog behavior struct=]
+       with [=file dialog behavior struct/accepted=] set to false and
+       [=file dialog behavior struct/paths=] set to null.
+
+       Note: For example, [=remote ends=] might be unable to select paths that do not currently
+       exist on the filesystem (when |type| is "<code>open-file</code>" or "<code>directory</code>",
+       or when the parent directory does not exist when |type| is "<code>save-file</code>") or do
+       not match |type| (such as providing a file path when |type| is "<code>directory</code>", or a
+       directory path when |type| is "<code>open-file</code>" or "<code>save-file</code>").
+
+  1. Return |file dialog behavior|.
+
 1. Let |dismissed| be false.
 
 1. For each |session| in [=active BiDi sessions=]:
@@ -15438,7 +15557,11 @@ opened.
       |user prompt handler|["<code>default</code>"] is not equal to
       "<code>ignore</code>", set |dismissed| to true.
 
-1. Return |dismissed|.
+1. If |dismissed| is true, return a [=file dialog behavior struct=] with
+   [=file dialog behavior struct/accepted=] set to false and
+   [=file dialog behavior struct/paths=] set to null.
+
+1. Return null.
 
 </div>
 
