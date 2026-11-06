@@ -15463,8 +15463,9 @@ The [=remote end steps=] given |session| and |command parameters| are:
    </dd>
 </dl>
 
-A <dfn>WebDriver BiDi file picker options</dfn> is a [=struct=] with an [=struct/item=] named
-<dfn for="WebDriver BiDi file picker options">multiple</dfn> which is a boolean.
+A <dfn export>WebDriver BiDi file picker options</dfn> is a [=struct=] with:
+* [=struct/item=] named <dfn export id="webdriver-bidi-file-picker-options-type" for="WebDriver BiDi file picker options">type</dfn> which is one of "<code>open-file</code>", "<code>save-file</code>", or "<code>directory</code>", initially "<code>open-file</code>";
+* [=struct/item=] named <dfn export id="webdriver-bidi-file-picker-options-multiple" for="WebDriver BiDi file picker options">multiple</dfn> which is a boolean, initially <code>false</code>.
 
 <div algorithm>
 The [=remote end event trigger=] is the
@@ -15479,13 +15480,19 @@ opened.
 
 1. Let |user context id| be the [=user context id=] of |navigable|'s [=associated user context=].
 
+1. Let |type| be "<code>open-file</code>".
+
 1. Let |multiple| be <code>false</code>.
 
 1. If |element| is not null and |element|'s <{input/multiple}> attribute is set,
     set |multiple| to <code>true</code>.
 
-1. If |file picker options| is not null and |file picker options|'s [=WebDriver BiDi file picker options/multiple=] is true, set |multiple| to
-      <code>true</code>.
+1. If |file picker options| is not null:
+
+   1. Set |type| to |file picker options|'s [=WebDriver BiDi file picker options/type=].
+
+   1. If |file picker options|'s [=WebDriver BiDi file picker options/multiple=] is true, set
+      |multiple| to <code>true</code>.
 
 1. Let |related navigables| be a [=/set=] containing |navigable|.
 
@@ -15519,14 +15526,15 @@ opened.
 
     1. If |multiple| is <code>false</code> and [=list/size=] of |paths| is greater than 1, or if,
        for any reason, the [=remote end=] is unable to select the files or directories with paths
-       given in |paths| for the file dialog, return a [=file dialog behavior struct=] with
-       [=file dialog behavior struct/accepted=] set to false and
+       given in |paths| for a file dialog of type |type|, return a [=file dialog behavior struct=]
+       with [=file dialog behavior struct/accepted=] set to false and
        [=file dialog behavior struct/paths=] set to null.
 
        Note: For example, [=remote ends=] might be unable to select paths that do not currently
-       exist on the filesystem (for open file or directory dialogs, or when the parent directory
-       does not exist for a save file dialog) or do not match the requested file dialog type (such
-       as providing a file path for a directory picker, or a directory path for a file picker).
+       exist on the filesystem (when |type| is "<code>open-file</code>" or "<code>directory</code>",
+       or when the parent directory does not exist when |type| is "<code>save-file</code>") or do
+       not match |type| (such as providing a file path when |type| is "<code>directory</code>", or a
+       directory path when |type| is "<code>open-file</code>" or "<code>save-file</code>").
 
   1. Return |file dialog behavior|.
 
