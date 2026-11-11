@@ -3251,6 +3251,9 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 
 #### The browser.setFileDialogBehavior Command #### {#command-browser-setFileDialogBehavior}
 
+The <dfn export for=commands>browser.setFileDialogBehavior</dfn> command
+configures how the [=remote end=] handles file dialogs.
+
 A <dfn export>file dialog behavior struct</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn export id="file-dialog-behavior-struct-accepted" for="file dialog behavior struct">accepted</dfn> which is a boolean;
 * [=struct/item=] named <dfn export id="file-dialog-behavior-struct-paths" for="file dialog behavior struct">paths</dfn> which is a [=/list=] of strings or null.
@@ -15484,8 +15487,14 @@ opened.
 
 1. Let |multiple| be <code>false</code>.
 
-1. If |element| is not null and |element|'s <{input/multiple}> attribute is set,
-    set |multiple| to <code>true</code>.
+1. If |element| is not null:
+
+   1. If |element| implements {{HTMLInputElement}} and |element|'s
+      {{HTMLInputElement/webkitdirectory}} attribute is true, set |type| to
+      "<code>directory</code>".
+
+   1. Otherwise, if |element|'s <{input/multiple}> attribute is set, set
+      |multiple| to <code>true</code>.
 
 1. If |file picker options| is not null:
 
@@ -15534,7 +15543,10 @@ opened.
        exist on the filesystem (when |type| is "<code>open-file</code>" or "<code>directory</code>",
        or when the parent directory does not exist when |type| is "<code>save-file</code>") or do
        not match |type| (such as providing a file path when |type| is "<code>directory</code>", or a
-       directory path when |type| is "<code>open-file</code>" or "<code>save-file</code>").
+       directory path when |type| is "<code>open-file</code>" or "<code>save-file</code>"). Because
+       <code>[=commands/browser.setFileDialogBehavior=]</code> configures the behavior ahead of time
+       before the dialog is opened, the [=remote end=] does not send an error or warning to the
+       [=local end=] in these cases, and instead cancels the file dialog.
 
   1. Return |file dialog behavior|.
 
@@ -15562,6 +15574,15 @@ opened.
    [=file dialog behavior struct/paths=] set to null.
 
 1. Return null.
+
+Note: Callers of [=WebDriver BiDi file dialog opened=] (such as HTML and File System Access)
+inspect the returned value to determine how to proceed: if null is returned, the user agent
+displays the file dialog prompt to the user as normal; if a [=file dialog behavior struct=] with
+[=file dialog behavior struct/accepted=] set to true is returned, the user agent skips displaying
+the prompt and uses [=file dialog behavior struct/paths=] as the selected file or directory paths;
+if a [=file dialog behavior struct=] with [=file dialog behavior struct/accepted=] set to false is
+returned, the user agent skips displaying the prompt and acts as if the user dismissed the dialog
+without making a selection.
 
 </div>
 
