@@ -322,18 +322,18 @@ spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
   type: dfn
     text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
     text: toUppercase; url: ch03.pdf#G34078
-spec: ACCNAME; urlPrefix:https://www.w3.org/TR/accname-1.2
+spec: ACCNAME-1.2; urlPrefix: https://www.w3.org/TR/accname-1.2/
   type: dfn
-    text: accessible name; url: /#dfn-accessible-name
-spec: CORE-AAM; urlPrefix:https://www.w3.org/TR/core-aam-1.2
+    text: accessible name; url: #dfn-accessible-name
+spec: CORE-AAM-1.2; urlPrefix: https://www.w3.org/TR/core-aam-1.2/
   type: dfn
-    text: accessibility node; url: /#dfn-accessibility-node
-    text: accessibility node ID; url: /#dfn-accessibility-node-id
-    text: computed accessibility properties; url: /#dfn-computed-accessibility-properties
-    text: computed role; url: /#roleMappingComputedRole
-spec: WAI-ARIA; urlPrefix:https://www.w3.org/TR/wai-aria-1.2
+    text: accessibility node; url: #dfn-accessibility-node
+    text: accessibility node ID; url: #dfn-accessibility-node-id
+    text: computed accessibility properties; url: #dfn-computed-accessibility-properties
+    text: computed role; url: #roleMappingComputedRole
+spec: WAI-ARIA-1.2; urlPrefix: https://www.w3.org/TR/wai-aria-1.2/
   type: dfn
-    text: accessibility tree; url: /#dfn-accessibility-tree
+    text: accessibility tree; url: #dfn-accessibility-tree
 spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
   type: dfn
     text: resolution media feature; url: #resolution
@@ -3492,7 +3492,8 @@ To <dfn>get the accessibility node info</dfn> given |accessibility node|,
 1. For each [=accessibility node=] |child| that is a child of
    |accessibility node| in the [=accessibility tree=], in tree order:
 
-   1. If |child| represents a {{Document}} that is not |document|, continue.
+   1. If |child| represents a {{Document}} that is not |document|,
+      [=continue=].
 
       Note: This step excludes the documents of the [=child navigables=]. The
       result includes the [=accessibility node=] of the [=navigable container=].
@@ -3512,25 +3513,34 @@ To <dfn>get the accessibility node info</dfn> given |accessibility node|,
 1. For each |key| → |value| of the [=computed accessibility properties=] of
    |accessibility node|:
 
-   1. If |key| is "<code>accessibilityID</code>", "<code>parent</code>" or
-      "<code>children</code>", continue.
+   1. If |key| is "<code>accessibilityID</code>", "<code>parent</code>",
+      "<code>children</code>" or "<code>label</code>", [=continue=].
 
-      Note: The <code>accessibilityId</code> and <code>children</code> fields
-      of |info| contain this data.
+      Note: The <code>accessibilityId</code>, <code>children</code> and
+      <code>name</code> fields of |info| contain this data.
 
-   1. If |key| is "<code>role</code>", set |info|["<code>role</code>"] to
-      |value| and continue.
+   1. If |key| is "<code>role</code>":
+
+      1. If |value| is not the empty string, set |info|["<code>role</code>"] to
+         |value|.
+
+      1. [=Continue=].
 
    1. Set |properties|[|key|] to |value|.
 
    Issue: [[CORE-AAM-1.2]] does not define the values of the relation properties,
-   for example <code>aria-labelledby</code>. A possible value is the list of
+   for example <code>aria-controls</code>. A possible value is the list of
    <code>script.SharedId</code> values of the related nodes.
 
 1. Let |name| be the [=accessible name=] of |accessibility node|.
 
 1. If |name| is not the empty string, set |info|["<code>name</code>"] to
    |name|.
+
+   Issue: [[ACCNAME-1.2]] and [[CORE-AAM-1.2]] define the [=accessible name=]
+   and the [=computed role=] only for elements. The values for other
+   [=accessibility nodes=] are not defined, for example for a {{Document}}, a
+   {{Text}} node or a pseudo-element.
 
 1. If |properties| [=map/is empty|is not empty=], set
    |info|["<code>properties</code>"] to |properties|.
