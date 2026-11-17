@@ -1029,10 +1029,8 @@ are instead given as a precise processing model, while no
 normative requirements are given for [=local ends=].
 
 A <dfn>message transport</dfn> is an abstract interface for passing
-messages between the [=local end=] and the [=remote end=].
-
-<dfn>Connection steps</dfn> for a [=message transport=] are the steps taken
-when the [=local end=] establishes a new [=connection=].
+messages between the [=local end=] and the [=remote end=]. Each [=message
+transport=] defines how the [=local end=] establishes a [=connection=].
 
 A <dfn>connection listener</dfn> is a mechanism that is able to accept
 incoming [=connections=].
@@ -1040,11 +1038,12 @@ incoming [=connections=].
 A <dfn>connection</dfn> is an abstract WebDriver BiDi connection between
 the [=local end=] and the [=remote end=].
 
-A [=connection=] has the <dfn>send a connection message</dfn> steps for
-sending a message over the connection.
+A [=connection=] has <dfn>send a connection message</dfn> steps, which take a
+[=byte sequence=] and send it to the [=local end=] over the connection.
 
-A [=connection=] has the <dfn>close the connection</dfn> steps for closing
-the connection.
+A [=connection=] has <dfn>close the connection</dfn> steps, which close the
+connection. These steps must result in [=the connection is closed=] for that
+connection.
 
 A [=remote end=] has a [=/set=] of [=connection listeners=] <dfn>active
 listeners</dfn>, which is initially empty.
@@ -1060,8 +1059,8 @@ A [=BiDi session=] |session| is <dfn>associated with connection</dfn>
 
 Note: Each [=connection=] is associated with at most one [=BiDi session=].
 
-When <dfn>a message has been received</dfn> for a [=connection=] |connection|
-with a [=scalar value string=] |data|, a [=remote end=]
+When a [=message transport=] receives a message over a [=connection=]
+|connection| with a [=scalar value string=] |data|, a [=remote end=]
 must [=handle an incoming message=] given |connection| and |data|.
 
 When <dfn>the connection is closed</dfn> for a [=connection=] |connection|,
@@ -1076,20 +1075,30 @@ using the WebSocket protocol.
 Note: In the terms of the WebSocket protocol, the [=local end=] is the
 client and the [=remote end=] is the server / remote host.
 
+A <dfn>WebSocket listener</dfn> is a network endpoint that is able to accept
+incoming [[!RFC6455|WebSocket]] connections. A [=WebSocket listener=] is a
+[=connection listener=].
+
+A [=WebSocket listener=] has a <dfn for=listener>host</dfn>, a <dfn
+for=listener>port</dfn>, a <dfn for=listener>secure flag</dfn>, and a
+<dfn>list of WebSocket resources</dfn>.
+
+A <dfn>WebSocket connection</dfn> is a network [=connection=] of the
+[=WebSocket transport=] that follows the requirements of the
+[[!RFC6455|WebSocket protocol]].
+
 When a [=WebSocket listener=] |listener| is created, a [=remote end=]
 must start to listen for WebSocket connections on the host and port
 given by |listener|'s [=listener/host=] and [=listener/port=]. If
 |listener|'s [=listener/secure flag=] is set, then connections
 established from |listener| must be TLS encrypted.
 
-The [=connection steps=] for the [=WebSocket transport=] are:
-
-<div>
+<div algorithm="WebSocket connection establishment">
 
 When a client [=establishes a WebSocket connection=] |connection| by
-connecting to one of the set of [=active listeners=] |listener|, the
-implementation must proceed according to the WebSocket
-[=server-side requirements=], with the following steps run when deciding whether to
+connecting to a [=WebSocket listener=] |listener| in [=active listeners=], the
+implementation must proceed according to the WebSocket [=server-side
+requirements=], with the following steps run when deciding whether to
 accept the incoming connection:
 
 1. Let |resource name| be the resource name from [=reading the
@@ -1131,17 +1140,6 @@ Issue: Do we support > 1 connection for a single session?
 
 </div>
 
-A <dfn>WebSocket listener</dfn> is a network endpoint that is able to accept
-incoming [[!RFC6455|WebSocket]] connections. A [=WebSocket listener=] is a
-[=connection listener=].
-
-A [=WebSocket listener=] has a <dfn for=listener>host</dfn>, a <dfn
-for=listener>port</dfn>, a <dfn for=listener>secure flag</dfn>, and a
-<dfn>list of WebSocket resources</dfn>.
-
-A <dfn>WebSocket connection</dfn> is a network [=connection=] that follows the
-requirements of the [[!RFC6455|WebSocket protocol]].
-
 <div algorithm="WebSocket message received">
 
 When [=a WebSocket message has been received=] for a [=WebSocket connection=]
@@ -1160,29 +1158,36 @@ steps:
    Issue: Nothing seems to define what [=status codes|status code=]
    is used for UTF-8 errors.
 
-1. [=A message has been received=] for |connection| with |data|.
+1. [=Handle an incoming message=] given |connection| and |data|.
 
 </div>
 
-[=The connection is closed=] for a [=WebSocket connection=] when [=the
-WebSocket closing handshake is started=] or when [=the WebSocket connection is
-closed=].
+[=The connection is closed=] for a [=WebSocket connection=] |connection| when
+[=the WebSocket closing handshake is started=] or when [=the WebSocket
+connection is closed=] for |connection|.
 
 Note: Both conditions are needed because it is possible for a connection to be
 closed without a closing handshake.
 
-The [=send a connection message=] steps for a [=WebSocket connection=] are
-[=send a WebSocket message=].
+<div algorithm="WebSocket send a connection message">
 
-<div>
+The [=send a connection message=] steps for a [=WebSocket connection=]
+|connection| given a [=byte sequence=] |message| are:
 
-The [=close the connection=] steps for a [=WebSocket connection=] |connection| are:
+1. [=Send a WebSocket message=] comprised of |message| over |connection|.
 
-  1. [=Start the WebSocket closing handshake=] with |connection|.
+</div>
 
-     Note: this will result in the steps in [=handle a connection closing=]
-     being run for |connection|, which will clean up resources associated with
-     |connection|.
+<div algorithm="WebSocket close the connection">
+
+The [=close the connection=] steps for a [=WebSocket connection=] |connection|
+are:
+
+1. [=Start the WebSocket closing handshake=] with |connection|.
+
+   Note: this will result in the steps in [=handle a connection closing=]
+   being run for |connection|, which will clean up resources associated with
+   |connection|.
 
 </div>
 
@@ -1263,6 +1268,8 @@ expected to only have a single listener.
 Note: For an [=endpoint node=] the [=listener/host=] in the above steps will
 typically be "<code>localhost</code>".
 
+## Message Processing ## {#message-processing}
+
 <div algorithm>
 To <dfn>handle an incoming message</dfn> given a [=connection=]
 |connection| and a [=scalar value string=] |data|:
@@ -1326,8 +1333,8 @@ To <dfn>handle an incoming message</dfn> given a [=connection=]
     1. Let |serialized| be the result of [=serialize an infra value to JSON
        bytes=] given |response|.
 
-    1. [=Send a connection message=] comprised of |serialized| over
-       |connection|.
+    1. Run the [=send a connection message=] steps for |connection| given
+       |serialized|.
 
 1. Otherwise:
 
@@ -1452,7 +1459,8 @@ To <dfn>get valid top-level traversables by ids</dfn> given a [=/list=] of conte
 
 1. [=list/For each=] |connection| in |session|'s [=session connections=]:
 
-  1. [=Send a connection message=] comprised of |serialized| over |connection|.
+  1. Run the [=send a connection message=] steps for |connection| given
+     |serialized|.
 
 </div>
 
@@ -1475,7 +1483,8 @@ To <dfn>send an error response</dfn> given a [=connection=]
    Note: |command id| can be null, in which case the <code>id</code> field will
    also be set to null, not omitted from |response|.
 
-1. [=Send a connection message=] comprised of |response| over |connection|.
+1. Run the [=send a connection message=] steps for |connection| given
+   |response|.
 
 </div>
 
@@ -1505,9 +1514,13 @@ the listener if it wants.
 
 To <dfn>close the connections</dfn> given |session|:
 
-1. For each |connection| in |session|'s [=session connections=]:
+1. [=list/For each=] |connection| of a [=list/clone=] of |session|'s [=session
+   connections=]:
 
-  1. Run [=close the connection=] steps for the |connection|.
+  1. Run the [=close the connection=] steps for |connection|.
+
+Note: The steps iterate over a clone because [=handle a connection closing=]
+removes |connection| from |session|'s [=session connections=].
 
 </div>
 
