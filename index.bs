@@ -1031,21 +1031,26 @@ normative requirements are given for [=local ends=].
 A <dfn>message transport</dfn> is an abstract interface for passing
 messages between the [=local end=] and the [=remote end=].
 
-<dfn>Connection steps</dfn> for a [=message transport=] are the steps taken when the [=local end=] establishes a new [=connection=].
+<dfn>Connection steps</dfn> for a [=message transport=] are the steps taken
+when the [=local end=] establishes a new [=connection=].
 
-A <dfn>connection listener</dfn> is a mechanism that is able to accept incoming [=connections=].
+A <dfn>connection listener</dfn> is a mechanism that is able to accept
+incoming [=connections=].
 
-A <dfn>connection</dfn> is an abstract WebDriver BiDi connection between the [=local end=] and the [=remote end=].
+A <dfn>connection</dfn> is an abstract WebDriver BiDi connection between
+the [=local end=] and the [=remote end=].
 
-A [=connection=] has the <dfn>send a connection message</dfn> steps for sending a message over the connection.
+A [=connection=] has the <dfn>send a connection message</dfn> steps for
+sending a message over the connection.
 
-A [=connection=] has the <dfn>close the connection</dfn> steps for closing the connection.
+A [=connection=] has the <dfn>close the connection</dfn> steps for closing
+the connection.
 
-A [=remote end=] has a [=/set=] of [=connection listeners=] <dfn>active listeners</dfn>,
-which is initially empty.
+A [=remote end=] has a [=/set=] of [=connection listeners=] <dfn>active
+listeners</dfn>, which is initially empty.
 
-A [=remote end=] has a [=/set=] of <dfn>connections not associated with a session</dfn>,
-which is initially empty.
+A [=remote end=] has a [=/set=] of <dfn>connections not associated with a
+session</dfn>, which is initially empty.
 
 A [=BiDi session=] has a [=/set=] of <dfn>session connections</dfn>
 whose elements are [=connections=]. This is initially empty.
@@ -1056,8 +1061,8 @@ A [=BiDi session=] |session| is <dfn>associated with connection</dfn>
 Note: Each [=connection=] is associated with at most one [=BiDi session=].
 
 When <dfn>a message has been received</dfn> for a [=connection=] |connection|
-with type |type| and data |data|, a [=remote end=]
-must [=handle an incoming message=] given |connection|, |type| and |data|.
+with a [=scalar value string=] |data|, a [=remote end=]
+must [=handle an incoming message=] given |connection| and |data|.
 
 When <dfn>the connection is closed</dfn> for a [=connection=] |connection|,
 a [=remote end=] must [=handle a connection closing=] given |connection|.
@@ -1066,7 +1071,7 @@ a [=remote end=] must [=handle a connection closing=] given |connection|.
 
 The <dfn>WebSocket transport</dfn> is a [=message transport=] implementation
 using the WebSocket protocol.
-[[!RFC6455]].
+[[!RFC6455]]
 
 Note: In the terms of the WebSocket protocol, the [=local end=] is the
 client and the [=remote end=] is the server / remote host.
@@ -1137,14 +1142,37 @@ for=listener>port</dfn>, a <dfn for=listener>secure flag</dfn>, and a
 A <dfn>WebSocket connection</dfn> is a network [=connection=] that follows the
 requirements of the [[!RFC6455|WebSocket protocol]].
 
-[=A message has been received=] for a [=WebSocket connection=] when [=a WebSocket Message Has Been Received=].
-[=The connection is closed=] for a [=WebSocket connection=] when [=the WebSocket closing handshake is started=]
-or when [=the WebSocket connection is closed=].
+<div algorithm="WebSocket message received">
+
+When [=a WebSocket message has been received=] for a [=WebSocket connection=]
+|connection| with type |type| and data |data|, a [=remote end=] must run these
+steps:
+
+1. If |type| is not [=%x1 denotes a text frame|text=], [=send an error
+   response=] given |connection|, null, and [=invalid argument=], and finally
+   return.
+
+1. [=Assert=]: |data| is a [=scalar value string=], because the
+    WebSocket [=handling errors in UTF-8-encoded data=] would already
+    have [=fail the WebSocket connection|failed the WebSocket
+    connection=] otherwise.
+
+   Issue: Nothing seems to define what [=status codes|status code=]
+   is used for UTF-8 errors.
+
+1. [=A message has been received=] for |connection| with |data|.
+
+</div>
+
+[=The connection is closed=] for a [=WebSocket connection=] when [=the
+WebSocket closing handshake is started=] or when [=the WebSocket connection is
+closed=].
 
 Note: Both conditions are needed because it is possible for a connection to be
 closed without a closing handshake.
 
-The [=send a connection message=] steps for a [=WebSocket connection=] are [=send a WebSocket Message=].
+The [=send a connection message=] steps for a [=WebSocket connection=] are
+[=send a WebSocket message=].
 
 <div>
 
@@ -1237,23 +1265,12 @@ typically be "<code>localhost</code>".
 
 <div algorithm>
 To <dfn>handle an incoming message</dfn> given a [=connection=]
-|connection|, type |type| and data |data|:
-
-1. If |type| is not [=%x1 denotes a text frame|text=], [=send an error
-   response=] given |connection|, null, and [=invalid argument=], and finally
-   return.
-
-1. [=Assert=]: |data| is a [=scalar value string=], because the
-    WebSocket [=handling errors in UTF-8-encoded data=] would already
-    have [=fail the WebSocket connection|failed the WebSocket
-    connection=] otherwise.
-
-   Issue: Nothing seems to define what [=status codes|status code=]
-   is used for UTF-8 errors.
+|connection| and a [=scalar value string=] |data|:
 
 1. If there is a [=BiDi Session=] [=associated with connection=] |connection|,
-   let |session| be that session. Otherwise if |connection| is in [=connections not associated with a session=],
-   let |session| be null. Otherwise, return.
+   let |session| be that session. Otherwise if |connection| is in
+   [=connections not associated with a session=], let |session| be null.
+   Otherwise, return.
 
 1. Let |parsed| be the result of [=parse JSON into Infra values|parsing JSON
    into Infra values=] given |data|. If this throws an exception, then [=send
@@ -1512,9 +1529,11 @@ with parameters |session|, |capabilities|, and |flags| is:
 
 1. [=Assert=]: |webSocketUrl| is true.
 
-1. Let |listener| be the result of [=start listening for a WebSocket connection=] given |session|.
+1. Let |listener| be the result of [=start listening for a WebSocket
+   connection=] given |session|.
 
-1. Set |webSocketUrl| to the result of [=construct a WebSocket URL=] with |listener| and |session|.
+1. Set |webSocketUrl| to the result of [=construct a WebSocket
+   URL=] with |listener| and |session|.
 
 1. [=Set a property=] on |capabilities| named
    "<code>webSocketUrl</code>" to |webSocketUrl|.
@@ -1533,8 +1552,7 @@ communicated out-of-band. An implementation that allows this <dfn>supports
 BiDi-only sessions</dfn>. At the time such an implementation is ready to accept
 requests to start a WebDriver session, it must:
 
-1. Let |transport| be a [=WebSocket transport=].
-1. Run [=start listening for a WebSocket connection=] for |transport| given null.
+1. [=Start listening for a WebSocket connection=] given null.
 
 </div>
 
@@ -2832,7 +2850,7 @@ The [=remote end steps=] with |session| and <var ignore>command parameters</var>
      Note: For example this might include cleanly shutting down any OS-level
      processes associated with the browser under automation, removing temporary
      state, such as user profile data, created by the [=remote end=] while under
-     automation, or shutting down the [=Connection Listener=]. Because of
+     automation, or shutting down the [=connection listener=]. Because of
      differences between browsers and operating systems it is not possible to
      specify in detail precise invariants [=local ends=] can depend on here.
 
