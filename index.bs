@@ -3344,6 +3344,8 @@ BrowsingContextEvent = (
   browsingContext.NavigationCommitted //
   browsingContext.NavigationFailed //
   browsingContext.NavigationStarted //
+  browsingContext.PageHide //
+  browsingContext.PageShow //
   browsingContext.UserPromptClosed //
   browsingContext.UserPromptOpened
 )
@@ -5757,23 +5759,6 @@ The [=remote end steps=] with |command parameters| are:
 
 <div algorithm>
 
-The <dfn export>WebDriver BiDi page show</dfn> steps given <var
-ignore>context</var> and [=WebDriver BiDi navigation status|navigation status=] |navigation status|
-are:
-
-Issue: Do we want to expose a `browsingContext.pageShow` event? In that case we'd
-need to call this whenever `pageshow` is going to be emitted, not just on
-bfcache restore, and also add the persisted status to the data.
-
- 1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
-
- 1. [=Resume=] with "<code>page show</code>", |navigation id|, and
-    |navigation status|.
-
-</div>
-
-<div algorithm>
-
 The <dfn export>WebDriver BiDi pop state</dfn> steps given <var
 ignore>context</var> and [=WebDriver BiDi navigation status|navigation status=] |navigation status|
 are:
@@ -6139,6 +6124,107 @@ The [=remote end event trigger=] is the <dfn export>WebDriver BiDi load complete
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>browsingContext.load</code>" and |related navigables|:
+
+  1. [=Emit an event=] with |session| and |body|.
+
+</div>
+
+#### The browsingContext.pageShow Event #### {#event-browsingContext-pageShow}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+        browsingContext.PageShow = (
+         method: "browsingContext.pageShow",
+         params: browsingContext.PageTransitionParameters
+        )
+
+        browsingContext.PageTransitionParameters = {
+          browsingContext.BaseNavigationInfo,
+          persisted: bool
+        }
+      </pre>
+   </dd>
+</dl>
+
+The <code>browsingContext.pageShow</code> event is emitted each time a
+<code>pageshow</code> event fires at a [=/navigable=]'s [=active window=]. This
+happens after the <code>load</code> event of a new document, and also when a
+document is restored from the back/forward cache, in which case no <code>load</code>
+event fires. The <code>persisted</code> field is true when the document is
+restored from the back/forward cache, and false otherwise.
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi page show</dfn> steps
+given [=/navigable=] |navigable|, [=WebDriver BiDi navigation status|navigation
+status=] |navigation status| and boolean |persisted|:
+
+1. Let |params| be the result of [=get the navigation info=] given |navigable|
+   and |navigation status|.
+
+1. [=map/Set=] |params|["<code>persisted</code>"] to |persisted|.
+
+1. Let |body| be a [=/map=] matching the <code>browsingContext.PageShow</code>
+   production, with the <code>params</code> field set to |params|.
+
+1. Let |related navigables| be a [=/set=] containing |navigable|.
+
+1. Let |navigation id| be |navigation status|'s [=WebDriver BiDi navigation status/id=].
+
+1. [=Resume=] with "<code>page show</code>", |navigation id|, and
+   |navigation status|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.pageShow</code>" and |related navigables|:
+
+  1. [=Emit an event=] with |session| and |body|.
+
+</div>
+
+Issue: HTML does not create a [=navigation id=] for history traversals. So the
+<code>navigation</code> field is null when the <code>pageshow</code> event is
+caused by a history traversal, both when the document is restored from the
+back/forward cache and when it is loaded again.
+
+#### The browsingContext.pageHide Event #### {#event-browsingContext-pageHide}
+
+<dl>
+   <dt>Event Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="local-cddl">
+        browsingContext.PageHide = (
+         method: "browsingContext.pageHide",
+         params: browsingContext.PageTransitionParameters
+        )
+      </pre>
+   </dd>
+</dl>
+
+The <code>browsingContext.pageHide</code> event is emitted each time a
+<code>pagehide</code> event fires at a [=/navigable=]'s [=active window=],
+before its document is unloaded. The <code>persisted</code> field is true when
+the document might be stored in the back/forward cache, and false otherwise.
+The <code>navigation</code> field is the [=navigation id=] of the navigation
+that replaces the document, or null if there is none.
+
+<div algorithm>
+The [=remote end event trigger=] is the <dfn export>WebDriver BiDi page hide</dfn> steps
+given [=/navigable=] |navigable|, [=WebDriver BiDi navigation status|navigation
+status=] |navigation status| and boolean |persisted|:
+
+1. Let |params| be the result of [=get the navigation info=] given |navigable|
+   and |navigation status|.
+
+1. [=map/Set=] |params|["<code>persisted</code>"] to |persisted|.
+
+1. Let |body| be a [=/map=] matching the <code>browsingContext.PageHide</code>
+   production, with the <code>params</code> field set to |params|.
+
+1. Let |related navigables| be a [=/set=] containing |navigable|.
+
+1. For each |session| in the [=set of sessions for which an event is enabled=]
+   given "<code>browsingContext.pageHide</code>" and |related navigables|:
 
   1. [=Emit an event=] with |session| and |body|.
 
