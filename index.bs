@@ -4431,7 +4431,7 @@ To <dfn>round a number</dfn> given |number|:
 
 1. If |number| < 0.5𝔽 and |number| > +0𝔽, return +0𝔽.
 
-1. If |number| < -0𝔽 and n ≥ -0.5𝔽, return -0𝔽.
+1. If |number| < -0𝔽 and |number| ≥ -0.5𝔽, return -0𝔽.
 
 1. Return the [=integral Number=] closest to |number|, preferring the Number closer to +∞ in the case of a tie.
 
@@ -4440,8 +4440,7 @@ To <dfn>round a number</dfn> given |number|:
 <div algorithm>
 To <dfn>render document to a canvas</dfn> given |document|, |rect| and |image size|:
 
-1. Let |ratio| be [=determine the device pixel ratio=] given |document|'s
-   [=default view=].
+1. Let |ratio| be the result of [=determine the device pixel ratio|determining the device pixel ratio=] for |document|.
 
 1. Let |framebuffer width| be |rect|'s [=width dimension=] multiplied by
    |ratio|, so it matches the width of |rect| in device pixels.
@@ -4999,7 +4998,7 @@ list of all nodes matching the specified locator.
 
 <div algorithm="locate nodes using CSS">
 To <dfn>locate nodes using CSS</dfn> with given |navigable|, |context nodes|,
-|selector|, |maximum returned node count|, and <var ignore>session</var>:
+|selector|, and |maximum returned node count|:
 
 1. Let |returned nodes| be an empty [=/list=].
 
@@ -5140,7 +5139,7 @@ To <dfn>locate nodes using inner text</dfn> with given |context nodes|,
 
       1. Let |child max depth| be null if |max depth| is null, or |max depth| - 1 otherwise.
 
-      1. Let |child node matches| be the result of [=locate nodes using inner text=]
+      1. Let |child node matches| be the result of [=trying=] to [=locate nodes using inner text=]
          with |child nodes|, |selector|, |child max depth| , |match type|,
          |ignore case|, and |maximum returned node count|.
 
@@ -5200,7 +5199,7 @@ To <dfn>collect nodes using accessibility attributes</dfn> with given |context n
 
     1. If |child| implements {{Element}}, [=list/append=] |child| to |child nodes|.
 
-  1. [=Try=] to [=collect nodes using accessibility attributes=] with |child nodes|,
+  1. Run [=collect nodes using accessibility attributes=] with |child nodes|,
      |selector|, |maximum returned node count|, and |returned nodes|.
 
 1. Return |returned nodes|.
@@ -5216,8 +5215,10 @@ To <dfn>locate nodes using accessibility attributes</dfn> with given |context no
    [=error=] with [=error code=]
    [=invalid selector=].
 
-1. Return the result of [=collect nodes using accessibility attributes=] with |context nodes|,
+1. Let |nodes| be the result of [=collect nodes using accessibility attributes=] with |context nodes|,
     |selector|, |maximum returned node count|, and null.
+
+1. Return [=success=] with data |nodes|.
 
 </div>
 
@@ -5269,16 +5270,16 @@ The [=remote end steps=] with |session| and |command parameters| are:
          1. Let |selector| be |locator|["<code>value</code>"].
 
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using css=]
-            given |navigable|, |context nodes|, |selector| and |maximum returned
-            nodes|.
+            given |navigable|, |context nodes|, |selector|, and |maximum returned
+            node count|.
 
       <dt>|type| is the string "<code>xpath</code>"
       <dd>
          1. Let |selector| be |locator|["<code>value</code>"].
 
          1. Let |result nodes| be a result of [=trying=] to [=locate nodes using xpath=]
-            given |navigable|, |context nodes|, |selector| and |maximum returned
-            nodes|.
+            given |navigable|, |context nodes|, |selector|, and |maximum returned
+            node count|.
 
       <dt>|type| is the string "<code>innerText</code>"
       <dd>
@@ -5301,8 +5302,9 @@ The [=remote end steps=] with |session| and |command parameters| are:
       <dd>
          1. Let |selector| be |locator|["<code>value</code>"].
 
-         1. Let |result nodes| be [=locate nodes using accessibility attributes=]
-            given |context nodes|, |selector|, and |maximum returned node count|.
+         1. Let |result nodes| be the result of [=trying=] to
+            [=locate nodes using accessibility attributes=] given |context nodes|,
+            |selector|, and |maximum returned node count|.
 
       <dt>|type| is the string "<code>context</code>"
       <dd>
@@ -10431,7 +10433,7 @@ The <dfn export for=commands>network.addIntercept</dfn> command adds a
    </dd>
 </dl>
 
-<div algorithm="remote end steps for network.addRequestIntercept">
+<div algorithm="remote end steps for network.addIntercept">
 The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Let |intercept| be the string representation of a [[!RFC9562|UUID]].
@@ -10471,7 +10473,7 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. Set |intercept map|[|intercept|] to a struct with <code>url patterns</code>
    |parsed patterns|, <code>phases</code> |command
-   parameters|["<code>phases</code>"] and <code>browsingContexts</code>
+   parameters|["<code>phases</code>"] and <code>contexts</code>
    |navigables|.
 
 1. Return a new [=/map=] matching the
@@ -10893,12 +10895,12 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. If |command parameters| [=map/contains=] "<code>collector</code>":
 
+   1. Set |collector id| to |command parameters|["<code>collector</code>"].
+
    1. Let |collectors| be |session|'s [=network collectors=].
 
    1. If |collectors| does not [=map/contain=] |collector id|, return
       [=error=] with [=error code=] [=no such network collector=].
-
-   1. Set |collector id| to |command parameters|["<code>collector</code>"].
 
 1. Let |disown| be |command parameters|["<code>disown</code>"].
 
@@ -11829,7 +11831,7 @@ given [=/request=] |request| and [=/response=] |response|:
     1. Let |request id| be |request|'s [=request id=].
 
     1. Set |blocked requests|[|request id|] to (|request|,
-       "<code>beforeRequestSent</code>", |response|).
+       "<code>responseStarted</code>", |response|).
 
     1. Let (|response|, |status|) be [=await=] with «"<code>continue request</code>"», and
        |request id|.
@@ -12293,7 +12295,7 @@ To <dfn>deserialize local value</dfn> given |local protocol value|, |realm| and
       1. If |value| does not match [=Date Time String Format=], return [=error=] with
          [=error code=] [=invalid argument=].
 
-      1. Let |date result| be [=Construct=]([=Date=], |value|).
+      1. Let |date result| be [=Construct=]([=Date=], «|value|»).
 
       1. Assert: |date result| is not an [=abrupt completion=].
 
@@ -12319,12 +12321,12 @@ To <dfn>deserialize local value</dfn> given |local protocol value|, |realm| and
 
     <dt>|type| is the string "<code>regexp</code>"
     <dd>
-      1. Let |pattern| be the value of the <code>pattern</code> field of |local protocol value|.
+      1. Let |pattern| be the value of the <code>pattern</code> field of |value|.
 
-      1. Let |flags| be the value of the <code>flags</code> field of |local protocol value| or
+      1. Let |flags| be the value of the <code>flags</code> field of |value| or
          undefined if no such a field.
 
-      1. Let |regex_result| be [=Regexp=](|pattern|, |flags|). If this throws exception, return [=error=]
+      1. Let |regex_result| be [=RegExp=](|pattern|, |flags|). If this throws exception, return [=error=]
          with [=error code=] [=invalid argument=].
 
       1. Return [=success=] with data |regex_result|.
@@ -12334,7 +12336,7 @@ To <dfn>deserialize local value</dfn> given |local protocol value|, |realm| and
       1. Let |deserialized value list| be a result of [=trying=] to [=deserialize value list=]
          given |value|, |realm| and |session|.
 
-      1. Let |iterable| be [=CreateArrayFromList=](|deserialized key-value list|)
+      1. Let |iterable| be [=CreateArrayFromList=](|deserialized value list|)
 
       1. Return [=success=] with data [=Set object=](|iterable|).
 
@@ -13198,7 +13200,7 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
         property set to |handle id| if it's not null, or omitted otherwise.
 
     <dt>[=IsArray=](|value|)
-    <dd>Let |remote value| be [=serialize an Array-like=] with |session|,
+    <dd>Let |remote value| be [=serialize an Array-like=] with
         <code>script.ArrayRemoteValue</code>, |handle id|, |known object|, |value|,
         |serialization options|, |ownership type|, |serialization internal map|,
         |realm|, and |session|.
@@ -13326,7 +13328,7 @@ an |ownership type|, a |serialization internal map|, a |realm| and a |session|:
     <dt>|value| is a [=platform object=] that implements {{HTMLCollection}}
     <dd>Let |remote value| be [=serialize an Array-like=] with
         <code>script.HTMLCollectionRemoteValue</code>, |handle id|, |known object|, |value|,
-        |serialization options|, |ownership type|, |known object|, |serialization internal map|,
+        |serialization options|, |ownership type|, |serialization internal map|,
         |realm|, and |session|.
 
     <dt>|value| is a [=platform object=] that implements {{Node}}
@@ -15752,12 +15754,12 @@ The [=remote end steps=] given |session| and |command parameters| are:
    <{input/type}> is not in the [=File Upload state=], or |element| is [=disabled=],
    return [=error=] with [=error code=] [=unable to set file input=].
 
+1. Let |files| be the value of the |command parameters|["<code>files</code>"]
+   field.
+
 1. If the [=set/size=] of |files| is greater than 1 and |element|'s
    <{input/multiple}> attribute is not set, return [=error=] with [=error code=]
    [=unable to set file input=].
-
-1. Let |files| be the value of the |command parameters|["<code>files</code>"]
-   field.
 
 1. Let |selected files| be |element|'s [=selected files=].
 
@@ -16106,7 +16108,10 @@ Other specifications can define <dfn>console steps</dfn>.
 
 Insert the following steps at the start of the [=determine the device pixel ratio=] algorithm:
 
-1. If [=device pixel ratio overrides=] [=map/contains=] <var ignore>window</var>'s [=window/navigable=], return [=device pixel ratio overrides=][<var ignore>window</var>'s [=window/navigable=]].
+1. Let |navigable| be <var ignore>document</var>'s [=/node navigable=].
+
+1. If |navigable| is not null and [=device pixel ratio overrides=] [=map/contains=]
+   |navigable|, return [=device pixel ratio overrides=][|navigable|].
 
 ### Evaluating Media Queries ### {#patchs-evaluating-media-queries}
 
