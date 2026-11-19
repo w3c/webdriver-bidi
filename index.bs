@@ -3472,7 +3472,7 @@ To <dfn>stop a screencast recording</dfn> given a [=screencast recording=] |reco
 <pre class="cddl" data-cddl-module="local-cddl">
 browsingContext.AccessibilityNode = {
   accessibilityId: text,
-  children: [* browsingContext.AccessibilityNode],
+  children: [* browsingContext.AccessibilityNode] / null,
   ? name: text,
   ? properties: {* text => text},
   ? role: text,
@@ -3483,25 +3483,41 @@ browsingContext.AccessibilityNode = {
 The <code>browsingContext.AccessibilityNode</code> type represents an
 [=accessibility node=] and its descendants in the [=accessibility tree=].
 
+Note: The <code>children</code> field is null when the maximum depth prevents
+the serialization of the children. The field is an empty list when the
+[=accessibility node=] has no children.
+
+Note: The structure of the [=accessibility tree=] is implementation-defined.
+The same document can produce a different tree in each implementation.
+
 <div algorithm>
 To <dfn>get the accessibility node info</dfn> given |accessibility node|,
-|document| and |session|:
+|document|, |max depth| and |session|:
 
-1. Let |children| be an empty [=/list=].
+1. Let |children| be null.
 
-1. For each [=accessibility node=] |child| that is a child of
-   |accessibility node| in the [=accessibility tree=], in tree order:
+1. If |max depth| is null, or |max depth| is greater than 0:
 
-   1. If |child| represents a {{Document}} that is not |document|,
-      [=continue=].
+   1. Set |children| to an empty [=/list=].
 
-      Note: This step excludes the documents of the [=child navigables=]. The
-      result includes the [=accessibility node=] of the [=navigable container=].
+   1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null
+      otherwise.
 
-   1. Let |child info| be the result of [=get the accessibility node info=]
-      given |child|, |document| and |session|.
+   1. For each [=accessibility node=] |child| that is a child of
+      |accessibility node| in the [=accessibility tree=], in tree order:
 
-   1. Append |child info| to |children|.
+      1. If |child| represents a {{Document}} that is not |document|,
+         [=continue=].
+
+         Note: This step excludes the documents of the [=child navigables=].
+         The result includes the [=accessibility node=] of the
+         [=navigable container=].
+
+      1. Let |child info| be the result of
+         [=get the accessibility node info=] given |child|, |document|,
+         |child depth| and |session|.
+
+      1. Append |child info| to |children|.
 
 1. Let |info| be a [=/map=] matching the
    <code>browsingContext.AccessibilityNode</code> production, with the
@@ -4508,7 +4524,8 @@ The [=remote end steps=] with |command parameters| are:
 
 The <dfn export for=commands>browsingContext.getAccessibilityTree</dfn> command
 returns the [=accessibility tree=] of the [=active document=] of a
-[=/top-level traversable=].
+[=/top-level traversable=]. The command can also return the subtree of a
+specified node, and can limit the depth of the returned tree.
 
 <dl>
    <dt>Command Type</dt>
@@ -4521,6 +4538,8 @@ returns the [=accessibility tree=] of the [=active document=] of a
 
       browsingContext.GetAccessibilityTreeParameters = {
         context: browsingContext.BrowsingContext,
+        ? maxDepth: js-uint,
+        ? startNode: script.SharedReference,
       }
       </pre>
    </dd>
@@ -4546,17 +4565,39 @@ The [=remote end steps=] with |session| and |command parameters| are:
 1. If |navigable| is not a [=/top-level traversable=], return [=error=]
    with [=error code=] [=invalid argument=].
 
+1. If |command parameters| [=map/contains=] "<code>maxDepth</code>", let
+   |max depth| be |command parameters|["<code>maxDepth</code>"]. Otherwise,
+   let |max depth| be null.
+
 1. Let |document| be |navigable|'s [=active document=].
+
+1. Let |start node| be |document|.
+
+1. If |command parameters| [=map/contains=] "<code>startNode</code>":
+
+   1. Let |realm| be the result of [=trying=] to
+      [=get a realm from a navigable=] with |navigable id| and null.
+
+   1. Set |start node| to the result of [=trying=] to
+      [=deserialize shared reference=] given
+      |command parameters|["<code>startNode</code>"], |realm| and |session|.
 
 1. If the implementation is unable to provide the [=accessibility tree=] of
    |document| for any reason then return [=error=] with [=error code=]
    [=unsupported operation=].
 
-1. Let |root| be the [=accessibility node=] that represents |document| in the
-   [=accessibility tree=].
+1. If no [=accessibility node=] in the [=accessibility tree=] of |document|
+   represents |start node|, return [=error=] with [=error code=]
+   [=invalid argument=].
+
+   Note: The [=accessibility tree=] does not include all nodes. For example,
+   it does not include an element that is not rendered.
+
+1. Let |root| be the [=accessibility node=] that represents |start node| in
+   the [=accessibility tree=].
 
 1. Let |info| be the result of [=get the accessibility node info=] given
-   |root|, |document| and |session|.
+   |root|, |document|, |max depth| and |session|.
 
 1. Let |body| be a [=/map=] matching the
    <code>browsingContext.GetAccessibilityTreeResult</code> production, with the
