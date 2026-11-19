@@ -322,12 +322,18 @@ spec: UNICODE; urlPrefix: https://www.unicode.org/versions/Unicode15.0.0/
   type: dfn
     text: Unicode Default Case Conversion algorithm; url: ch03.pdf#G34944
     text: toUppercase; url: ch03.pdf#G34078
-spec: ACCNAME; urlPrefix:https://www.w3.org/TR/accname-1.2
+spec: ACCNAME-1.2; urlPrefix: https://www.w3.org/TR/accname-1.2/
   type: dfn
-    text: accessible name; url: /#dfn-accessible-name
-spec: CORE-AAM; urlPrefix:https://www.w3.org/TR/core-aam-1.2
+    text: accessible name; url: #dfn-accessible-name
+spec: CORE-AAM-1.2; urlPrefix: https://www.w3.org/TR/core-aam-1.2/
   type: dfn
-    text: computed role; url: /#roleMappingComputedRole
+    text: accessibility node; url: #dfn-accessibility-node
+    text: accessibility node ID; url: #dfn-accessibility-node-id
+    text: computed accessibility properties; url: #dfn-computed-accessibility-properties
+    text: computed role; url: #roleMappingComputedRole
+spec: WAI-ARIA-1.2; urlPrefix: https://www.w3.org/TR/wai-aria-1.2/
+  type: dfn
+    text: accessibility tree; url: #dfn-accessibility-tree
 spec: MEDIAQUERIES4; urlPrefix: https://drafts.csswg.org/mediaqueries-4/
   type: dfn
     text: resolution media feature; url: #resolution
@@ -3296,6 +3302,7 @@ BrowsingContextCommand = (
   browsingContext.CaptureScreenshot //
   browsingContext.Close //
   browsingContext.Create //
+  browsingContext.GetAccessibilityTree //
   browsingContext.GetTree //
   browsingContext.HandleUserPrompt //
   browsingContext.LocateNodes //
@@ -3318,6 +3325,7 @@ BrowsingContextResult = (
   browsingContext.CaptureScreenshotResult /
   browsingContext.CloseResult /
   browsingContext.CreateResult /
+  browsingContext.GetAccessibilityTreeResult /
   browsingContext.GetTreeResult /
   browsingContext.HandleUserPromptResult /
   browsingContext.LocateNodesResult /
@@ -3456,6 +3464,114 @@ To <dfn>stop a screencast recording</dfn> given a [=screencast recording=] |reco
 </div>
 
 ### Types ### {#module-browsingcontext-types}
+
+#### The browsingContext.AccessibilityNode Type #### {#type-browsingContext-AccessibilityNode}
+
+{^local end definition^}
+
+<pre class="cddl" data-cddl-module="local-cddl">
+browsingContext.AccessibilityNode = {
+  accessibilityId: text,
+  children: [* browsingContext.AccessibilityNode] / null,
+  ? name: text,
+  ? properties: {* text => text},
+  ? role: text,
+  ? sharedId: script.SharedId,
+}
+</pre>
+
+The <code>browsingContext.AccessibilityNode</code> type represents an
+[=accessibility node=] and its descendants in the [=accessibility tree=].
+
+Note: The <code>children</code> field is null when the maximum depth prevents
+the serialization of the children. The field is an empty list when the
+[=accessibility node=] has no children.
+
+Note: The structure of the [=accessibility tree=] is implementation-defined.
+The same document can produce a different tree in each implementation.
+
+<div algorithm>
+To <dfn>get the accessibility node info</dfn> given |accessibility node|,
+|document|, |max depth| and |session|:
+
+1. Let |children| be null.
+
+1. If |max depth| is null, or |max depth| is greater than 0:
+
+   1. Set |children| to an empty [=/list=].
+
+   1. Let |child depth| be |max depth| - 1 if |max depth| is not null, or null
+      otherwise.
+
+   1. For each [=accessibility node=] |child| that is a child of
+      |accessibility node| in the [=accessibility tree=], in tree order:
+
+      1. If |child| represents a {{Document}} that is not |document|,
+         [=continue=].
+
+         Note: This step excludes the documents of the [=child navigables=].
+         The result includes the [=accessibility node=] of the
+         [=navigable container=].
+
+      1. Let |child info| be the result of
+         [=get the accessibility node info=] given |child|, |document|,
+         |child depth| and |session|.
+
+      1. Append |child info| to |children|.
+
+1. Let |info| be a [=/map=] matching the
+   <code>browsingContext.AccessibilityNode</code> production, with the
+   <code>accessibilityId</code> field set to the [=accessibility node ID=] of
+   |accessibility node|, and the <code>children</code> field set to |children|.
+
+1. Let |properties| be a new [=/map=].
+
+1. For each |key| → |value| of the [=computed accessibility properties=] of
+   |accessibility node|:
+
+   1. If |key| is "<code>accessibilityID</code>", "<code>parent</code>",
+      "<code>children</code>" or "<code>label</code>", [=continue=].
+
+      Note: The <code>accessibilityId</code>, <code>children</code> and
+      <code>name</code> fields of |info| contain this data.
+
+   1. If |key| is "<code>role</code>":
+
+      1. If |value| is not the empty string, set |info|["<code>role</code>"] to
+         |value|.
+
+      1. [=Continue=].
+
+   1. Set |properties|[|key|] to |value|.
+
+   Issue: [[CORE-AAM-1.2]] does not define the values of the relation properties,
+   for example <code>aria-controls</code>. A possible value is the list of
+   <code>script.SharedId</code> values of the related nodes.
+
+1. Let |name| be the [=accessible name=] of |accessibility node|.
+
+1. If |name| is not the empty string, set |info|["<code>name</code>"] to
+   |name|.
+
+   Issue: [[ACCNAME-1.2]] and [[CORE-AAM-1.2]] define the [=accessible name=]
+   and the [=computed role=] only for elements. The values for other
+   [=accessibility nodes=] are not defined, for example for a {{Document}}, a
+   {{Text}} node or a pseudo-element.
+
+1. If |properties| [=map/is empty|is not empty=], set
+   |info|["<code>properties</code>"] to |properties|.
+
+1. If |accessibility node| represents a {{Node}} |node|:
+
+   1. Let |shared id| be [=get shared id for a node=] with |node| and
+      |session|.
+
+   1. If |shared id| is not null, set |info|["<code>sharedId</code>"] to
+      |shared id|.
+
+1. Return |info|.
+
+</div>
 
 #### The browsingContext.BrowsingContext Type #### {#type-browsingContext-Browsingcontext}
 
@@ -4401,6 +4517,93 @@ The [=remote end steps=] with |command parameters| are:
      [=associated user context=].
 
   1. Return [=success=] with data |body|.
+
+</div>
+
+#### The browsingContext.getAccessibilityTree Command ####  {#command-browsingContext-getAccessibilityTree}
+
+The <dfn export for=commands>browsingContext.getAccessibilityTree</dfn> command
+returns the [=accessibility tree=] of the [=active document=] of a
+[=/top-level traversable=]. The command can also return the subtree of a
+specified node, and can limit the depth of the returned tree.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      browsingContext.GetAccessibilityTree = (
+        method: "browsingContext.getAccessibilityTree",
+        params: browsingContext.GetAccessibilityTreeParameters
+      )
+
+      browsingContext.GetAccessibilityTreeParameters = {
+        context: browsingContext.BrowsingContext,
+        ? maxDepth: js-uint,
+        ? startNode: script.SharedReference,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+        browsingContext.GetAccessibilityTreeResult = {
+          root: browsingContext.AccessibilityNode
+        }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for browsingContext.getAccessibilityTree">
+The [=remote end steps=] with |session| and |command parameters| are:
+
+1. Let |navigable id| be the value of the <code>context</code> field of
+   |command parameters|.
+
+1. Let |navigable| be the result of [=trying=] to [=get a navigable=]
+   with |navigable id|.
+
+1. If |navigable| is not a [=/top-level traversable=], return [=error=]
+   with [=error code=] [=invalid argument=].
+
+1. If |command parameters| [=map/contains=] "<code>maxDepth</code>", let
+   |max depth| be |command parameters|["<code>maxDepth</code>"]. Otherwise,
+   let |max depth| be null.
+
+1. Let |document| be |navigable|'s [=active document=].
+
+1. Let |start node| be |document|.
+
+1. If |command parameters| [=map/contains=] "<code>startNode</code>":
+
+   1. Let |realm| be the result of [=trying=] to
+      [=get a realm from a navigable=] with |navigable id| and null.
+
+   1. Set |start node| to the result of [=trying=] to
+      [=deserialize shared reference=] given
+      |command parameters|["<code>startNode</code>"], |realm| and |session|.
+
+1. If the implementation is unable to provide the [=accessibility tree=] of
+   |document| for any reason then return [=error=] with [=error code=]
+   [=unsupported operation=].
+
+1. If no [=accessibility node=] in the [=accessibility tree=] of |document|
+   represents |start node|, return [=error=] with [=error code=]
+   [=invalid argument=].
+
+   Note: The [=accessibility tree=] does not include all nodes. For example,
+   it does not include an element that is not rendered.
+
+1. Let |root| be the [=accessibility node=] that represents |start node| in
+   the [=accessibility tree=].
+
+1. Let |info| be the result of [=get the accessibility node info=] given
+   |root|, |document|, |max depth| and |session|.
+
+1. Let |body| be a [=/map=] matching the
+   <code>browsingContext.GetAccessibilityTreeResult</code> production, with the
+   <code>root</code> field set to |info|.
+
+1. Return [=success=] with data |body|.
 
 </div>
 
