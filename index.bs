@@ -804,7 +804,7 @@ with the following additional codes:
   <dd>Tried to remove an unknown [=network intercept=].
 
   <dt><dfn for=errors export>no such network data</dfn>
-  <dd>Tried to reference an unknown [=network data=].
+  <dd>Tried to reference an unknown [=network data=] or [=network stream record=].
 
   <dt><dfn for=errors export>no such node</dfn>
   <dd>Tried to deserialize an unknown <code>SharedReference</code>.
@@ -849,7 +849,8 @@ with the following additional codes:
   <dd>Tried to set a file input, but failed to do so.
 
   <dt><dfn for=errors export>unavailable network data</dfn>
-  <dd>Tried to get network data which was not collected or already evicted.
+  <dd>Tried to get network data which was not collected or already evicted, or
+  a network body stream which failed, was cancelled or was already read.
 
 </dl>
 
@@ -1850,6 +1851,9 @@ To <dfn>cleanup the session</dfn> given |session|:
 
    1. For each |collected data| in [=collected network data=], [=remove collector from data=]
       with |collected data| and |collector id|.
+
+1. For each |record| of a [=list/clone=] of |session|'s [=network stream
+   records=], [=release a network stream record=] given |session| and |record|.
 
 1. For each |screencast recording| in |session|'s [=screencast recordings map=]:
 
@@ -8581,6 +8585,7 @@ NetworkCommand = (
   network.DisownData //
   network.FailRequest //
   network.GetData //
+  network.GetStream //
   network.ProvideResponse //
   network.RemoveDataCollector //
   network.RemoveIntercept //
@@ -8603,6 +8608,7 @@ NetworkResult = (
   network.DisownDataResult /
   network.FailRequestResult /
   network.GetDataResult /
+  network.GetStreamResult /
   network.ProvideResponseResult /
   network.RemoveDataCollectorResult /
   network.RemoveInterceptResult /
@@ -8652,7 +8658,7 @@ A <dfn>network data</dfn> is a [=/struct=] with:
 * [=struct/Item=] named <dfn for="network-data">type</dfn>, which is a <code>[=network.DataType=]</code>.
 
 A <dfn for="network">collector</dfn> is a [=/struct=] with:
-* [=struct/Item=] named <dfn for="network-collector">max encoded item size</dfn>, which is a js-uint;
+* [=struct/Item=] named <dfn for="network-collector">max encoded item size</dfn>, which is a js-uint or null;
 * [=struct/item=] named <dfn for="network-collector">contexts</dfn>, which is a [=/list=] of [=navigable id=];
 * [=struct/item=] named <dfn for="network-collector">data types</dfn>, which is a [=/list=] of  <code>[=network.DataType=]</code>;
 * [=struct/item=] named <dfn for="network-collector">collector</dfn>, which is a <code>[=network.Collector=]</code>;
@@ -8662,6 +8668,10 @@ A <dfn for="network">collector</dfn> is a [=/struct=] with:
 Note: [=network-collector/max encoded item size=] defines the limit per item (response or request),
 and does not limit the size collected by the specific collector. The total size of all collected resources is
 limited by [=max total collected size=].
+
+Note: The [=network-collector/max encoded item size=] of a collector whose
+[=network-collector/collector type=] is "<code>stream</code>" is null. See
+[[#network-stream-collection]].
 
 A [=BiDi session=] has <dfn>network collectors</dfn> which is a [=/map=] between
 <code>[=network.Collector=]</code> and a [=network/collector=]. It is initially empty.
@@ -8718,13 +8728,27 @@ To <dfn>match collector for navigable</dfn> given |collector| and |navigable|:
 </div>
 
 <div algorithm>
+A [=BiDi session=] |session| <dfn>has a blob collector</dfn> if there is a
+[=network/collector=] in |session|'s [=network collectors=]' [=map/values=]
+whose [=network-collector/collector type=] is "<code>blob</code>".
+
+</div>
+
+<div algorithm>
+A [=BiDi session=] |session| <dfn>has a stream collector</dfn> if there is a
+[=network/collector=] in |session|'s [=network collectors=]' [=map/values=]
+whose [=network-collector/collector type=] is "<code>stream</code>".
+
+</div>
+
+<div algorithm>
 The <dfn export>WebDriver BiDi clone network request body</dfn> steps given [=/request=] |request| are:
 
 1. If |request|'s [=request/body=] is null, return.
 
 1. For each |session| in [=active BiDi sessions=]:
 
-   1. If |session|'s [=network collectors=] is not [=list/empty=]:
+   1. If |session| [=has a blob collector=]:
 
       1. Let |collected data| be a [=network data=] with
          [=network-data/bytes=] set to null,
@@ -8748,7 +8772,7 @@ The <dfn export>WebDriver BiDi clone network response body</dfn> steps given |re
 
 1. For each |session| in [=active BiDi sessions=]:
 
-   1. If |session|'s [=network collectors=] is not [=list/empty=]:
+   1. If |session| [=has a blob collector=]:
 
       1. Let |collected data| be a [=network data=] with
          [=network-data/bytes=] set to null,
@@ -8761,7 +8785,11 @@ The <dfn export>WebDriver BiDi clone network response body</dfn> steps given |re
 
       1. [=list/Append=] |collected data| to [=collected network data=].
 
-      1. Return.
+      1. [=Break=].
+
+1. If any [=BiDi session=] in [=active BiDi sessions=] [=has a stream
+   collector=], [=clone a body for network stream records=] given |request|,
+   "<code>response</code>" and |response body|.
 
 </div>
 
@@ -8861,8 +8889,10 @@ To <dfn>maybe collect network data</dfn> given [=/request=] |request|,
 
    1. For each |collector| in |session|'s [=network collectors=]:
 
-      1. If |collector|'s [=network-collector/data types=] [=list/contains=] |data type| and if
-         [=match collector for navigable=] with |collector| and |top-level navigable|:
+      1. If |collector|'s [=network-collector/collector type=] is
+         "<code>blob</code>", |collector|'s [=network-collector/data types=]
+         [=list/contains=] |data type| and if [=match collector for navigable=]
+         with |collector| and |top-level navigable|:
 
          1. [=list/Append=] |collector| to |collectors|.
 
@@ -8949,6 +8979,161 @@ To <dfn>remove collector from data</dfn> given |collected data| and |collector i
    1. If |collected data|'s [=network-data/collectors=] is [=list/empty=]:
 
       1. [=list/Remove=] |collected data| from [=collected network data=].
+
+</div>
+
+### Network Stream Collection ### {#network-stream-collection}
+
+A [=network/collector=] whose [=network-collector/collector type=] is
+"<code>stream</code>" captures response bodies, so that the [=local end=] can
+read them with the [[#module-io|io]] module while they are being received.
+Each body captured for such a collector is represented by a [=network stream
+record=], which is owned by the [=BiDi session=] of the collector and holds
+its own [=body/clone=] of the body. Network stream records are separate from
+the [=collected network data=] used by collectors whose
+[=network-collector/collector type=] is "<code>blob</code>".
+
+A body is identified by a [=request id=], a [=redirect count=] and a
+<code>[=network.DataType=]</code>. Each redirect of a request results in a new
+response body.
+
+A <dfn>network stream record</dfn> is a [=/struct=] with:
+* [=struct/Item=] named <dfn for="network stream record">collector</dfn>, which
+  is a <code>[=network.Collector=]</code>;
+* [=struct/Item=] named <dfn for="network stream record">request</dfn>, which
+  is a [=request id=];
+* [=struct/Item=] named <dfn for="network stream record">redirect count</dfn>,
+  which is a js-uint;
+* [=struct/Item=] named <dfn for="network stream record">type</dfn>, which is a
+  <code>[=network.DataType=]</code>;
+* [=struct/Item=] named <dfn for="network stream record">cloned body</dfn>,
+  which is a [=/body=] or null, initially null;
+* [=struct/Item=] named <dfn for="network stream record">realm</dfn>, which is
+  the [=/realm=] in which the [=network stream record/cloned body=] is read;
+* [=struct/Item=] named <dfn for="network stream record">handle</dfn>, which is
+  an <code>io.Stream</code> or null, initially null.
+
+A [=BiDi session=] has <dfn>network stream records</dfn> which is a [=/list=]
+of [=network stream records=]. It is initially empty.
+
+<div algorithm>
+To <dfn>get a network stream record</dfn> given |session|, |collector id|,
+|request id|, |redirect count| and |data type|:
+
+1. For each |record| in |session|'s [=network stream records=]:
+
+   1. If |record|'s [=network stream record/collector=] is |collector id|,
+      |record|'s [=network stream record/request=] is |request id|, |record|'s
+      [=network stream record/redirect count=] is |redirect count| and
+      |record|'s [=network stream record/type=] is |data type|, return
+      |record|.
+
+1. Return null.
+
+</div>
+
+<div algorithm>
+To <dfn>prepare network stream records</dfn> given |request| and |data type|:
+
+1. If no [=BiDi session=] in [=active BiDi sessions=] [=has a stream
+   collector=], return.
+
+1. Let |navigable| be [=get navigable for request=] with |request|.
+
+1. If |navigable| is null, return.
+
+1. Let |top-level navigable| be |navigable|'s [=navigable/top-level traversable=].
+
+1. Let |realm| be |request|'s [=request/client=]'s [=environment settings
+   object's Realm=].
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. For each |collector id| → |collector| of |session|'s [=network
+      collectors=]:
+
+      1. If |collector|'s [=network-collector/collector type=] is not
+         "<code>stream</code>", [=iteration/continue=].
+
+      1. If |collector|'s [=network-collector/data types=] does not
+         [=list/contain=] |data type|, [=iteration/continue=].
+
+      1. If [=match collector for navigable=] with |collector| and |top-level
+         navigable| is false, [=iteration/continue=].
+
+      1. If [=get a network stream record=] with |session|, |collector id|,
+         |request|'s [=request id=], |request|'s [=redirect count=] and |data
+         type| is not null, [=iteration/continue=].
+
+      1. Let |record| be a new [=network stream record=] with
+         [=network stream record/collector=] set to |collector id|,
+         [=network stream record/request=] set to |request|'s [=request id=],
+         [=network stream record/redirect count=] set to |request|'s
+         [=redirect count=],
+         [=network stream record/type=] set to |data type| and
+         [=network stream record/realm=] set to |realm|.
+
+      1. [=list/Append=] |record| to |session|'s [=network stream records=].
+
+</div>
+
+<div algorithm>
+To <dfn>clone a body for network stream records</dfn> given |request|, |data
+type| and |body|:
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. For each |collector id| of the [=map/keys=] of |session|'s [=network
+      collectors=]:
+
+      1. Let |record| be [=get a network stream record=] with |session|,
+         |collector id|, |request|'s [=request id=], |request|'s [=redirect
+         count=] and |data type|.
+
+      1. If |record| is not null and |record|'s [=network stream
+         record/cloned body=] is null, set |record|'s [=network stream
+         record/cloned body=] to the [=body/clone=] of |body|.
+
+</div>
+
+<div algorithm>
+To <dfn>remove pending network stream records</dfn> given |request| and |data
+type|:
+
+1. For each |session| in [=active BiDi sessions=]:
+
+   1. For each |record| of a [=list/clone=] of |session|'s [=network stream
+      records=]:
+
+      1. If |record|'s [=network stream record/request=] is |request|'s
+         [=request id=], |record|'s [=network stream record/redirect count=] is
+         |request|'s [=redirect count=], |record|'s [=network stream
+         record/type=] is |data type| and |record|'s [=network stream
+         record/cloned body=] is null, [=list/remove=] |record| from
+         |session|'s [=network stream records=].
+
+</div>
+
+<div algorithm>
+To <dfn>release a network stream record</dfn> given |session| and |record|:
+
+1. Let |handle| be |record|'s [=network stream record/handle=].
+
+1. If |session|'s [=readable stream settings map=] [=map/contains=] |handle|:
+
+   1. Let |stream settings| be |session|'s [=readable stream settings
+      map=][|handle|].
+
+   1. [=Cancel a readable stream=] given |record|'s [=network stream
+      record/realm=], |stream settings| and undefined.
+
+   1. [=Remove a readable stream=] given |session| and |handle|.
+
+1. Otherwise, if |handle| is null and |record|'s [=network stream
+   record/cloned body=] is not null, [=ReadableStream/cancel=] |record|'s
+   [=network stream record/cloned body=]'s [=body/stream=] with undefined.
+
+1. [=list/Remove=] |record| from |session|'s [=network stream records=].
 
 </div>
 
@@ -9310,14 +9495,15 @@ The <code><dfn>network.Collector</dfn></code> type represents the id of a [=netw
 {^Remote end definition^} and {^local end definition^}
 
 <pre class="cddl" data-cddl-module="local-cddl,remote-cddl">
-network.CollectorType = "blob"
+network.CollectorType = "blob" / "stream"
 </pre>
 
-Note: In the future we might also support the "stream" collector type for clients
-which want to read the data gathered by a given collector via a stream.
-
 The <code><dfn>network.CollectorType</dfn></code> type represents the different types of data collectors
-that can be added.
+that can be added. A "<code>blob</code>" collector collects complete bodies,
+which can be retrieved with <code>network.getData</code>. A
+"<code>stream</code>" collector captures response bodies while they are being
+received, which can be read with <code>network.getStream</code> and the
+[[#module-io|io]] module.
 
 #### The network.Cookie Type #### {#type-network-Cookie}
 
@@ -10355,11 +10541,19 @@ The <dfn export for=commands>network.addDataCollector</dfn> adds a
 
       network.AddDataCollectorParameters = {
         dataTypes: [+network.DataType],
-        maxEncodedDataSize: js-uint,
-        ? collectorType: network.CollectorType .default "blob",
+        (network.BlobCollectorParameters // network.StreamCollectorParameters),
         ? contexts: [+browsingContext.BrowsingContext],
         ? userContexts: [+browser.UserContext],
       }
+
+      network.BlobCollectorParameters = (
+        collectorType: "blob",
+        maxEncodedDataSize: js-uint,
+      )
+
+      network.StreamCollectorParameters = (
+        collectorType: "stream",
+      )
     </pre>
    </dd>
    <dt>Return Type</dt>
@@ -10386,20 +10580,34 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |data types| be [=set/create|create a set=] with
    |command parameters|["<code>dataTypes</code>"].
 
-1. Let |max encoded item size| be |command parameters|
-   ["<code>maxEncodedDataSize</code>"].
-
-   Note: The <code>maxEncodedDataSize</code> parameter represents
-   [=network-collector/max encoded item size=] and limits the size of each request collected by the
-   given collector, not the total collector's collected size.
-
-   Note: Different implementations might support different encodings, which means the
-   encoded size might be different between browsers. Therefore, for the same data collector
-   configuration, some network data might fit the [=network-collector/max encoded item size=] only
-   in some implementations.
-
 1. Let |collector type| be |command parameters|
    ["<code>collectorType</code>"].
+
+1. Let |max encoded item size| be null.
+
+1. If |collector type| is "<code>blob</code>":
+
+   1. Set |max encoded item size| to |command parameters|
+      ["<code>maxEncodedDataSize</code>"].
+
+      Note: The <code>maxEncodedDataSize</code> parameter represents
+      [=network-collector/max encoded item size=] and limits the size of each request collected by the
+      given collector, not the total collector's collected size.
+
+      Note: Different implementations might support different encodings, which means the
+      encoded size might be different between browsers. Therefore, for the same data collector
+      configuration, some network data might fit the [=network-collector/max encoded item size=] only
+      in some implementations.
+
+1. Otherwise:
+
+   1. Assert: |collector type| is "<code>stream</code>".
+
+   1. If |data types| [=set/contains=] "<code>request</code>", return
+      [=error=] with [=error code=] [=unsupported operation=].
+
+      Issue: Support capturing request bodies with a collector whose
+      [=network-collector/collector type=] is "<code>stream</code>".
 
 1. Let |input user context ids| be an empty [=/set=].
 
@@ -10795,6 +11003,11 @@ The [=remote end steps=] given |session| and |command parameters| are:
 The <dfn export for=commands>network.disownData</dfn> command releases a
 collected network data for a given [=network/collector=].
 
+For a collector whose [=network-collector/collector type=] is
+"<code>stream</code>", the <code>redirectCount</code> parameter is required and
+selects the body, as for [=commands/network.getStream=]. Releasing the body
+also releases its [=/stream=] handle.
+
 <dl>
    <dt>Command Type</dt>
    <dd>
@@ -10807,6 +11020,7 @@ collected network data for a given [=network/collector=].
       network.DisownDataParameters = {
         dataType: network.DataType,
         collector: network.Collector,
+        ? redirectCount: js-uint,
         request: network.Request,
       }
     </pre>
@@ -10835,6 +11049,25 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. If |collectors| does not [=map/contain=] |collector id|, return
    [=error=] with [=error code=] [=no such network collector=].
+
+1. If |collectors|[|collector id|]'s [=network-collector/collector type=] is
+   "<code>stream</code>":
+
+   1. If |command parameters| does not [=map/contain=]
+      "<code>redirectCount</code>", return [=error=] with [=error code=]
+      [=invalid argument=].
+
+   1. Let |redirect count| be |command parameters|["<code>redirectCount</code>"].
+
+   1. Let |record| be [=get a network stream record=] with |session|,
+      |collector id|, |request id|, |redirect count| and |data type|.
+
+   1. If |record| is null, return [=error=] with [=error code=] [=no such
+      network data=].
+
+   1. [=Release a network stream record=] given |session| and |record|.
+
+   1. Return [=success=] with data [=null=].
 
 1. Let |collected data| be [=get collected data=] with |request id| and |data type|.
 
@@ -10950,6 +11183,10 @@ The [=remote end steps=] given |session| and |command parameters| are:
    1. If |collectors| does not [=map/contain=] |collector id|, return
       [=error=] with [=error code=] [=no such network collector=].
 
+   1. If |collectors|[|collector id|]'s [=network-collector/collector type=] is
+      "<code>stream</code>", return [=error=] with [=error code=] [=invalid
+      argument=].
+
 1. Let |disown| be |command parameters|["<code>disown</code>"].
 
 1. If |disown| is true and |collector id| is null, return [=error=]
@@ -10982,6 +11219,108 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. If |disown| is true, [=remove collector from data=] with |collected data| and |collector id|.
 
 1. Return [=success=] with data |body|.
+
+</div>
+
+#### The network.getStream Command ####  {#command-network-getStream}
+
+The <dfn export for=commands>network.getStream</dfn> command returns a handle
+to a [=/stream=] from which a response body captured by a
+[=network/collector=] can be read with <code>io.readStream</code>, while the
+body is being received.
+
+The <code>redirectCount</code> parameter selects the body. It corresponds to
+the <code>redirectCount</code> field of the
+<code>network.responseStarted</code> event for the response.
+
+<dl>
+   <dt>Command Type</dt>
+   <dd>
+      <pre class="cddl" data-cddl-module="remote-cddl">
+      network.GetStream = (
+        method: "network.getStream",
+        params: network.GetStreamParameters
+      )
+
+      network.GetStreamParameters = {
+        collector: network.Collector,
+        dataType: network.DataType,
+        redirectCount: js-uint,
+        request: network.Request,
+      }
+      </pre>
+   </dd>
+   <dt>Return Type</dt>
+   <dd>
+    <pre class="cddl" data-cddl-module="local-cddl">
+      network.GetStreamResult = {
+        stream: io.Stream,
+      }
+    </pre>
+   </dd>
+</dl>
+
+<div algorithm="remote end steps for network.getStream">
+The [=remote end steps=] given |session| and |command parameters| are:
+
+1. Let |collector id| be |command parameters|["<code>collector</code>"].
+
+1. Let |data type| be |command parameters|["<code>dataType</code>"].
+
+1. Let |redirect count| be |command parameters|["<code>redirectCount</code>"].
+
+1. Let |request id| be |command parameters|["<code>request</code>"].
+
+1. Let |collectors| be |session|'s [=network collectors=].
+
+1. If |collectors| does not [=map/contain=] |collector id|, return [=error=]
+   with [=error code=] [=no such network collector=].
+
+1. If |collectors|[|collector id|]'s [=network-collector/collector type=] is not
+   "<code>stream</code>", return [=error=] with [=error code=] [=invalid
+   argument=].
+
+1. Let |record| be [=get a network stream record=] with |session|, |collector
+   id|, |request id|, |redirect count| and |data type|.
+
+1. If |record| is null, return [=error=] with [=error code=] [=no such network
+   data=].
+
+1. If |record|'s [=network stream record/cloned body=] is null:
+
+   1. Wait until |record|'s [=network stream record/cloned body=] is not null,
+      or |session|'s [=network stream records=] does not [=list/contain=]
+      |record|, whichever occurs first.
+
+   1. If |session|'s [=network stream records=] does not [=list/contain=]
+      |record|, return [=error=] with [=error code=] [=no such network data=].
+
+1. If |record|'s [=network stream record/handle=] is not null:
+
+   1. If |session|'s [=readable stream settings map=] does not [=map/contain=]
+      |record|'s [=network stream record/handle=], return [=error=] with
+      [=error code=] [=unavailable network data=].
+
+   1. Return [=success=] with data a [=/map=] matching the
+      <code>network.GetStreamResult</code> production, with the
+      <code>stream</code> field set to |record|'s [=network stream
+      record/handle=].
+
+1. Let |stream id| be the string representation of a [[!RFC9562|UUID]].
+
+1. Let |stream settings| be a new [=stream settings=] with [=stream
+   settings/stream=] set to |record|'s [=network stream record/cloned body=]'s
+   [=body/stream=] and [=stream settings/realm=] set to the [=realm id=] for
+   |record|'s [=network stream record/realm=].
+
+1. Set |session|'s [=readable stream settings map=][|stream id|] to |stream
+   settings|.
+
+1. Set |record|'s [=network stream record/handle=] to |stream id|.
+
+1. Return [=success=] with data a [=/map=] matching the
+   <code>network.GetStreamResult</code> production, with the
+   <code>stream</code> field set to |stream id|.
 
 </div>
 
@@ -11086,6 +11425,12 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
 1. For |collected data| in [=collected network data=], [=remove collector from data=]
    with |collected data| and |collector id|.
+
+1. For each |record| of a [=list/clone=] of |session|'s [=network stream
+   records=]:
+
+   1. If |record|'s [=network stream record/collector=] is |collector id|,
+      [=release a network stream record=] given |session| and |record|.
 
 1. Return [=success=] with data [=null=].
 
@@ -11730,6 +12075,9 @@ error</dfn> steps given [=/request=] |request|:
 
 1. [=Maybe abort network response body collection=] with |request|.
 
+1. [=Remove pending network stream records=] given |request| and
+   "<code>response</code>".
+
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>network.fetchError</code>" and |related navigables|:
 
@@ -11787,6 +12135,9 @@ given [=/request=] |request| and [=/response=] |response|:
    set.
 
 1. [=Maybe collect network response body=] with |request| and |response|.
+
+1. [=Remove pending network stream records=] given |request| and
+   "<code>response</code>".
 
 1. Let |sessions| be the [=set of sessions for which an event is enabled=]
    given "<code>network.responseCompleted</code>" and |related navigables|.
@@ -11851,6 +12202,9 @@ given [=/request=] |request| and [=/response=] |response|:
    set.
 
 1. Let |response status| be "<code>incomplete</code>".
+
+1. [=Prepare network stream records=] with |request| and
+   "<code>response</code>".
 
 1. Let |sessions| be the [=set of sessions for which an event is enabled=]
    given "<code>network.responseStarted</code>" and |related navigables|.
@@ -14679,6 +15033,13 @@ Define the following [=unloading document cleanup steps=] with |document|:
       1. If |stream settings|[[=stream settings/realm=]] equals |realm id|:
 
          1. [=Remove a readable stream=] given |active session| and |stream id|.
+
+   1. For each |record| of a [=list/clone=] of |active session|'s [=network
+      stream records=]:
+
+      1. If |record|'s [=network stream record/realm=] is |realm|,
+         [=list/remove=] |record| from |active session|'s [=network stream
+         records=].
 
 1. Let |params| be a [=/map=] matching the
    <code>script.RealmDestroyedParameters</code> production, with the
