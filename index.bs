@@ -8159,6 +8159,10 @@ a <code>io.Stream</code> and [=stream settings=].
   initially null.
 * <dfn for="stream settings">read command active</dfn>, which is a boolean,
   initially false.
+* <dfn for="stream settings">remaining bytes</dfn>, which is a [=byte
+  sequence=], initially empty. It holds the bytes of a chunk which was read
+  from the [=stream settings/stream=], but not returned to the [=local end=]
+  yet.
 
 <div class="algorithm">
 
@@ -8180,6 +8184,26 @@ To <dfn>remove a readable stream</dfn> given |session| and |stream|:
 1. Let |stream map| be |session|'s [=readable stream settings map=].
 
 1. If |stream map| [=map/contains=] |stream|, [=map/remove=] |stream map|[|stream|].
+
+</div>
+
+<div class="algorithm">
+
+To <dfn>take the bytes to return</dfn> given |stream settings|, |bytes| and
+|max size|:
+
+1. If |max size| is null, or the [=byte sequence/length=] of |bytes| is less
+   than or equal to |max size|:
+
+   1. Set |stream settings|[[=stream settings/remaining bytes=]] to an empty
+      [=byte sequence=].
+
+   1. Return |bytes|.
+
+1. Set |stream settings|[[=stream settings/remaining bytes=]] to |bytes|
+   without its first |max size| bytes.
+
+1. Return the first |max size| bytes of |bytes|.
 
 </div>
 
@@ -8317,9 +8341,12 @@ The <dfn export for=commands>io.readStream</dfn> command reads the next chunk of
 [=readable stream=]. If provided, the <code>timeout</code> parameter specifies the
 maximum number of milliseconds to wait for the next chunk. If the timeout
 expires, the command returns an [=error=] with [=error code=] [=timeout=]
-without removing the stream. Only one invocation for the same stream can be
-active at a time. Additional concurrent invocations return an [=error=] with
-[=error code=] [=stream read error=].
+without removing the stream. If provided, the <code>maxSize</code> parameter
+specifies the maximum number of bytes to return, before they are encoded.
+If the next chunk is larger, the command returns its first <code>maxSize</code> bytes,
+and the following invocations return the rest of the chunk before reading the stream again.
+Only one invocation for the same stream can be active at a time.
+Additional concurrent invocations return an [=error=] with [=error code=] [=stream read error=].
 
 <dl>
   <dt>Command Type</dt>
@@ -8332,6 +8359,7 @@ active at a time. Additional concurrent invocations return an [=error=] with
 
       io.ReadStreamParameters = {
         stream: io.Stream,
+        ? maxSize: (js-uint .ge 1),
         ? timeout: js-uint,
       }
     </pre>
@@ -8353,11 +8381,27 @@ The [=remote end steps=] given |session| and |command parameters| are:
 1. Let |timeout| be |command parameters|["<code>timeout</code>"] if present, or
    null otherwise.
 
+1. Let |max size| be |command parameters|["<code>maxSize</code>"] if present,
+   or null otherwise.
+
 1. Let |stream settings| be the result of [=trying=] to [=get readable stream settings=] with
    |session| and |stream id|.
 
 1. If |stream settings|[[=stream settings/read command active=]] is true,
    return [=error=] with [=error code=] [=stream read error=].
+
+1. Let |remaining bytes| be |stream settings|[[=stream settings/remaining
+   bytes=]].
+
+1. If |remaining bytes| is not empty:
+
+   1. Let |bytes| be the result of [=take the bytes to return=] given |stream
+      settings|, |remaining bytes| and |max size|.
+
+   1. Return [=success=] with data a new <code>io.ReadData</code> with the
+      <code>type</code> field set to "<code>bytes</code>", the
+      <code>value</code> field set to [=forgiving-base64 encode=] |bytes| and
+      the <code>done</code> field set to false.
 
 1. Set |stream settings|[[=stream settings/read command active=]] to true.
 
@@ -8496,7 +8540,8 @@ The [=remote end steps=] given |session| and |command parameters| are:
 
    1. Otherwise:
 
-      1. Let |bytes| be |read value|["<code>value</code>"].
+      1. Let |bytes| be the result of [=take the bytes to return=] given
+         |stream settings|, |read value|["<code>value</code>"] and |max size|.
 
       1. Let |response| be a new <code>io.ReadData</code> with the
          <code>type</code> field set to "<code>bytes</code>", the
