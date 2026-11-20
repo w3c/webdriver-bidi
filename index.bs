@@ -1031,6 +1031,8 @@ normative requirements are given for [=local ends=].
 A <dfn>message transport</dfn> is an abstract interface for passing
 messages between the [=local end=] and the [=remote end=]. Each [=message
 transport=] defines how the [=local end=] establishes a [=connection=].
+Each [=message transport=] also defines how to serialize an Infra value to the
+wire format, and how to deserialize the wire format to an Infra value.
 
 A <dfn>connection listener</dfn> is a mechanism that is able to accept
 incoming [=connections=].
@@ -1038,8 +1040,9 @@ incoming [=connections=].
 A <dfn>connection</dfn> is an abstract WebDriver BiDi connection between
 the [=local end=] and the [=remote end=].
 
-A [=connection=] has <dfn>send a connection message</dfn> steps, which take a
-[=byte sequence=] and send it to the [=local end=] over the connection.
+A [=connection=] has <dfn>send a connection message</dfn> steps, which take an
+Infra value, serialize it, and send it to the [=local end=] over the
+connection.
 
 A [=connection=] has <dfn>close the connection</dfn> steps, which close the
 connection. These steps must result in [=the connection is closed=] for that
@@ -1060,8 +1063,13 @@ A [=BiDi session=] |session| is <dfn>associated with connection</dfn>
 Note: Each [=connection=] is associated with at most one [=BiDi session=].
 
 When a [=message transport=] receives a message over a [=connection=]
-|connection| with a [=scalar value string=] |data|, a [=remote end=]
-must [=handle an incoming message=] given |connection| and |data|.
+|connection|, the [=message transport=] must deserialize the message to an
+Infra value |message|. A [=remote end=] must then [=handle an incoming
+message=] given |connection| and |message|.
+
+If a [=message transport=] cannot deserialize a message received over a
+[=connection=] |connection|, a [=remote end=] must [=send an error response=]
+given |connection|, null, and [=invalid argument=].
 
 When <dfn>the connection is closed</dfn> for a [=connection=] |connection|,
 a [=remote end=] must [=handle a connection closing=] given |connection|.
@@ -1158,7 +1166,12 @@ steps:
    Issue: Nothing seems to define what [=status codes|status code=]
    is used for UTF-8 errors.
 
-1. [=Handle an incoming message=] given |connection| and |data|.
+1. Let |message| be the result of [=parse JSON into Infra values|parsing JSON
+   into Infra values=] given |data|. If this throws an exception, then [=send
+   an error response=] given |connection|, null, and [=invalid argument=], and
+   finally return.
+
+1. [=Handle an incoming message=] given |connection| and |message|.
 
 </div>
 
@@ -1172,9 +1185,12 @@ closed without a closing handshake.
 <div algorithm="WebSocket send a connection message">
 
 The [=send a connection message=] steps for a [=WebSocket connection=]
-|connection| given a [=byte sequence=] |message| are:
+|connection| given an Infra value |message| are:
 
-1. [=Send a WebSocket message=] comprised of |message| over |connection|.
+1. Let |serialized| be the result of [=serialize an infra value to JSON
+   bytes=] given |message|.
+
+1. [=Send a WebSocket message=] comprised of |serialized| over |connection|.
 
 </div>
 
@@ -1272,21 +1288,16 @@ typically be "<code>localhost</code>".
 
 <div algorithm>
 To <dfn>handle an incoming message</dfn> given a [=connection=]
-|connection| and a [=scalar value string=] |data|:
+|connection| and an Infra value |message|:
 
 1. If there is a [=BiDi Session=] [=associated with connection=] |connection|,
    let |session| be that session. Otherwise if |connection| is in
    [=connections not associated with a session=], let |session| be null.
    Otherwise, return.
 
-1. Let |parsed| be the result of [=parse JSON into Infra values|parsing JSON
-   into Infra values=] given |data|. If this throws an exception, then [=send
-   an error response=] given |connection|, null, and [=invalid argument=], and
-   finally return.
-
 1. If |session| is not null and not in [=active sessions=] then return.
 
-1. Match |parsed| against the {^remote end definition^}. If this results in a
+1. Match |message| against the {^remote end definition^}. If this results in a
    match:
 
    1. Let |matched| be the [=/map=] representing the matched data.
@@ -1330,23 +1341,20 @@ To <dfn>handle an incoming message</dfn> given a [=connection=]
        field set to |command id| and the <code>value</code> field set to
        |value|.
 
-    1. Let |serialized| be the result of [=serialize an infra value to JSON
-       bytes=] given |response|.
-
     1. Run the [=send a connection message=] steps for |connection| given
-       |serialized|.
+       |response|.
 
 1. Otherwise:
 
    1. Let |command id| be null.
 
-   1. If |parsed| is a [=/map=] and |parsed|["<code>id</code>"] exists and is an
+   1. If |message| is a [=/map=] and |message|["<code>id</code>"] exists and is an
       integer greater than or equal to zero, set |command id| to that integer.
 
    1. Let |error code| be [=invalid argument=].
 
-   1. If |parsed| is a [=/map=] and |parsed|["<code>method</code>"] exists and is a
-      string, but |parsed|["<code>method</code>"] is not in the [=set of all
+   1. If |message| is a [=/map=] and |message|["<code>method</code>"] exists and is a
+      string, but |message|["<code>method</code>"] is not in the [=set of all
       command names=], set |error code| to [=unknown command=].
 
    1. [=Send an error response=] given |connection|, |command id|, and
@@ -1454,13 +1462,10 @@ To <dfn>get valid top-level traversables by ids</dfn> given a [=/list=] of conte
 
 1. [=Assert=]: |body| matches the <code>Event</code> production.
 
-1. Let |serialized| be the result of [=serialize an infra value to JSON
-   bytes=] given |body|.
-
 1. [=list/For each=] |connection| in |session|'s [=session connections=]:
 
   1. Run the [=send a connection message=] steps for |connection| given
-     |serialized|.
+     |body|.
 
 </div>
 
@@ -1477,14 +1482,11 @@ To <dfn>send an error response</dfn> given a [=connection=]
    string containing a stack trace report of the active stack frames at the
    time when the error occurred.
 
-1. Let |response| be the result of [=serialize an infra value to JSON bytes=]
-   given |error data|.
-
    Note: |command id| can be null, in which case the <code>id</code> field will
-   also be set to null, not omitted from |response|.
+   also be set to null, not omitted from |error data|.
 
 1. Run the [=send a connection message=] steps for |connection| given
-   |response|.
+   |error data|.
 
 </div>
 
