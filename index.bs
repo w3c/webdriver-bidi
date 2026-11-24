@@ -2018,7 +2018,9 @@ The <code>session.UserPromptHandler</code> type represents the configuration of
 the user prompt handler.
 
 Note: <code>file</code> handles file picker. "accept" and "dismiss" dismisses
-the picker. "ignore" keeps the picker open.
+the picker. "ignore" keeps the picker open. A file dialog behavior configured
+with <code>[=commands/browser.setFileDialogBehavior=]</code> takes precedence
+over this handler.
 
 #### The session.UserPromptHandlerType Type #### {#type-session-UserPromptHandlerType}
 
@@ -3285,7 +3287,7 @@ A [=remote end=] has a <dfn>file dialog behavior configuration</dfn>, which is
       browser.FileDialogBehavior = {
         (
           browser.FileDialogBehaviorAccept //
-          browser.FileDialogBehaviorCancel
+          browser.FileDialogBehaviorDismiss
         )
       }
 
@@ -3294,8 +3296,8 @@ A [=remote end=] has a <dfn>file dialog behavior configuration</dfn>, which is
         paths: [+text]
       )
 
-      browser.FileDialogBehaviorCancel = (
-        type: "cancel"
+      browser.FileDialogBehaviorDismiss = (
+        type: "dismiss"
       )
       </pre>
    </dd>
@@ -3343,6 +3345,12 @@ The [=remote end steps=] given |command parameters| are:
    |command parameters|.
 
 1. Return [=success=] with data null.
+
+Note: The strings in <code>paths</code> are interpreted by the [=remote end=],
+and this specification does not define their form. [=Remote ends=] might
+require absolute paths. This command does not report paths that the
+[=remote end=] is unable to select. Instead, the file dialog is dismissed when
+it is opened, as described in [=WebDriver BiDi file dialog opened=].
 
 </div>
 
@@ -15539,12 +15547,17 @@ opened.
 
     1. Let |paths| be |file dialog behavior|'s [=file dialog behavior struct/paths=].
 
-    1. If (|type| is not "<code>open-file</code>" or |multiple| is <code>false</code>) and
-       [=list/size=] of |paths| is greater than 1, or if, for any reason, the [=remote end=] is
-       unable to select the files or directories with paths given in |paths| for a file dialog of
-       type |type|, return a [=file dialog behavior struct=] with
-       [=file dialog behavior struct/accepted=] set to false and
-       [=file dialog behavior struct/paths=] set to null.
+    1. If |type| is not "<code>open-file</code>" or |multiple| is <code>false</code>:
+
+      1. If [=list/size=] of |paths| is greater than 1, return a
+         [=file dialog behavior struct=] with
+         [=file dialog behavior struct/accepted=] set to false and
+         [=file dialog behavior struct/paths=] set to null.
+
+    1. If, for any reason, the [=remote end=] is unable to select the files or directories with
+       paths given in |paths| for a file dialog of type |type|, return a
+       [=file dialog behavior struct=] with [=file dialog behavior struct/accepted=] set to false
+       and [=file dialog behavior struct/paths=] set to null.
 
        Note: For example, [=remote ends=] might be unable to select paths that do not currently
        exist on the filesystem (when |type| is "<code>open-file</code>" or "<code>directory</code>",
@@ -15553,9 +15566,16 @@ opened.
        directory path when |type| is "<code>open-file</code>" or "<code>save-file</code>"). Because
        <code>[=commands/browser.setFileDialogBehavior=]</code> configures the behavior ahead of time
        before the dialog is opened, the [=remote end=] does not send an error or warning to the
-       [=local end=] in these cases, and instead cancels the file dialog.
+       [=local end=] in these cases, and instead dismisses the file dialog.
 
   1. Return |file dialog behavior|.
+
+  Note: A configured file dialog behavior takes precedence over the
+  <code>file</code> and <code>default</code> entries of the
+  [=user prompt handler=] of every [=BiDi session=], including entries set to
+  "<code>ignore</code>". The [=file dialog behavior configuration=] belongs to
+  the [=remote end=] and not to a [=BiDi session=], so it applies regardless of
+  which [=BiDi session=] configured it.
 
 1. Let |dismissed| be false.
 
