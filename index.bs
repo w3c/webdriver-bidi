@@ -11228,6 +11228,9 @@ Issue: Respect return value in Fetch's "HTTP-network-or-cache fetch" algorithm.
 
 This event is emitted when a network request ends in an error.
 
+A <dfn>CORS error</dfn> is an error which causes a request to fail because the
+request was rejected by the [=CORS protocol=].
+
 <div algorithm>
 The [=remote end event trigger=] is the <dfn export>WebDriver BiDi fetch
 error</dfn> steps given [=/request=] |request|:
@@ -11247,6 +11250,14 @@ error</dfn> steps given [=/request=] |request|:
    set.
 
 1. [=Maybe abort network response body collection=] with |request|.
+
+1. If |request|'s [=request/client=] is not null, and the error which caused
+   the request to be aborted is a [=CORS error=]:
+
+   1. Let |text| be an [=implementation-defined=] string describing the error.
+
+   1. [=Report a browser log entry=] with |request|'s [=request/client=],
+      "<code>error</code>", |text|, and subtype "<code>cors</code>".
 
 1. For each |session| in the [=set of sessions for which an event is enabled=]
    given "<code>network.fetchError</code>" and |related navigables|:
@@ -14771,6 +14782,7 @@ log.JavascriptLogEntry = {
 log.BrowserLogEntry = {
   log.BaseLogEntry,
   type: "browser",
+  ? subtype: "cors",
 }
 </pre>
 
@@ -14914,12 +14926,16 @@ of the message, and, if the message was triggered by script execution, a
 <code>script.StackTrace</code> representing the script that triggered it. The set
 of such messages, their text and their severity are [=implementation-defined=].
 
+The <code>subtype</code> field of a <code>log.BrowserLogEntry</code> identifies
+the kind of message. It is set to "<code>cors</code>" for messages about a
+request that failed because of the [=CORS protocol=].
+
 Note: The content of browser log entries is not stable between different implementations,
 or different versions of the same implementation. Consumers are encouraged to allow for
 such differences, and not encode dependencies on the number of such events or their properties.
 
-To <dfn>report a browser log entry</dfn> given |settings|, |level|, |text|, and
-optional |stack|:
+To <dfn>report a browser log entry</dfn> given |settings|, |level|, |text|,
+optional |stack|, and optional |subtype|:
 
 1. Let |timestamp| be a [=time value=] representing the current date and time in UTC.
 
@@ -14933,6 +14949,8 @@ optional |stack|:
    to |source|, and <code>timestamp</code> set to |timestamp|.
 
 1. If |stack| is provided, set |entry|["<code>stackTrace</code>"] to |stack|.
+
+1. If |subtype| is provided, set |entry|["<code>subtype</code>"] to |subtype|.
 
 1. Let |body| be a [=/map=] matching the <code>log.EntryAdded</code> production, with
    the <code>params</code> field set to |entry|.
