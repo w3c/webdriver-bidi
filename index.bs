@@ -3143,11 +3143,9 @@ A <dfn>download behavior struct</dfn> is a [=struct=] with:
 * [=struct/item=] named <dfn id="download-behavior-struct-allowed" for="download-behavior-struct">allowed</dfn> which is a boolean;
 * [=struct/item=] named <dfn id="download-behavior-struct-destination-folder" for="download-behavior-struct">destinationFolder</dfn> which is a string or null.
 
-A [=remote end=] has a <dfn>download behavior</dfn> which is a [=struct=] with an [=struct/item=]
-named <dfn for="download behavior">default download behavior</dfn>, which is a
-[=download behavior struct=] or null, and an [=struct/item=] named <dfn
-for="download behavior">user context download behavior</dfn>, which is a weak map between
-[=user context|user contexts=] and [=download behavior struct=].
+A [=remote end=] has a <dfn>download behavior configuration</dfn>, which is a
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=]
+[=download behavior struct=].
 
 <dl>
    <dt>Command Type</dt>
@@ -3191,13 +3189,12 @@ for="download behavior">user context download behavior</dfn>, which is a weak ma
 <div algorithm>
 To <dfn export>get download behavior</dfn> given |navigable|:
 
-1. Let |user context| be |navigable|'s [=associated user context=].
+1. Let |download behavior| be the result of [=get WebDriver configuration value=] of
+   [=download behavior configuration=] for |navigable|.
 
-1. If [=download behavior=]'s [=download behavior/user context download behavior=] [=map/contains=]
-   |user context|, return [=download behavior=]'s
-   [=download behavior/user context download behavior=][|user context|].
+1. If |download behavior| is [=WebDriver configuration/unset=], return null.
 
-1. Return [=download behavior=]'s [=download behavior/default download behavior=].
+1. Return |download behavior|.
 
 </div>
 
@@ -3206,7 +3203,7 @@ To <dfn export>get download behavior</dfn> given |navigable|:
 The [=remote end steps=] with <var ignore>session</var> and |command parameters| are:
 
 1. If |command parameters|["<code>downloadBehavior</code>"] is null, let
-   |download behavior| be null.
+   |download behavior| be [=WebDriver configuration/unset=].
 
 1. Otherwise:
 
@@ -3226,22 +3223,8 @@ The [=remote end steps=] with <var ignore>session</var> and |command parameters|
 1. If the implementation does not support required |download behavior|, then return
    [=error=] with [=error code=] [=unsupported operation=].
 
-1. If the <code>userContexts</code> field of |command parameters| is present:
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. If |download behavior| is null, [=map/remove=] |user context| from [=download behavior=]'s
-         [=download behavior/user context download behavior=].
-
-      1. Otherwise, [=map/set=] [=download behavior=]'s
-         [=download behavior/user context download behavior=][|user context|] to
-         |download behavior|.
-
-1. Otherwise, set [=download behavior=]'s [=download behavior/default download behavior=] to
-   |download behavior|.
+1. [=Try=] to [=store WebDriver configuration=] [=download behavior configuration=]
+   |download behavior| for |command parameters|.
 
 1. Return [=success=] with data null.
 
@@ -3376,26 +3359,11 @@ A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map bet
 A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
 [=/navigables=] or [=user context|user contexts=] and string.
 
-A <dfn>screen settings</dfn> is a [=struct=] with an [=struct/item=] named
-<dfn attribute for="screen settings">height</dfn> which is an integer,
-an [=struct/item=] named <dfn attribute for="screen settings">width</dfn> which is an integer,
-an [=struct/item=] named <dfn attribute for="screen settings">x</dfn> which is an integer,
-an [=struct/item=] named <dfn attribute for="screen settings">y</dfn> which is an integer.
-
-A [=remote end=] has a <dfn>screen settings overrides</dfn> which is a [=struct=] with
-an [=struct/item=] named <dfn for="screen settings overrides">user context screen settings</dfn>,
-which is a weak map between [=user context|user contexts=] and [=screen settings=],
-and an [=struct/item=] named <dfn for="screen settings overrides">navigable screen settings</dfn>,
-which is a weak map between [=/navigables=] and [=screen settings=].
-
 A [=remote end=] has a <dfn>timezone overrides map</dfn> which is a weak map between
 [=/navigables=] or [=user context|user contexts=] and string.
 
 A [=remote end=] has an <dfn>unhandled prompt behavior overrides map</dfn> which is a
 weak map between [=user context|user contexts=] and [=unhandled prompt behavior struct=].
-
-A [=remote end=] has a <dfn>scripting enabled overrides map</dfn> which is a weak
-map between [=/navigables=] or [=user context|user contexts=] and boolean.
 
 A [=remote end=] has a <dfn>download id map</dfn> which is is a weak map between
 [=response=] and download ids. It is initially empty.
@@ -7173,21 +7141,25 @@ emulates [=web-exposed screen area=] and [=web-exposed available screen area=] o
    </dd>
 </dl>
 
+A <dfn>screen settings</dfn> is a [=struct=] with an [=struct/item=] named
+<dfn attribute for="screen settings">height</dfn> which is an integer,
+an [=struct/item=] named <dfn attribute for="screen settings">width</dfn> which is an integer,
+an [=struct/item=] named <dfn attribute for="screen settings">x</dfn> which is an integer,
+an [=struct/item=] named <dfn attribute for="screen settings">y</dfn> which is an integer.
+
+A [=remote end=] has a <dfn>screen settings override configuration</dfn>, which is a
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] [=screen settings=].
+
 <div algorithm>
 
 The <dfn export>WebDriver BiDi emulated available screen area</dfn> steps given [=/navigable=] |navigable|:
 
-1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
+1. Let |screen settings| be the result of [=get WebDriver configuration value=] of
+   [=screen settings override configuration=] for |navigable|.
 
-1. Let |user context| be |top-level traversable|'s [=associated user context=].
+1. If |screen settings| is [=WebDriver configuration/unset=], return null.
 
-1. If [=screen settings overrides=] [=map/contains=] |top-level traversable|, return
-   [=screen settings overrides=][|top-level traversable|].
-
-1. If [=screen settings overrides=] [=map/contains=] |user context|, return
-   [=screen settings overrides=][|user context|].
-
-1. Return null
+1. Return |screen settings|.
 
 </div>
 
@@ -7195,17 +7167,12 @@ The <dfn export>WebDriver BiDi emulated available screen area</dfn> steps given 
 
 The <dfn export>WebDriver BiDi emulated total screen area</dfn> steps given [=/navigable=] |navigable|:
 
-1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
+1. Let |screen settings| be the result of [=get WebDriver configuration value=] of
+   [=screen settings override configuration=] for |navigable|.
 
-1. Let |user context| be |top-level traversable|'s [=associated user context=].
+1. If |screen settings| is [=WebDriver configuration/unset=], return null.
 
-1. If [=screen settings overrides=] [=map/contains=] |top-level traversable|, return
-   [=screen settings overrides=][|top-level traversable|].
-
-1. If [=screen settings overrides=] [=map/contains=] |user context|, return
-   [=screen settings overrides=][|user context|].
-
-1. Return null
+1. Return |screen settings|.
 
 </div>
 
@@ -7213,59 +7180,25 @@ The <dfn export>WebDriver BiDi emulated total screen area</dfn> steps given [=/n
 
 The [=remote end steps=] with |command parameters| are:
 
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
 1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
    and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |emulated screen area| be |command parameters|["<code>screenArea</code>"].
 
-1. If |emulated screen area| is not null:
+1. If |emulated screen area| is null, set |emulated screen area| to
+   [=WebDriver configuration/unset=].
+
+1. Otherwise:
 
    1. [=map/Set=] |emulated screen area|["<code>x</code>"] to 0.
 
    1. [=map/Set=] |emulated screen area|["<code>y</code>"] to 0.
 
-1. Let |navigables| be a [=/set=].
+1. [=Try=] to [=store WebDriver configuration=] [=screen settings override configuration=]
+   |emulated screen area| for |command parameters|.
 
-1. If the <code>contexts</code> field of |command parameters| is present:
-
-   1. Let |navigables| be the result of [=trying=] to
-      [=get valid top-level traversables by ids=] with
-      |command parameters|["<code>contexts</code>"].
-
-   1. Let |target| be [=screen settings overrides/navigable screen settings=].
-
-   1. For each |navigable| of |navigables|:
-
-      1. If |emulated screen area| is null, [=map/remove=] |navigable|
-         from |target|.
-
-      1. Otherwise, [=map/set=] |target|[|navigable|]
-         to |emulated screen area|.
-
-   1. Return [=success=] with data null.
-
-1. Otherwise:
-
-   1. Assert the <code>userContexts</code> field of |command parameters| is present.
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. Let |target| be [=screen settings overrides/user context screen settings=].
-
-   1. For each |user context| of |user contexts|:
-
-      1. If |emulated screen area| is null, [=map/remove=] |user context| from
-         |target|.
-
-      1. Otherwise, [=map/set=] |target|[|user context|] to |emulated screen area|.
-
-   1. Return [=success=] with data null.
+1. Return [=success=] with data null.
 
 </div>
 
@@ -7615,6 +7548,9 @@ disabling JavaScript on web pages.
 
 Note: only emulation of disabled Javascript is supported.
 
+A [=remote end=] has a <dfn>scripting enabled configuration</dfn>, which is a
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] boolean.
+
 <div algorithm>
 The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
 [=environment settings object=] |settings| are:
@@ -7622,17 +7558,12 @@ The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
 1. Let |navigable| be |settings|'s [=relevant global object=]'s
    <a>associated <code>Document</code></a>'s [=/node navigable=].
 
-1. Let |top-level traversable| be |navigable|’s [=navigable/top-level traversable=].
+1. Let |scripting enabled| be the result of [=get WebDriver configuration value=] of
+   [=scripting enabled configuration=] for |navigable|.
 
-1. If [=scripting enabled overrides map=] contains |top-level traversable|, return
-   [=scripting enabled overrides map=][|top-level traversable|]
+1. If |scripting enabled| is [=WebDriver configuration/unset=], return true.
 
-1. Let |user context| be  |top-level traversable|'s [=associated user context=].
-
-1. If [=scripting enabled overrides map=] contains |user context|, return
-   [=scripting enabled overrides map=][|user context|].
-
-1. Return true.
+1. Return |scripting enabled|.
 
 </div>
 
@@ -7640,42 +7571,17 @@ The <dfn export>WebDriver BiDi scripting is enabled</dfn> steps given
 
 The [=remote end steps=] with |command parameters| are:
 
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
 1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
    and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
    return [=error=] with [=error code=] [=invalid argument=].
 
 1. Let |emulated scripting enabled status| be |command parameters|["<code>enabled</code>"].
 
-1. If the <code>contexts</code> field of |command parameters| is present:
+1. If |emulated scripting enabled status| is null, set |emulated scripting enabled status| to
+   [=WebDriver configuration/unset=].
 
-   1. Let |navigables| be the result of [=trying=] to
-      [=get valid top-level traversables by ids=] with
-      |command parameters|["<code>contexts</code>"].
-
-   1. For each |navigable| of |navigables|:
-
-      1. If |emulated scripting enabled status| is null, [=map/remove=] |navigable| from
-         [=scripting enabled overrides map=].
-
-      1. Otherwise, [=map/set=] [=scripting enabled overrides map=][|navigable|] to
-         |emulated scripting enabled status|.
-
-1. If the <code>userContexts</code> field of |command parameters| is present:
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. If |emulated scripting enabled status| is null, [=map/remove=] |user context| from
-         [=scripting enabled overrides map=].
-
-      1. Otherwise [=map/set=] [=scripting enabled overrides map=][|user context|] to
-         |emulated scripting enabled status|.
+1. [=Try=] to [=store WebDriver configuration=] [=scripting enabled configuration=]
+   |emulated scripting enabled status| for |command parameters|.
 
 1. Return [=success=] with data null.
 
