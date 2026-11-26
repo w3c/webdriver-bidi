@@ -454,6 +454,45 @@ value whose type is the [=WebDriver configuration/associated type=] for that con
 
 <div algorithm>
 
+Note: this algorithm allows accessing the [=WebDriver configuration=] for a given [=/set=] of
+[=/navigables=] by checking values in [=WebDriver configuration/navigables=], then in
+[=WebDriver configuration/user contexts=] and finally in [=WebDriver configuration/global=].
+Returns [=WebDriver configuration/unset=] if configuration is not set.
+
+To <dfn>get WebDriver configuration value for navigables</dfn> of [=WebDriver configuration=]
+|configuration| for a [=/set=] of [=/navigables=] |navigables|:
+
+1. For each |navigable| of |navigables|:
+
+   1. Let |top-level traversable| be |navigable|'s [=navigable/top-level traversable=].
+
+   1. If |configuration|'s [=WebDriver configuration/navigables=] [=map/contains=]
+      |top-level traversable|:
+
+      1. Let |navigable configuration value| be |configuration|'s
+         [=WebDriver configuration/navigables=][|top-level traversable|].
+
+      1. If |navigable configuration value| is not [=WebDriver configuration/unset=], return
+         |navigable configuration value|.
+
+1. For each |navigable| of |navigables|:
+
+   1. Let |user context| be |navigable|'s [=associated user context=].
+
+   1. If |configuration|'s [=WebDriver configuration/user contexts=] [=map/contains=] |user context|:
+
+      1. Let |user context configuration value| be |configuration|'s
+         [=WebDriver configuration/user contexts=][|user context|].
+
+      1. If |user context configuration value| is not [=WebDriver configuration/unset=], return
+         |user context configuration value|.
+
+1. Return |configuration|'s [=WebDriver configuration/global=].
+
+</div>
+
+<div algorithm>
+
 Note: this algorithm allows accessing the [=WebDriver configuration=] for a given [=/navigable=]
 by checking values in [=WebDriver configuration/navigables=], then in
 [=WebDriver configuration/user contexts=] and finally in [=WebDriver configuration/global=].
@@ -462,28 +501,28 @@ Returns [=WebDriver configuration/unset=] if configuration is not set.
 To <dfn>get WebDriver configuration value</dfn> of [=WebDriver configuration=] |configuration| for
 [=/navigable=] |navigable|:
 
-1. Let |top-level traversable| be |navigable|'s [=navigable/top-level traversable=].
+1. Return the result of [=get WebDriver configuration value for navigables=] of |configuration| for
+   a [=/set=] containing |navigable|.
 
-1. If |configuration|'s [=WebDriver configuration/navigables=] [=map/contains=]
-   |top-level traversable|:
+</div>
 
-   1. Let |navigable configuration value| be |configuration|'s
-      [=WebDriver configuration/navigables=][|top-level traversable|].
+<div algorithm>
 
-   1. If |navigable configuration value| is not [=WebDriver configuration/unset=], return
-      |navigable configuration value|.
+Note: this algorithm allows accessing the [=WebDriver configuration=] for a given
+[=environment settings object=] by checking values for its related navigables in
+[=WebDriver configuration/navigables=], then in [=WebDriver configuration/user contexts=], and
+finally in [=WebDriver configuration/global=]. Returns [=WebDriver configuration/unset=] if
+configuration is not set.
 
-1. Let |user context| be |navigable|'s [=associated user context=].
+To <dfn>get WebDriver configuration value for environment settings</dfn> of
+[=WebDriver configuration=] |configuration| for [=environment settings object=]
+|environment settings|:
 
-1. If |configuration|'s [=WebDriver configuration/user contexts=] [=map/contains=] |user context|:
+1. Let |related navigables| be the result of [=get related navigables=] given
+   |environment settings|.
 
-   1. Let |user context configuration value| be |configuration|'s
-      [=WebDriver configuration/user contexts=][|user context|].
-
-   1. If |user context configuration value| is not [=WebDriver configuration/unset=], return
-      |user context configuration value|.
-
-1. Return |configuration|'s [=WebDriver configuration/global=].
+1. Return the result of [=get WebDriver configuration value for navigables=] of |configuration| for
+   |related navigables|.
 
 </div>
 
@@ -3355,9 +3394,6 @@ An <dfn>unhandled prompt behavior struct</dfn> is a [=struct=] with:
 * [=struct/Item=] named <dfn attribute for="unhandled-prompt-behavior-prompt">prompt</dfn> which is a string or null.
 
 A [=remote end=] has a <dfn>viewport overrides map</dfn> which is a weak map between [=user context|user contexts=] and [=viewport configuration=].
-
-A [=remote end=] has a <dfn>locale overrides map</dfn> which is a weak map between
-[=/navigables=] or [=user context|user contexts=] and string.
 
 A [=remote end=] has a <dfn>timezone overrides map</dfn> which is a weak map between
 [=/navigables=] or [=user context|user contexts=] and string.
@@ -6769,7 +6805,7 @@ The [=remote end steps=] with |command parameters| are:
 #### The emulation.setLocaleOverride Command ####  {#command-emulation-setLocaleOverride}
 
 The <dfn export for=commands>emulation.setLocaleOverride</dfn> command modifies
-locale on the given top-level traversables or user contexts.
+locale on the given top-level traversables, user contexts, or globally.
 
 <dl>
    <dt>Command Type</dt>
@@ -6795,28 +6831,20 @@ locale on the given top-level traversables or user contexts.
    </dd>
 </dl>
 
+A [=remote end=] has a <dfn>locale override configuration</dfn>, which is a
+[=WebDriver configuration=] with [=WebDriver configuration/associated type=] string.
+
 <div algorithm>
 
 The <dfn export>WebDriver BiDi emulated language</dfn> steps given an [=environment settings object=]
 |environment settings|:
 
-1. Let |related navigables| be the result of [=get related navigables=] given
-   |environment settings|.
+1. Let |locale| be the result of [=get WebDriver configuration value for environment settings=] of
+   [=locale override configuration=] for |environment settings|.
 
-1. For each |navigable| of |related navigables|:
+1. If |locale| is [=WebDriver configuration/unset=], return null.
 
-    1. Let |top-level traversable| be |navigable|’s
-       [=navigable/top-level traversable=].
-
-    1. Let |user context| be |top-level traversable|'s [=associated user context=].
-
-    1. If [=locale overrides map=] [=map/contains=] |top-level traversable|, return
-       [=locale overrides map=][|top-level traversable|].
-
-    1. If [=locale overrides map=] [=map/contains=] |user context|, return
-       [=locale overrides map=][|user context|].
-
-1. Return null
+1. Return |locale|.
 
 </div>
 
@@ -6824,51 +6852,15 @@ The <dfn export>WebDriver BiDi emulated language</dfn> steps given an [=environm
 
 The [=remote end steps=] with |command parameters| are:
 
-1. If |command parameters| [=map/contains=] "<code>userContexts</code>"
-   and |command parameters| [=map/contains=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
-1. If |command parameters| doesn't [=map/contain=] "<code>userContexts</code>"
-   and |command parameters| doesn't [=map/contain=] "<code>contexts</code>",
-   return [=error=] with [=error code=] [=invalid argument=].
-
 1. Let |emulated locale| be |command parameters|["<code>locale</code>"].
 
-1. If |emulated locale| is not null and [=IsStructurallyValidLanguageTag=](|emulated locale|)
-   returns false, return [=error=] with [=error code=] [=invalid argument=].
+1. If |emulated locale| is null, set |emulated locale| to [=WebDriver configuration/unset=].
 
-1. Let |navigables| be a [=/set=].
+1. Otherwise, if [=IsStructurallyValidLanguageTag=](|emulated locale|) returns false, return
+   [=error=] with [=error code=] [=invalid argument=].
 
-1. If the <code>contexts</code> field of |command parameters| is present:
-
-   1. Let |navigables| be the result of [=trying=] to
-      [=get valid top-level traversables by ids=] with
-      |command parameters|["<code>contexts</code>"].
-
-1. Otherwise:
-
-   1. Assert the <code>userContexts</code> field of |command parameters| is present.
-
-   1. Let |user contexts| be the result of [=trying=] to [=get valid user contexts=]
-      with |command parameters|["<code>userContexts</code>"].
-
-   1. For each |user context| of |user contexts|:
-
-      1. If |emulated locale| is null, [=map/remove=] |user context| from [=locale overrides map=].
-
-      1. Otherwise, [=map/set=] [=locale overrides map=][|user context|] to |emulated locale|.
-
-      1. [=list/For each=] |top-level traversable| of the list of all
-         [=/top-level traversables=] whose [=associated user context=] is
-         |user context|:
-
-         1. [=list/Append=] |top-level traversable| to |navigables|.
-
-1. For each |navigable| of |navigables|:
-
-   1. If |emulated locale| is null, [=map/remove=] |navigable| from [=locale overrides map=].
-
-   1. Otherwise, [=map/set=] [=locale overrides map=][|navigable|] to |emulated locale|.
+1. [=Try=] to [=store WebDriver configuration=] [=locale override configuration=]
+   |emulated locale| for |command parameters|.
 
 1. Return [=success=] with data null.
 
